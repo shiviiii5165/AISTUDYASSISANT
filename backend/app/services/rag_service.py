@@ -139,15 +139,19 @@ async def process_chunk_batch(messages: list, batch_index: int, retries: int = 1
         except Exception as e:
             print(f"Error in batch {batch_index}, attempt {attempt + 1}: {e}")
             if attempt == retries:
-                return f"[Error processing batch {batch_index}]"
-    return f"[Error processing batch {batch_index}]"
+                return f"[Error processing batch {batch_index}: {str(e)}]"
+    return f"[Error processing batch {batch_index}: Unknown error]"
 
 async def synthesize_batches(batch_results: list[str], mode: str, question: str) -> str:
     """Merge independent batch outputs into one coherent, deduplicated response."""
     valid_results = [r for r in batch_results if not r.startswith("[Error processing batch")]
+    errors = [r for r in batch_results if r.startswith("[Error processing batch")]
 
-    if len(valid_results) <= 1:
-        return valid_results[0] if valid_results else "Could not generate a response. Please try again."
+    if not valid_results:
+        return f"Groq API Error: {errors[0]}" if errors else "Could not generate a response. Please try again."
+    
+    if len(valid_results) == 1:
+        return valid_results[0]
 
     combined_drafts = "\n\n=== NEXT DRAFT SECTION ===\n\n".join(valid_results)
     user_message = f"Original task: {question}\n\nMode: {mode}\n\nDraft sections to merge:\n\n{combined_drafts}"
@@ -204,8 +208,12 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
             
             tasks.append(process_chunk_batch(messages, i))
         
-        # Run all batches concurrently
-        batch_results = await asyncio.gather(*tasks)
+        # Run batches sequentially to avoid hitting Groq API rate limits (HTTP 429)
+        batch_results = []
+        for task in tasks:
+            result = await task
+            batch_results.append(result)
+            await asyncio.sleep(1.5) # Delay to respect TPM/RPM limits
         
         # Merge results
         final_answer = await synthesize_batches(batch_results, mode, question)
