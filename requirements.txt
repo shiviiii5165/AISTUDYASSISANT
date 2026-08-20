@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pypdf
+langchain-text-splitters
+groq
+supabase
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+httpx
+pydantic
+pydantic-settings
