@@ -24,15 +24,18 @@ async def upload_pdf(
         temp_dir = os.path.join(tempfile.gettempdir(), "teachgenie_temp")
         os.makedirs(temp_dir, exist_ok=True)
         temp_path = os.path.join(temp_dir, f"{pdf_id}.pdf")
+        file_bytes = await file.read()
         with open(temp_path, "wb") as f:
-            f.write(await file.read())
+            f.write(file_bytes)
         
-        # Upload to Supabase Storage
-        with open(temp_path, "rb") as f:
-            storage_res = supabase.storage.from_("pdfs").upload(f"{current_user.id}/{pdf_id}.pdf", f)
-            # Some versions of supabase-py return an object with an error attribute if it fails
-            if hasattr(storage_res, 'error') and storage_res.error:
-                raise Exception(f"Storage Error: {storage_res.error}")
+        # Upload to Supabase Storage using bytes
+        storage_res = supabase.storage.from_("pdfs").upload(
+            f"{current_user.id}/{pdf_id}.pdf", 
+            file_bytes,
+            {"content-type": "application/pdf"}
+        )
+        if hasattr(storage_res, 'error') and storage_res.error:
+            raise Exception(f"Storage Error: {storage_res.error}")
         
         # Save metadata to DB
         db_res = supabase.table("pdfs").insert({

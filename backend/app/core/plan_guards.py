@@ -4,8 +4,9 @@ from app.db.supabase_client import supabase
 
 def require_pro(current_user = Depends(get_current_user)):
     """Block free users from Pro-only modes entirely."""
-    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).single().execute()
-    if profile.data["plan"] != "pro":
+    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).execute()
+    plan = profile.data[0]["plan"] if profile.data else "free"
+    if plan != "pro":
         raise HTTPException(
             status_code=403,
             detail={"error": "upgrade_required", "message": "This feature requires Pro. Upgrade to unlock it."}
@@ -14,8 +15,9 @@ def require_pro(current_user = Depends(get_current_user)):
 
 def check_daily_question_limit(current_user = Depends(get_current_user)):
     """Free users get 20 questions/day. Pro users are unlimited."""
-    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).single().execute()
-    if profile.data["plan"] == "pro":
+    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).execute()
+    plan = profile.data[0]["plan"] if profile.data else "free"
+    if plan == "pro":
         return current_user
 
     allowed = supabase.rpc("increment_daily_usage", {
@@ -31,8 +33,9 @@ def check_daily_question_limit(current_user = Depends(get_current_user)):
 
 def check_pdf_upload_limit(current_user = Depends(get_current_user)):
     """Free users get 3 PDFs total. Pro users are unlimited."""
-    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).single().execute()
-    if profile.data["plan"] == "pro":
+    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).execute()
+    plan = profile.data[0]["plan"] if profile.data else "free"
+    if plan == "pro":
         return current_user
 
     count = supabase.table("pdfs").select("id", count="exact").eq("user_id", current_user.id).execute()
@@ -45,8 +48,9 @@ def check_pdf_upload_limit(current_user = Depends(get_current_user)):
 
 def check_topic_deck_limit(current_user = Depends(get_current_user)):
     """Pro users get 15 decks per month. Free users get 0."""
-    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).single().execute()
-    if profile.data["plan"] != "pro":
+    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).execute()
+    plan = profile.data[0]["plan"] if profile.data else "free"
+    if plan != "pro":
         raise HTTPException(
             status_code=403,
             detail={"error": "upgrade_required", "message": "Topic Decks are a Pro feature."}
