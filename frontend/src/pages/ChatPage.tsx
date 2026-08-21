@@ -13,6 +13,7 @@ import MCQCard from '../components/chat/MCQCard';
 import ExamPredictorCard from '../components/chat/ExamPredictorCard';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import { Lock } from 'lucide-react';
+import GenieAvatar from '../components/GenieAvatar';
 
 interface DisplayMessage {
   role: 'user' | 'assistant';
@@ -279,11 +280,9 @@ const ChatPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6">
           {!selectedPdfId ? (
             /* Empty state: no PDF selected */
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-20 h-20 bg-[var(--accent-indigo-light)] rounded-3xl flex items-center justify-center mb-6">
-                <BookOpen className="w-10 h-10 text-[var(--accent-indigo)]" />
-              </div>
-              <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-fadeIn">
+              <GenieAvatar size="md" />
+              <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-2">
                 Select a PDF to start chatting
               </h3>
               <p className="text-[var(--text-secondary)] text-sm max-w-md">
@@ -292,11 +291,9 @@ const ChatPage: React.FC = () => {
             </div>
           ) : messages.length === 0 && !loading ? (
             /* Empty state: PDF selected but no messages */
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-[var(--accent-green)]/10 to-[var(--accent-indigo)]/10 rounded-2xl flex items-center justify-center mb-5">
-                <Sparkles className="w-8 h-8 text-[var(--accent-green)]" />
-              </div>
-              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-fadeIn">
+              <GenieAvatar size="md" />
+              <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-2">
                 Ask anything about "{selectedPdf?.name}"
               </h3>
               <p className="text-[var(--text-secondary)] text-sm max-w-md mb-6">
@@ -315,7 +312,7 @@ const ChatPage: React.FC = () => {
                       setInputValue(suggestion);
                       inputRef.current?.focus();
                     }}
-                    className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-secondary)] border border-[var(--border)] rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
+                    className="px-4 py-2 text-xs font-semibold bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:shadow-md hover:text-[var(--text-primary)] hover:-translate-y-0.5 transition-all"
                   >
                     {suggestion}
                   </button>
@@ -328,15 +325,15 @@ const ChatPage: React.FC = () => {
               {messages.map((message, index) => (
                 <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent-green)] to-[var(--accent-indigo)] flex items-center justify-center shrink-0 mt-1">
-                      <Sparkles className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-[var(--accent-indigo-light)] flex items-center justify-center shrink-0 mt-1 border border-[var(--border)] shadow-sm">
+                      <Sparkles className="w-4 h-4 text-[var(--accent-indigo)]" />
                     </div>
                   )}
                   <div
                     className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-3.5 py-2.5 md:px-4 md:py-3 ${
                       message.role === 'user'
-                        ? 'bg-[var(--accent-green)] text-white rounded-br-md'
-                        : 'bg-white border border-[var(--border)] text-[var(--text-primary)] rounded-bl-md shadow-sm'
+                        ? 'bg-[var(--text-primary)] text-white rounded-br-md shadow-sm'
+                        : 'bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-bl-md shadow-sm'
                     }`}
                   >
                     {message.role === 'assistant' ? (
@@ -371,15 +368,15 @@ const ChatPage: React.FC = () => {
 
               {/* Typing indicator */}
               {loading && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent-green)] to-[var(--accent-indigo)] flex items-center justify-center shrink-0 mt-1">
-                    <Sparkles className="w-4 h-4 text-white" />
+                <div className="flex gap-3 justify-start animate-fadeIn">
+                  <div className="w-8 h-8 rounded-full bg-[var(--accent-indigo-light)] flex items-center justify-center shrink-0 mt-1 border border-[var(--border)] shadow-sm">
+                    <Sparkles className="w-4 h-4 text-[var(--accent-indigo)]" />
                   </div>
-                  <div className="bg-white border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                  <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-[var(--accent-green)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-[var(--accent-green)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-[var(--accent-green)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="w-2 h-2 bg-[var(--accent-indigo)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-[var(--accent-indigo)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-[var(--accent-indigo)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -418,12 +415,12 @@ const ChatPage: React.FC = () => {
                         setSelectedMode(mode);
                       }
                     }}
-                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg whitespace-nowrap transition-colors flex items-center gap-1 ${
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1 border ${
                       selectedMode === mode
-                        ? 'bg-[var(--accent-indigo)] text-white'
+                        ? 'bg-gradient-to-r from-[var(--accent-indigo)] to-[#2A4A6E] text-white border-transparent shadow-md'
                         : isLocked
-                        ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:bg-gray-100'
-                        : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                        ? 'bg-[var(--bg-secondary)] border-transparent text-[var(--text-muted)] hover:bg-gray-200'
+                        : 'bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:shadow-sm'
                     }`}
                   >
                     {isLocked && <Lock className="w-2.5 h-2.5" />}
@@ -432,7 +429,8 @@ const ChatPage: React.FC = () => {
                 );
               })}
             </div>
-            <div className="max-w-3xl mx-auto flex items-end gap-2">
+            <div className="max-w-3xl mx-auto flex items-end gap-2 relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-indigo)] rounded-xl opacity-0 group-focus-within:opacity-20 group-focus-within:animate-[borderGlow_3s_infinite] transition-all blur-sm pointer-events-none" />
               <div className="flex-1 relative">
                 <textarea
                   ref={inputRef}
@@ -442,8 +440,8 @@ const ChatPage: React.FC = () => {
                   placeholder={isVoiceActive ? "Listening... speak your question" : "Ask a question about your PDF..."}
                   rows={1}
                   disabled={loading}
-                  className="w-full resize-none px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm leading-relaxed disabled:opacity-50 max-h-32 overflow-y-auto"
-                  style={{ minHeight: '44px', color: isVoiceActive ? '#16a34a' : 'inherit' }}
+                  className="w-full resize-none px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-1 focus:ring-[var(--accent-amber)] focus:border-[var(--accent-amber)] bg-[var(--bg-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm leading-relaxed disabled:opacity-50 max-h-32 overflow-y-auto shadow-inner relative z-10"
+                  style={{ minHeight: '44px', color: isVoiceActive ? 'var(--accent-green)' : 'inherit' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -468,7 +466,7 @@ const ChatPage: React.FC = () => {
               <button
                 onClick={() => handleSend()}
                 disabled={!inputValue.trim() || loading}
-                className="p-3 bg-[var(--accent-green)] text-white rounded-xl hover:bg-green-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-sm"
+                className="btn-gold p-3 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-md relative z-10 w-[44px] h-[44px]"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

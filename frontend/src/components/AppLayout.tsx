@@ -27,7 +27,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex">
       {/* ── Desktop Sidebar ── */}
-      <aside className="w-60 bg-white border-r border-[var(--border)] hidden md:flex flex-col shrink-0">
+      <aside className="w-60 bg-[var(--bg-card)] border-r border-[var(--border)] hidden md:flex flex-col shrink-0">
         <div className="px-5 py-5">
           <Link to="/dashboard" className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-3">
             <img src="/logo.png" alt="TeachGenie Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
@@ -54,12 +54,12 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
           })}
         </nav>
         <div className="p-3">
-          <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100">
-            <h3 className="text-sm font-bold text-amber-900 mb-1">Upgrade to Pro</h3>
-            <p className="text-xs text-amber-700/80 mb-3 leading-relaxed">Unlimited PDFs & questions.</p>
+          <div className="card-storybook p-4">
+            <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">Upgrade to Pro</h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-3 leading-relaxed">Unlimited PDFs & questions.</p>
             <button 
               onClick={() => navigate('/pricing')}
-              className="w-full bg-[var(--accent-amber)] text-white text-xs font-semibold py-2 rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
+              className="w-full btn-gold text-xs py-2 rounded-lg"
             >
               View Plans
             </button>
@@ -71,7 +71,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-xl animate-slideUp flex flex-col">
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[var(--bg-card)] shadow-xl animate-slideUp flex flex-col">
             <div className="px-5 py-4 flex items-center justify-between border-b border-[var(--border)]">
               <Link to="/dashboard" className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
                 <img src="/logo.png" alt="TeachGenie Logo" className="w-9 h-9 object-contain" />
@@ -117,7 +117,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
       {/* ── Main Content ── */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="h-14 border-b border-[var(--border)] bg-white flex items-center justify-between px-4 md:px-6 shrink-0">
+        <header className="h-14 border-b border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-between px-4 md:px-6 shrink-0 z-10 relative shadow-sm">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -144,7 +144,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
               {showNotifications && (
                 <>
                   <div className="fixed inset-0 z-20" onClick={() => setShowNotifications(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-[var(--border)] rounded-xl shadow-lg z-30 py-2">
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-lg z-30 py-2">
                     <div className="px-4 py-2 border-b border-[var(--border)]">
                       <h3 className="text-sm font-bold text-[var(--text-primary)]">Notifications</h3>
                     </div>
@@ -175,7 +175,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
               {showProfileMenu && (
                 <>
                   <div className="fixed inset-0 z-20" onClick={() => setShowProfileMenu(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[var(--border)] rounded-xl shadow-lg z-30 py-1">
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-lg z-30 py-1">
                     <div className="px-4 py-2.5 border-b border-[var(--border)] mb-1">
                       <p className="text-sm font-bold text-[var(--text-primary)] truncate">{user?.full_name || 'Student'}</p>
                       <p className="text-xs text-[var(--text-secondary)] truncate">{user?.email}</p>

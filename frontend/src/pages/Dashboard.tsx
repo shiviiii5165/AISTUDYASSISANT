@@ -6,6 +6,7 @@ import { Search, BookOpen, Loader2, ArrowRight, FileText, MessageSquare, Sparkle
 import { fetchPdfs } from '../lib/api';
 import type { PDFDocument } from '../lib/api';
 import { useAuthStore } from '../store/useAuthStore';
+import GenieAvatar from '../components/GenieAvatar';
 
 const SUBJECT_COLORS: Record<string, { bg: string; text: string }> = {
   Physics: { bg: 'bg-blue-50', text: 'text-blue-600' },
@@ -25,6 +26,21 @@ const Dashboard: React.FC = () => {
   const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
   const [loadingPdfs, setLoadingPdfs] = useState(true);
   const [quickAsk, setQuickAsk] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const placeholders = [
+    "Ask a doubt from any PDF...",
+    "What is Newton's third law?",
+    "Explain mitochondria simply...",
+    "Generate 5 MCQs on this chapter..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [placeholders.length]);
 
   useEffect(() => {
     (async () => {
@@ -88,75 +104,68 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <AppLayout title={
-      <div className="flex items-center gap-3">
-        <span>{getGreeting()}, {firstName}</span>
-        {user?.plan === 'pro' ? (
-          <span className="hidden sm:flex items-center gap-1 bg-indigo-50 text-[var(--accent-indigo)] text-xs font-bold px-2.5 py-1 rounded-md border border-indigo-100">
-            <Sparkles className="w-3 h-3" /> Pro Plan
-          </span>
-        ) : (
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-md border border-gray-200">
-              Free Plan
-            </span>
-            <button 
-              onClick={() => navigate('/pricing')}
-              className="text-xs font-bold text-white bg-[var(--text-primary)] px-3 py-1 rounded-md hover:bg-gray-800 transition-colors shadow-sm"
-            >
-              Upgrade
-            </button>
-          </div>
-        )}
-      </div>
-    }>
+    <AppLayout title={<span className="font-semibold">Dashboard</span>}>
       <SEO 
         title="Dashboard" 
         description="View your learning progress, recent uploads, and AI study sessions on TeachGenie." 
       />
-      <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="bg-white p-4 rounded-xl border border-[var(--border)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow">
-              <div className={`w-8 h-8 ${stat.iconBg} rounded-lg flex items-center justify-center mb-3`}>
-                {stat.icon}
-              </div>
-              <p className="text-[var(--text-muted)] text-[11px] font-semibold uppercase tracking-wider mb-0.5">{stat.label}</p>
-              {loadingPdfs && !stat.isStreak ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
-              ) : (
-                <p className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">{stat.value}</p>
-              )}
-            </div>
-          ))}
+      <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-10">
+        
+        {/* Hero Section */}
+        <div className="flex flex-col items-center justify-center text-center space-y-4 pt-4 pb-2">
+          <GenieAvatar size="lg" />
+          <h1 className="text-4xl md:text-5xl tracking-tight mt-2 animate-slideUp" style={{ animationDelay: '0.1s' }}>
+            {getGreeting()}, <span className="text-gold-shimmer font-bold">{firstName}</span>.
+          </h1>
+          <p className="text-[var(--text-secondary)] text-lg animate-slideUp" style={{ animationDelay: '0.2s' }}>
+            What would you like to teach today?
+          </p>
         </div>
 
         {/* Quick Ask */}
-        <div className="bg-white p-1.5 rounded-xl border border-[var(--border)] shadow-[var(--shadow-sm)] flex items-center gap-2">
-          <div className="pl-3">
-            <Search className="w-4 h-4 text-[var(--text-muted)]" />
+        <div className="relative group animate-slideUp" style={{ animationDelay: '0.3s' }}>
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-indigo)] rounded-2xl opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 group-focus-within:animate-[borderGlow_3s_infinite] transition-all blur-sm" />
+          <div className="relative card-storybook p-2 flex items-center gap-2 rounded-xl">
+            <div className="pl-4">
+              <Search className="w-5 h-5 text-[var(--accent-amber)]" />
+            </div>
+            <input
+              type="text"
+              value={quickAsk}
+              onChange={(e) => setQuickAsk(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleQuickAsk()}
+              placeholder={readyPdfs.length > 0 ? placeholders[placeholderIndex] : "Upload a PDF first to start asking..."}
+              className="flex-1 bg-transparent border-none focus:outline-none text-[var(--text-primary)] py-3 px-2 placeholder:text-[var(--text-muted)] text-base min-w-0 transition-all"
+              style={{ animation: readyPdfs.length > 0 && !quickAsk ? 'placeholderFade 4s infinite' : 'none' }}
+              disabled={readyPdfs.length === 0}
+            />
+            <button
+              onClick={handleQuickAsk}
+              className="btn-gold px-6 py-3 rounded-lg flex items-center gap-2 text-sm shadow-sm shrink-0"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">Ask Genie</span>
+            </button>
           </div>
-          <input
-            type="text"
-            value={quickAsk}
-            onChange={(e) => setQuickAsk(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleQuickAsk()}
-            placeholder={readyPdfs.length > 0 ? "Ask a doubt from any PDF..." : "Upload a PDF first to start asking..."}
-            className="flex-1 bg-transparent border-none focus:outline-none text-[var(--text-primary)] py-2.5 placeholder:text-[var(--text-muted)] text-sm min-w-0"
-            disabled={readyPdfs.length === 0}
-          />
-          <button
-            onClick={handleQuickAsk}
-            className="bg-[var(--accent-green)] text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-1.5 text-sm shadow-sm shrink-0"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Ask</span>
-          </button>
         </div>
 
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slideUp" style={{ animationDelay: '0.4s' }}>
+          {STATS.map((stat, i) => (
+            <div key={stat.label} className="card-storybook p-5 flex flex-col justify-between" style={{ animationDelay: `${0.4 + i*0.1}s` }}>
+              <div className={`w-8 h-8 ${stat.iconBg} rounded-lg flex items-center justify-center mb-3`}>
+                {stat.icon}
+              </div>
+              <p className="text-[var(--text-muted)] text-[11px] font-bold uppercase tracking-widest mb-1">{stat.label}</p>
+              {loadingPdfs && !stat.isStreak ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
+              ) : (
+                <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">{stat.value}</p>
+              )}
+            </div>
+          ))}
         {/* Recent PDFs */}
-        <div>
+        <div className="animate-slideUp" style={{ animationDelay: '0.6s' }}>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-base font-bold text-[var(--text-primary)]">Recent PDFs</h3>
             <button
@@ -172,15 +181,15 @@ const Dashboard: React.FC = () => {
               <Loader2 className="w-5 h-5 animate-spin text-[var(--accent-green)]" />
             </div>
           ) : recentPdfs.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-xl border border-[var(--border)] shadow-[var(--shadow-sm)]">
-              <div className="w-12 h-12 bg-[var(--bg-secondary)] rounded-xl flex items-center justify-center mx-auto mb-3">
-                <BookOpen className="w-6 h-6 text-[var(--text-muted)]" />
+            <div className="text-center py-12 card-storybook">
+              <div className="w-14 h-14 bg-[var(--bg-secondary)] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[var(--border)] shadow-inner">
+                <BookOpen className="w-6 h-6 text-[var(--accent-amber)]" />
               </div>
-              <p className="text-[var(--text-secondary)] font-medium text-sm mb-1">No PDFs yet</p>
-              <p className="text-[var(--text-muted)] text-xs mb-4">Upload your first study material to get started</p>
+              <p className="text-[var(--text-primary)] font-bold text-lg mb-1">Your library is empty</p>
+              <p className="text-[var(--text-secondary)] text-sm mb-6">Upload your first study material to get started</p>
               <button
                 onClick={() => navigate('/library')}
-                className="bg-[var(--accent-green)] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                className="btn-gold px-6 py-2.5 rounded-lg text-sm transition-all"
               >
                 Upload PDF
               </button>
@@ -195,18 +204,18 @@ const Dashboard: React.FC = () => {
                     onClick={() => {
                       if (pdf.status === 'ready') navigate(`/chat?pdf=${pdf.id}`);
                     }}
-                    className={`bg-white p-4 rounded-xl border border-[var(--border)] shadow-[var(--shadow-sm)] transition-all group ${
-                      pdf.status === 'ready' ? 'hover:shadow-[var(--shadow-md)] hover:border-[var(--accent-green)]/40 cursor-pointer' : 'opacity-70'
+                    className={`card-storybook p-4 transition-all group ${
+                      pdf.status === 'ready' ? 'cursor-pointer' : 'opacity-70'
                     }`}
                   >
-                    <div className="h-24 bg-[var(--bg-secondary)] rounded-lg mb-3 flex items-center justify-center group-hover:bg-green-50/50 transition-colors relative overflow-hidden">
+                    <div className="h-28 bg-[var(--bg-secondary)] rounded-lg mb-4 flex items-center justify-center group-hover:bg-[var(--accent-green-light)] transition-colors relative overflow-hidden border border-[var(--border)]">
                       {pdf.status === 'processing' ? (
                         <Loader2 className="w-6 h-6 text-[var(--accent-amber)] animate-spin" />
                       ) : pdf.status === 'ready' ? (
                         <>
-                          <BookOpen className="w-6 h-6 text-[var(--text-muted)] opacity-30 group-hover:opacity-0 transition-opacity" />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MessageSquare className="w-5 h-5 text-[var(--accent-green)]" />
+                          <BookOpen className="w-8 h-8 text-[var(--accent-amber)] opacity-40 group-hover:opacity-0 transition-all duration-300 transform group-hover:scale-110" />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
+                            <MessageSquare className="w-6 h-6 text-[var(--accent-green)] drop-shadow-md" />
                           </div>
                         </>
                       ) : (
