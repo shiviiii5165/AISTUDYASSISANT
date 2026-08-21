@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
-  Send, FileText, Loader2, Sparkles, ArrowDown, 
-  Upload, Search, MessageSquare, BookOpen, TrendingUp, Plus
+  Send, FileText, Loader2, Sparkles, 
+  Upload, BookOpen, Plus
 } from 'lucide-react';
 import { fetchPdfs, askQuestion, uploadPdf, getPdfStatus } from '../lib/api';
-import type { PDFDocument, ChatMessage, ChatSource } from '../lib/api';
+import type { PDFDocument, ChatMessage } from '../lib/api';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import VoiceInputButton from '../components/voice/VoiceInputButton';
@@ -30,7 +30,6 @@ const WorkspacePage: React.FC = () => {
   const intent = searchParams.get('intent');
   
   const { user: currentUser } = useAuthStore();
-  const navigate = useNavigate();
 
   const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
   const [loadingPdfs, setLoadingPdfs] = useState(true);
@@ -155,7 +154,8 @@ const WorkspacePage: React.FC = () => {
         subject: 'General',
         page_count: 0,
         status: 'processing',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        user_id: currentUser?.id || ''
       };
       setPdfs(prev => [newPdf, ...prev]);
       setSelectedPdfId(result.pdf_id);
@@ -283,7 +283,7 @@ const WorkspacePage: React.FC = () => {
             {msg.sources.map((src, i) => (
               <div key={i} className="flex items-center gap-1 text-[10px] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-2 py-1 rounded-md border border-[var(--border)]">
                 <FileText className="w-3 h-3" />
-                <span>Page {src.page_num}</span>
+                <span>Page {src.page}</span>
               </div>
             ))}
           </div>
@@ -294,9 +294,6 @@ const WorkspacePage: React.FC = () => {
 
   // Render Sidebar Content (The Rail)
   const renderSidebar = () => {
-    const totalPages = pdfs.reduce((sum, p) => sum + (p.page_count || 0), 0);
-    const readyPdfs = pdfs.filter(p => p.status === 'ready');
-    
     return (
       <div className="flex flex-col h-full bg-[var(--bg-card)] w-60 border-r border-[var(--border)] shrink-0 pb-4">
         {/* Top Header */}
@@ -541,8 +538,6 @@ const WorkspacePage: React.FC = () => {
                             inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
                           }
                         }}
-                        isActive={isVoiceActive}
-                        onToggle={() => setIsVoiceActive(!isVoiceActive)}
                       />
                       
                       <textarea

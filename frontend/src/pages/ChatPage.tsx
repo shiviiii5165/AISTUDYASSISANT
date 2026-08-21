@@ -40,15 +40,6 @@ const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const PRO_MODES = [
-    'Full Chapter Crux',
-    'No Fact Miss',
-    'Formula Coverage',
-    'Exam Shield Notes',
-    'Generate MCQs',
-    'Predicted Exam Questions'
-  ];
-
   // Load PDFs list
   useEffect(() => {
     (async () => {

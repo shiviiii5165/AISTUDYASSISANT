@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence, useReducedMotion, Variants } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 interface GenieAvatarProps {
   size?: 'sm' | 'md' | 'lg';
