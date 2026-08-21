@@ -8,7 +8,7 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
         
     print(f"Generating Gemini embeddings for {len(texts)} chunks via REST...")
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key={settings.GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key={settings.GEMINI_API_KEY.strip()}"
     
     requests = []
     for text in texts:

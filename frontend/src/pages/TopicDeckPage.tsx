@@ -98,7 +98,7 @@ const TopicDeckPage: React.FC = () => {
   }, [deckId, status]);
 
   return (
-    <AppLayout title="Topic Decks">
+    <AppLayout title="PPT Generator">
       <SEO title="Generate PPTX Decks" description="Generate complete PowerPoint presentations instantly with AI." />
       
       <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-16 px-4 pb-12 bg-white relative overflow-hidden">

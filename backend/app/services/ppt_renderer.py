@@ -30,7 +30,7 @@ def get_palette_for_topic(topic: str) -> Dict[str, tuple]:
 
 async def generate_slide_image(prompt: str) -> Optional[bytes]:
     """Calls Gemini 2.5 Flash Image to generate a slide visual."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key={settings.GEMINI_IMAGE_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key={settings.GEMINI_IMAGE_API_KEY.strip()}"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
