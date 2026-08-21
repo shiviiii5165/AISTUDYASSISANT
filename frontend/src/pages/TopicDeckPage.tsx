@@ -20,7 +20,7 @@ const TopicDeckPage: React.FC = () => {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
-  const isPro = currentUser?.plan === 'pro';
+  const isPro = true; // Plan requirement removed
 
   const toggleFilter = (key: string) => {
     setActiveToggles(prev => ({ ...prev, [key]: !prev[key] }));

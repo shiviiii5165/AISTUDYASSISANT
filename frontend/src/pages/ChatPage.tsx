@@ -402,7 +402,7 @@ const ChatPage: React.FC = () => {
                 'Professor Mode'
               ].map((mode) => {
                 const isProMode = PRO_MODES.includes(mode);
-                const isLocked = isProMode && currentUser?.plan !== 'pro';
+                const isLocked = false; // Plan requirement removed
                 
                 return (
                   <button

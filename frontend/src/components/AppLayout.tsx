@@ -53,18 +53,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
             );
           })}
         </nav>
-        <div className="p-3">
-          <div className="card-storybook p-4">
-            <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">Upgrade to Pro</h3>
-            <p className="text-xs text-[var(--text-secondary)] mb-3 leading-relaxed">Unlimited PDFs & questions.</p>
-            <button 
-              onClick={() => navigate('/pricing')}
-              className="w-full btn-gold text-xs py-2 rounded-lg"
-            >
-              View Plans
-            </button>
-          </div>
-        </div>
+
       </aside>
 
       {/* ── Mobile Overlay ── */}
