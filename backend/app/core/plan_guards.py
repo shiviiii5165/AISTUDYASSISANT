@@ -42,3 +42,24 @@ def check_pdf_upload_limit(current_user = Depends(get_current_user)):
             detail={"error": "pdf_limit_reached", "message": "Free plan allows 3 PDFs. Upgrade to Pro for unlimited uploads."}
         )
     return current_user
+
+def check_topic_deck_limit(current_user = Depends(get_current_user)):
+    """Pro users get 15 decks per month. Free users get 0."""
+    profile = supabase.table("profiles").select("plan").eq("id", current_user.id).single().execute()
+    if profile.data["plan"] != "pro":
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "upgrade_required", "message": "Topic Decks are a Pro feature."}
+        )
+
+    # Check monthly usage
+    allowed = supabase.rpc("increment_monthly_deck_usage", {
+        "p_user_id": current_user.id, "p_limit": 15
+    }).execute()
+
+    if not allowed.data:
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "monthly_limit_reached", "message": "You've reached your monthly limit of 15 Topic Decks."}
+        )
+    return current_user

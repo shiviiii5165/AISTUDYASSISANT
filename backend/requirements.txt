@@ -11,3 +11,4 @@ python-dotenv
 httpx
 pydantic
 pydantic-settings
+python-pptx

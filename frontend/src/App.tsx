@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
 import ChatPage from './pages/ChatPage';
+import TopicDeckPage from './pages/TopicDeckPage';
 import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import SupportPage from './pages/SupportPage';
@@ -116,6 +117,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChatPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/decks" 
+            element={
+              <ProtectedRoute>
+                <TopicDeckPage />
               </ProtectedRoute>
             } 
           />

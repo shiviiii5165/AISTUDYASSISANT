@@ -32,6 +32,7 @@ app.include_router(pdfs.router, prefix="/pdfs", tags=["pdfs"])
 app.include_router(chat.router, prefix="/chat", tags=["chat"])
 app.include_router(notes.router, prefix="/api/notes", tags=["notes"])
 app.include_router(predict.router, prefix="/api/predict", tags=["predict"])
-from app.api import billing
+from app.api import billing, decks
 app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
+app.include_router(decks.router, prefix="/api/decks", tags=["decks"])
 
