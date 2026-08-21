@@ -1,7 +1,7 @@
 import os
 import asyncio
 import re
-from groq import AsyncGroq
+from app.services.llm_service import call_gemini
 from app.services.embedding_service import get_embeddings
 from app.services.vector_store import search_relevant_chunks, get_all_chunks
 from app.core.config import settings
@@ -26,13 +26,6 @@ Rules:
 - CRITICAL: You are strictly FORBIDDEN from using any LaTeX, MathJax, or TeX symbols (no $, $$, \\text, \\frac, \\rightarrow). Write all math/chemistry formulas in plain English using basic keyboard symbols and "->" for arrows.
 - Do not mention that you are merging drafts. Just produce the final unified output directly."""
 
-
-def get_groq_client():
-    return AsyncGroq(
-        api_key=settings.GROQ_API_KEY,
-        timeout=60.0,
-        max_retries=2
-    )
 
 # Define system prompts for each mode
 MODE_PROMPTS = {
@@ -127,16 +120,14 @@ Provide a highly advanced, scholarly analysis of the context. Focus on theoretic
 
 async def process_chunk_batch(messages: list, batch_index: int, retries: int = 2) -> str:
     """Helper to process a batch of chunks asynchronously."""
-    client = get_groq_client()
     for attempt in range(retries + 1):
         try:
-            response = await client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            return await call_gemini(
                 messages=messages,
+                model="gemini-2.5-flash",
                 max_tokens=3000,
                 temperature=0.3
             )
-            return response.choices[0].message.content
         except Exception as e:
             print(f"Error in batch {batch_index}, attempt {attempt + 1}: {e}")
             if attempt == retries:
@@ -150,7 +141,7 @@ async def synthesize_batches(batch_results: list[str], mode: str, question: str)
     errors = [r for r in batch_results if r.startswith("[Error processing batch")]
 
     if not valid_results:
-        return f"Groq API Error: {errors[0]}" if errors else "Could not generate a response. Please try again."
+        return f"Gemini API Error: {errors[0]}" if errors else "Could not generate a response. Please try again."
     
     if len(valid_results) == 1:
         return valid_results[0]
@@ -158,17 +149,15 @@ async def synthesize_batches(batch_results: list[str], mode: str, question: str)
     combined_drafts = "\n\n=== NEXT DRAFT SECTION ===\n\n".join(valid_results)
     user_message = f"Original task: {question}\n\nMode: {mode}\n\nDraft sections to merge:\n\n{combined_drafts}"
 
-    client = get_groq_client()
-    response = await client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    return await call_gemini(
         messages=[
             {"role": "system", "content": SYNTHESIS_PROMPT},
             {"role": "user", "content": user_message}
         ],
+        model="gemini-2.5-flash",
         max_tokens=4000,
         temperature=0.4
     )
-    return response.choices[0].message.content
 
 async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = "Quick Answer", chat_history: list = None) -> dict:
     if chat_history is None:
@@ -182,14 +171,14 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
         print("Global Mode detected. Fetching full chapter context...")
         all_chunks = get_all_chunks(pdf_id, user_id)
         if not all_chunks:
-            return {"answer": "No content found in this PDF.", "sources": [], "model": "llama-3.3-70b-versatile"}
+            return {"answer": "No content found in this PDF.", "sources": [], "model": "gemini-2.5-flash"}
         chunks_to_process = all_chunks
     else:
         print("Quick Answer Mode detected. Performing vector search...")
         query_embedding = get_embeddings([question])[0]
         chunks_to_process = search_relevant_chunks(pdf_id, user_id, query_embedding, top_k=15)
         if not chunks_to_process:
-            return {"answer": "No relevant content found for your query.", "sources": [], "model": "llama-3.3-70b-versatile"}
+            return {"answer": "No relevant content found for your query.", "sources": [], "model": "gemini-2.5-flash"}
 
     # 2. Get the specific prompt for the mode
     system_prompt = MODE_PROMPTS.get(mode, MODE_PROMPTS["Quick Answer"])
@@ -211,7 +200,7 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
             
             tasks.append(process_chunk_batch(messages, i))
         
-        # Run batches sequentially to avoid hitting Groq API rate limits (HTTP 429)
+        # Run batches sequentially to avoid hitting API rate limits
         batch_results = []
         for task in tasks:
             result = await task
@@ -237,14 +226,12 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
         messages.extend(chat_history)
         messages.append({"role": "user", "content": user_message})
         
-        client = get_groq_client()
-        response = await client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        final_answer = await call_gemini(
             messages=messages,
+            model="gemini-2.5-flash",
             max_tokens=1500,
             temperature=0.3
         )
-        final_answer = response.choices[0].message.content
         sources = [
             {"page": c["page"] if c["page"] > 0 else "Note", "text": clean_source_preview(c["text"][:100]) + "..."}
             for c in chunks_to_process
@@ -253,5 +240,5 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
     return {
         "answer": final_answer,
         "sources": sources,
-        "model": "llama-3.3-70b-versatile (Groq Hierarchical Synthesis)" if is_global_mode else "llama-3.3-70b-versatile (Groq RAG)"
+        "model": "gemini-2.5-flash (Hierarchical Synthesis)" if is_global_mode else "gemini-2.5-flash (RAG)"
     }

@@ -2,7 +2,7 @@ import json
 import asyncio
 from typing import Dict, Any, List
 from app.db.supabase_client import supabase
-from app.services.rag_service import get_groq_client
+from app.services.llm_service import call_gemini
 from app.services.ppt_renderer import generate_pptx_bytes
 
 # Prompt constants
@@ -90,34 +90,30 @@ async def generate_deck(topic: str, depth: str, audience: str, user_id: str, dec
         if cache_res.data:
             final_deck_json = cache_res.data[0]["deck_json"]
         else:
-            client = get_groq_client()
-            
             # STAGE 1: Outline
             sys_msg = STAGE_1_OUTLINE_PROMPT
             user_msg = f"Topic: {topic}\nDepth: {depth}\nAudience: {audience}"
             
-            completion = await client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            outline_raw_response = await call_gemini(
                 messages=[
                     {"role": "system", "content": sys_msg},
                     {"role": "user", "content": user_msg}
                 ],
                 temperature=0.3
             )
-            outline_raw = extract_json(completion.choices[0].message.content)
+            outline_raw = extract_json(outline_raw_response)
             outline_data = json.loads(outline_raw)
             
             # STAGE 2: Audit
             audit_sys = STAGE_2_AUDIT_PROMPT.format(topic=topic, audience=audience)
-            audit_comp = await client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            audit_raw_response = await call_gemini(
                 messages=[
                     {"role": "system", "content": audit_sys},
                     {"role": "user", "content": json.dumps(outline_data)}
                 ],
                 temperature=0.2
             )
-            audit_raw = extract_json(audit_comp.choices[0].message.content)
+            audit_raw = extract_json(audit_raw_response)
             audit_data = json.loads(audit_raw)
             
             # Inject missing subtopics
@@ -135,30 +131,28 @@ async def generate_deck(topic: str, depth: str, audience: str, user_id: str, dec
             for i in range(0, len(sections), batch_size):
                 batch = sections[i:i+batch_size]
                 
-                exp_comp = await client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                exp_raw_response = await call_gemini(
                     messages=[
                         {"role": "system", "content": STAGE_3_EXPANSION_PROMPT},
                         {"role": "user", "content": json.dumps({"sections": batch})}
                     ],
                     temperature=0.4
                 )
-                exp_raw = extract_json(exp_comp.choices[0].message.content)
+                exp_raw = extract_json(exp_raw_response)
                 exp_data = json.loads(exp_raw)
                 expanded_sections.extend(exp_data.get("sections", []))
                 
             outline_data["sections"] = expanded_sections
             
             # STAGE 4: Synthesis
-            synth_comp = await client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            synth_raw_response = await call_gemini(
                 messages=[
                     {"role": "system", "content": STAGE_4_SYNTHESIS_PROMPT},
                     {"role": "user", "content": json.dumps(outline_data)}
                 ],
                 temperature=0.3
             )
-            synth_raw = extract_json(synth_comp.choices[0].message.content)
+            synth_raw = extract_json(synth_raw_response)
             final_deck_json = json.loads(synth_raw)
             
             # Save to Cache

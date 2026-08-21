@@ -1,6 +1,6 @@
 """
 Exam question predictor endpoint.
-Uses Groq (llama-3.3-70b-versatile) for prediction.
+Uses Gemini (gemini-2.5-flash) for prediction.
 Uses vector_service.get_all_chunks_text() for context retrieval.
 """
 
@@ -8,16 +8,14 @@ import json
 import re
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from groq import Groq
 
 from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro
 from app.services.vector_service import get_all_chunks_text
+from app.services.llm_service import call_gemini
 
 router = APIRouter()
-
-groq_client = Groq(api_key=settings.GROQ_API_KEY)
 
 
 class PredictRequest(BaseModel):
@@ -90,21 +88,19 @@ async def predict_exam_questions(
     )
 
     try:
-        response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        ai_response = await call_gemini(
             messages=[
                 {"role": "system", "content": PREDICT_SYSTEM_PROMPT},
                 {"role": "user", "content": user_message},
             ],
+            model="gemini-2.5-flash",
             max_tokens=4000,
             temperature=0.3,
         )
-
-        ai_response = response.choices[0].message.content
-        print(f"Groq prediction response length: {len(ai_response)}")
+        print(f"Gemini prediction response length: {len(ai_response)}")
 
     except Exception as e:
-        print(f"Groq API error: {e}")
+        print(f"Gemini API error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"AI prediction failed: {str(e)}",
