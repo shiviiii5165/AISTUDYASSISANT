@@ -50,7 +50,6 @@ interface LessonData {
 
 // ─── Component ───────────────────────────────────
 const VideoGeneratorPage: React.FC = () => {
-  const _authStore = useAuthStore();
   const [topic, setTopic] = useState('');
   
   // Settings
