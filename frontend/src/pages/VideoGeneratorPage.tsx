@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlayCircle, Clock, Globe, Filter, Sparkles, ChevronDown, Download, Loader2, BookOpen, Brain, HelpCircle, Lightbulb, FileText, RotateCcw, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
+import { PlayCircle, Clock, Globe, Filter, Sparkles, ChevronDown, Loader2, BookOpen, Brain, HelpCircle, Lightbulb, FileText, RotateCcw, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
@@ -50,7 +50,7 @@ interface LessonData {
 
 // ─── Component ───────────────────────────────────
 const VideoGeneratorPage: React.FC = () => {
-  const { user: currentUser } = useAuthStore();
+  const _authStore = useAuthStore();
   const [topic, setTopic] = useState('');
   
   // Settings
