@@ -164,6 +164,8 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           ))}
+        </div>
+        
         {/* Recent PDFs */}
         <div className="animate-slideUp" style={{ animationDelay: '0.6s' }}>
           <div className="flex items-center justify-between mb-3">
