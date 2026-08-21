@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
 import ChatPage from './pages/ChatPage';
 import TopicDeckPage from './pages/TopicDeckPage';
+import VideoGeneratorPage from './pages/VideoGeneratorPage';
 import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import SupportPage from './pages/SupportPage';
@@ -125,6 +126,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <TopicDeckPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/video" 
+            element={
+              <ProtectedRoute>
+                <VideoGeneratorPage />
               </ProtectedRoute>
             } 
           />

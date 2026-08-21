@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, MessageSquare, Target, Bell, Menu, X, LogOut, LifeBuoy, Presentation } from 'lucide-react';
+import { BookOpen, MessageSquare, Target, Bell, Menu, X, LogOut, LifeBuoy, Presentation, PlayCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { path: '/library', label: 'My Library', icon: BookOpen },
   { path: '/chat', label: 'AI Chat', icon: MessageSquare },
   { path: '/decks', label: 'PPT Generator', icon: Presentation },
+  { path: '/video', label: 'Video Generator', icon: PlayCircle },
   { path: '/support', label: 'Support', icon: LifeBuoy },
 ];
 
