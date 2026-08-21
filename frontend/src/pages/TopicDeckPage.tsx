@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2, Lock } from 'lucide-react';
+import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
@@ -40,7 +40,7 @@ const TopicDeckPage: React.FC = () => {
     setStatus('processing');
     
     try {
-      const token = (await useAuthStore.getState().getSession())?.access_token;
+      const token = useAuthStore.getState().session?.access_token;
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/generate`, {
         method: 'POST',
         headers: {
@@ -73,7 +73,7 @@ const TopicDeckPage: React.FC = () => {
     if (deckId && status === 'processing') {
       intervalId = setInterval(async () => {
         try {
-          const token = (await useAuthStore.getState().getSession())?.access_token;
+          const token = useAuthStore.getState().session?.access_token;
           const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/${deckId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
