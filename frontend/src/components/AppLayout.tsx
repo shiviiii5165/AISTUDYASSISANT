@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { path: '/support', label: 'Support', icon: LifeBuoy },
 ];
 
-const AppLayout = ({ children, title }: { children: React.ReactNode; title: React.ReactNode }) => {
+const AppLayout = ({ children, title, sidebarOverride }: { children: React.ReactNode; title: React.ReactNode; sidebarOverride?: React.ReactNode }) => {
   const location = useLocation();
 
   const { user, signOut } = useAuthStore();
@@ -34,8 +34,8 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
             TeachGenie
           </Link>
         </div>
-        <nav className="flex-1 px-3 space-y-1">
-          {NAV_ITEMS.map(({ path, label, icon: Icon }) => {
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+          {sidebarOverride ? sidebarOverride : NAV_ITEMS.map(({ path, label, icon: Icon }) => {
             const isActive = location.pathname === path;
             return (
               <Link
@@ -70,8 +70,8 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
                 <X className="w-5 h-5 text-[var(--text-secondary)]" />
               </button>
             </div>
-            <nav className="flex-1 p-3 space-y-1">
-              {NAV_ITEMS.map(({ path, label, icon: Icon }) => {
+            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+              {sidebarOverride ? sidebarOverride : NAV_ITEMS.map(({ path, label, icon: Icon }) => {
                 const isActive = location.pathname === path;
                 return (
                   <Link
