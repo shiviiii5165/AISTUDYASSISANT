@@ -8,7 +8,7 @@ import {
   Upload, BookOpen, Plus
 } from 'lucide-react';
 import { fetchPdfs, askQuestion, uploadPdf, getPdfStatus } from '../lib/api';
-import type { PDFDocument, ChatMessage } from '../lib/api';
+import type { PDFDocument, ChatMessage, ChatSource } from '../lib/api';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import VoiceInputButton from '../components/voice/VoiceInputButton';
