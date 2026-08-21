@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, MessageSquare, Target, Bell, Menu, X, LogOut, LifeBuoy } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
 const NAV_ITEMS = [
@@ -12,7 +12,7 @@ const NAV_ITEMS = [
 
 const AppLayout = ({ children, title }: { children: React.ReactNode; title: React.ReactNode }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const { user, signOut } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);

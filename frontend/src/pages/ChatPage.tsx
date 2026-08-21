@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Send, FileText, Loader2, BookOpen, ChevronDown, Sparkles, ArrowDown } from 'lucide-react';
+import { Send, FileText, Loader2, ChevronDown, Sparkles, ArrowDown } from 'lucide-react';
 import { fetchPdfs, askQuestion } from '../lib/api';
 import type { PDFDocument, ChatMessage, ChatSource } from '../lib/api';
 import AppLayout from '../components/AppLayout';
@@ -401,7 +401,6 @@ const ChatPage: React.FC = () => {
                 'Kid Mode',
                 'Professor Mode'
               ].map((mode) => {
-                const isProMode = PRO_MODES.includes(mode);
                 const isLocked = false; // Plan requirement removed
                 
                 return (

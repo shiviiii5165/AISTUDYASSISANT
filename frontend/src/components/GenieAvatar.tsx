@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, Variants } from 'framer-motion';
 
 interface GenieAvatarProps {
   size?: 'sm' | 'md' | 'lg';
@@ -103,7 +103,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
   const variant = getReactiveVariant();
 
   // Animation variants for the genie image
-  const genieVariants = prefersReducedMotion
+  const genieVariants: Variants = prefersReducedMotion
     ? {
         idle: { opacity: 1 },
         leaning: { opacity: 0.95 },
