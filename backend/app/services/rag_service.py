@@ -26,7 +26,13 @@ Rules:
 - CRITICAL: You are strictly FORBIDDEN from using any LaTeX, MathJax, or TeX symbols (no $, $$, \\text, \\frac, \\rightarrow). Write all math/chemistry formulas in plain English using basic keyboard symbols and "->" for arrows.
 - Do not mention that you are merging drafts. Just produce the final unified output directly."""
 
-groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+
+def get_groq_client():
+    return AsyncGroq(
+        api_key=settings.GROQ_API_KEY,
+        timeout=60.0,
+        max_retries=2
+    )
 
 # Define system prompts for each mode
 MODE_PROMPTS = {
@@ -119,11 +125,12 @@ Explain the concepts with academic rigor. Use precise terminology, structured ar
 Provide a highly advanced, scholarly analysis of the context. Focus on theoretical foundations, critical evaluations, and comprehensive discourse. CITE PAGE NUMBERS."""
 }
 
-async def process_chunk_batch(messages: list, batch_index: int, retries: int = 1) -> str:
+async def process_chunk_batch(messages: list, batch_index: int, retries: int = 2) -> str:
     """Helper to process a batch of chunks asynchronously."""
+    client = get_groq_client()
     for attempt in range(retries + 1):
         try:
-            response = await groq_client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=messages,
                 max_tokens=3000,
@@ -134,6 +141,7 @@ async def process_chunk_batch(messages: list, batch_index: int, retries: int = 1
             print(f"Error in batch {batch_index}, attempt {attempt + 1}: {e}")
             if attempt == retries:
                 return f"[Error processing batch {batch_index}: {str(e)}]"
+            await asyncio.sleep(2)
     return f"[Error processing batch {batch_index}: Unknown error]"
 
 async def synthesize_batches(batch_results: list[str], mode: str, question: str) -> str:
@@ -150,7 +158,8 @@ async def synthesize_batches(batch_results: list[str], mode: str, question: str)
     combined_drafts = "\n\n=== NEXT DRAFT SECTION ===\n\n".join(valid_results)
     user_message = f"Original task: {question}\n\nMode: {mode}\n\nDraft sections to merge:\n\n{combined_drafts}"
 
-    response = await groq_client.chat.completions.create(
+    client = get_groq_client()
+    response = await client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": SYNTHESIS_PROMPT},
@@ -228,7 +237,8 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
         messages.extend(chat_history)
         messages.append({"role": "user", "content": user_message})
         
-        response = await groq_client.chat.completions.create(
+        client = get_groq_client()
+        response = await client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
             max_tokens=1500,
