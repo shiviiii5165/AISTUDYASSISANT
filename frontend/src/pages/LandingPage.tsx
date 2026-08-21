@@ -150,7 +150,7 @@ const LandingPage: React.FC = () => {
           
           <motion.div custom={3} variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 justify-center">
             <button 
-              onClick={() => navigate('/auth?intent=upload')} 
+              onClick={() => navigate('/auth')} 
               className="bg-[var(--accent-green)] text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-green-700 hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
             >
               Upload Your First PDF

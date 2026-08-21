@@ -3,8 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
-import WorkspacePage from './pages/WorkspacePage';
+import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
+import ChatPage from './pages/ChatPage';
 import TopicDeckPage from './pages/TopicDeckPage';
 import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
@@ -99,7 +100,7 @@ function App() {
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <WorkspacePage />
+                <Dashboard />
               </ProtectedRoute>
             } 
           />
@@ -115,7 +116,7 @@ function App() {
             path="/chat" 
             element={
               <ProtectedRoute>
-                <WorkspacePage />
+                <ChatPage />
               </ProtectedRoute>
             } 
           />
