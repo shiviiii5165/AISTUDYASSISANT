@@ -6,15 +6,15 @@ import { useAuthStore } from '../store/useAuthStore';
 import UpgradeModal from '../components/billing/UpgradeModal';
 
 const DEPTH_OPTIONS = [
-  { value: 'full', label: 'Full (10-16 slides)', icon: '📚' },
-  { value: 'quick', label: 'Quick (6-8 slides)', icon: '⚡' },
+  { value: 'full', label: 'Full (10-16 slides)', icon: '\u{1F4DA}' },
+  { value: 'quick', label: 'Quick (6-8 slides)', icon: '\u26A1' },
 ];
 
 const AUDIENCE_OPTIONS = [
-  { value: 'university', label: 'University', icon: '🎓' },
-  { value: 'high_school', label: 'High School', icon: '🏫' },
-  { value: 'professional', label: 'Professional', icon: '💼' },
-  { value: 'beginner', label: 'Beginner', icon: '🌱' },
+  { value: 'university', label: 'University', icon: '\u{1F393}' },
+  { value: 'high_school', label: 'High School', icon: '\u{1F3EB}' },
+  { value: 'professional', label: 'Professional', icon: '\u{1F4BC}' },
+  { value: 'beginner', label: 'Beginner', icon: '\u{1F331}' },
 ];
 
 const TopicDeckPage: React.FC = () => {
@@ -33,17 +33,17 @@ const TopicDeckPage: React.FC = () => {
   });
   
   const [generating, setGenerating] = useState(false);
-  const [deckId, setDeckId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [slideCount, setSlideCount] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [progressMsg, setProgressMsg] = useState('Initializing...');
   
   // Usage stats
   const [deckHistory, setDeckHistory] = useState<any[]>([]);
   
-  const isPro = true; // Plan requirement removed
+  const isPro = true;
 
   const toggleFilter = (key: string) => {
     setActiveToggles(prev => ({ ...prev, [key]: !prev[key] }));
@@ -69,6 +69,29 @@ const TopicDeckPage: React.FC = () => {
     fetchHistory();
   }, []);
 
+  // Progress messages while generating
+  useEffect(() => {
+    if (!generating) return;
+    const messages = [
+      'Outlining the deck structure...',
+      'Auditing for missing subtopics...',
+      'Writing slide content & examples...',
+      'Generating visuals with AI...',
+      'Polishing & removing duplicates...',
+      'Rendering your PowerPoint...',
+      'Almost there, finalizing...',
+    ];
+    let i = 0;
+    setProgressMsg(messages[0]);
+    const interval = setInterval(() => {
+      i++;
+      if (i < messages.length) {
+        setProgressMsg(messages[i]);
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [generating]);
+
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!isPro) {
@@ -78,7 +101,6 @@ const TopicDeckPage: React.FC = () => {
     if (!topic.trim()) return;
     
     setGenerating(true);
-    setDeckId(null);
     setDownloadUrl(null);
     setSlideCount(null);
     setErrorMessage(null);
@@ -86,14 +108,23 @@ const TopicDeckPage: React.FC = () => {
     
     try {
       const token = useAuthStore.getState().session?.access_token;
+      
+      // The /generate endpoint now runs synchronously and returns the result
+      // This call can take 30-60 seconds — that's expected
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2min safety timeout
+      
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ topic, depth, audience })
+        body: JSON.stringify({ topic, depth, audience }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
       
       const data = await res.json();
       if (!res.ok) {
@@ -103,48 +134,73 @@ const TopicDeckPage: React.FC = () => {
           setStatus(null);
           return;
         }
-        throw new Error(data.detail || 'Failed to start generation');
+        throw new Error(data.detail || 'Failed to generate deck');
       }
       
-      setDeckId(data.deck_id);
+      // The response now includes the final result directly
+      if (data.status === 'ready' && data.download_url) {
+        setStatus('ready');
+        setDownloadUrl(data.download_url);
+        setSlideCount(data.slide_count);
+      } else if (data.status === 'failed') {
+        setStatus('failed');
+        setErrorMessage(data.error_message || 'Generation failed. Please try again.');
+      } else {
+        // Fallback: start polling if for some reason it's still processing
+        startPolling(data.deck_id);
+        return; // Don't set generating to false
+      }
+      
+      setGenerating(false);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage(err.message || 'Failed to start generation');
+      if (err.name === 'AbortError') {
+        setErrorMessage('Request timed out. The topic may be too broad — try a more specific topic.');
+      } else {
+        setErrorMessage(err.message || 'Failed to generate deck. Check your internet connection.');
+      }
       setStatus('failed');
       setGenerating(false);
     }
   };
 
-  useEffect(() => {
-    let intervalId: any;
-    if (deckId && status === 'processing') {
-      intervalId = setInterval(async () => {
-        try {
-          const token = useAuthStore.getState().session?.access_token;
-          const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/${deckId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const data = await res.json();
-          
-          if (data.status === 'ready') {
-            setStatus('ready');
-            setDownloadUrl(data.download_url);
-            setSlideCount(data.slide_count);
-            setGenerating(false);
-            clearInterval(intervalId);
-          } else if (data.status === 'failed') {
-            setStatus('failed');
-            setErrorMessage(data.error_message || 'Generation failed. Please try again.');
-            setGenerating(false);
-            clearInterval(intervalId);
-          }
-        } catch (e) {
-          console.error("Polling error", e);
+  // Fallback polling (only used if synchronous response is still "processing")
+  const startPolling = (deckId: string) => {
+    const intervalId = setInterval(async () => {
+      try {
+        const token = useAuthStore.getState().session?.access_token;
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/${deckId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (data.status === 'ready') {
+          setStatus('ready');
+          setDownloadUrl(data.download_url);
+          setSlideCount(data.slide_count);
+          setGenerating(false);
+          clearInterval(intervalId);
+        } else if (data.status === 'failed') {
+          setStatus('failed');
+          setErrorMessage(data.error_message || 'Generation failed.');
+          setGenerating(false);
+          clearInterval(intervalId);
         }
-      }, 3000);
-    }
-    return () => clearInterval(intervalId);
-  }, [deckId, status]);
+      } catch (e) {
+        console.error("Polling error", e);
+      }
+    }, 3000);
+    
+    // Auto-clear after 3 minutes
+    setTimeout(() => {
+      clearInterval(intervalId);
+      setGenerating(false);
+      if (status === 'processing') {
+        setStatus('failed');
+        setErrorMessage('Generation timed out. Please try again.');
+      }
+    }, 180000);
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -159,7 +215,6 @@ const TopicDeckPage: React.FC = () => {
   const totalCreated = deckHistory.length;
   const readyCount = deckHistory.filter((d: any) => d.status === 'ready').length;
 
-  // Get time-appropriate greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -178,11 +233,10 @@ const TopicDeckPage: React.FC = () => {
           <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center shadow-lg relative z-10 overflow-hidden border-4 border-white">
             <div className="text-5xl" style={{ transform: 'scale(1.2) translateY(5px)' }}>🧞‍♂️</div>
           </div>
-          {/* Magic glow effect */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-3xl opacity-30 z-0"></div>
         </div>
 
-        {/* Top Badges — Dynamic */}
+        {/* Top Badges */}
         <div className="flex items-center gap-3 mb-10">
           <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
             <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
@@ -203,7 +257,7 @@ const TopicDeckPage: React.FC = () => {
           <p className="text-xl text-gray-700 font-medium">What would you like to teach today?</p>
         </div>
 
-        {/* Search / Input Area */}
+        {/* Search Input */}
         <div className="w-full max-w-4xl mx-auto mb-6 relative z-20">
           <div className={`flex items-center bg-white rounded-full border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden ${generating ? 'opacity-50' : 'hover:shadow-md hover:border-gray-300'}`}>
             <div className="pl-6 pr-3 py-3">
@@ -234,10 +288,10 @@ const TopicDeckPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Filters/Toggles */}
+        {/* Filters */}
         <div className="w-full max-w-4xl mx-auto flex flex-wrap justify-center gap-3">
           
-          {/* Level / Audience Dropdown */}
+          {/* Audience Dropdown */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => { setShowAudienceDropdown(!showAudienceDropdown); setShowDepthDropdown(false); }}
@@ -263,7 +317,7 @@ const TopicDeckPage: React.FC = () => {
             )}
           </div>
           
-          {/* Duration / Depth Dropdown */}
+          {/* Depth Dropdown */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => { setShowDepthDropdown(!showDepthDropdown); setShowAudienceDropdown(false); }}
@@ -305,7 +359,7 @@ const TopicDeckPage: React.FC = () => {
 
           <button onClick={() => toggleFilter('visuals')} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 shadow-sm">
             <div className="flex items-center gap-1">
-              <span className="text-gray-400">▶</span> Visuals <span className="text-yellow-500">✦ Gold+</span>
+              <span className="text-gray-400">{'\u25B6'}</span> Visuals <span className="text-yellow-500">{'\u2726'} Gold+</span>
             </div>
             <span className="text-[10px] px-1.5 py-0.5 rounded-sm font-bold bg-gray-200 text-gray-600">OFF</span>
           </button>
@@ -350,26 +404,32 @@ const TopicDeckPage: React.FC = () => {
         {/* Results / Status Area */}
         <div className="w-full max-w-4xl mx-auto mt-12">
           {status === 'processing' && (
-            <div className="p-6 bg-blue-50/50 rounded-xl flex flex-col items-center justify-center text-center animate-pulse border border-blue-100">
-              <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-              <h3 className="font-bold text-gray-800">Crafting your presentation</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                This takes about 20-40 seconds. I'm researching, writing slides, generating visuals, and styling the deck.
+            <div className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex flex-col items-center justify-center text-center border border-blue-100 shadow-sm">
+              <div className="relative mb-6">
+                <Loader2 className="w-14 h-14 text-blue-500 animate-spin" />
+                <div className="absolute inset-0 w-14 h-14 rounded-full bg-blue-400/20 animate-ping" />
+              </div>
+              <h3 className="font-bold text-lg text-gray-800 mb-1">Crafting your presentation</h3>
+              <p className="text-sm text-blue-600 font-medium animate-pulse mb-3">
+                {progressMsg}
+              </p>
+              <p className="text-xs text-gray-400">
+                This typically takes 30-60 seconds. Please don't close this tab.
               </p>
               <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
                 <span className="flex items-center gap-1"><Layers className="w-3 h-3" /> {depth === 'full' ? '10-16 slides' : '6-8 slides'}</span>
-                <span>•</span>
+                <span>|</span>
                 <span>{AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level</span>
               </div>
             </div>
           )}
 
           {status === 'ready' && downloadUrl && (
-            <div className="p-8 bg-green-50 border border-green-200 rounded-xl flex flex-col items-center justify-center text-center shadow-sm transform transition-all translate-y-0 opacity-100">
-              <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
+            <div className="p-8 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm">
+              <CheckCircle2 className="w-14 h-14 text-green-500 mb-4" />
               <h3 className="text-xl font-bold text-green-900 mb-2">Your deck is ready!</h3>
               {slideCount && (
-                <p className="text-sm text-green-700 mb-4">{slideCount} slides • {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level • {depth} depth</p>
+                <p className="text-sm text-green-700 mb-4">{slideCount} slides with AI-generated content & visuals</p>
               )}
               <a
                 href={downloadUrl}
@@ -378,19 +438,25 @@ const TopicDeckPage: React.FC = () => {
               >
                 <Download className="w-5 h-5" /> Download .pptx
               </a>
+              <button
+                onClick={() => { setStatus(null); setTopic(''); setDownloadUrl(null); }}
+                className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Generate another deck
+              </button>
             </div>
           )}
           
           {status === 'failed' && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-center">
-              <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-              <p className="text-red-700 font-bold mb-2">Failed to generate deck</p>
+            <div className="p-8 bg-red-50 border border-red-200 rounded-2xl text-center">
+              <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+              <p className="text-red-700 font-bold mb-2 text-lg">Failed to generate deck</p>
               {errorMessage && (
-                <p className="text-red-500 text-sm mb-4 max-w-lg mx-auto">{errorMessage}</p>
+                <p className="text-red-500 text-sm mb-4 max-w-lg mx-auto leading-relaxed">{errorMessage}</p>
               )}
               <button 
                 onClick={() => { setStatus(null); setErrorMessage(null); }}
-                className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-full text-sm transition-colors"
+                className="px-6 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-full text-sm transition-colors"
               >
                 Try Again
               </button>

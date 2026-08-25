@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel
 from typing import Optional, List
 from app.db.supabase_client import supabase
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro, check_topic_deck_limit
 from app.services.deck_service import generate_deck
+import asyncio
 
 router = APIRouter()
 
@@ -16,12 +17,15 @@ class GenerateDeckRequest(BaseModel):
 @router.post("/generate")
 async def create_deck(
     request: GenerateDeckRequest, 
-    background_tasks: BackgroundTasks,
     current_user = Depends(get_current_user),
-    # Both require pro and check the monthly limit
     _ = Depends(require_pro),
     __ = Depends(check_topic_deck_limit)
 ):
+    """
+    Generate a PPT deck. Runs the full pipeline synchronously (inline)
+    because Vercel serverless kills background tasks after the response.
+    The frontend shows a loading state while waiting.
+    """
     try:
         # Insert initial record
         res = supabase.table("topic_decks").insert({
@@ -34,9 +38,9 @@ async def create_deck(
         
         deck_id = res.data[0]["id"]
         
-        # Schedule background generation
-        background_tasks.add_task(
-            generate_deck,
+        # Run generation SYNCHRONOUSLY (not as background task)
+        # This is required for Vercel serverless — background tasks get killed
+        await generate_deck(
             request.topic,
             request.depth,
             request.audience,
@@ -44,10 +48,52 @@ async def create_deck(
             deck_id
         )
         
-        return {"deck_id": deck_id, "status": "processing"}
+        # After generation, fetch the updated record to return the result
+        updated = supabase.table("topic_decks").select("*").eq("id", deck_id).single().execute()
+        deck = updated.data
+        
+        download_url = None
+        if deck.get("status") == "ready" and deck.get("storage_path"):
+            download_url = _get_signed_url(deck["storage_path"])
+        
+        return {
+            "deck_id": deck_id, 
+            "status": deck.get("status", "processing"),
+            "slide_count": deck.get("slide_count"),
+            "download_url": download_url,
+            "error_message": deck.get("error_message")
+        }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # If we have a deck_id, mark it as failed
+        if 'deck_id' in dir():
+            try:
+                supabase.table("topic_decks").update({
+                    "status": "failed",
+                    "error_message": str(e)[:500]
+                }).eq("id", deck_id).execute()
+            except:
+                pass
+        raise HTTPException(status_code=500, detail=str(e)[:500])
+
+
+def _get_signed_url(storage_path: str) -> Optional[str]:
+    """Generate a signed download URL from Supabase storage."""
+    try:
+        url_res = supabase.storage.from_("topic-decks").create_signed_url(storage_path, 3600)
+        
+        if isinstance(url_res, dict):
+            return url_res.get("signedUrl") or url_res.get("signedURL")
+        elif hasattr(url_res, 'signed_url'):
+            return url_res.signed_url
+        elif hasattr(url_res, 'signedUrl'):
+            return url_res.signedUrl
+        else:
+            return str(url_res) if url_res else None
+    except Exception as e:
+        print(f"Failed to create signed URL: {e}")
+        return None
+
 
 @router.get("/{deck_id}")
 async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)):
@@ -60,26 +106,7 @@ async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)
     download_url = None
     
     if deck["status"] == "ready" and deck.get("storage_path"):
-        try:
-            # Generate a signed URL valid for 1 hour
-            # Supabase Python client returns an object with 'signedUrl' (camelCase)
-            url_res = supabase.storage.from_("topic-decks").create_signed_url(deck["storage_path"], 3600)
-            
-            # Handle both dict-style and object-style responses from different supabase-py versions
-            if isinstance(url_res, dict):
-                download_url = url_res.get("signedUrl") or url_res.get("signedURL")
-            elif hasattr(url_res, 'signed_url'):
-                download_url = url_res.signed_url
-            elif hasattr(url_res, 'signedUrl'):
-                download_url = url_res.signedUrl
-            else:
-                # Fallback: try string conversion
-                download_url = str(url_res) if url_res else None
-                
-        except Exception as e:
-            print(f"Failed to create signed URL: {e}")
-            # Don't crash — return the deck info without download URL
-            download_url = None
+        download_url = _get_signed_url(deck["storage_path"])
         
     return {
         "status": deck["status"],

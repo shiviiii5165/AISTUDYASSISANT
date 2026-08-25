@@ -454,8 +454,12 @@ def _lighten_color(color_tuple, factor=0.8):
 # MAIN GENERATION FUNCTION
 # ─────────────────────────────────────────────────────────────────────────────
 
+MAX_IMAGES = 5  # Limit images to stay within Vercel time constraints
+
 async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> bytes:
     """Takes the JSON structure from the LLM and creates a PPTX byte stream."""
+    import asyncio
+    
     prs = Presentation()
     
     # Set 16:9 widescreen
@@ -470,19 +474,42 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
     # 1. Title Slide
     add_title_slide(prs, topic, audience, palette)
     
-    # 2. Content Slides
+    # 2. Generate ALL images in parallel (huge speed win)
+    image_tasks = []
+    image_indices = []
+    
     for idx, section in enumerate(sections):
-        image_bytes = None
-        
-        # If visual hint requires an image, generate it
         visual_hint = section.get("visual_hint", "")
         if visual_hint == "generated_image" and section.get("image_prompt"):
-            image_bytes = await generate_slide_image(section["image_prompt"])
-        
+            if len(image_tasks) < MAX_IMAGES:
+                image_tasks.append(generate_slide_image(section["image_prompt"]))
+                image_indices.append(idx)
+    
+    # Run all image generations concurrently
+    image_results = []
+    if image_tasks:
+        try:
+            image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
+        except Exception as e:
+            print(f"Parallel image generation error: {e}")
+            image_results = [None] * len(image_tasks)
+    
+    # Map results back to section indices
+    image_map = {}
+    for i, idx in enumerate(image_indices):
+        result = image_results[i] if i < len(image_results) else None
+        if isinstance(result, Exception):
+            print(f"Image for section {idx} failed: {result}")
+            result = None
+        image_map[idx] = result
+    
+    # 3. Build content slides with pre-generated images
+    for idx, section in enumerate(sections):
+        image_bytes = image_map.get(idx, None)
         slide_number = idx + 2  # 1-indexed, after title
         add_content_slide(prs, section, slide_number, total_slides, palette, image_bytes)
     
-    # 3. Closing Slide
+    # 4. Closing Slide
     add_closing_slide(prs, deck_data, palette)
     
     output = io.BytesIO()
