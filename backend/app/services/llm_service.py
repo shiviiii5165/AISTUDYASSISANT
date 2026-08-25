@@ -63,7 +63,7 @@ def safe_json_loads(text: str) -> dict:
 
 async def call_gemini(
     messages: list, 
-    model: str = "gemini-2.5-flash", 
+    model: str = "gemini-3.6-flash", 
     temperature: float = 0.3, 
     max_tokens: int = 8192,
     retries: int = 1
