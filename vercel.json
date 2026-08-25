@@ -3,7 +3,6 @@
   "outputDirectory": "frontend/dist",
   "functions": {
     "api/*.py": {
-      "maxDuration": 120,
       "memory": 1024,
       "includeFiles": "backend/**"
     }

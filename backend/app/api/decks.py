@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from app.db.supabase_client import supabase
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro, check_topic_deck_limit
-from app.services.deck_service import generate_deck
+from app.services.deck_service import generate_outline_step, expand_outline_step, render_deck_step
 import asyncio
 
 router = APIRouter()
@@ -14,20 +14,28 @@ class GenerateDeckRequest(BaseModel):
     depth: str = "full"
     audience: str = "university"
 
-@router.post("/generate")
-async def create_deck(
+class ExpandRequest(BaseModel):
+    topic: str
+    audience: str
+    outline_data: Dict[str, Any]
+
+class RenderRequest(BaseModel):
+    deck_id: str
+    topic: str
+    depth: str
+    audience: str
+    expanded_data: Dict[str, Any]
+
+
+@router.post("/outline")
+async def step_outline(
     request: GenerateDeckRequest, 
     current_user = Depends(get_current_user),
     _ = Depends(require_pro),
     __ = Depends(check_topic_deck_limit)
 ):
-    """
-    Generate a PPT deck. Runs the full pipeline synchronously (inline)
-    because Vercel serverless kills background tasks after the response.
-    The frontend shows a loading state while waiting.
-    """
+    """Step 1: Create DB record and generate outline."""
     try:
-        # Insert initial record
         res = supabase.table("topic_decks").insert({
             "user_id": current_user.id,
             "topic": request.topic,
@@ -37,43 +45,60 @@ async def create_deck(
         }).execute()
         
         deck_id = res.data[0]["id"]
+        outline_data = await generate_outline_step(request.topic, request.depth, request.audience)
         
-        # Run generation SYNCHRONOUSLY (not as background task)
-        # This is required for Vercel serverless — background tasks get killed
-        await generate_deck(
-            request.topic,
-            request.depth,
-            request.audience,
-            current_user.id,
-            deck_id
+        return {"deck_id": deck_id, "outline_data": outline_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)[:500])
+
+
+@router.post("/expand")
+async def step_expand(
+    request: ExpandRequest, 
+    current_user = Depends(get_current_user)
+):
+    """Step 2: Expand outline to full content."""
+    try:
+        expanded_data = await expand_outline_step(request.topic, request.audience, request.outline_data)
+        return {"expanded_data": expanded_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)[:500])
+
+
+@router.post("/render")
+async def step_render(
+    request: RenderRequest, 
+    current_user = Depends(get_current_user)
+):
+    """Step 3: Generate images in parallel and render PPTX."""
+    try:
+        storage_path = await render_deck_step(
+            request.deck_id, 
+            current_user.id, 
+            request.topic, 
+            request.depth, 
+            request.audience, 
+            request.expanded_data
         )
         
-        # After generation, fetch the updated record to return the result
-        updated = supabase.table("topic_decks").select("*").eq("id", deck_id).single().execute()
-        deck = updated.data
+        download_url = _get_signed_url(storage_path)
         
-        download_url = None
-        if deck.get("status") == "ready" and deck.get("storage_path"):
-            download_url = _get_signed_url(deck["storage_path"])
+        # Get final slide count
+        updated = supabase.table("topic_decks").select("slide_count").eq("id", request.deck_id).single().execute()
         
         return {
-            "deck_id": deck_id, 
-            "status": deck.get("status", "processing"),
-            "slide_count": deck.get("slide_count"),
+            "status": "ready",
             "download_url": download_url,
-            "error_message": deck.get("error_message")
+            "slide_count": updated.data.get("slide_count") if updated.data else 0
         }
-        
     except Exception as e:
-        # If we have a deck_id, mark it as failed
-        if 'deck_id' in dir():
-            try:
-                supabase.table("topic_decks").update({
-                    "status": "failed",
-                    "error_message": str(e)[:500]
-                }).eq("id", deck_id).execute()
-            except:
-                pass
+        try:
+            supabase.table("topic_decks").update({
+                "status": "failed",
+                "error_message": str(e)[:500]
+            }).eq("id", request.deck_id).execute()
+        except:
+            pass
         raise HTTPException(status_code=500, detail=str(e)[:500])
 
 

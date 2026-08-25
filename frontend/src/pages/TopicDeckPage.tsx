@@ -69,29 +69,6 @@ const TopicDeckPage: React.FC = () => {
     fetchHistory();
   }, []);
 
-  // Progress messages while generating
-  useEffect(() => {
-    if (!generating) return;
-    const messages = [
-      'Outlining the deck structure...',
-      'Auditing for missing subtopics...',
-      'Writing slide content & examples...',
-      'Generating visuals with AI...',
-      'Polishing & removing duplicates...',
-      'Rendering your PowerPoint...',
-      'Almost there, finalizing...',
-    ];
-    let i = 0;
-    setProgressMsg(messages[0]);
-    const interval = setInterval(() => {
-      i++;
-      if (i < messages.length) {
-        setProgressMsg(messages[i]);
-      }
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [generating]);
-
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!isPro) {
@@ -106,100 +83,71 @@ const TopicDeckPage: React.FC = () => {
     setErrorMessage(null);
     setStatus('processing');
     
+    const token = useAuthStore.getState().session?.access_token;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
     try {
-      const token = useAuthStore.getState().session?.access_token;
-      
-      // The /generate endpoint now runs synchronously and returns the result
-      // This call can take 30-60 seconds — that's expected
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2min safety timeout
-      
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/generate`, {
+      // ---------------------------------------------------------
+      // STEP 1: Outline
+      // ---------------------------------------------------------
+      setProgressMsg('Step 1/3: Designing syllabus & outline...');
+      const outlineRes = await fetch(`${apiUrl}/api/decks/outline`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ topic, depth, audience }),
-        signal: controller.signal,
       });
       
-      clearTimeout(timeoutId);
-      
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 403) {
-          setShowUpgradeModal(true);
-          setGenerating(false);
-          setStatus(null);
-          return;
-        }
-        throw new Error(data.detail || 'Failed to generate deck');
+      if (!outlineRes.ok) {
+        if (outlineRes.status === 403) { setShowUpgradeModal(true); setGenerating(false); setStatus(null); return; }
+        throw new Error((await outlineRes.json()).detail || 'Failed at outline stage');
       }
       
-      // The response now includes the final result directly
-      if (data.status === 'ready' && data.download_url) {
+      const { deck_id, outline_data } = await outlineRes.json();
+      
+      // ---------------------------------------------------------
+      // STEP 2: Expand
+      // ---------------------------------------------------------
+      setProgressMsg('Step 2/3: Writing deep educational content & examples...');
+      const expandRes = await fetch(`${apiUrl}/api/decks/expand`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ topic, audience, outline_data }),
+      });
+      
+      if (!expandRes.ok) throw new Error((await expandRes.json()).detail || 'Failed at content expansion stage');
+      
+      const { expanded_data } = await expandRes.json();
+
+      // ---------------------------------------------------------
+      // STEP 3: Render (Images + PPTX)
+      // ---------------------------------------------------------
+      setProgressMsg('Step 3/3: Generating visuals & rendering PPTX...');
+      const renderRes = await fetch(`${apiUrl}/api/decks/render`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ deck_id, topic, depth, audience, expanded_data }),
+      });
+      
+      if (!renderRes.ok) throw new Error((await renderRes.json()).detail || 'Failed to render PowerPoint');
+      
+      const renderData = await renderRes.json();
+      
+      if (renderData.status === 'ready' && renderData.download_url) {
         setStatus('ready');
-        setDownloadUrl(data.download_url);
-        setSlideCount(data.slide_count);
-      } else if (data.status === 'failed') {
-        setStatus('failed');
-        setErrorMessage(data.error_message || 'Generation failed. Please try again.');
+        setDownloadUrl(renderData.download_url);
+        setSlideCount(renderData.slide_count);
       } else {
-        // Fallback: start polling if for some reason it's still processing
-        startPolling(data.deck_id);
-        return; // Don't set generating to false
+        throw new Error('Generation completed but download URL is missing.');
       }
       
       setGenerating(false);
+      
     } catch (err: any) {
       console.error(err);
-      if (err.name === 'AbortError') {
-        setErrorMessage('Request timed out. The topic may be too broad — try a more specific topic.');
-      } else {
-        setErrorMessage(err.message || 'Failed to generate deck. Check your internet connection.');
-      }
+      setErrorMessage(err.message || 'Failed to generate deck. Check your internet connection.');
       setStatus('failed');
       setGenerating(false);
     }
-  };
-
-  // Fallback polling (only used if synchronous response is still "processing")
-  const startPolling = (deckId: string) => {
-    const intervalId = setInterval(async () => {
-      try {
-        const token = useAuthStore.getState().session?.access_token;
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/${deckId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        
-        if (data.status === 'ready') {
-          setStatus('ready');
-          setDownloadUrl(data.download_url);
-          setSlideCount(data.slide_count);
-          setGenerating(false);
-          clearInterval(intervalId);
-        } else if (data.status === 'failed') {
-          setStatus('failed');
-          setErrorMessage(data.error_message || 'Generation failed.');
-          setGenerating(false);
-          clearInterval(intervalId);
-        }
-      } catch (e) {
-        console.error("Polling error", e);
-      }
-    }, 3000);
-    
-    // Auto-clear after 3 minutes
-    setTimeout(() => {
-      clearInterval(intervalId);
-      setGenerating(false);
-      if (status === 'processing') {
-        setStatus('failed');
-        setErrorMessage('Generation timed out. Please try again.');
-      }
-    }, 180000);
   };
 
   // Close dropdowns on outside click
