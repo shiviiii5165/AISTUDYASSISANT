@@ -94,7 +94,7 @@ const VideoGeneratorPage: React.FC = () => {
     const loadHistory = async () => {
       try {
         const token = useAuthStore.getState().session?.access_token;
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lessons/`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -115,7 +115,7 @@ const VideoGeneratorPage: React.FC = () => {
       intervalId = setInterval(async () => {
         try {
           const token = useAuthStore.getState().session?.access_token;
-          const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lessons/${lessonId}`, {
+          const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/${lessonId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = await res.json();
@@ -160,7 +160,7 @@ const VideoGeneratorPage: React.FC = () => {
     
     try {
       const token = useAuthStore.getState().session?.access_token;
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lessons/generate`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +187,7 @@ const VideoGeneratorPage: React.FC = () => {
   const loadLesson = async (id: string) => {
     try {
       const token = useAuthStore.getState().session?.access_token;
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lessons/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();

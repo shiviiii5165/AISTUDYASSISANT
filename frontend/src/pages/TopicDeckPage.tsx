@@ -55,7 +55,7 @@ const TopicDeckPage: React.FC = () => {
       try {
         const token = useAuthStore.getState().session?.access_token;
         if (!token) return;
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/decks/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -84,7 +84,7 @@ const TopicDeckPage: React.FC = () => {
     setStatus('processing');
     
     const token = useAuthStore.getState().session?.access_token;
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const apiUrl = import.meta.env.VITE_API_URL || '';
     
     try {
       // ---------------------------------------------------------
@@ -143,8 +143,17 @@ const TopicDeckPage: React.FC = () => {
       setGenerating(false);
       
     } catch (err: any) {
-      console.error(err);
-      setErrorMessage(err.message || 'Failed to generate deck. Check your internet connection.');
+      console.error('[PPT Generator] Error details:', {
+        name: err?.name,
+        message: err?.message,
+        stack: err?.stack,
+        raw: err
+      });
+      const msg = err?.message || 'Unknown error';
+      setErrorMessage(msg.includes('Failed to fetch') 
+        ? 'Network error: could not reach the server. Please check your internet connection and try again.'
+        : msg
+      );
       setStatus('failed');
       setGenerating(false);
     }

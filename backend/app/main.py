@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import os
+import traceback
 
 from app.api import auth, pdfs, chat, notes, predict
 from app.core.config import settings
@@ -18,6 +20,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global exception handler — always returns CORS-safe JSON, never a raw crash
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    print(f"UNHANDLED EXCEPTION on {request.method} {request.url.path}: {exc}\n{tb}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)[:300]}"}
+    )
+
 @app.get("/")
 def read_root():
     from app.db.supabase_client import supabase
@@ -25,6 +37,17 @@ def read_root():
         "message": "Welcome to TeachGenie API", 
         "supabase": "connected" if supabase else "failed",
         "gemini": "configured" if settings.GEMINI_API_KEY else "missing"
+    }
+
+@app.get("/api/health")
+def health_check():
+    """Lightweight liveness check — confirms the serverless function boots and env vars are loaded."""
+    from app.db.supabase_client import supabase
+    return {
+        "status": "ok",
+        "supabase": "connected" if supabase else "missing",
+        "gemini_key": "set" if settings.GEMINI_API_KEY else "missing",
+        "gemini_image_key": "set" if settings.GEMINI_IMAGE_API_KEY else "missing",
     }
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -36,4 +59,5 @@ from app.api import billing, decks, lessons
 app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
 app.include_router(decks.router, prefix="/api/decks", tags=["decks"])
 app.include_router(lessons.router, prefix="/api/lessons", tags=["lessons"])
+
 
