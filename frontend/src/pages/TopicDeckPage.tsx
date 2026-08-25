@@ -1,15 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2 } from 'lucide-react';
+import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2, AlertTriangle, Layers } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import UpgradeModal from '../components/billing/UpgradeModal';
 
+const DEPTH_OPTIONS = [
+  { value: 'full', label: 'Full (10-16 slides)', icon: '📚' },
+  { value: 'quick', label: 'Quick (6-8 slides)', icon: '⚡' },
+];
+
+const AUDIENCE_OPTIONS = [
+  { value: 'university', label: 'University', icon: '🎓' },
+  { value: 'high_school', label: 'High School', icon: '🏫' },
+  { value: 'professional', label: 'Professional', icon: '💼' },
+  { value: 'beginner', label: 'Beginner', icon: '🌱' },
+];
+
 const TopicDeckPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
   const [topic, setTopic] = useState('');
   
-  // Fake UI states for the toggles
+  // Depth & Audience selectors
+  const [depth, setDepth] = useState('full');
+  const [audience, setAudience] = useState('university');
+  const [showDepthDropdown, setShowDepthDropdown] = useState(false);
+  const [showAudienceDropdown, setShowAudienceDropdown] = useState(false);
+  
+  // Toggles
   const [activeToggles, setActiveToggles] = useState<Record<string, boolean>>({
     rbt: true,
   });
@@ -18,13 +36,38 @@ const TopicDeckPage: React.FC = () => {
   const [deckId, setDeckId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [slideCount, setSlideCount] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  
+  // Usage stats
+  const [deckHistory, setDeckHistory] = useState<any[]>([]);
   
   const isPro = true; // Plan requirement removed
 
   const toggleFilter = (key: string) => {
     setActiveToggles(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // Fetch deck history on mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const token = useAuthStore.getState().session?.access_token;
+        if (!token) return;
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/decks/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDeckHistory(data || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch deck history", e);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -37,6 +80,8 @@ const TopicDeckPage: React.FC = () => {
     setGenerating(true);
     setDeckId(null);
     setDownloadUrl(null);
+    setSlideCount(null);
+    setErrorMessage(null);
     setStatus('processing');
     
     try {
@@ -47,7 +92,7 @@ const TopicDeckPage: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ topic, depth: 'full', audience: 'university' })
+        body: JSON.stringify({ topic, depth, audience })
       });
       
       const data = await res.json();
@@ -55,14 +100,16 @@ const TopicDeckPage: React.FC = () => {
         if (res.status === 403) {
           setShowUpgradeModal(true);
           setGenerating(false);
+          setStatus(null);
           return;
         }
         throw new Error(data.detail || 'Failed to start generation');
       }
       
       setDeckId(data.deck_id);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorMessage(err.message || 'Failed to start generation');
       setStatus('failed');
       setGenerating(false);
     }
@@ -82,10 +129,12 @@ const TopicDeckPage: React.FC = () => {
           if (data.status === 'ready') {
             setStatus('ready');
             setDownloadUrl(data.download_url);
+            setSlideCount(data.slide_count);
             setGenerating(false);
             clearInterval(intervalId);
           } else if (data.status === 'failed') {
             setStatus('failed');
+            setErrorMessage(data.error_message || 'Generation failed. Please try again.');
             setGenerating(false);
             clearInterval(intervalId);
           }
@@ -96,6 +145,27 @@ const TopicDeckPage: React.FC = () => {
     }
     return () => clearInterval(intervalId);
   }, [deckId, status]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClick = () => {
+      setShowDepthDropdown(false);
+      setShowAudienceDropdown(false);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
+  const totalCreated = deckHistory.length;
+  const readyCount = deckHistory.filter((d: any) => d.status === 'ready').length;
+
+  // Get time-appropriate greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   return (
     <AppLayout title="PPT Generator">
@@ -112,22 +182,22 @@ const TopicDeckPage: React.FC = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-3xl opacity-30 z-0"></div>
         </div>
 
-        {/* Top Badges */}
+        {/* Top Badges — Dynamic */}
         <div className="flex items-center gap-3 mb-10">
           <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
             <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
-            <span>4 free generations left</span>
+            <span>{readyCount} decks generated</span>
           </div>
           <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
             <Clock className="w-3.5 h-3.5 text-blue-500" />
-            <span>1 total created</span>
+            <span>{totalCreated} total created</span>
           </div>
         </div>
 
         {/* Greeting */}
         <div className="text-center mb-10">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
-            <span className="text-[#5D4037]">Good morning, </span>
+            <span className="text-[#5D4037]">{getGreeting()}, </span>
             <span className="text-[#FFA000]">{currentUser?.full_name?.split(' ')[0] || 'User'}.</span>
           </h1>
           <p className="text-xl text-gray-700 font-medium">What would you like to teach today?</p>
@@ -164,20 +234,60 @@ const TopicDeckPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Filters/Toggles mimicking the screenshot */}
+        {/* Filters/Toggles */}
         <div className="w-full max-w-4xl mx-auto flex flex-wrap justify-center gap-3">
           
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-            <Filter className="w-4 h-4 text-blue-500" />
-            Level
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </button>
+          {/* Level / Audience Dropdown */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => { setShowAudienceDropdown(!showAudienceDropdown); setShowDepthDropdown(false); }}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              <Filter className="w-4 h-4 text-blue-500" />
+              {AUDIENCE_OPTIONS.find(a => a.value === audience)?.icon} {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label}
+              <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showAudienceDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            {showAudienceDropdown && (
+              <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] overflow-hidden">
+                {AUDIENCE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setAudience(opt.value); setShowAudienceDropdown(false); }}
+                    className={`w-full flex items-center gap-2 px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors ${audience === opt.value ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700'}`}
+                  >
+                    <span>{opt.icon}</span> {opt.label}
+                    {audience === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-blue-500" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-            <Clock className="w-4 h-4 text-indigo-500" />
-            Duration
-            <ChevronDown className="w-3 h-3 text-gray-400" />
-          </button>
+          {/* Duration / Depth Dropdown */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => { setShowDepthDropdown(!showDepthDropdown); setShowAudienceDropdown(false); }}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              <Layers className="w-4 h-4 text-indigo-500" />
+              {DEPTH_OPTIONS.find(d => d.value === depth)?.icon} {DEPTH_OPTIONS.find(d => d.value === depth)?.label}
+              <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showDepthDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            {showDepthDropdown && (
+              <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[220px] overflow-hidden">
+                {DEPTH_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setDepth(opt.value); setShowDepthDropdown(false); }}
+                    className={`w-full flex items-center gap-2 px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors ${depth === opt.value ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-700'}`}
+                  >
+                    <span>{opt.icon}</span> {opt.label}
+                    {depth === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-indigo-500" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           
           <button onClick={() => toggleFilter('scenario')} className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium shadow-sm transition-colors ${activeToggles.scenario ? 'text-gray-900 ring-1 ring-gray-300' : 'text-gray-600'}`}>
             <Sparkles className="w-4 h-4 text-gray-400" />
@@ -246,6 +356,11 @@ const TopicDeckPage: React.FC = () => {
               <p className="text-sm text-gray-500 mt-1">
                 This takes about 20-40 seconds. I'm researching, writing slides, generating visuals, and styling the deck.
               </p>
+              <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
+                <span className="flex items-center gap-1"><Layers className="w-3 h-3" /> {depth === 'full' ? '10-16 slides' : '6-8 slides'}</span>
+                <span>•</span>
+                <span>{AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level</span>
+              </div>
             </div>
           )}
 
@@ -253,10 +368,13 @@ const TopicDeckPage: React.FC = () => {
             <div className="p-8 bg-green-50 border border-green-200 rounded-xl flex flex-col items-center justify-center text-center shadow-sm transform transition-all translate-y-0 opacity-100">
               <CheckCircle2 className="w-12 h-12 text-green-500 mb-4" />
               <h3 className="text-xl font-bold text-green-900 mb-2">Your deck is ready!</h3>
+              {slideCount && (
+                <p className="text-sm text-green-700 mb-4">{slideCount} slides • {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level • {depth} depth</p>
+              )}
               <a
                 href={downloadUrl}
                 download
-                className="mt-4 px-8 py-4 bg-[#5D4037] hover:bg-[#4E342E] text-white font-bold rounded-full flex items-center gap-2 transition-transform hover:scale-105 shadow-md"
+                className="mt-2 px-8 py-4 bg-[#5D4037] hover:bg-[#4E342E] text-white font-bold rounded-full flex items-center gap-2 transition-transform hover:scale-105 shadow-md"
               >
                 <Download className="w-5 h-5" /> Download .pptx
               </a>
@@ -265,7 +383,17 @@ const TopicDeckPage: React.FC = () => {
           
           {status === 'failed' && (
             <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-center">
-              <p className="text-red-700 font-bold">Failed to generate deck. Please try again or try a different topic.</p>
+              <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+              <p className="text-red-700 font-bold mb-2">Failed to generate deck</p>
+              {errorMessage && (
+                <p className="text-red-500 text-sm mb-4 max-w-lg mx-auto">{errorMessage}</p>
+              )}
+              <button 
+                onClick={() => { setStatus(null); setErrorMessage(null); }}
+                className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-full text-sm transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           )}
         </div>

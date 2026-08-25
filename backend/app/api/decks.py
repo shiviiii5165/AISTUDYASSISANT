@@ -60,9 +60,26 @@ async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)
     download_url = None
     
     if deck["status"] == "ready" and deck.get("storage_path"):
-        # Generate a signed URL valid for 1 hour
-        url_res = supabase.storage.from_("topic-decks").create_signed_url(deck["storage_path"], 3600)
-        download_url = url_res.get("signedURL")
+        try:
+            # Generate a signed URL valid for 1 hour
+            # Supabase Python client returns an object with 'signedUrl' (camelCase)
+            url_res = supabase.storage.from_("topic-decks").create_signed_url(deck["storage_path"], 3600)
+            
+            # Handle both dict-style and object-style responses from different supabase-py versions
+            if isinstance(url_res, dict):
+                download_url = url_res.get("signedUrl") or url_res.get("signedURL")
+            elif hasattr(url_res, 'signed_url'):
+                download_url = url_res.signed_url
+            elif hasattr(url_res, 'signedUrl'):
+                download_url = url_res.signedUrl
+            else:
+                # Fallback: try string conversion
+                download_url = str(url_res) if url_res else None
+                
+        except Exception as e:
+            print(f"Failed to create signed URL: {e}")
+            # Don't crash — return the deck info without download URL
+            download_url = None
         
     return {
         "status": deck["status"],
@@ -84,7 +101,10 @@ async def delete_deck(deck_id: str, current_user = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Deck not found")
         
     if res.data.get("storage_path"):
-        supabase.storage.from_("topic-decks").remove([res.data["storage_path"]])
+        try:
+            supabase.storage.from_("topic-decks").remove([res.data["storage_path"]])
+        except Exception as e:
+            print(f"Failed to remove file from storage: {e}")
         
     supabase.table("topic_decks").delete().eq("id", deck_id).execute()
     return {"status": "success"}
