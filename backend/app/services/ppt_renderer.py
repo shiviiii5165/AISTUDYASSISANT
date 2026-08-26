@@ -137,10 +137,10 @@ async def generate_slide_image(prompt: str) -> Optional[bytes]:
     if not api_key:
         return None
     
-    # Try the primary image-capable model
+    # Try the primary image-capable model (current Gemini 3.x series)
     models_to_try = [
-        "gemini-2.0-flash-exp",
-        "gemini-2.0-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
     ]
     
     for model_name in models_to_try:

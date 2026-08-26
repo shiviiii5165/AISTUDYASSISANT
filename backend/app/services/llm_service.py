@@ -66,22 +66,20 @@ def safe_json_loads(text: str) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PROVIDER DEFINITIONS — Cascading provider chain
+# PROVIDER DEFINITIONS — Current models as of August 2026
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Each Gemini model is treated as a separate "provider" for failover.
-# If model A returns 404/quota-exceeded, we try model B, then Groq, etc.
+# Gemini 3.x series (current generation, ordered by capability)
 GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash",
+    "gemini-3.6-flash",       # Latest stable (July 2026)
+    "gemini-3.5-flash",       # Stable production (May 2026)
+    "gemini-3.5-flash-lite",  # Lightweight fallback (July 2026)
 ]
 
+# Groq models (currently active, verified August 2026)
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
-    "gemma2-9b-it",
-    "mixtral-8x7b-32768",
+    "llama-3.3-70b-versatile",   # Primary — best quality
+    "llama-3.1-8b-instant",      # Fast fallback
 ]
 
 
@@ -91,7 +89,7 @@ GROQ_MODELS = [
 
 async def _call_gemini_raw(
     messages: list,
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-3.6-flash",
     temperature: float = 0.3,
     max_tokens: int = 8192,
     api_key: str = None,
@@ -167,12 +165,12 @@ async def _call_groq_raw(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SMART ORCHESTRATION
+# SMART ORCHESTRATION — Cascading fallback through all providers
 # ══════════════════════════════════════════════════════════════════════════════
 
 async def call_gemini(
     messages: list,
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-3.6-flash",
     temperature: float = 0.3,
     max_tokens: int = 8192,
     retries: int = 1,
@@ -181,12 +179,11 @@ async def call_gemini(
     RESILIENT LLM call — cascading fallback through ALL available providers.
     
     Order:
-      1. Gemini (requested model)
-      2. Gemini (other models)
-      3. Groq llama-3.3-70b
-      4. Groq llama-3.1-70b
-      5. Groq gemma2-9b
-      6. Groq mixtral-8x7b
+      1. Gemini 3.6 Flash (latest stable)
+      2. Gemini 3.5 Flash (production stable)
+      3. Gemini 3.5 Flash-Lite (lightweight)
+      4. Groq Llama 3.3 70B (best Groq model)
+      5. Groq Llama 3.1 8B (fast fallback)
     
     If ANY provider succeeds, the user never sees an error.
     """
@@ -308,7 +305,7 @@ async def call_best_llm(
     gemini_task = asyncio.create_task(
         _call_gemini_raw(
             messages=messages,
-            model="gemini-2.0-flash",
+            model="gemini-3.6-flash",
             temperature=temperature,
             max_tokens=max_tokens,
         )
@@ -372,7 +369,7 @@ async def call_parallel_merge(
     """
     tasks = [
         asyncio.create_task(_call_gemini_raw(
-            messages=messages, model="gemini-2.0-flash",
+            messages=messages, model="gemini-3.6-flash",
             temperature=temperature, max_tokens=max_tokens,
         )),
         asyncio.create_task(_call_groq_raw(

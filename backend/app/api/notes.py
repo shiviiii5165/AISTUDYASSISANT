@@ -54,7 +54,7 @@ async def upload_handwritten_note(
         b64_img = base64.b64encode(file_bytes).decode("utf-8")
         
         api_key = settings.GEMINI_API_KEY
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
         
         payload = {
             "contents": [
