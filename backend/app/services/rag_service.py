@@ -124,7 +124,7 @@ async def process_chunk_batch(messages: list, batch_index: int, retries: int = 2
         try:
             return await call_gemini(
                 messages=messages,
-                model="gemini-2.5-flash",
+                model="gemini-2.0-flash",
                 max_tokens=3000,
                 temperature=0.3
             )
@@ -154,7 +154,7 @@ async def synthesize_batches(batch_results: list[str], mode: str, question: str)
             {"role": "system", "content": SYNTHESIS_PROMPT},
             {"role": "user", "content": user_message}
         ],
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         max_tokens=4000,
         temperature=0.4
     )
@@ -171,14 +171,14 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
         print("Global Mode detected. Fetching full chapter context...")
         all_chunks = get_all_chunks(pdf_id, user_id)
         if not all_chunks:
-            return {"answer": "No content found in this PDF.", "sources": [], "model": "gemini-2.5-flash"}
+            return {"answer": "No content found in this PDF.", "sources": [], "model": "gemini-2.0-flash"}
         chunks_to_process = all_chunks
     else:
         print("Quick Answer Mode detected. Performing vector search...")
         query_embedding = get_embeddings([question])[0]
         chunks_to_process = search_relevant_chunks(pdf_id, user_id, query_embedding, top_k=15)
         if not chunks_to_process:
-            return {"answer": "No relevant content found for your query.", "sources": [], "model": "gemini-2.5-flash"}
+            return {"answer": "No relevant content found for your query.", "sources": [], "model": "gemini-2.0-flash"}
 
     # 2. Get the specific prompt for the mode
     system_prompt = MODE_PROMPTS.get(mode, MODE_PROMPTS["Quick Answer"])
@@ -228,7 +228,7 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
         
         final_answer = await call_gemini(
             messages=messages,
-            model="gemini-2.5-flash",
+            model="gemini-2.0-flash",
             max_tokens=1500,
             temperature=0.3
         )
@@ -240,5 +240,5 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
     return {
         "answer": final_answer,
         "sources": sources,
-        "model": "gemini-2.5-flash (Hierarchical Synthesis)" if is_global_mode else "gemini-2.5-flash (RAG)"
+        "model": "gemini-2.0-flash (Hierarchical Synthesis)" if is_global_mode else "gemini-2.0-flash (RAG)"
     }

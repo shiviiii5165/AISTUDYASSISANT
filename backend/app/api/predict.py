@@ -1,6 +1,6 @@
 """
 Exam question predictor endpoint.
-Uses Gemini (gemini-2.5-flash) for prediction.
+Uses Gemini (gemini-2.0-flash) for prediction.
 Uses vector_service.get_all_chunks_text() for context retrieval.
 """
 
@@ -93,7 +93,7 @@ async def predict_exam_questions(
                 {"role": "system", "content": PREDICT_SYSTEM_PROMPT},
                 {"role": "user", "content": user_message},
             ],
-            model="gemini-2.5-flash",
+            model="gemini-2.0-flash",
             max_tokens=4000,
             temperature=0.3,
         )

@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Any
 from app.db.supabase_client import supabase
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro, check_topic_deck_limit
-from app.services.deck_service import generate_outline_step, expand_outline_step, render_deck_step
+from app.services.deck_service import generate_outline_step, expand_outline_step, quality_review_step, render_deck_step
 import asyncio
 
 router = APIRouter()
@@ -57,10 +57,14 @@ async def step_expand(
     request: ExpandRequest, 
     current_user = Depends(get_current_user)
 ):
-    """Step 2: Expand outline to full content."""
+    """Step 2: Expand outline to full content + quality review pass."""
     try:
         expanded_data = await expand_outline_step(request.topic, request.audience, request.outline_data)
-        return {"expanded_data": expanded_data}
+        
+        # 🏆 Quality review: AI reviewer improves content before rendering
+        reviewed_data = await quality_review_step(request.topic, request.audience, expanded_data)
+        
+        return {"expanded_data": reviewed_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)[:500])
 
