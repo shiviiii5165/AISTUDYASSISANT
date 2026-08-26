@@ -457,9 +457,107 @@ def _lighten_color(color_tuple, factor=0.8):
 MAX_IMAGES = 5  # Limit images to stay within Vercel time constraints
 
 async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> bytes:
-    """Takes the JSON structure from the LLM and creates a PPTX byte stream."""
+    """Takes the JSON structure from the LLM and creates a PPTX byte stream.
+    
+    Uses the new Presentation Design Engine for polished, professional output.
+    Falls back to the legacy renderer if the new engine encounters issues.
+    """
     import asyncio
     
+    # ──────────────────────────────────────────────────────────────────────
+    # NEW PRESENTATION ENGINE PATH
+    # ──────────────────────────────────────────────────────────────────────
+    try:
+        from app.services.presentation_engine import (
+            SlideContent, SlidePurpose, PresentationPlan,
+            VisualType, ProcessStep, TimelineMilestone,
+            ComparisonColumn, KPIMetric, ArchitectureLayer,
+        )
+        from app.services.presentation_engine.builder import build_presentation
+        from app.services.presentation_engine.presets import get_slide_flow
+
+        topic = deck_data.get("deck_title", "Topic Deck")
+        sections = deck_data.get("sections", [])
+        key_takeaways = deck_data.get("key_takeaways", [])
+
+        # Get the preset slide flow for layout variety
+        flow = get_slide_flow("academic", "full" if len(sections) > 8 else "quick")
+        # Remove cover and closing from flow (we add them in builder)
+        content_flow = [p for p in flow if p not in (SlidePurpose.COVER, SlidePurpose.CLOSING)]
+
+        # ── Generate images in parallel (reuse existing logic) ──
+        image_tasks = []
+        image_indices = []
+        for idx, section in enumerate(sections):
+            visual_hint = section.get("visual_hint", "")
+            if visual_hint == "generated_image" and section.get("image_prompt"):
+                if len(image_tasks) < MAX_IMAGES:
+                    image_tasks.append(generate_slide_image(section["image_prompt"]))
+                    image_indices.append(idx)
+
+        image_results = []
+        if image_tasks:
+            try:
+                image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
+            except Exception as e:
+                print(f"Parallel image generation error: {e}")
+                image_results = [None] * len(image_tasks)
+
+        image_map = {}
+        for i, idx in enumerate(image_indices):
+            result = image_results[i] if i < len(image_results) else None
+            if isinstance(result, Exception):
+                result = None
+            image_map[idx] = result
+
+        # ── Convert legacy sections → SlideContent objects ──
+        slides = []
+        for idx, section in enumerate(sections):
+            # Assign purpose from flow (with variety) or auto-detect
+            if idx < len(content_flow):
+                purpose = content_flow[idx]
+            else:
+                purpose = SlidePurpose.CONCEPT
+
+            img_bytes = image_map.get(idx, None)
+
+            sc = SlideContent(
+                id=section.get("id", f"slide_{idx}"),
+                purpose=purpose,
+                title=section.get("title", ""),
+                body_bullets=section.get("body_bullets", []),
+                example=section.get("example", ""),
+                key_insight=section.get("example", ""),  # reuse example as insight
+                speaker_note=section.get("speaker_note", ""),
+                image_prompt=section.get("image_prompt", ""),
+                image_bytes=img_bytes,
+                visual_type=VisualType.AI_IMAGE if img_bytes else VisualType.NONE,
+            )
+            slides.append(sc)
+
+        plan = PresentationPlan(
+            deck_title=topic,
+            key_takeaways=key_takeaways,
+            slides=slides,
+        )
+
+        pptx_bytes = build_presentation(
+            plan=plan,
+            topic=topic,
+            audience=audience,
+            preset_label="Academic Presentation",
+        )
+        print("[OK] New Presentation Engine rendered successfully")
+        return pptx_bytes
+
+    except Exception as engine_error:
+        print(f"[WARN] New engine failed, falling back to legacy renderer: {engine_error}")
+        import traceback
+        traceback.print_exc()
+
+    # ──────────────────────────────────────────────────────────────────────
+    # LEGACY FALLBACK PATH (original renderer)
+    # ──────────────────────────────────────────────────────────────────────
     prs = Presentation()
     
     # Set 16:9 widescreen
@@ -517,3 +615,4 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
     output.seek(0)
     
     return output.read()
+

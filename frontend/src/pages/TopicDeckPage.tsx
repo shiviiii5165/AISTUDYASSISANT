@@ -1,46 +1,92 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2, AlertTriangle, Layers } from 'lucide-react';
+import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2, AlertTriangle, Layers, Palette, Users, Zap, Settings2, Eye, RotateCcw } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import UpgradeModal from '../components/billing/UpgradeModal';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIGURATION OPTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PRESET_OPTIONS = [
+  { value: 'academic', label: 'Academic', icon: '🎓', desc: 'University lecture with learning progression' },
+  { value: 'pitch', label: 'Business', icon: '🚀', desc: 'Data-driven pitch with KPIs & strategy' },
+  { value: 'technical', label: 'Technical', icon: '⚙️', desc: 'Architecture diagrams & system deep-dive' },
+  { value: 'research', label: 'Research', icon: '🔬', desc: 'Evidence-based findings & methodology' },
+  { value: 'teaching', label: 'Teaching', icon: '📚', desc: "Scaffolded lesson with Bloom's alignment" },
+];
+
 const DEPTH_OPTIONS = [
-  { value: 'full', label: 'Full (10-16 slides)', icon: '\u{1F4DA}' },
-  { value: 'quick', label: 'Quick (6-8 slides)', icon: '\u26A1' },
+  { value: 'full', label: 'Full (10-16 slides)', icon: '📚' },
+  { value: 'quick', label: 'Quick (6-8 slides)', icon: '⚡' },
 ];
 
 const AUDIENCE_OPTIONS = [
-  { value: 'university', label: 'University', icon: '\u{1F393}' },
-  { value: 'high_school', label: 'High School', icon: '\u{1F3EB}' },
-  { value: 'professional', label: 'Professional', icon: '\u{1F4BC}' },
-  { value: 'beginner', label: 'Beginner', icon: '\u{1F331}' },
+  { value: 'university', label: 'University', icon: '🎓' },
+  { value: 'high_school', label: 'High School', icon: '🏫' },
+  { value: 'professional', label: 'Professional', icon: '💼' },
+  { value: 'beginner', label: 'Beginner', icon: '🌱' },
 ];
+
+const THEME_OPTIONS = [
+  { value: '', label: 'AI Pick', colors: ['#1E40AF', '#3B82F6', '#DBEAFE'], desc: 'AI selects best theme' },
+  { value: 'blue_professional', label: 'Blue Pro', colors: ['#1E40AF', '#3B82F6', '#DBEAFE'], desc: 'Corporate & Tech' },
+  { value: 'indigo_innovation', label: 'Indigo', colors: ['#4F46E5', '#818CF8', '#E0E7FF'], desc: 'AI & Innovation' },
+  { value: 'emerald_academic', label: 'Emerald', colors: ['#059669', '#10B981', '#D1FAE5'], desc: 'Science & Research' },
+  { value: 'teal_corporate', label: 'Teal', colors: ['#0D9488', '#14B8A6', '#CCFBF1'], desc: 'Enterprise' },
+  { value: 'orange_energy', label: 'Orange', colors: ['#C2410C', '#EA580C', '#FFEDD5'], desc: 'Startup & Creative' },
+  { value: 'minimal_charcoal', label: 'Minimal', colors: ['#18181B', '#52525B', '#E4E4E7'], desc: 'Executive & Law' },
+];
+
+const VISUAL_OPTIONS = [
+  { value: 'standard', label: 'Standard', desc: 'Clean layouts, minimal visuals', icon: '📄' },
+  { value: 'smart', label: 'Smart', desc: 'AI picks images, diagrams & charts', icon: '🧠' },
+  { value: 'premium', label: 'Premium', desc: 'Maximum visual richness', icon: '✨' },
+];
+
+const GENERATION_STAGES = [
+  { key: 'outline', label: 'Designing narrative & structure', icon: '📝' },
+  { key: 'expand', label: 'Writing educational content', icon: '📖' },
+  { key: 'render', label: 'Rendering visuals & PPTX', icon: '🎨' },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════
 
 const TopicDeckPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
   const [topic, setTopic] = useState('');
   
-  // Depth & Audience selectors
+  // Core config
+  const [preset, setPreset] = useState('academic');
   const [depth, setDepth] = useState('full');
   const [audience, setAudience] = useState('university');
+  const [themeId, setThemeId] = useState('');
+  const [visualMode, setVisualMode] = useState('smart');
+  
+  // UI state
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDepthDropdown, setShowDepthDropdown] = useState(false);
   const [showAudienceDropdown, setShowAudienceDropdown] = useState(false);
   
-  // Toggles
+  // Toggles (education features)
   const [activeToggles, setActiveToggles] = useState<Record<string, boolean>>({
     rbt: true,
   });
   
+  // Generation state
   const [generating, setGenerating] = useState(false);
+  const [currentStage, setCurrentStage] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [slideCount, setSlideCount] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [progressMsg, setProgressMsg] = useState('Initializing...');
+  const [resultTitle, setResultTitle] = useState('');
   
-  // Usage stats
+  // History
   const [deckHistory, setDeckHistory] = useState<any[]>([]);
   
   const isPro = true;
@@ -69,12 +115,13 @@ const TopicDeckPage: React.FC = () => {
     fetchHistory();
   }, []);
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // GENERATION HANDLER
+  // ═══════════════════════════════════════════════════════════════════════
+
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!isPro) {
-      setShowUpgradeModal(true);
-      return;
-    }
+    if (!isPro) { setShowUpgradeModal(true); return; }
     if (!topic.trim()) return;
     
     setGenerating(true);
@@ -82,15 +129,14 @@ const TopicDeckPage: React.FC = () => {
     setSlideCount(null);
     setErrorMessage(null);
     setStatus('processing');
+    setCurrentStage(0);
     
     const token = useAuthStore.getState().session?.access_token;
     const apiUrl = import.meta.env.VITE_API_URL || '';
     
     try {
-      // ---------------------------------------------------------
       // STEP 1: Outline
-      // ---------------------------------------------------------
-      setProgressMsg('Step 1/3: Designing syllabus & outline...');
+      setCurrentStage(0);
       const outlineRes = await fetch(`${apiUrl}/api/decks/outline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -104,10 +150,8 @@ const TopicDeckPage: React.FC = () => {
       
       const { deck_id, outline_data } = await outlineRes.json();
       
-      // ---------------------------------------------------------
       // STEP 2: Expand
-      // ---------------------------------------------------------
-      setProgressMsg('Step 2/3: Writing deep educational content & examples...');
+      setCurrentStage(1);
       const expandRes = await fetch(`${apiUrl}/api/decks/expand`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -118,10 +162,8 @@ const TopicDeckPage: React.FC = () => {
       
       const { expanded_data } = await expandRes.json();
 
-      // ---------------------------------------------------------
-      // STEP 3: Render (Images + PPTX)
-      // ---------------------------------------------------------
-      setProgressMsg('Step 3/3: Generating visuals & rendering PPTX...');
+      // STEP 3: Render
+      setCurrentStage(2);
       const renderRes = await fetch(`${apiUrl}/api/decks/render`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -136,6 +178,7 @@ const TopicDeckPage: React.FC = () => {
         setStatus('ready');
         setDownloadUrl(renderData.download_url);
         setSlideCount(renderData.slide_count);
+        setResultTitle(expanded_data?.deck_title || topic);
       } else {
         throw new Error('Generation completed but download URL is missing.');
       }
@@ -143,15 +186,10 @@ const TopicDeckPage: React.FC = () => {
       setGenerating(false);
       
     } catch (err: any) {
-      console.error('[PPT Generator] Error details:', {
-        name: err?.name,
-        message: err?.message,
-        stack: err?.stack,
-        raw: err
-      });
+      console.error('[PPT Generator] Error:', err);
       const msg = err?.message || 'Unknown error';
       setErrorMessage(msg.includes('Failed to fetch') 
-        ? 'Network error: could not reach the server. Please check your internet connection and try again.'
+        ? 'Network error: could not reach the server. Please check your connection and try again.'
         : msg
       );
       setStatus('failed');
@@ -179,47 +217,50 @@ const TopicDeckPage: React.FC = () => {
     return 'Good evening';
   };
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════
+
   return (
     <AppLayout title="PPT Generator">
-      <SEO title="Generate PPTX Decks" description="Generate complete PowerPoint presentations instantly with AI." />
+      <SEO title="AI Presentation Studio" description="Generate professional PowerPoint presentations with AI-powered design intelligence." />
       
-      <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-16 px-4 pb-12 bg-white relative overflow-hidden">
+      <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-12 px-4 pb-12 bg-[#FAFAFA] relative overflow-hidden">
         
-        {/* Animated Genie Container */}
-        <div className="relative mb-8 animate-[bounce_3s_ease-in-out_infinite]">
-          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center shadow-lg relative z-10 overflow-hidden border-4 border-white">
-            <div className="text-5xl" style={{ transform: 'scale(1.2) translateY(5px)' }}>🧞‍♂️</div>
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-3xl opacity-30 z-0"></div>
+        {/* Subtle background gradient */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-blue-50/50 to-transparent rounded-full blur-3xl" />
         </div>
 
-        {/* Top Badges */}
-        <div className="flex items-center gap-3 mb-10">
-          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
-            <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+        {/* Top Stats Badges */}
+        <div className="flex items-center gap-3 mb-8 relative z-10">
+          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-600">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>{readyCount} decks generated</span>
           </div>
-          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
+          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-600">
             <Clock className="w-3.5 h-3.5 text-blue-500" />
-            <span>{totalCreated} total created</span>
+            <span>{totalCreated} total</span>
           </div>
         </div>
 
         {/* Greeting */}
-        <div className="text-center mb-10">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
-            <span className="text-[#5D4037]">{getGreeting()}, </span>
-            <span className="text-[#FFA000]">{currentUser?.full_name?.split(' ')[0] || 'User'}.</span>
+        <div className="text-center mb-8 relative z-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
+            <span className="text-gray-800">{getGreeting()}, </span>
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              {currentUser?.full_name?.split(' ')[0] || 'User'}
+            </span>
           </h1>
-          <p className="text-xl text-gray-700 font-medium">What would you like to teach today?</p>
+          <p className="text-lg text-gray-500 font-medium">What would you like to present today?</p>
         </div>
 
-        {/* Search Input */}
-        <div className="w-full max-w-4xl mx-auto mb-6 relative z-20">
-          <div className={`flex items-center bg-white rounded-full border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden ${generating ? 'opacity-50' : 'hover:shadow-md hover:border-gray-300'}`}>
-            <div className="pl-6 pr-3 py-3">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-500 font-bold text-lg leading-none">+</span>
+        {/* ─── Topic Input ─── */}
+        <div className="w-full max-w-3xl mx-auto mb-6 relative z-20">
+          <div className={`flex items-center bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden ${generating ? 'opacity-50 pointer-events-none' : 'hover:shadow-md hover:border-gray-300 focus-within:shadow-md focus-within:border-blue-300'}`}>
+            <div className="pl-5 pr-2 py-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
             </div>
             
@@ -228,43 +269,96 @@ const TopicDeckPage: React.FC = () => {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleGenerate(); }}
-              placeholder="Cloud Computing Architecture"
+              placeholder="Cloud Computing Architecture, Machine Learning Fundamentals..."
               disabled={generating}
-              className="flex-1 py-5 px-2 bg-transparent text-gray-800 text-lg focus:outline-none placeholder:text-gray-400"
+              className="flex-1 py-4 px-3 bg-transparent text-gray-800 text-base focus:outline-none placeholder:text-gray-400"
             />
             
-            <div className="pr-4">
+            <div className="pr-3">
               <button
                 onClick={() => handleGenerate()}
                 disabled={generating || !topic.trim()}
-                className="w-10 h-10 rounded-full bg-gray-300 text-white flex items-center justify-center hover:bg-gray-400 transition-colors disabled:opacity-50"
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center hover:from-blue-600 hover:to-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
               >
-                {generating ? <Loader2 className="w-5 h-5 animate-spin text-gray-600" /> : <ArrowUp className="w-5 h-5" />}
+                {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUp className="w-5 h-5" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="w-full max-w-4xl mx-auto flex flex-wrap justify-center gap-3">
+        {/* ─── Preset Cards ─── */}
+        <div className="w-full max-w-3xl mx-auto mb-5 relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Presentation Type</span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {PRESET_OPTIONS.map(p => (
+              <button
+                key={p.value}
+                onClick={() => setPreset(p.value)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                  preset === p.value
+                    ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
+                    : 'bg-white border-gray-150 text-gray-600 hover:bg-gray-50 hover:border-gray-200'
+                }`}
+              >
+                <span className="text-base">{p.icon}</span>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── Theme Picker ─── */}
+        <div className="w-full max-w-3xl mx-auto mb-5 relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Palette className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Theme</span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {THEME_OPTIONS.map(t => (
+              <button
+                key={t.value}
+                onClick={() => setThemeId(t.value)}
+                title={t.desc}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all border ${
+                  themeId === t.value
+                    ? 'bg-white border-gray-300 shadow-sm ring-1 ring-gray-200'
+                    : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
+                }`}
+              >
+                <div className="flex gap-0.5">
+                  {t.colors.map((c, i) => (
+                    <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <span className="text-gray-700">{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── Quick Config Row ─── */}
+        <div className="w-full max-w-3xl mx-auto flex flex-wrap gap-2 mb-4 relative z-10">
           
           {/* Audience Dropdown */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => { setShowAudienceDropdown(!showAudienceDropdown); setShowDepthDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-150 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
             >
-              <Filter className="w-4 h-4 text-blue-500" />
+              <Users className="w-4 h-4 text-blue-500" />
               {AUDIENCE_OPTIONS.find(a => a.value === audience)?.icon} {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label}
               <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showAudienceDropdown ? 'rotate-180' : ''}`} />
             </button>
             {showAudienceDropdown && (
-              <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] overflow-hidden">
+              <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] overflow-hidden">
                 {AUDIENCE_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => { setAudience(opt.value); setShowAudienceDropdown(false); }}
-                    className={`w-full flex items-center gap-2 px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors ${audience === opt.value ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700'}`}
+                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors ${audience === opt.value ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700'}`}
                   >
                     <span>{opt.icon}</span> {opt.label}
                     {audience === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-blue-500" />}
@@ -278,19 +372,19 @@ const TopicDeckPage: React.FC = () => {
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => { setShowDepthDropdown(!showDepthDropdown); setShowAudienceDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-150 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
             >
               <Layers className="w-4 h-4 text-indigo-500" />
               {DEPTH_OPTIONS.find(d => d.value === depth)?.icon} {DEPTH_OPTIONS.find(d => d.value === depth)?.label}
               <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showDepthDropdown ? 'rotate-180' : ''}`} />
             </button>
             {showDepthDropdown && (
-              <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[220px] overflow-hidden">
+              <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[220px] overflow-hidden">
                 {DEPTH_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => { setDepth(opt.value); setShowDepthDropdown(false); }}
-                    className={`w-full flex items-center gap-2 px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors ${depth === opt.value ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-700'}`}
+                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors ${depth === opt.value ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-700'}`}
                   >
                     <span>{opt.icon}</span> {opt.label}
                     {depth === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-indigo-500" />}
@@ -299,121 +393,187 @@ const TopicDeckPage: React.FC = () => {
               </div>
             )}
           </div>
-          
-          <button onClick={() => toggleFilter('scenario')} className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium shadow-sm transition-colors ${activeToggles.scenario ? 'text-gray-900 ring-1 ring-gray-300' : 'text-gray-600'}`}>
-            <Sparkles className="w-4 h-4 text-gray-400" />
-            Scenario Quiz
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-sm font-bold ${activeToggles.scenario ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'}`}>
-              {activeToggles.scenario ? 'ON' : 'OFF'}
-            </span>
-          </button>
 
-          <button onClick={() => toggleFilter('exercise')} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 shadow-sm">
-            <FileText className="w-4 h-4 text-gray-400" />
-            Exercise (1 left)
-            <span className="text-[10px] px-1.5 py-0.5 rounded-sm font-bold bg-gray-200 text-gray-600">OFF</span>
-          </button>
+          {/* Visual Mode */}
+          {VISUAL_OPTIONS.map(v => (
+            <button
+              key={v.value}
+              onClick={() => setVisualMode(v.value)}
+              title={v.desc}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
+                visualMode === v.value
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              {v.label}
+            </button>
+          ))}
 
-          <button onClick={() => toggleFilter('visuals')} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 shadow-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-gray-400">{'\u25B6'}</span> Visuals <span className="text-yellow-500">{'\u2726'} Gold+</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-sm font-bold bg-gray-200 text-gray-600">OFF</span>
+          {/* Advanced toggle */}
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-100 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 transition-all"
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            Advanced
+            <ChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
           </button>
-          
-          {/* Row 2 */}
-          <div className="w-full flex justify-center gap-3 mt-1">
-            <button onClick={() => toggleFilter('trends')} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 shadow-sm">
-              <FileText className="w-4 h-4 text-gray-400" />
-              Trends
-              <span className="text-[10px] px-1.5 py-0.5 rounded-sm font-bold bg-gray-200 text-gray-600">OFF</span>
-            </button>
-            
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-              <Globe className="w-4 h-4 text-gray-400" />
-              Language (1 left)
-              <span className="text-[10px] px-1.5 py-0.5 rounded-sm font-bold bg-gray-200 text-gray-600">EN</span>
-            </button>
-          </div>
-          
-          {/* Row 3 */}
-          <div className="w-full flex justify-center gap-3 mt-1">
-            <button onClick={() => toggleFilter('rbt')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold shadow-sm transition-all ${activeToggles.rbt ? 'bg-[#FFF3E0] border border-[#FFCC80] text-[#E65100]' : 'bg-white border border-gray-200 text-gray-600'}`}>
-              RBT
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${activeToggles.rbt ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                {activeToggles.rbt ? 'ON' : 'OFF'}
-              </span>
-            </button>
-            
-            <button className="flex items-center gap-2 px-4 py-2 bg-transparent border border-gray-100 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-50">
-              LO-PO Mapping
-              <ChevronDown className="w-3 h-3 text-gray-300" />
-            </button>
-            
-            <button className="flex items-center gap-2 px-4 py-2 bg-transparent border border-gray-100 rounded-full text-sm font-medium text-gray-500 hover:bg-gray-50">
-              IKS Mapping
-              <ChevronDown className="w-3 h-3 text-gray-300" />
-            </button>
-          </div>
-          
         </div>
 
-        {/* Results / Status Area */}
-        <div className="w-full max-w-4xl mx-auto mt-12">
+        {/* ─── Advanced Settings Drawer ─── */}
+        {showAdvanced && (
+          <div className="w-full max-w-3xl mx-auto mb-4 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm relative z-10 animate-in slide-in-from-top-2 duration-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button onClick={() => toggleFilter('rbt')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeToggles.rbt ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-gray-50 border-gray-150 text-gray-500'}`}>
+                RBT / Bloom's
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${activeToggles.rbt ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                  {activeToggles.rbt ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              <button onClick={() => toggleFilter('scenario')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${activeToggles.scenario ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-150 text-gray-500'}`}>
+                Scenario Quiz
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${activeToggles.scenario ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                  {activeToggles.scenario ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-150 rounded-xl text-sm font-medium text-gray-500">
+                <Globe className="w-3.5 h-3.5" /> Language
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-200 text-gray-500">EN</span>
+              </button>
+              <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-150 rounded-xl text-sm font-medium text-gray-500">
+                <FileText className="w-3.5 h-3.5" /> Exercises
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-200 text-gray-500">OFF</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* GENERATION PROGRESS */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        <div className="w-full max-w-3xl mx-auto mt-6 relative z-10">
           {status === 'processing' && (
-            <div className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex flex-col items-center justify-center text-center border border-blue-100 shadow-sm">
-              <div className="relative mb-6">
-                <Loader2 className="w-14 h-14 text-blue-500 animate-spin" />
-                <div className="absolute inset-0 w-14 h-14 rounded-full bg-blue-400/20 animate-ping" />
+            <div className="p-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
+              {/* Stage Progress */}
+              <div className="flex items-center justify-between mb-8">
+                {GENERATION_STAGES.map((stage, i) => (
+                  <div key={stage.key} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center flex-1">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all duration-500 ${
+                        i < currentStage ? 'bg-green-100 text-green-600' :
+                        i === currentStage ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-200 animate-pulse' :
+                        'bg-gray-100 text-gray-400'
+                      }`}>
+                        {i < currentStage ? (
+                          <CheckCircle2 className="w-5 h-5" />
+                        ) : i === currentStage ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <span className="text-sm font-bold">{i + 1}</span>
+                        )}
+                      </div>
+                      <span className={`text-xs font-medium text-center ${
+                        i <= currentStage ? 'text-gray-700' : 'text-gray-400'
+                      }`}>{stage.label}</span>
+                    </div>
+                    {i < GENERATION_STAGES.length - 1 && (
+                      <div className={`w-12 h-0.5 mx-2 mb-6 transition-colors ${
+                        i < currentStage ? 'bg-green-300' : 'bg-gray-200'
+                      }`} />
+                    )}
+                  </div>
+                ))}
               </div>
-              <h3 className="font-bold text-lg text-gray-800 mb-1">Crafting your presentation</h3>
-              <p className="text-sm text-blue-600 font-medium animate-pulse mb-3">
-                {progressMsg}
-              </p>
-              <p className="text-xs text-gray-400">
-                This typically takes 30-60 seconds. Please don't close this tab.
-              </p>
-              <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
-                <span className="flex items-center gap-1"><Layers className="w-3 h-3" /> {depth === 'full' ? '10-16 slides' : '6-8 slides'}</span>
-                <span>|</span>
-                <span>{AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level</span>
+
+              <div className="text-center">
+                <p className="text-sm text-gray-500">
+                  This typically takes 30-60 seconds. Please don't close this tab.
+                </p>
+                <div className="flex items-center justify-center gap-3 mt-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><Layers className="w-3 h-3" /> {depth === 'full' ? '10-16 slides' : '6-8 slides'}</span>
+                  <span>|</span>
+                  <span>{AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level</span>
+                  <span>|</span>
+                  <span>{PRESET_OPTIONS.find(p => p.value === preset)?.label} style</span>
+                </div>
               </div>
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* SUCCESS RESULT */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           {status === 'ready' && downloadUrl && (
-            <div className="p-8 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm">
-              <CheckCircle2 className="w-14 h-14 text-green-500 mb-4" />
-              <h3 className="text-xl font-bold text-green-900 mb-2">Your deck is ready!</h3>
-              {slideCount && (
-                <p className="text-sm text-green-700 mb-4">{slideCount} slides with AI-generated content & visuals</p>
-              )}
-              <a
-                href={downloadUrl}
-                download
-                className="mt-2 px-8 py-4 bg-[#5D4037] hover:bg-[#4E342E] text-white font-bold rounded-full flex items-center gap-2 transition-transform hover:scale-105 shadow-md"
-              >
-                <Download className="w-5 h-5" /> Download .pptx
-              </a>
-              <button
-                onClick={() => { setStatus(null); setTopic(''); setDownloadUrl(null); }}
-                className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
-              >
-                Generate another deck
-              </button>
+            <div className="p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
+              {/* Success header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Your presentation is ready!</h3>
+                  <p className="text-sm text-gray-500">
+                    {resultTitle || topic} · {slideCount} slides · {PRESET_OPTIONS.find(p => p.value === preset)?.label}
+                  </p>
+                </div>
+              </div>
+
+              {/* Info pills */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
+                  {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} Level
+                </span>
+                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">
+                  {depth === 'full' ? 'Full Depth' : 'Quick Overview'}
+                </span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
+                  {THEME_OPTIONS.find(t => t.value === themeId)?.label || 'AI Theme'} Theme
+                </span>
+                <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full">
+                  16:9 Widescreen
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <a
+                  href={downloadUrl}
+                  download
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-sm transition-all hover:shadow-md"
+                >
+                  <Download className="w-5 h-5" /> Download .pptx
+                </a>
+                <button
+                  onClick={() => { setStatus(null); setTopic(''); setDownloadUrl(null); }}
+                  className="flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4" /> New Deck
+                </button>
+              </div>
             </div>
           )}
           
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* ERROR STATE */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           {status === 'failed' && (
-            <div className="p-8 bg-red-50 border border-red-200 rounded-2xl text-center">
-              <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-              <p className="text-red-700 font-bold mb-2 text-lg">Failed to generate deck</p>
-              {errorMessage && (
-                <p className="text-red-500 text-sm mb-4 max-w-lg mx-auto leading-relaxed">{errorMessage}</p>
-              )}
+            <div className="p-8 bg-white border border-red-200 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Generation failed</h3>
+                  {errorMessage && (
+                    <p className="text-sm text-red-500 mt-1">{errorMessage}</p>
+                  )}
+                </div>
+              </div>
               <button 
                 onClick={() => { setStatus(null); setErrorMessage(null); }}
-                className="px-6 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-full text-sm transition-colors"
+                className="px-5 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl text-sm transition-colors"
               >
                 Try Again
               </button>

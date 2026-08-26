@@ -8,10 +8,25 @@
     }
   },
   "rewrites": [
-    { "source": "/auth/:path*", "destination": "/api/index.py" },
-    { "source": "/pdfs/:path*", "destination": "/api/index.py" },
-    { "source": "/chat/:path*", "destination": "/api/index.py" },
-    { "source": "/api/:path*", "destination": "/api/index.py" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/auth/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/pdfs/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/chat/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
