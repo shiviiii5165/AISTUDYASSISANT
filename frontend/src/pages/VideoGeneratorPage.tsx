@@ -1,99 +1,166 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlayCircle, Clock, Globe, Filter, Sparkles, ChevronDown, Loader2, BookOpen, Brain, HelpCircle, Lightbulb, FileText, RotateCcw, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
+import { 
+  PlayCircle, Clock, Globe, Filter, Sparkles, ChevronDown, 
+  Loader2, BookOpen, Brain, HelpCircle, Lightbulb, FileText, 
+  RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
+  Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
+  Plus, Edit3, Youtube, ChevronRight, CheckSquare, Search,
+  BarChart2, Zap, Bookmark, Volume2, Maximize2
+} from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
+import { fetchPdfs, PDFDocument } from '../lib/api';
 
-// ─── Types ───────────────────────────────────────
-interface Scene {
-  id: string;
-  type: string;
-  title: string;
-  duration_seconds: number;
-  teacher_speech: string;
+// ═══════════════════════════════════════════════════════════════════════════
+// TYPES & CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface SourceRef {
+  source_type?: string;
+  page_number?: number;
+  slide_number?: number;
+  timestamp_start?: number;
+  timestamp_end?: number;
+  snippet?: string;
+}
+
+interface SceneSpec {
+  scene_id: string;
+  order: number;
+  concept_id: string;
+  purpose: string;
+  duration: number;
+  narration: string;
   visual_type: string;
-  visual_content: {
+  visual_spec: {
     title?: string;
     bullets?: string[];
     formula?: string;
-    diagram_description?: string;
+    diagram_type?: string;
+    stock_keywords?: string[];
   };
-  teacher_emotion: string;
+  caption: string;
+  ai_video_score?: number;
+  source_refs?: SourceRef[];
+  status: string;
 }
 
-interface QuizItem {
-  question: string;
-  options: string[];
-  correct_answer: string;
-  explanation: string;
+interface VideoMetrics {
+  total_duration_sec: number;
+  ai_video_seconds: number;
+  ai_image_count: number;
+  stock_media_count: number;
+  python_graphics_count: number;
+  tts_characters: number;
+  cost_per_minute_usd: number;
+  ai_generation_ratio: number;
+  render_time_sec: number;
 }
 
-interface Flashcard {
-  front: string;
-  back: string;
-}
-
-interface LessonData {
-  lesson_title: string;
+interface StoryboardData {
+  topic: string;
+  style: string;
   language: string;
-  estimated_duration_seconds: number;
+  total_duration: number;
+  scenes: SceneSpec[];
   learning_objectives: string[];
-  prerequisites: string[];
-  scenes: Scene[];
-  key_takeaways: string[];
   summary_notes: string;
-  revision_notes: string[];
-  quiz: QuizItem[];
-  important_questions: string[];
-  flashcards: Flashcard[];
 }
 
-// ─── Component ───────────────────────────────────
+const QUALITY_OPTIONS = [
+  { value: 'quick', label: 'Quick', desc: 'Fast rendering with Python diagrams & stock footage' },
+  { value: 'standard', label: 'Standard', desc: 'Balanced mix of graphics, stock, and AI visuals' },
+  { value: 'premium', label: 'Premium', desc: 'Higher fidelity visuals, richer transitions & AI motion' },
+];
+
+const STYLE_OPTIONS = [
+  { value: 'academic', label: 'Academic Clean', desc: 'Structured university lecture style' },
+  { value: 'modern_explainer', label: 'Modern Explainer', desc: 'Fast-paced, high visual clarity' },
+  { value: 'technical', label: 'Technical Deep Dive', desc: 'Architectures, terminal code & equations' },
+  { value: 'visual_learning', label: 'Visual Learning', desc: 'Diagrams, mental models & concept flows' },
+  { value: 'cinematic', label: 'Documentary', desc: 'Rich b-roll and narrative storytelling' },
+];
+
+const DURATION_OPTIONS = [
+  { val: '1', label: '1 min' },
+  { val: '3', label: '3 min' },
+  { val: '5', label: '5 min' },
+  { val: '10', label: '10 min' },
+  { val: '15', label: '15 min' },
+];
+
+const LEVEL_OPTIONS = ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'B.Tech', 'Undergrad', 'Graduate'];
+const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Hinglish'];
+
 const VideoGeneratorPage: React.FC = () => {
   const [topic, setTopic] = useState('');
-  
-  // Settings
-  const [level, setLevel] = useState('Class 10');
+  const [level, setLevel] = useState('B.Tech');
   const [duration, setDuration] = useState('5');
-  const [language, setLanguage] = useState('hinglish');
-  const [showLevelDropdown, setShowLevelDropdown] = useState(false);
-  const [showDurationDropdown, setShowDurationDropdown] = useState(false);
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [language, setLanguage] = useState('English');
+  const [quality, setQuality] = useState('standard');
+  const [style, setStyle] = useState('academic');
+  const [aiIntensity, setAiIntensity] = useState<'minimal' | 'balanced' | 'maximum'>('balanced');
   
-  // Generation state
+  // Knowledge Sources
+  const [sourceType, setSourceType] = useState('topic');
+  const [selectedPdfId, setSelectedPdfId] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [userPdfs, setUserPdfs] = useState<PDFDocument[]>([]);
+
+  // Generation State
   const [generating, setGenerating] = useState(false);
+  const [regeneratingScene, setRegeneratingScene] = useState(false);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [lessonData, setLessonData] = useState<LessonData | null>(null);
+  const [storyboard, setStoryboard] = useState<StoryboardData | null>(null);
+  const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<VideoMetrics | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // History
-  const [pastLessons, setPastLessons] = useState<any[]>([]);
-  
-  // Active tab for results view
-  const [activeTab, setActiveTab] = useState<'scenes' | 'notes' | 'quiz' | 'flashcards' | 'questions'>('scenes');
-  
-  // Quiz state
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
-  const [showQuizResults, setShowQuizResults] = useState(false);
-  
-  // Flashcard state
-  const [flippedCards, setFlippedCards] = useState<Record<number, boolean>>({});
-  
-  // Active scene
+  // Studio & Navigation State
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<'studio' | 'transcript' | 'notes' | 'telemetry'>('studio');
+  const [transcriptSearch, setTranscriptSearch] = useState('');
+  const [bookmarks, setBookmarks] = useState<number[]>([]);
+  const [pastLessons, setPastLessons] = useState<any[]>([]);
 
   const resultsRef = useRef<HTMLDivElement>(null);
-  
-  const levels = ['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Undergraduate', 'Graduate'];
-  const durations = [{ val: '5', label: '5 min' }, { val: '8', label: '8 min' }, { val: '10', label: '10 min' }, { val: '15', label: '15 min' }];
-  const languages = [{ val: 'hinglish', label: 'Hinglish' }, { val: 'hindi', label: 'Hindi' }, { val: 'english', label: 'English' }];
 
-  // Load past lessons
+  // Natural Language Prompt Parser
+  const parseNaturalLanguagePrompt = (text: string) => {
+    const lower = text.toLowerCase();
+    
+    // Duration detection
+    if (lower.includes('1 minute') || lower.includes('1 min') || lower.includes('1m')) setDuration('1');
+    else if (lower.includes('3 minute') || lower.includes('3 min') || lower.includes('3m')) setDuration('3');
+    else if (lower.includes('10 minute') || lower.includes('10 min') || lower.includes('10m')) setDuration('10');
+    else if (lower.includes('15 minute') || lower.includes('15 min') || lower.includes('15m')) setDuration('15');
+    else if (lower.includes('5 minute') || lower.includes('5 min') || lower.includes('5m')) setDuration('5');
+
+    // Language detection
+    if (lower.includes('hinglish')) setLanguage('Hinglish');
+    else if (lower.includes('hindi')) setLanguage('Hindi');
+    else if (lower.includes('english')) setLanguage('English');
+
+    // Level detection
+    if (lower.includes('b.tech') || lower.includes('btech') || lower.includes('engineering')) setLevel('B.Tech');
+    else if (lower.includes('class 12') || lower.includes('12th')) setLevel('Class 12');
+    else if (lower.includes('class 10') || lower.includes('10th')) setLevel('Class 10');
+
+    // Source detection
+    if (lower.includes('notes') || lower.includes('pdf')) setSourceType('pdf');
+    else if (lower.includes('youtube')) setSourceType('youtube');
+  };
+
+  // Load User PDFs & Past Lessons
   useEffect(() => {
-    const loadHistory = async () => {
+    const loadData = async () => {
       try {
         const token = useAuthStore.getState().session?.access_token;
+        const pdfs = await fetchPdfs();
+        setUserPdfs(pdfs.filter(p => p.status === 'ready'));
+        
         const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -102,16 +169,16 @@ const VideoGeneratorPage: React.FC = () => {
           setPastLessons(data);
         }
       } catch (e) {
-        console.error("Failed to load lesson history", e);
+        console.error("Failed to load initial data", e);
       }
     };
-    loadHistory();
+    loadData();
   }, []);
-  
-  // Poll for lesson status
+
+  // Poll for Video Status
   useEffect(() => {
     let intervalId: any;
-    if (lessonId && (status === 'processing' || status === 'auditing' || status === 'enhancing')) {
+    if (lessonId && (status === 'processing' || status === 'planning' || status === 'assets' || status === 'audio')) {
       intervalId = setInterval(async () => {
         try {
           const token = useAuthStore.getState().session?.access_token;
@@ -123,15 +190,16 @@ const VideoGeneratorPage: React.FC = () => {
           setStatus(data.status);
           
           if (data.status === 'ready' && data.lesson_json) {
-            setLessonData(data.lesson_json);
+            setStoryboard(data.lesson_json);
+            if (data.final_video_url) setFinalVideoUrl(data.final_video_url);
+            if (data.metrics) setMetrics(data.metrics);
             setGenerating(false);
             clearInterval(intervalId);
-            // Scroll to results
             setTimeout(() => {
               resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
             }, 300);
           } else if (data.status === 'failed') {
-            setError(data.error_message || 'Generation failed. Please try again.');
+            setError(data.error_message || 'Video generation failed.');
             setGenerating(false);
             clearInterval(intervalId);
           }
@@ -143,601 +211,532 @@ const VideoGeneratorPage: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [lessonId, status]);
 
+  // Start Generation
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!topic.trim()) return;
-    
+    if (!topic.trim() || generating) return;
+
     setGenerating(true);
     setLessonId(null);
-    setLessonData(null);
+    setStoryboard(null);
+    setFinalVideoUrl(null);
+    setMetrics(null);
     setError(null);
     setStatus('processing');
-    setActiveTab('scenes');
-    setSelectedAnswers({});
-    setShowQuizResults(false);
-    setFlippedCards({});
     setActiveSceneIndex(0);
-    
+
+    const token = useAuthStore.getState().session?.access_token;
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+
     try {
-      const token = useAuthStore.getState().session?.access_token;
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/generate`, {
+      const sourceIds = (sourceType === 'pdf' && selectedPdfId) ? [selectedPdfId] : [];
+
+      const res = await fetch(`${apiUrl}/api/lessons/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ topic, level, duration, language })
+        body: JSON.stringify({
+          topic: topic.trim(),
+          level,
+          duration,
+          language: language.toLowerCase(),
+          style,
+          quality,
+          source_type: sourceType,
+          source_ids: sourceIds,
+          youtube_url: youtubeUrl.trim() || null,
+        }),
       });
-      
+
+      if (!res.ok) throw new Error('Failed to initiate video generation');
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.detail || 'Failed to start generation');
-      }
-      
       setLessonId(data.lesson_id);
+
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to generate lesson');
+      setError(err.message || 'Failed to start video generation');
       setGenerating(false);
       setStatus('failed');
     }
   };
 
-  const loadLesson = async (id: string) => {
+  // Regenerate Single Scene
+  const handleRegenerateScene = async (sceneId: string) => {
+    if (!lessonId || regeneratingScene) return;
+
+    setRegeneratingScene(true);
+    const token = useAuthStore.getState().session?.access_token;
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+
     try {
-      const token = useAuthStore.getState().session?.access_token;
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${apiUrl}/api/lessons/${lessonId}/regenerate-scene`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ scene_id: sceneId }),
       });
+
+      if (!res.ok) throw new Error('Scene regeneration failed');
       const data = await res.json();
-      if (data.status === 'ready' && data.lesson_json) {
-        setLessonData(data.lesson_json);
-        setLessonId(id);
-        setStatus('ready');
-        setTopic(data.topic || '');
-        setActiveTab('scenes');
-        setSelectedAnswers({});
-        setShowQuizResults(false);
-        setFlippedCards({});
-        setActiveSceneIndex(0);
-        setTimeout(() => {
-          resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 300);
-      }
-    } catch (e) {
-      console.error("Failed to load lesson", e);
+      if (data.final_video_url) setFinalVideoUrl(data.final_video_url);
+
+      alert(`Scene ${sceneId} updated and final video re-composed successfully!`);
+    } catch (err: any) {
+      console.error(err);
+      alert('Could not regenerate scene. Please try again.');
+    } finally {
+      setRegeneratingScene(false);
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+  const toggleBookmark = (idx: number) => {
+    setBookmarks(prev => 
+      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+    );
   };
 
-  const getSceneTypeIcon = (type: string) => {
+  const getVisualBadge = (type: string) => {
     switch (type) {
-      case 'intro': return '🎬';
-      case 'concept': return '💡';
-      case 'definition': return '📖';
-      case 'formula': return '🔢';
-      case 'diagram': return '📊';
-      case 'example': return '📝';
-      case 'comparison': return '⚖️';
-      case 'quiz': return '❓';
-      case 'summary': return '📋';
-      case 'outro': return '🎯';
-      default: return '📌';
-    }
-  };
-
-  const getStatusMessage = () => {
-    switch (status) {
-      case 'processing': return 'Understanding your topic & creating lesson plan...';
-      case 'auditing': return 'Reviewing lesson for completeness...';
-      case 'enhancing': return 'Enhancing with missing content...';
-      default: return 'Generating...';
+      case 'python_graphics': return { label: '⚡ Python Graphics', bg: 'bg-blue-50 text-blue-700 border-blue-200' };
+      case 'stock_video': return { label: '🎬 Stock Footage', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+      case 'ai_image': return { label: '🎨 AI Concept Art', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
+      case 'ai_video': return { label: '✨ AI Motion Video', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
+      default: return { label: '📌 Visual Slide', bg: 'bg-slate-50 text-slate-700 border-slate-200' };
     }
   };
 
   return (
-    <AppLayout title="Video Generator">
-      <SEO title="GyanVideo AI — Generate Video Lessons" description="Turn any topic into a structured AI teacher-led lesson with notes, quiz, and flashcards." />
-      
-      <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-12 px-4 pb-12 bg-white relative overflow-hidden">
+    <AppLayout title="AI Educational Video Studio">
+      <SEO 
+        title="AI Video Studio — TeachGenie" 
+        description="Transform any topic, notes, or YouTube link into an educational video with Python graphics, TTS narration, and captions."
+      />
+
+      <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-8 px-4 pb-16 bg-[#F8FAFC]">
         
-        {/* ── Header Area ── */}
-        <div className="relative mb-6 animate-[bounce_3s_ease-in-out_infinite]">
-          <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center shadow-lg relative z-10 overflow-hidden border-4 border-white">
-            <PlayCircle className="w-10 h-10 text-purple-600" />
+        {/* Header */}
+        <div className="text-center max-w-2xl mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-bold text-blue-700 mb-3 shadow-xs">
+            <Film className="w-3.5 h-3.5 text-blue-600" />
+            <span>AI Educational Video Generation Compiler</span>
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 bg-purple-300 rounded-full blur-3xl opacity-30 z-0"></div>
-        </div>
-
-        <div className="flex items-center gap-3 mb-8">
-          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
-            <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-            <span>GyanVideo AI</span>
-          </div>
-          {pastLessons.length > 0 && (
-            <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-700">
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
-              <span>{pastLessons.length} lessons created</span>
-            </div>
-          )}
-        </div>
-
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            <span className="text-gray-800">What do you want </span>
-            <span className="text-purple-600">to learn?</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
+            Create Masterclass <span className="text-blue-600">Video Lessons</span>
           </h1>
-          <p className="text-lg text-gray-500 font-medium">Enter any topic — get a complete lesson with notes, quiz & flashcards</p>
+          <p className="text-sm text-slate-600">
+            Intelligent storyboarding, Python graphics, licensed stock media, synchronized TTS narration & captions.
+          </p>
         </div>
 
-        {/* ── Input Area ── */}
-        <div className="w-full max-w-3xl mx-auto mb-6 relative z-20">
-          <div className={`flex items-center bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden ${generating ? 'opacity-60 pointer-events-none' : 'hover:shadow-md hover:border-purple-300'}`}>
-            <div className="pl-5 pr-2 py-3">
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                <Lightbulb className="w-4 h-4 text-purple-600" />
-              </div>
-            </div>
-            <form onSubmit={handleGenerate} className="flex-1 flex items-center">
-              <input
-                type="text"
-                placeholder="e.g. Newton's Laws of Motion, Binary Search, Photosynthesis..."
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                disabled={generating}
-                className="w-full py-4 px-2 text-base outline-none bg-transparent placeholder:text-gray-400 font-medium text-gray-800"
-              />
-              <button 
-                type="submit"
-                disabled={generating || !topic.trim()}
-                className="mr-3 ml-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl font-semibold text-sm hover:bg-purple-700 transition-colors disabled:opacity-40 disabled:hover:bg-purple-600 flex items-center gap-2 whitespace-nowrap"
-              >
-                {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                Generate
-              </button>
-            </form>
-          </div>
-        </div>
-
-        {/* ── Settings Dropdowns ── */}
-        <div className="flex flex-wrap items-center justify-center gap-3 max-w-3xl mx-auto mb-8 relative z-30">
-          {/* Level */}
-          <div className="relative">
-            <button 
-              onClick={() => { setShowLevelDropdown(!showLevelDropdown); setShowDurationDropdown(false); setShowLanguageDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-purple-300 cursor-pointer shadow-sm transition-colors"
-            >
-              <Filter className="w-4 h-4 text-purple-400" />
-              {level}
-              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-            </button>
-            {showLevelDropdown && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50 min-w-[160px]">
-                {levels.map(l => (
-                  <button key={l} onClick={() => { setLevel(l); setShowLevelDropdown(false); }} className={`w-full text-left px-4 py-2 text-sm hover:bg-purple-50 transition-colors ${level === l ? 'text-purple-600 font-semibold bg-purple-50' : 'text-gray-700'}`}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Duration */}
-          <div className="relative">
-            <button 
-              onClick={() => { setShowDurationDropdown(!showDurationDropdown); setShowLevelDropdown(false); setShowLanguageDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-purple-300 cursor-pointer shadow-sm transition-colors"
-            >
-              <Clock className="w-4 h-4 text-purple-400" />
-              {durations.find(d => d.val === duration)?.label}
-              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-            </button>
-            {showDurationDropdown && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50 min-w-[120px]">
-                {durations.map(d => (
-                  <button key={d.val} onClick={() => { setDuration(d.val); setShowDurationDropdown(false); }} className={`w-full text-left px-4 py-2 text-sm hover:bg-purple-50 transition-colors ${duration === d.val ? 'text-purple-600 font-semibold bg-purple-50' : 'text-gray-700'}`}>
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Language */}
-          <div className="relative">
-            <button 
-              onClick={() => { setShowLanguageDropdown(!showLanguageDropdown); setShowLevelDropdown(false); setShowDurationDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-purple-300 cursor-pointer shadow-sm transition-colors"
-            >
-              <Globe className="w-4 h-4 text-purple-400" />
-              {languages.find(l => l.val === language)?.label}
-              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-            </button>
-            {showLanguageDropdown && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50 min-w-[140px]">
-                {languages.map(l => (
-                  <button key={l.val} onClick={() => { setLanguage(l.val); setShowLanguageDropdown(false); }} className={`w-full text-left px-4 py-2 text-sm hover:bg-purple-50 transition-colors ${language === l.val ? 'text-purple-600 font-semibold bg-purple-50' : 'text-gray-700'}`}>
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Generation Progress ── */}
-        {generating && (
-          <div className="w-full max-w-2xl mx-auto mb-10 bg-purple-50 border border-purple-100 rounded-2xl p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
-            </div>
-            <h3 className="text-lg font-bold text-purple-900 mb-2">Generating your lesson...</h3>
-            <p className="text-sm text-purple-700 mb-6">{getStatusMessage()}</p>
+        {/* Input & Configuration Card */}
+        <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs mb-8">
+          <form onSubmit={handleGenerate}>
             
-            <div className="space-y-3 text-left max-w-sm mx-auto">
-              {[
-                { key: 'processing', label: 'Understanding topic & creating lesson plan' },
-                { key: 'auditing', label: 'Reviewing lesson for completeness' },
-                { key: 'enhancing', label: 'Enhancing with missing content' },
-                { key: 'ready', label: 'Finalizing lesson' },
-              ].map(step => {
-                const isComplete = 
-                  step.key === 'processing' && (status === 'auditing' || status === 'enhancing' || status === 'ready') ||
-                  step.key === 'auditing' && (status === 'enhancing' || status === 'ready') ||
-                  step.key === 'enhancing' && status === 'ready' ||
-                  step.key === 'ready' && status === 'ready';
-                const isCurrent = step.key === status;
-                
-                return (
-                  <div key={step.key} className="flex items-center gap-3">
-                    {isComplete ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                    ) : isCurrent ? (
-                      <Loader2 className="w-5 h-5 text-purple-500 animate-spin shrink-0" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 shrink-0" />
-                    )}
-                    <span className={`text-sm ${isComplete ? 'text-green-700 font-medium' : isCurrent ? 'text-purple-700 font-semibold' : 'text-gray-400'}`}>
-                      {step.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Error State ── */}
-        {error && !generating && (
-          <div className="w-full max-w-2xl mx-auto mb-10 bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
-            <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-red-800 mb-1">Generation Failed</h3>
-            <p className="text-sm text-red-600 mb-4">{error}</p>
-            <button onClick={() => { setError(null); handleGenerate(); }} className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors inline-flex items-center gap-2">
-              <RotateCcw className="w-4 h-4" /> Retry
-            </button>
-          </div>
-        )}
-
-        {/* ═══════════ RESULTS ═══════════ */}
-        {lessonData && (
-          <div ref={resultsRef} className="w-full max-w-5xl mx-auto mt-4">
-            
-            {/* Lesson Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 mb-6 text-white">
-              <h2 className="text-2xl font-bold mb-2">{lessonData.lesson_title}</h2>
-              <div className="flex flex-wrap items-center gap-4 text-sm opacity-90">
-                <span className="flex items-center gap-1"><Layers className="w-4 h-4" /> {lessonData.scenes?.length || 0} scenes</span>
-                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {formatDuration(lessonData.estimated_duration_seconds || 0)}</span>
-                <span className="flex items-center gap-1"><Globe className="w-4 h-4" /> {lessonData.language}</span>
+            {/* Topic Input */}
+            <div className="mb-5">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                What do you want to learn?
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => {
+                    setTopic(e.target.value);
+                    parseNaturalLanguagePrompt(e.target.value);
+                  }}
+                  placeholder="e.g. Operating Systems Deadlock in Hinglish for B.Tech (5 min), or TCP Congestion Control..."
+                  disabled={generating}
+                  className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  disabled={generating || !topic.trim()}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors shrink-0"
+                >
+                  {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  <span>Create Video</span>
+                </button>
               </div>
-              {lessonData.learning_objectives && (
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2 opacity-75">Learning Objectives</p>
-                  <ul className="space-y-1">
-                    {lessonData.learning_objectives.map((obj, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-                        {obj}
-                      </li>
+            </div>
+
+            {/* Knowledge Source Selection */}
+            <div className="mb-5">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                Knowledge Grounding Source
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { id: 'topic', label: 'Topic Only', icon: Globe },
+                  { id: 'pdf', label: 'My Uploaded Notes', icon: FileText },
+                  { id: 'youtube', label: 'YouTube Video URL', icon: Youtube },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSourceType(s.id)}
+                    className={`p-3 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors ${
+                      sourceType === s.id
+                        ? 'border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <s.icon className={`w-4 h-4 ${sourceType === s.id ? 'text-blue-600' : 'text-slate-400'}`} />
+                    <span>{s.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {sourceType === 'pdf' && (
+                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Select Document from Library:</label>
+                  <select
+                    value={selectedPdfId}
+                    onChange={(e) => setSelectedPdfId(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    {userPdfs.map(p => (
+                      <option key={p.id} value={p.id}>📄 {p.name} ({p.page_count || 1} pages)</option>
                     ))}
-                  </ul>
+                  </select>
+                </div>
+              )}
+
+              {sourceType === 'youtube' && (
+                <div className="mt-3 p-3 bg-red-50/60 border border-red-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube Video URL:</label>
+                  <input
+                    type="url"
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full px-3 py-2 bg-white border border-red-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  />
                 </div>
               )}
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex items-center gap-1 border-b border-gray-200 mb-6 overflow-x-auto pb-px">
+            {/* Quality, Duration, Style, and AI Visual Intensity Controls */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+              
+              {/* Duration */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Duration</label>
+                <select
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                >
+                  {DURATION_OPTIONS.map(d => (
+                    <option key={d.val} value={d.val}>{d.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quality Tier */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Quality Tier</label>
+                <select
+                  value={quality}
+                  onChange={(e) => setQuality(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                >
+                  {QUALITY_OPTIONS.map(q => (
+                    <option key={q.value} value={q.value}>{q.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Style */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Visual Style</label>
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                >
+                  {STYLE_OPTIONS.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Language */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Language</label>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                >
+                  {LANGUAGE_OPTIONS.map(l => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+
+            </div>
+
+          </form>
+        </div>
+
+        {/* Progress State */}
+        {generating && (
+          <div className="w-full max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-xs mb-8">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-900 mb-1">Compiling Masterclass Video...</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Planning storyboard, generating SVG/Python diagrams, synthesizing TTS narration & compiling FFmpeg stream.
+            </p>
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div className="bg-blue-600 h-2 rounded-full w-2/3 animate-pulse" />
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════ VIDEO STUDIO RESULTS ═══════════ */}
+        {storyboard && (
+          <div ref={resultsRef} className="w-full max-w-5xl bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs mb-10">
+            
+            {/* Header / Download */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 mb-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                    ✓ Ready to Watch
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400 capitalize">{storyboard.style} Style</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{storyboard.topic}</h2>
+              </div>
+
+              {finalVideoUrl && (
+                <a
+                  href={finalVideoUrl}
+                  download={`${storyboard.topic.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
+                >
+                  <Download className="w-4 h-4" /> Download MP4 Video
+                </a>
+              )}
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-6 overflow-x-auto">
               {[
-                { key: 'scenes' as const, label: 'Lesson Scenes', icon: PlayCircle },
-                { key: 'notes' as const, label: 'Summary Notes', icon: FileText },
-                { key: 'quiz' as const, label: 'Quiz', icon: HelpCircle },
-                { key: 'flashcards' as const, label: 'Flashcards', icon: Brain },
-                { key: 'questions' as const, label: 'Important Q&A', icon: BookOpen },
+                { id: 'studio' as const, label: 'Video Studio & Timeline', icon: PlayCircle },
+                { id: 'transcript' as const, label: 'Transcript & Search', icon: FileText },
+                { id: 'notes' as const, label: 'Lesson Notes & Takeaways', icon: BookOpen },
+                { id: 'telemetry' as const, label: 'Telemetry & Cost KPI', icon: BarChart2 },
               ].map(tab => (
                 <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                    activeTab === tab.key
-                      ? 'border-purple-600 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
+                  <tab.icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
                 </button>
               ))}
             </div>
 
-            {/* ── TAB: Scenes ── */}
-            {activeTab === 'scenes' && lessonData.scenes && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                {/* Scene List */}
-                <div className="lg:col-span-1 space-y-2 max-h-[600px] overflow-y-auto pr-2">
-                  {lessonData.scenes.map((scene, i) => (
-                    <button
-                      key={scene.id}
-                      onClick={() => setActiveSceneIndex(i)}
-                      className={`w-full text-left p-3 rounded-xl border transition-all ${
-                        activeSceneIndex === i
-                          ? 'border-purple-300 bg-purple-50 shadow-sm'
-                          : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{getSceneTypeIcon(scene.type)}</span>
-                        <span className="text-xs font-semibold text-gray-400 uppercase">{scene.type}</span>
-                        <span className="ml-auto text-xs text-gray-400">{scene.duration_seconds}s</span>
-                      </div>
-                      <p className="text-sm font-medium text-gray-800 line-clamp-1">{scene.title}</p>
-                    </button>
-                  ))}
-                </div>
+            {/* TAB: STUDIO */}
+            {activeTab === 'studio' && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                
+                {/* Scene List Timeline */}
+                <div className="lg:col-span-1 space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scene Timeline ({storyboard.scenes.length} Scenes)</p>
+                  </div>
+                  {storyboard.scenes.map((s, i) => {
+                    const badge = getVisualBadge(s.visual_type);
+                    const isCurrent = i === activeSceneIndex;
+                    const isBookmarked = bookmarks.includes(i);
 
-                {/* Active Scene Detail */}
-                <div className="lg:col-span-2 bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                  {lessonData.scenes[activeSceneIndex] && (() => {
-                    const scene = lessonData.scenes[activeSceneIndex];
                     return (
-                      <>
-                        <div className="flex items-center gap-3 mb-4">
-                          <span className="text-2xl">{getSceneTypeIcon(scene.type)}</span>
-                          <div>
-                            <h3 className="text-lg font-bold text-gray-900">{scene.title}</h3>
-                            <p className="text-xs text-gray-500">{scene.type} • {scene.duration_seconds}s • {scene.teacher_emotion}</p>
+                      <div
+                        key={s.scene_id}
+                        onClick={() => setActiveSceneIndex(i)}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer relative ${
+                          isCurrent
+                            ? 'border-blue-600 bg-blue-50/70 shadow-xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="font-bold text-slate-900 truncate max-w-[130px]">{i + 1}. {s.caption || s.purpose}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-400 font-semibold">{s.duration}s</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleBookmark(i);
+                              }}
+                              className="text-slate-400 hover:text-amber-500"
+                            >
+                              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'text-amber-500 fill-amber-500' : ''}`} />
+                            </button>
                           </div>
                         </div>
-                        
-                        {/* Visual Content */}
-                        {scene.visual_content && (
-                          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-                            <p className="text-xs font-semibold text-purple-600 uppercase mb-2">{scene.visual_type}</p>
-                            {scene.visual_content.title && (
-                              <p className="font-bold text-gray-800 mb-2">{scene.visual_content.title}</p>
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold border ${badge.bg}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Active Scene Detail & Inspector Drawer */}
+                <div className="lg:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-5">
+                  {storyboard.scenes[activeSceneIndex] && (() => {
+                    const sc = storyboard.scenes[activeSceneIndex];
+                    const badge = getVisualBadge(sc.visual_type);
+
+                    return (
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                              {activeSceneIndex + 1}
+                            </span>
+                            <h3 className="font-bold text-sm text-slate-900">{sc.caption || sc.purpose}</h3>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badge.bg}`}>
+                            {badge.label}
+                          </span>
+                        </div>
+
+                        {/* Narration Script */}
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">🎙️ Narration Track</p>
+                          <p className="text-sm text-slate-800 leading-relaxed font-medium">{sc.narration}</p>
+                        </div>
+
+                        {/* Visual Content Specification */}
+                        {sc.visual_spec && (
+                          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📊 Scene Visual Breakdown</p>
+                            {sc.visual_spec.title && (
+                              <p className="text-xs font-bold text-slate-900 mb-1">{sc.visual_spec.title}</p>
                             )}
-                            {scene.visual_content.bullets && scene.visual_content.bullets.length > 0 && (
-                              <ul className="space-y-1.5">
-                                {scene.visual_content.bullets.map((b, bi) => (
-                                  <li key={bi} className="text-sm text-gray-700 flex items-start gap-2">
-                                    <span className="text-purple-400 mt-1">•</span>
-                                    {b}
-                                  </li>
+                            {sc.visual_spec.bullets && sc.visual_spec.bullets.length > 0 && (
+                              <ul className="text-xs text-slate-600 space-y-1 list-disc pl-4">
+                                {sc.visual_spec.bullets.map((b, bi) => (
+                                  <li key={bi}>{b}</li>
                                 ))}
                               </ul>
                             )}
-                            {scene.visual_content.formula && (
-                              <div className="mt-2 bg-purple-50 text-purple-800 font-mono text-lg font-bold rounded-lg p-3 text-center">
-                                {scene.visual_content.formula}
-                              </div>
-                            )}
                           </div>
                         )}
-                        
-                        {/* Teacher Speech */}
-                        <div className="bg-white rounded-xl border border-gray-200 p-4">
-                          <p className="text-xs font-semibold text-green-600 uppercase mb-2">🎙️ Teacher Script</p>
-                          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{scene.teacher_speech}</p>
+
+                        {/* Scene Regeneration Action */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => handleRegenerateScene(sc.scene_id)}
+                            disabled={regeneratingScene}
+                            className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-xl font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            {regeneratingScene ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <RefreshCw className="w-3.5 h-3.5 text-blue-600" />}
+                            <span>Regenerate Scene {activeSceneIndex + 1}</span>
+                          </button>
                         </div>
-                      </>
+                      </div>
                     );
                   })()}
                 </div>
+
               </div>
             )}
 
-            {/* ── TAB: Notes ── */}
-            {activeTab === 'notes' && (
-              <div className="space-y-6 mb-10">
-                {/* Summary */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2"><FileText className="w-5 h-5 text-purple-500" /> Summary Notes</h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">{lessonData.summary_notes}</p>
+            {/* TAB: TRANSCRIPT & SEARCH */}
+            {activeTab === 'transcript' && (
+              <div className="space-y-4 mb-8">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={transcriptSearch}
+                    onChange={(e) => setTranscriptSearch(e.target.value)}
+                    placeholder="Search video transcript (e.g. congestion, slow start, lock)..."
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
                 </div>
-                
-                {/* Revision Notes */}
-                {lessonData.revision_notes && lessonData.revision_notes.length > 0 && (
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5 text-blue-500" /> Revision Notes</h3>
-                    <ul className="space-y-2">
-                      {lessonData.revision_notes.map((note, i) => (
-                        <li key={i} className="text-sm text-gray-700 flex items-start gap-3 p-2 bg-blue-50 rounded-lg">
-                          <span className="text-blue-500 font-bold shrink-0">{i + 1}.</span>
-                          {note}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
 
-                {/* Key Takeaways */}
-                {lessonData.key_takeaways && lessonData.key_takeaways.length > 0 && (
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border border-yellow-200 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-yellow-500" /> Key Takeaways</h3>
-                    <ul className="space-y-2">
-                      {lessonData.key_takeaways.map((takeaway, i) => (
-                        <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                          <span className="text-yellow-500 mt-0.5">🔥</span>
-                          {takeaway}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── TAB: Quiz ── */}
-            {activeTab === 'quiz' && lessonData.quiz && (
-              <div className="space-y-6 mb-10">
-                {lessonData.quiz.map((q, qi) => (
-                  <div key={qi} className="bg-white rounded-2xl border border-gray-200 p-6">
-                    <p className="text-sm font-bold text-gray-900 mb-4">
-                      <span className="text-purple-600 mr-2">Q{qi + 1}.</span>
-                      {q.question}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                      {q.options.map((opt, oi) => {
-                        const letter = String.fromCharCode(65 + oi);
-                        const isSelected = selectedAnswers[qi] === letter;
-                        const isCorrect = q.correct_answer === letter;
-                        const showResult = showQuizResults;
-                        
-                        return (
-                          <button
-                            key={oi}
-                            onClick={() => { if (!showQuizResults) setSelectedAnswers(prev => ({ ...prev, [qi]: letter })); }}
-                            className={`text-left p-3 rounded-xl border text-sm font-medium transition-all ${
-                              showResult && isCorrect
-                                ? 'border-green-400 bg-green-50 text-green-800'
-                                : showResult && isSelected && !isCorrect
-                                  ? 'border-red-400 bg-red-50 text-red-800'
-                                  : isSelected
-                                    ? 'border-purple-400 bg-purple-50 text-purple-800'
-                                    : 'border-gray-200 text-gray-700 hover:border-purple-200 hover:bg-purple-50/50'
-                            }`}
-                          >
-                            <span className="font-bold mr-2">{letter}.</span>
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {showQuizResults && (
-                      <div className={`mt-3 p-3 rounded-lg text-sm ${selectedAnswers[qi] === q.correct_answer ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                        <p className="font-semibold mb-1">{selectedAnswers[qi] === q.correct_answer ? '✅ Correct!' : `❌ Correct answer: ${q.correct_answer}`}</p>
-                        <p>{q.explanation}</p>
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {storyboard.scenes
+                    .filter(s => !transcriptSearch || s.narration.toLowerCase().includes(transcriptSearch.toLowerCase()))
+                    .map((s, i) => (
+                      <div
+                        key={s.scene_id}
+                        onClick={() => {
+                          setActiveSceneIndex(i);
+                          setActiveTab('studio');
+                        }}
+                        className="p-3 bg-slate-50 hover:bg-blue-50/50 border border-slate-200 rounded-xl cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[11px] font-bold text-blue-600">Scene {i + 1}</span>
+                          <span className="text-[10px] text-slate-400">({s.duration}s)</span>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">{s.narration}</p>
                       </div>
-                    )}
-                  </div>
-                ))}
-                
-                {!showQuizResults && (
-                  <button
-                    onClick={() => setShowQuizResults(true)}
-                    disabled={Object.keys(selectedAnswers).length < lessonData.quiz.length}
-                    className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors disabled:opacity-40"
-                  >
-                    Check Answers ({Object.keys(selectedAnswers).length}/{lessonData.quiz.length} answered)
-                  </button>
-                )}
-                {showQuizResults && (
-                  <div className="text-center bg-purple-50 rounded-2xl p-6">
-                    <p className="text-2xl font-bold text-purple-800 mb-1">
-                      {lessonData.quiz.filter((q, i) => selectedAnswers[i] === q.correct_answer).length} / {lessonData.quiz.length}
-                    </p>
-                    <p className="text-sm text-purple-600">Correct Answers</p>
-                    <button onClick={() => { setSelectedAnswers({}); setShowQuizResults(false); }} className="mt-4 px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors inline-flex items-center gap-2">
-                      <RotateCcw className="w-4 h-4" /> Retry Quiz
-                    </button>
-                  </div>
-                )}
+                    ))}
+                </div>
               </div>
             )}
 
-            {/* ── TAB: Flashcards ── */}
-            {activeTab === 'flashcards' && lessonData.flashcards && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-                {lessonData.flashcards.map((card, ci) => (
-                  <div 
-                    key={ci}
-                    onClick={() => setFlippedCards(prev => ({ ...prev, [ci]: !prev[ci] }))}
-                    className="cursor-pointer group perspective"
-                  >
-                    <div className={`relative h-48 rounded-2xl border-2 transition-all duration-500 ${flippedCards[ci] ? 'border-green-300 bg-green-50' : 'border-purple-200 bg-white hover:border-purple-400 hover:shadow-md'}`}>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center">
-                        {!flippedCards[ci] ? (
-                          <>
-                            <p className="text-xs font-semibold text-purple-400 uppercase mb-2">Question</p>
-                            <p className="text-sm font-bold text-gray-800">{card.front}</p>
-                            <p className="text-xs text-gray-400 mt-3">Tap to flip</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-xs font-semibold text-green-500 uppercase mb-2">Answer</p>
-                            <p className="text-sm text-gray-700">{card.back}</p>
-                            <p className="text-xs text-gray-400 mt-3">Tap to flip back</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {/* TAB: TELEMETRY & COST KPI */}
+            {activeTab === 'telemetry' && metrics && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">Total Duration</p>
+                  <p className="text-lg font-extrabold text-slate-900">{metrics.total_duration_sec}s</p>
+                </div>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">AI Video Generated</p>
+                  <p className="text-lg font-extrabold text-blue-600">{metrics.ai_video_seconds}s</p>
+                </div>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">AI Generation Ratio</p>
+                  <p className="text-lg font-extrabold text-emerald-600">{(metrics.ai_generation_ratio * 100).toFixed(1)}%</p>
+                </div>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">Est. Cost / Min</p>
+                  <p className="text-lg font-extrabold text-slate-900">${metrics.cost_per_minute_usd}</p>
+                </div>
               </div>
             )}
 
-            {/* ── TAB: Important Questions ── */}
-            {activeTab === 'questions' && lessonData.important_questions && (
-              <div className="space-y-3 mb-10">
-                {lessonData.important_questions.map((q, qi) => (
-                  <div key={qi} className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs shrink-0">
-                      {qi + 1}
-                    </div>
-                    <p className="text-sm text-gray-800 font-medium">{q}</p>
-                  </div>
-                ))}
+            {/* TAB: SUMMARY NOTES */}
+            {activeTab === 'notes' && (
+              <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Learning Objectives</h4>
+                  <ul className="text-xs text-slate-700 space-y-1 list-disc pl-4">
+                    {storyboard.learning_objectives.map((obj, i) => (
+                      <li key={i}>{obj}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5">Educational Synthesis</h4>
+                  <p className="text-xs text-slate-700 leading-relaxed">{storyboard.summary_notes}</p>
+                </div>
               </div>
             )}
+
           </div>
         )}
 
-        {/* ── Past Lessons History ── */}
-        {!lessonData && !generating && pastLessons.length > 0 && (
-          <div className="w-full max-w-3xl mx-auto mt-6">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Recent Lessons</h3>
-            <div className="space-y-2">
-              {pastLessons.slice(0, 5).map(lesson => (
-                <button
-                  key={lesson.id}
-                  onClick={() => { if (lesson.status === 'ready') loadLesson(lesson.id); }}
-                  className={`w-full text-left p-4 bg-white rounded-xl border border-gray-100 hover:border-purple-200 hover:shadow-sm transition-all flex items-center gap-4 ${lesson.status !== 'ready' ? 'opacity-50' : ''}`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                    <PlayCircle className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{lesson.topic}</p>
-                    <p className="text-xs text-gray-400">{lesson.level} • {lesson.language} • {lesson.scene_count || '...'} scenes</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                    lesson.status === 'ready' ? 'bg-green-100 text-green-700' : 
-                    lesson.status === 'failed' ? 'bg-red-100 text-red-700' : 
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {lesson.status}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </AppLayout>
   );

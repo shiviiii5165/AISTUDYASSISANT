@@ -41,6 +41,8 @@ def add_text_box(
     alignment: int = PP_ALIGN.LEFT,
     anchor: int = MSO_ANCHOR.TOP,
     word_wrap: bool = True,
+    bold: Optional[bool] = None,
+    italic: Optional[bool] = None,
 ) -> None:
     """Add a styled text box to a slide using a TypeToken, auto-fitting to bounds."""
     # Fit text to box height
@@ -54,8 +56,8 @@ def add_text_box(
     p.text = actual_text
     p.font.name = actual_token.font_name
     p.font.size = actual_token.size
-    p.font.bold = actual_token.bold
-    p.font.italic = actual_token.italic
+    p.font.bold = bold if bold is not None else actual_token.bold
+    p.font.italic = italic if italic is not None else actual_token.italic
     if color:
         p.font.color.rgb = color
     p.alignment = alignment

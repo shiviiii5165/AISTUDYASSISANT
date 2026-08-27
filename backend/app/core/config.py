@@ -18,7 +18,17 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     GEMINI_IMAGE_API_KEY: str = ""
     GROQ_API_KEY: str
+    OPENROUTER_API_KEY: str = ""
+    CEREBRAS_API_KEY: str = ""
+    CLOUDFLARE_API_TOKEN: str = ""
+    CLOUDFLARE_ACCOUNT_ID: str = ""
     ANTHROPIC_API_KEY: str = ""
+    
+    # Optional Multi-Key Pools (comma-separated or specific indexed keys)
+    GEMINI_API_KEYS: str = ""
+    GROQ_API_KEYS: str = ""
+    OPENROUTER_API_KEYS: str = ""
+    CEREBRAS_API_KEYS: str = ""
     
     # AWS Bedrock (for Claude Vision OCR - Optional now)
     AWS_ACCESS_KEY_ID: str = ""
@@ -37,6 +47,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=_env_file if os.path.exists(_env_file) else None,
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
 settings = Settings()

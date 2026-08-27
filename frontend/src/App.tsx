@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import LibraryPage from './pages/LibraryPage';
 import ChatPage from './pages/ChatPage';
 import TopicDeckPage from './pages/TopicDeckPage';
+import TeachMePage from './pages/TeachMePage';
 import VideoGeneratorPage from './pages/VideoGeneratorPage';
 import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
@@ -102,6 +103,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/teach" 
+            element={
+              <ProtectedRoute>
+                <TeachMePage />
               </ProtectedRoute>
             } 
           />

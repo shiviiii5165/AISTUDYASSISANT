@@ -1,106 +1,123 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, Download, Loader2, AlertTriangle, Layers, Palette, Users, Zap, Settings2, Eye, RotateCcw } from 'lucide-react';
+import { 
+  ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, 
+  Download, Loader2, AlertTriangle, Layers, Palette, Users, Zap, Settings2, 
+  Eye, RotateCcw, CheckSquare, Square, BookOpen, Presentation, RefreshCw, Trash2
+} from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
+import { fetchPdfs, PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION OPTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
-const PRESET_OPTIONS = [
-  { value: 'academic', label: 'Academic', icon: '🎓', desc: 'University lecture with learning progression' },
-  { value: 'pitch', label: 'Business', icon: '🚀', desc: 'Data-driven pitch with KPIs & strategy' },
-  { value: 'technical', label: 'Technical', icon: '⚙️', desc: 'Architecture diagrams & system deep-dive' },
-  { value: 'research', label: 'Research', icon: '🔬', desc: 'Evidence-based findings & methodology' },
-  { value: 'teaching', label: 'Teaching', icon: '📚', desc: "Scaffolded lesson with Bloom's alignment" },
-];
+const SLIDE_COUNT_OPTIONS = [10, 11, 12, 13, 14, 15];
 
-const DEPTH_OPTIONS = [
-  { value: 'full', label: 'Full (10-16 slides)', icon: '📚' },
-  { value: 'quick', label: 'Quick (6-8 slides)', icon: '⚡' },
-];
-
-const AUDIENCE_OPTIONS = [
-  { value: 'university', label: 'University', icon: '🎓' },
-  { value: 'high_school', label: 'High School', icon: '🏫' },
-  { value: 'professional', label: 'Professional', icon: '💼' },
-  { value: 'beginner', label: 'Beginner', icon: '🌱' },
+const DESIGN_OPTIONS = [
+  { value: 'academic', label: 'Academic Clean', icon: '🎓', desc: 'University lecture with structured learning progression' },
+  { value: 'minimal', label: 'Modern Minimal', icon: '✨', desc: 'Canva-style spacious layout with focal takeaways' },
+  { value: 'technical', label: 'Technical Grid', icon: '⚙️', desc: 'Architecture diagrams, pipelines & component grids' },
+  { value: 'editorial', label: 'Editorial', icon: '📰', desc: 'Magazine & report composition with asymmetric balance' },
+  { value: 'visual', label: 'Visual Learning', icon: '🧠', desc: 'Diagram-first visual pedagogy with concise micro-text' },
 ];
 
 const THEME_OPTIONS = [
-  { value: '', label: 'AI Pick', colors: ['#1E40AF', '#3B82F6', '#DBEAFE'], desc: 'AI selects best theme' },
-  { value: 'blue_professional', label: 'Blue Pro', colors: ['#1E40AF', '#3B82F6', '#DBEAFE'], desc: 'Corporate & Tech' },
-  { value: 'indigo_innovation', label: 'Indigo', colors: ['#4F46E5', '#818CF8', '#E0E7FF'], desc: 'AI & Innovation' },
-  { value: 'emerald_academic', label: 'Emerald', colors: ['#059669', '#10B981', '#D1FAE5'], desc: 'Science & Research' },
-  { value: 'teal_corporate', label: 'Teal', colors: ['#0D9488', '#14B8A6', '#CCFBF1'], desc: 'Enterprise' },
-  { value: 'orange_energy', label: 'Orange', colors: ['#C2410C', '#EA580C', '#FFEDD5'], desc: 'Startup & Creative' },
-  { value: 'minimal_charcoal', label: 'Minimal', colors: ['#18181B', '#52525B', '#E4E4E7'], desc: 'Executive & Law' },
+  { value: 'blue_professional', label: 'Blue Pro', colors: ['#1E40AF', '#3B82F6', '#DBEAFE'] },
+  { value: 'indigo_innovation', label: 'Indigo', colors: ['#4F46E5', '#818CF8', '#E0E7FF'] },
+  { value: 'emerald_academic', label: 'Emerald', colors: ['#059669', '#10B981', '#D1FAE5'] },
+  { value: 'teal_corporate', label: 'Teal', colors: ['#0D9488', '#14B8A6', '#CCFBF1'] },
+  { value: 'orange_energy', label: 'Orange', colors: ['#C2410C', '#EA580C', '#FFEDD5'] },
+  { value: 'minimal_charcoal', label: 'Charcoal', colors: ['#18181B', '#52525B', '#E4E4E7'] },
 ];
 
-const VISUAL_OPTIONS = [
-  { value: 'standard', label: 'Standard', desc: 'Clean layouts, minimal visuals', icon: '📄' },
-  { value: 'smart', label: 'Smart', desc: 'AI picks images, diagrams & charts', icon: '🧠' },
-  { value: 'premium', label: 'Premium', desc: 'Maximum visual richness', icon: '✨' },
+const AUDIENCE_OPTIONS = [
+  { value: 'university', label: 'University / Undergraduate' },
+  { value: 'high_school', label: 'High School' },
+  { value: 'professional', label: 'Industry Professional' },
+  { value: 'beginner', label: 'Beginner / General' },
 ];
 
-const GENERATION_STAGES = [
-  { key: 'outline', label: 'Designing narrative & structure', icon: '📝' },
-  { key: 'expand', label: 'Writing educational content', icon: '📖' },
-  { key: 'render', label: 'Rendering visuals & PPTX', icon: '🎨' },
+const LANGUAGE_OPTIONS = [
+  { value: 'english', label: 'English' },
+  { value: 'hindi', label: 'Hindi' },
+  { value: 'hinglish', label: 'Hinglish' },
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
+const SUGGESTED_TOPICS = [
+  'Kubernetes Architecture & Orchestration',
+  'Deep Learning Transformers & Attention Mechanisms',
+  'Operating System Deadlocks & Memory Management',
+  'Database Normalization: 1NF to BCNF',
+];
 
 const TopicDeckPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
   const [topic, setTopic] = useState('');
   
-  // Core config
-  const [preset, setPreset] = useState('academic');
-  const [depth, setDepth] = useState('full');
-  const [audience, setAudience] = useState('university');
-  const [themeId, setThemeId] = useState('');
-  const [visualMode, setVisualMode] = useState('smart');
-  
-  // UI state
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showDepthDropdown, setShowDepthDropdown] = useState(false);
-  const [showAudienceDropdown, setShowAudienceDropdown] = useState(false);
-  
-  // Toggles (education features)
-  const [activeToggles, setActiveToggles] = useState<Record<string, boolean>>({
-    rbt: true,
-  });
-  
-  // Generation state
-  const [generating, setGenerating] = useState(false);
-  const [currentStage, setCurrentStage] = useState(0);
+  // Presentation Parameters
+  const [slideCount, setSlideCount] = useState<number>(12);
+  const [design, setDesign] = useState<string>('academic');
+  const [themeId, setThemeId] = useState<string>('blue_professional');
+  const [audience, setAudience] = useState<string>('university');
+  const [language, setLanguage] = useState<string>('english');
+  const [depth, setDepth] = useState<string>('full');
+
+  // Knowledge Source
+  const [sourceType, setSourceType] = useState<'general' | 'uploaded_material' | 'uploaded_material_plus_web'>('general');
+  const [selectedPdfId, setSelectedPdfId] = useState<string>('');
+  const [userPdfs, setUserPdfs] = useState<PDFDocument[]>([]);
+  const [loadingPdfs, setLoadingPdfs] = useState<boolean>(false);
+
+  // Feature Options Toggles
+  const [enableDiagrams, setEnableDiagrams] = useState<boolean>(true);
+  const [enableImages, setEnableImages] = useState<boolean>(true);
+  const [enableSpeakerNotes, setEnableSpeakerNotes] = useState<boolean>(true);
+  const [enableSources, setEnableSources] = useState<boolean>(true);
+  const [enableExamples, setEnableExamples] = useState<boolean>(true);
+  const [enableQuiz, setEnableQuiz] = useState<boolean>(false);
+
+  // Generation & Status State
+  const [generating, setGenerating] = useState<boolean>(false);
+  const [currentStage, setCurrentStage] = useState<number>(0);
+  const [stageMessage, setStageMessage] = useState<string>('');
+  const [progressPercent, setProgressPercent] = useState<number>(0);
   const [status, setStatus] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [slideCount, setSlideCount] = useState<number | null>(null);
+  const [finalSlideCount, setFinalSlideCount] = useState<number | null>(null);
+  const [resultTitle, setResultTitle] = useState<string>('');
+  const [resultTakeaways, setResultTakeaways] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [resultTitle, setResultTitle] = useState('');
-  
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+
   // History
   const [deckHistory, setDeckHistory] = useState<any[]>([]);
-  
-  const isPro = true;
 
-  const toggleFilter = (key: string) => {
-    setActiveToggles(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  // Fetch deck history on mount
+  // Load User's PDFs and Deck History
   useEffect(() => {
-    const fetchHistory = async () => {
+    const initData = async () => {
+      const token = useAuthStore.getState().session?.access_token;
+      if (!token) return;
+      
+      // Load user PDFs
       try {
-        const token = useAuthStore.getState().session?.access_token;
-        if (!token) return;
+        setLoadingPdfs(true);
+        const pdfs = await fetchPdfs();
+        const readyPdfs = pdfs.filter(p => p.status === 'ready');
+        setUserPdfs(readyPdfs);
+        if (readyPdfs.length > 0) {
+          setSelectedPdfId(readyPdfs[0].id);
+        }
+      } catch (e) {
+        console.error('Failed to load user PDFs', e);
+      } finally {
+        setLoadingPdfs(false);
+      }
+
+      // Load deck history
+      try {
         const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/decks/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -109,485 +126,544 @@ const TopicDeckPage: React.FC = () => {
           setDeckHistory(data || []);
         }
       } catch (e) {
-        console.error("Failed to fetch deck history", e);
+        console.error('Failed to fetch deck history', e);
       }
     };
-    fetchHistory();
-  }, []);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // GENERATION HANDLER
-  // ═══════════════════════════════════════════════════════════════════════
+    initData();
+  }, []);
 
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!isPro) { setShowUpgradeModal(true); return; }
-    if (!topic.trim()) return;
-    
+    if (!topic.trim() || generating) return;
+
     setGenerating(true);
     setDownloadUrl(null);
-    setSlideCount(null);
+    setFinalSlideCount(null);
     setErrorMessage(null);
     setStatus('processing');
     setCurrentStage(0);
-    
+    setProgressPercent(15);
+    setStageMessage('Designing narrative arc & slide blueprint...');
+
     const token = useAuthStore.getState().session?.access_token;
     const apiUrl = import.meta.env.VITE_API_URL || '';
-    
-    try {
-      // STEP 1: Outline
-      setCurrentStage(0);
-      const outlineRes = await fetch(`${apiUrl}/api/decks/outline`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ topic, depth, audience }),
-      });
-      
-      if (!outlineRes.ok) {
-        if (outlineRes.status === 403) { setShowUpgradeModal(true); setGenerating(false); setStatus(null); return; }
-        throw new Error((await outlineRes.json()).detail || 'Failed at outline stage');
-      }
-      
-      const { deck_id, outline_data } = await outlineRes.json();
-      
-      // STEP 2: Expand
-      setCurrentStage(1);
-      const expandRes = await fetch(`${apiUrl}/api/decks/expand`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ topic, audience, outline_data }),
-      });
-      
-      if (!expandRes.ok) throw new Error((await expandRes.json()).detail || 'Failed at content expansion stage');
-      
-      const { expanded_data } = await expandRes.json();
 
-      // STEP 3: Render
-      setCurrentStage(2);
-      const renderRes = await fetch(`${apiUrl}/api/decks/render`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ deck_id, topic, depth, audience, expanded_data }),
-      });
-      
-      if (!renderRes.ok) throw new Error((await renderRes.json()).detail || 'Failed to render PowerPoint');
-      
-      const renderData = await renderRes.json();
-      
-      if (renderData.status === 'ready' && renderData.download_url) {
-        setStatus('ready');
-        setDownloadUrl(renderData.download_url);
-        setSlideCount(renderData.slide_count);
-        setResultTitle(expanded_data?.deck_title || topic);
-      } else {
-        throw new Error('Generation completed but download URL is missing.');
+    const payload = {
+      topic: topic.trim(),
+      slide_count: slideCount,
+      depth,
+      audience,
+      design,
+      theme: themeId,
+      source_type: sourceType,
+      source_id: sourceType !== 'general' ? selectedPdfId : null,
+      options: {
+        diagrams: enableDiagrams,
+        images: enableImages,
+        speaker_notes: enableSpeakerNotes,
+        sources: enableSources,
+        examples: enableExamples,
+        quiz: enableQuiz,
       }
-      
-      setGenerating(false);
-      
+    };
+
+    try {
+      // Advance stage timers for UX feedback
+      const timer1 = setTimeout(() => {
+        setCurrentStage(1);
+        setProgressPercent(45);
+        setStageMessage('Generating scannable content & rich speaker notes in batches...');
+      }, 3000);
+
+      const timer2 = setTimeout(() => {
+        setCurrentStage(2);
+        setProgressPercent(75);
+        setStageMessage('Resolving deterministic diagrams & visual assets...');
+      }, 8000);
+
+      const timer3 = setTimeout(() => {
+        setCurrentStage(3);
+        setProgressPercent(90);
+        setStageMessage('Executing Python QA bounds inspection & slide formatting...');
+      }, 14000);
+
+      const res = await fetch(`${apiUrl}/api/decks/generate-advanced`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+
+      if (!res.ok) {
+        if (res.status === 403) {
+          setShowUpgradeModal(true);
+          setGenerating(false);
+          setStatus(null);
+          return;
+        }
+        const errData = await res.json();
+        throw new Error(errData.detail || 'Presentation generation failed');
+      }
+
+      const data = await res.json();
+      if (data.status === 'ready' && data.download_url) {
+        setStatus('ready');
+        setProgressPercent(100);
+        setDownloadUrl(data.download_url);
+        setFinalSlideCount(data.slide_count || slideCount);
+        setResultTitle(data.deck_title || topic);
+        setResultTakeaways(data.key_takeaways || []);
+      } else {
+        throw new Error('Presentation generated but download URL missing.');
+      }
     } catch (err: any) {
-      console.error('[PPT Generator] Error:', err);
-      const msg = err?.message || 'Unknown error';
-      setErrorMessage(msg.includes('Failed to fetch') 
-        ? 'Network error: could not reach the server. Please check your connection and try again.'
-        : msg
-      );
+      console.error('[TopicDeckPage] Generation error:', err);
+      setErrorMessage(err.message || 'An unexpected error occurred during generation.');
       setStatus('failed');
+    } finally {
       setGenerating(false);
     }
   };
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handleClick = () => {
-      setShowDepthDropdown(false);
-      setShowAudienceDropdown(false);
-    };
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, []);
-
-  const totalCreated = deckHistory.length;
-  const readyCount = deckHistory.filter((d: any) => d.status === 'ready').length;
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+  const handleDeleteDeck = async (deckId: string) => {
+    const token = useAuthStore.getState().session?.access_token;
+    if (!token) return;
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/decks/${deckId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setDeckHistory(prev => prev.filter(d => d.id !== deckId));
+    } catch (e) {
+      console.error('Failed to delete deck', e);
+    }
   };
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // RENDER
-  // ═══════════════════════════════════════════════════════════════════════
-
   return (
-    <AppLayout title="PPT Generator">
-      <SEO title="AI Presentation Studio" description="Generate professional PowerPoint presentations with AI-powered design intelligence." />
-      
-      <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-12 px-4 pb-12 bg-[#FAFAFA] relative overflow-hidden">
-        
-        {/* Subtle background gradient */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-blue-50/50 to-transparent rounded-full blur-3xl" />
-        </div>
+    <AppLayout title="AI Presentation Studio">
+      <SEO 
+        title="TeachGenie AI Presentation Studio — NotebookLM Quality PPTs" 
+        description="Generate deterministic, beautifully designed PowerPoint presentations with exact slide counts, structured diagrams, and verified knowledge grounding." 
+      />
 
-        {/* Top Stats Badges */}
-        <div className="flex items-center gap-3 mb-8 relative z-10">
-          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-600">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>{readyCount} decks generated</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-gray-100 shadow-sm rounded-full text-xs font-semibold text-gray-600">
-            <Clock className="w-3.5 h-3.5 text-blue-500" />
-            <span>{totalCreated} total</span>
-          </div>
-        </div>
-
-        {/* Greeting */}
-        <div className="text-center mb-8 relative z-10">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            <span className="text-gray-800">{getGreeting()}, </span>
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              {currentUser?.full_name?.split(' ')[0] || 'User'}
-            </span>
-          </h1>
-          <p className="text-lg text-gray-500 font-medium">What would you like to present today?</p>
-        </div>
-
-        {/* ─── Topic Input ─── */}
-        <div className="w-full max-w-3xl mx-auto mb-6 relative z-20">
-          <div className={`flex items-center bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 overflow-hidden ${generating ? 'opacity-50 pointer-events-none' : 'hover:shadow-md hover:border-gray-300 focus-within:shadow-md focus-within:border-blue-300'}`}>
-            <div className="pl-5 pr-2 py-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
+      <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC] text-slate-900 pb-16 pt-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          
+          {/* Header Banner */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-3 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Production AI Presentation Engine</span>
             </div>
-            
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleGenerate(); }}
-              placeholder="Cloud Computing Architecture, Machine Learning Fundamentals..."
-              disabled={generating}
-              className="flex-1 py-4 px-3 bg-transparent text-gray-800 text-base focus:outline-none placeholder:text-gray-400"
-            />
-            
-            <div className="pr-3">
-              <button
-                onClick={() => handleGenerate()}
-                disabled={generating || !topic.trim()}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center hover:from-blue-600 hover:to-indigo-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-              >
-                {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUp className="w-5 h-5" />}
-              </button>
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+              Transform Ideas into Professional Slide Decks
+            </h1>
+            <p className="mt-2 text-slate-600 text-base max-w-2xl mx-auto">
+              Choose your knowledge source, exact slide count, and design system. Rendered with clean Python typography.
+            </p>
           </div>
-        </div>
 
-        {/* ─── Preset Cards ─── */}
-        <div className="w-full max-w-3xl mx-auto mb-5 relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Presentation Type</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {PRESET_OPTIONS.map(p => (
-              <button
-                key={p.value}
-                onClick={() => setPreset(p.value)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
-                  preset === p.value
-                    ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                    : 'bg-white border-gray-150 text-gray-600 hover:bg-gray-50 hover:border-gray-200'
-                }`}
-              >
-                <span className="text-base">{p.icon}</span>
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
+          {/* Main Creator Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 mb-8 transition-all">
+            <form onSubmit={handleGenerate}>
+              
+              {/* 1. Topic Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Presentation Topic or Key Concept
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="e.g., Cloud Computing Architecture: Distributed Systems at Scale"
+                    disabled={generating}
+                    className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 font-medium transition-colors text-base"
+                  />
+                  {topic && !generating && (
+                    <button
+                      type="button"
+                      onClick={() => setTopic('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm p-1"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-        {/* ─── Theme Picker ─── */}
-        <div className="w-full max-w-3xl mx-auto mb-5 relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <Palette className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Theme</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {THEME_OPTIONS.map(t => (
-              <button
-                key={t.value}
-                onClick={() => setThemeId(t.value)}
-                title={t.desc}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all border ${
-                  themeId === t.value
-                    ? 'bg-white border-gray-300 shadow-sm ring-1 ring-gray-200'
-                    : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
-                }`}
-              >
-                <div className="flex gap-0.5">
-                  {t.colors.map((c, i) => (
-                    <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
+                {/* Quick Topic Suggestions */}
+                <div className="mt-2.5 flex flex-wrap gap-2 items-center">
+                  <span className="text-xs font-medium text-slate-500">Suggestions:</span>
+                  {SUGGESTED_TOPICS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTopic(t)}
+                      className="text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                    >
+                      {t}
+                    </button>
                   ))}
                 </div>
-                <span className="text-gray-700">{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ─── Quick Config Row ─── */}
-        <div className="w-full max-w-3xl mx-auto flex flex-wrap gap-2 mb-4 relative z-10">
-          
-          {/* Audience Dropdown */}
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => { setShowAudienceDropdown(!showAudienceDropdown); setShowDepthDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-150 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
-            >
-              <Users className="w-4 h-4 text-blue-500" />
-              {AUDIENCE_OPTIONS.find(a => a.value === audience)?.icon} {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label}
-              <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showAudienceDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            {showAudienceDropdown && (
-              <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[200px] overflow-hidden">
-                {AUDIENCE_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => { setAudience(opt.value); setShowAudienceDropdown(false); }}
-                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors ${audience === opt.value ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700'}`}
-                  >
-                    <span>{opt.icon}</span> {opt.label}
-                    {audience === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-blue-500" />}
-                  </button>
-                ))}
               </div>
-            )}
-          </div>
-          
-          {/* Depth Dropdown */}
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => { setShowDepthDropdown(!showDepthDropdown); setShowAudienceDropdown(false); }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-150 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
-            >
-              <Layers className="w-4 h-4 text-indigo-500" />
-              {DEPTH_OPTIONS.find(d => d.value === depth)?.icon} {DEPTH_OPTIONS.find(d => d.value === depth)?.label}
-              <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showDepthDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            {showDepthDropdown && (
-              <div className="absolute top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[220px] overflow-hidden">
-                {DEPTH_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => { setDepth(opt.value); setShowDepthDropdown(false); }}
-                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 transition-colors ${depth === opt.value ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-700'}`}
-                  >
-                    <span>{opt.icon}</span> {opt.label}
-                    {depth === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-indigo-500" />}
-                  </button>
-                ))}
+
+              {/* 2. Knowledge Source Selector */}
+              <div className="mb-6 pt-4 border-t border-slate-100">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Knowledge Grounding Source
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { type: 'general' as const, label: 'General Knowledge', icon: Globe, desc: 'AI subject knowledge' },
+                    { type: 'uploaded_material' as const, label: 'My Uploaded Notes', icon: FileText, desc: 'Grounded in PDF/Notes' },
+                    { type: 'uploaded_material_plus_web' as const, label: 'Document + Web', icon: Sparkles, desc: 'Document + Research' },
+                  ].map((src) => (
+                    <button
+                      key={src.type}
+                      type="button"
+                      onClick={() => setSourceType(src.type)}
+                      className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
+                        sourceType === src.type
+                          ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-xs'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <src.icon className={`w-4 h-4 ${sourceType === src.type ? 'text-blue-600' : 'text-slate-500'}`} />
+                        <span className="text-sm font-semibold text-slate-900">{src.label}</span>
+                      </div>
+                      <span className="text-xs text-slate-500">{src.desc}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* If Uploaded Material Selected: Show Document Dropdown */}
+                {sourceType !== 'general' && (
+                  <div className="mt-3 p-3.5 bg-blue-50/60 border border-blue-200/80 rounded-xl">
+                    <label className="block text-xs font-semibold text-blue-900 mb-1.5">
+                      Select Source Document from Your Library:
+                    </label>
+                    {userPdfs.length > 0 ? (
+                      <select
+                        value={selectedPdfId}
+                        onChange={(e) => setSelectedPdfId(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      >
+                        {userPdfs.map((pdf) => (
+                          <option key={pdf.id} value={pdf.id}>
+                            📄 {pdf.name} ({pdf.subject || 'General'}) — {pdf.page_count || 1} pages
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-xs text-blue-800">
+                        No uploaded PDFs found. You can upload a PDF in the Library or continue with General Knowledge.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* 3. Exact Slide Count Selector (10..15) */}
+              <div className="mb-6 pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-slate-800">
+                    Exact Slide Count
+                  </label>
+                  <span className="text-xs font-medium text-slate-500">
+                    Guaranteed exact count ({slideCount} slides)
+                  </span>
+                </div>
+                <div className="grid grid-cols-6 gap-2">
+                  {SLIDE_COUNT_OPTIONS.map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setSlideCount(num)}
+                      className={`py-2.5 rounded-xl border text-center font-bold text-sm transition-all cursor-pointer ${
+                        slideCount === num
+                          ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
+                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {num} Slides
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Design Systems & Themes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pt-4 border-t border-slate-100">
+                
+                {/* Design Template System */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    Design Template System
+                  </label>
+                  <div className="space-y-2">
+                    {DESIGN_OPTIONS.map((d) => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        onClick={() => setDesign(d.value)}
+                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          design === d.value
+                            ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-lg">{d.icon}</span>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{d.label}</p>
+                            <p className="text-xs text-slate-500 line-clamp-1">{d.desc}</p>
+                          </div>
+                        </div>
+                        {design === d.value && <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Theme Palette & Audience */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    Color Theme Palette
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {THEME_OPTIONS.map((t) => (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setThemeId(t.value)}
+                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          themeId === t.value
+                            ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex -space-x-1 shrink-0">
+                          {t.colors.map((c, ci) => (
+                            <div key={ci} className="w-3.5 h-3.5 rounded-full border border-white" style={{ backgroundColor: c }} />
+                          ))}
+                        </div>
+                        <span className="text-xs font-semibold text-slate-800 truncate">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Audience & Language */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Target Audience</label>
+                      <select
+                        value={audience}
+                        onChange={(e) => setAudience(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        {AUDIENCE_OPTIONS.map((a) => (
+                          <option key={a.value} value={a.value}>{a.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Language</label>
+                      <select
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        {LANGUAGE_OPTIONS.map((l) => (
+                          <option key={l.value} value={l.value}>{l.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Pedagogical & Visual Toggles */}
+              <div className="mb-8 pt-4 border-t border-slate-100">
+                <label className="block text-sm font-semibold text-slate-800 mb-3">
+                  Presentation Component Features
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: 'System & Flow Diagrams', state: enableDiagrams, set: setEnableDiagrams },
+                    { label: 'Selective AI Illustrations', state: enableImages, set: setEnableImages },
+                    { label: 'Rich Speaker Notes', state: enableSpeakerNotes, set: setEnableSpeakerNotes },
+                    { label: 'Document Source Citations', state: enableSources, set: setEnableSources },
+                    { label: 'Real-World Case Examples', state: enableExamples, set: setEnableExamples },
+                    { label: 'Interactive Final Quiz', state: enableQuiz, set: setEnableQuiz },
+                  ].map((opt, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => opt.set(!opt.state)}
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-left text-xs font-semibold cursor-pointer transition-colors ${
+                        opt.state
+                          ? 'border-blue-200 bg-blue-50/70 text-blue-900'
+                          : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'
+                      }`}
+                    >
+                      {opt.state ? (
+                        <CheckSquare className="w-4 h-4 text-blue-600 shrink-0" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400 shrink-0" />
+                      )}
+                      <span className="truncate">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div>
+                <button
+                  type="submit"
+                  disabled={generating || !topic.trim()}
+                  className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{stageMessage || 'Generating Presentation...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Presentation className="w-5 h-5" />
+                      <span>Generate {slideCount}-Slide Presentation (.pptx)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
 
-          {/* Visual Mode */}
-          {VISUAL_OPTIONS.map(v => (
-            <button
-              key={v.value}
-              onClick={() => setVisualMode(v.value)}
-              title={v.desc}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-                visualMode === v.value
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                  : 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              {v.label}
-            </button>
-          ))}
+          {/* ═══════════ LIVE GENERATION PROGRESS TRACKER ═══════════ */}
+          {generating && (
+            <div className="bg-white rounded-2xl border border-blue-200 shadow-sm p-6 mb-8 text-center animate-pulse">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
+                <span>STAGE {currentStage + 1} OF 4</span>
+                <span className="text-blue-600">{progressPercent}% COMPLETE</span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-100 rounded-full h-2.5 mb-4 overflow-hidden">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-700 ease-out" 
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
 
-          {/* Advanced toggle */}
-          <button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-100 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 transition-all"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            Advanced
-            <ChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
+              <p className="text-base font-bold text-slate-900 mb-1">{stageMessage}</p>
+              <p className="text-xs text-slate-500">Deterministic Python layout engine rendering 16:9 widescreen canvas...</p>
+            </div>
+          )}
 
-        {/* ─── Advanced Settings Drawer ─── */}
-        {showAdvanced && (
-          <div className="w-full max-w-3xl mx-auto mb-4 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm relative z-10 animate-in slide-in-from-top-2 duration-200">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button onClick={() => toggleFilter('rbt')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeToggles.rbt ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-gray-50 border-gray-150 text-gray-500'}`}>
-                RBT / Bloom's
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${activeToggles.rbt ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                  {activeToggles.rbt ? 'ON' : 'OFF'}
-                </span>
-              </button>
-              <button onClick={() => toggleFilter('scenario')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${activeToggles.scenario ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-150 text-gray-500'}`}>
-                Scenario Quiz
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${activeToggles.scenario ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                  {activeToggles.scenario ? 'ON' : 'OFF'}
-                </span>
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-150 rounded-xl text-sm font-medium text-gray-500">
-                <Globe className="w-3.5 h-3.5" /> Language
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-200 text-gray-500">EN</span>
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-150 rounded-xl text-sm font-medium text-gray-500">
-                <FileText className="w-3.5 h-3.5" /> Exercises
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-gray-200 text-gray-500">OFF</span>
+          {/* ═══════════ ERROR STATE ═══════════ */}
+          {errorMessage && !generating && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8 text-center">
+              <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+              <h3 className="text-base font-bold text-red-900 mb-1">Presentation Generation Failed</h3>
+              <p className="text-xs text-red-700 mb-4">{errorMessage}</p>
+              <button
+                onClick={handleGenerate}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 inline-flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Try Again
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* GENERATION PROGRESS */}
-        {/* ═══════════════════════════════════════════════════════════════════ */}
-        <div className="w-full max-w-3xl mx-auto mt-6 relative z-10">
-          {status === 'processing' && (
-            <div className="p-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
-              {/* Stage Progress */}
-              <div className="flex items-center justify-between mb-8">
-                {GENERATION_STAGES.map((stage, i) => (
-                  <div key={stage.key} className="flex items-center flex-1">
-                    <div className="flex flex-col items-center flex-1">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all duration-500 ${
-                        i < currentStage ? 'bg-green-100 text-green-600' :
-                        i === currentStage ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-200 animate-pulse' :
-                        'bg-gray-100 text-gray-400'
-                      }`}>
-                        {i < currentStage ? (
-                          <CheckCircle2 className="w-5 h-5" />
-                        ) : i === currentStage ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <span className="text-sm font-bold">{i + 1}</span>
-                        )}
+          {/* ═══════════ PRESENTATION READY VIEW ═══════════ */}
+          {status === 'ready' && downloadUrl && (
+            <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-6 sm:p-8 mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Presentation Ready
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">{resultTitle}</h2>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {finalSlideCount} Slides  •  {design.toUpperCase()} Template  •  16:9 Widescreen (.pptx)
+                  </p>
+                </div>
+                <a
+                  href={downloadUrl}
+                  download={`${resultTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`}
+                  className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-2 shrink-0 transition-colors"
+                >
+                  <Download className="w-4 h-4" /> Download PPTX
+                </a>
+              </div>
+
+              {/* Takeaways Preview */}
+              {resultTakeaways.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Core Deck Takeaways</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {resultTakeaways.map((t, i) => (
+                      <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 flex items-start gap-2">
+                        <span className="text-emerald-500 font-bold">✦</span>
+                        <span>{t}</span>
                       </div>
-                      <span className={`text-xs font-medium text-center ${
-                        i <= currentStage ? 'text-gray-700' : 'text-gray-400'
-                      }`}>{stage.label}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════ PREVIOUS DECKS HISTORY ═══════════ */}
+          {deckHistory.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-slate-500" /> Recent Presentations ({deckHistory.length})
+                </h3>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {deckHistory.map((deck) => (
+                  <div key={deck.id} className="py-3.5 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate">{deck.topic}</p>
+                      <p className="text-xs text-slate-400">
+                        {deck.slide_count || 12} slides  •  {deck.audience || 'University'}  •  {new Date(deck.created_at).toLocaleDateString()}
+                      </p>
                     </div>
-                    {i < GENERATION_STAGES.length - 1 && (
-                      <div className={`w-12 h-0.5 mx-2 mb-6 transition-colors ${
-                        i < currentStage ? 'bg-green-300' : 'bg-gray-200'
-                      }`} />
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => handleDeleteDeck(deck.id)}
+                        className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-50 transition-colors"
+                        title="Delete presentation"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-
-              <div className="text-center">
-                <p className="text-sm text-gray-500">
-                  This typically takes 30-60 seconds. Please don't close this tab.
-                </p>
-                <div className="flex items-center justify-center gap-3 mt-3 text-xs text-gray-400">
-                  <span className="flex items-center gap-1"><Layers className="w-3 h-3" /> {depth === 'full' ? '10-16 slides' : '6-8 slides'}</span>
-                  <span>|</span>
-                  <span>{AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} level</span>
-                  <span>|</span>
-                  <span>{PRESET_OPTIONS.find(p => p.value === preset)?.label} style</span>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* SUCCESS RESULT */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {status === 'ready' && downloadUrl && (
-            <div className="p-8 bg-white border border-gray-200 rounded-2xl shadow-sm">
-              {/* Success header */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-800">Your presentation is ready!</h3>
-                  <p className="text-sm text-gray-500">
-                    {resultTitle || topic} · {slideCount} slides · {PRESET_OPTIONS.find(p => p.value === preset)?.label}
-                  </p>
-                </div>
-              </div>
-
-              {/* Info pills */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
-                  {AUDIENCE_OPTIONS.find(a => a.value === audience)?.label} Level
-                </span>
-                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">
-                  {depth === 'full' ? 'Full Depth' : 'Quick Overview'}
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
-                  {THEME_OPTIONS.find(t => t.value === themeId)?.label || 'AI Theme'} Theme
-                </span>
-                <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full">
-                  16:9 Widescreen
-                </span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-3">
-                <a
-                  href={downloadUrl}
-                  download
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-sm transition-all hover:shadow-md"
-                >
-                  <Download className="w-5 h-5" /> Download .pptx
-                </a>
-                <button
-                  onClick={() => { setStatus(null); setTopic(''); setDownloadUrl(null); }}
-                  className="flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
-                >
-                  <RotateCcw className="w-4 h-4" /> New Deck
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* ERROR STATE */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {status === 'failed' && (
-            <div className="p-8 bg-white border border-red-200 rounded-2xl shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-500" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-800">Generation failed</h3>
-                  {errorMessage && (
-                    <p className="text-sm text-red-500 mt-1">{errorMessage}</p>
-                  )}
-                </div>
-              </div>
-              <button 
-                onClick={() => { setStatus(null); setErrorMessage(null); }}
-                className="px-5 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl text-sm transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          )}
         </div>
-
       </div>
-      
-      <UpgradeModal 
-        isOpen={showUpgradeModal} 
-        onClose={() => setShowUpgradeModal(false)} 
-        message="Topic Decks are a Pro-exclusive feature." 
-      />
+
+      {showUpgradeModal && (
+        <UpgradeModal 
+          isOpen={showUpgradeModal} 
+          onClose={() => setShowUpgradeModal(false)} 
+        />
+      )}
     </AppLayout>
   );
 };

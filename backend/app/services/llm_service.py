@@ -78,8 +78,7 @@ GEMINI_MODELS = [
 
 # Groq models (currently active, verified August 2026)
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",   # Primary — best quality
-    "llama-3.1-8b-instant",      # Fast fallback
+    "llama-3.3-70b-versatile",      # Fast fallback
 ]
 
 

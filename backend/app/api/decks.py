@@ -1,29 +1,45 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from app.db.supabase_client import supabase
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro, check_topic_deck_limit
 from app.services.deck_service import generate_outline_step, expand_outline_step, quality_review_step, render_deck_step
+from app.services.presentation.schemas import PresentationConfig, DesignSystem
+from app.services.presentation.orchestrator import generate_presentation_pipeline
 import asyncio
 
 router = APIRouter()
 
+
 class GenerateDeckRequest(BaseModel):
     topic: str
+    slide_count: int = 12
     depth: str = "full"
     audience: str = "university"
+    design: str = "academic"
+    theme: str = "blue_professional"
+    source_type: str = "general"
+    source_id: Optional[str] = None
+    options: Optional[Dict[str, bool]] = None
+
 
 class ExpandRequest(BaseModel):
     topic: str
     audience: str
     outline_data: Dict[str, Any]
+    slide_count: int = 12
+    source_type: str = "general"
+    source_id: Optional[str] = None
+
 
 class RenderRequest(BaseModel):
     deck_id: str
     topic: str
-    depth: str
-    audience: str
+    depth: str = "full"
+    audience: str = "university"
+    design: str = "academic"
+    theme: str = "blue_professional"
     expanded_data: Dict[str, Any]
 
 
@@ -34,7 +50,7 @@ async def step_outline(
     _ = Depends(require_pro),
     __ = Depends(check_topic_deck_limit)
 ):
-    """Step 1: Create DB record and generate outline."""
+    """Step 1: Create DB record and generate N-slide outline (10..15 slides)."""
     try:
         res = supabase.table("topic_decks").insert({
             "user_id": current_user.id,
@@ -45,7 +61,17 @@ async def step_outline(
         }).execute()
         
         deck_id = res.data[0]["id"]
-        outline_data = await generate_outline_step(request.topic, request.depth, request.audience)
+        outline_data = await generate_outline_step(
+            topic=request.topic,
+            depth=request.depth,
+            audience=request.audience,
+            slide_count=request.slide_count,
+            design=request.design,
+            theme=request.theme,
+            source_type=request.source_type,
+            source_id=request.source_id,
+            user_id=current_user.id,
+        )
         
         return {"deck_id": deck_id, "outline_data": outline_data}
     except Exception as e:
@@ -57,13 +83,19 @@ async def step_expand(
     request: ExpandRequest, 
     current_user = Depends(get_current_user)
 ):
-    """Step 2: Expand outline to full content + quality review pass."""
+    """Step 2: Expand outline to full content in 5-slide batches + quality review pass."""
     try:
-        expanded_data = await expand_outline_step(request.topic, request.audience, request.outline_data)
+        expanded_data = await expand_outline_step(
+            topic=request.topic,
+            audience=request.audience,
+            outline_data=request.outline_data,
+            slide_count=request.slide_count,
+            source_type=request.source_type,
+            source_id=request.source_id,
+            user_id=current_user.id,
+        )
         
-        # 🏆 Quality review: AI reviewer improves content before rendering
         reviewed_data = await quality_review_step(request.topic, request.audience, expanded_data)
-        
         return {"expanded_data": reviewed_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)[:500])
@@ -74,15 +106,17 @@ async def step_render(
     request: RenderRequest, 
     current_user = Depends(get_current_user)
 ):
-    """Step 3: Generate images in parallel and render PPTX."""
+    """Step 3: Generate diagrams, resolve visuals, and render PPTX."""
     try:
         storage_path = await render_deck_step(
-            request.deck_id, 
-            current_user.id, 
-            request.topic, 
-            request.depth, 
-            request.audience, 
-            request.expanded_data
+            deck_id=request.deck_id, 
+            user_id=current_user.id, 
+            topic=request.topic, 
+            depth=request.depth, 
+            audience=request.audience, 
+            final_deck_json=request.expanded_data,
+            design=request.design,
+            theme=request.theme,
         )
         
         download_url = _get_signed_url(storage_path)
@@ -103,6 +137,81 @@ async def step_render(
             }).eq("id", request.deck_id).execute()
         except:
             pass
+        raise HTTPException(status_code=500, detail=str(e)[:500])
+
+
+@router.post("/generate-advanced")
+async def generate_advanced(
+    request: GenerateDeckRequest,
+    current_user = Depends(get_current_user),
+    _ = Depends(require_pro),
+    __ = Depends(check_topic_deck_limit)
+):
+    """One-click advanced presentation generation pipeline with strict slide count guarantee."""
+    try:
+        # 1. Create DB record
+        res = supabase.table("topic_decks").insert({
+            "user_id": current_user.id,
+            "topic": request.topic,
+            "depth": request.depth,
+            "audience": request.audience,
+            "status": "processing"
+        }).execute()
+        deck_id = res.data[0]["id"]
+
+        # 2. Build PresentationConfig
+        options = request.options or {}
+        config = PresentationConfig(
+            topic=request.topic,
+            slide_count=request.slide_count if request.slide_count in [10, 11, 12, 13, 14, 15] else 12,
+            audience=request.audience,
+            language="english",
+            depth=request.depth,
+            design=DesignSystem(request.design) if request.design in [e.value for e in DesignSystem] else DesignSystem.ACADEMIC_CLEAN,
+            theme=request.theme,
+            source_type=request.source_type,
+            source_id=request.source_id,
+            enable_diagrams=options.get("diagrams", True),
+            enable_images=options.get("images", True),
+            enable_speaker_notes=options.get("speaker_notes", True),
+            enable_sources=options.get("sources", True),
+            enable_examples=options.get("examples", True),
+            enable_quiz=options.get("quiz", False),
+        )
+
+        # 3. Run Pipeline
+        spec, pptx_bytes = await generate_presentation_pipeline(config, user_id=current_user.id)
+
+        # 4. Upload to Supabase Storage
+        file_path = f"{current_user.id}/{deck_id}.pptx"
+        try:
+            supabase.storage.from_("topic-decks").upload(
+                file_path,
+                pptx_bytes,
+                {"content-type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
+            )
+        except Exception as storage_err:
+            print(f"[Decks API] Storage upload note: {storage_err}")
+
+        download_url = _get_signed_url(file_path)
+
+        supabase.table("topic_decks").update({
+            "status": "ready",
+            "storage_path": file_path,
+            "slide_count": len(spec.slides)
+        }).eq("id", deck_id).execute()
+
+        return {
+            "deck_id": deck_id,
+            "status": "ready",
+            "download_url": download_url,
+            "slide_count": len(spec.slides),
+            "deck_title": spec.title,
+            "key_takeaways": spec.key_takeaways,
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e)[:500])
 
 
@@ -144,10 +253,12 @@ async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)
         "error_message": deck.get("error_message")
     }
 
+
 @router.get("/")
 async def list_decks(current_user = Depends(get_current_user)):
     res = supabase.table("topic_decks").select("*").eq("user_id", current_user.id).order("created_at", desc=True).execute()
     return res.data
+
 
 @router.delete("/{deck_id}")
 async def delete_deck(deck_id: str, current_user = Depends(get_current_user)):

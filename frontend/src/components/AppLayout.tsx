@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { BookOpen, MessageSquare, Target, Bell, Menu, X, LogOut, LifeBuoy, Presentation, PlayCircle } from 'lucide-react';
+import { BookOpen, MessageSquare, Target, Bell, Menu, X, LogOut, LifeBuoy, Presentation, PlayCircle, GraduationCap } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: Target },
+  { path: '/teach', label: 'Teach Me', icon: GraduationCap },
   { path: '/library', label: 'My Library', icon: BookOpen },
   { path: '/chat', label: 'AI Chat', icon: MessageSquare },
   { path: '/decks', label: 'PPT Generator', icon: Presentation },
