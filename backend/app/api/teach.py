@@ -10,7 +10,8 @@ from app.core.dependencies import get_current_user
 from app.core.plan_guards import check_daily_question_limit
 from app.models.teach import (
     StartTeachRequest, TeachMessageRequest, TeachCommandRequest,
-    TeachAnswerRequest, YouTubeIngestRequest, ExportPPTRequest
+    TeachAnswerRequest, YouTubeIngestRequest, ExportPPTRequest,
+    ExportVideoRequest
 )
 from app.services.teach import (
     start_teaching_session, handle_user_turn, handle_quick_command,
