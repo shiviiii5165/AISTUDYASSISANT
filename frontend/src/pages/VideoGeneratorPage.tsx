@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-    Globe,  Sparkles,  
-  Loader2,     FileText, 
-       
-  Download,     Film, 
-       Search,
-  BarChart2,  Bookmark,  } from 'lucide-react';
+  PlayCircle, Clock, Globe, Filter, Sparkles, ChevronDown, 
+  Loader2, BookOpen, Brain, HelpCircle, Lightbulb, FileText, 
+  RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
+  Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
+  Plus, Edit3, ChevronRight, CheckSquare, Search,
+  BarChart2, Zap, Bookmark, Volume2, Maximize2
+} from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
@@ -89,7 +90,7 @@ const DURATION_OPTIONS = [
   { val: '15', label: '15 min' },
 ];
 
-// const LEVEL_OPTIONS = ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'B.Tech', 'Undergrad', 'Graduate'];
+const LEVEL_OPTIONS = ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'B.Tech', 'Undergrad', 'Graduate'];
 const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Hinglish'];
 
 const VideoGeneratorPage: React.FC = () => {
@@ -115,16 +116,14 @@ const VideoGeneratorPage: React.FC = () => {
   const [storyboard, setStoryboard] = useState<StoryboardData | null>(null);
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<VideoMetrics | null>(null);
-  const [error, setError] = useState<string | null>(null); // @ts-ignore
-  const _error = error;
+  const [error, setError] = useState<string | null>(null);
   
   // Studio & Navigation State
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'studio' | 'transcript' | 'notes' | 'telemetry'>('studio');
   const [transcriptSearch, setTranscriptSearch] = useState('');
   const [bookmarks, setBookmarks] = useState<number[]>([]);
-  const [pastLessons, setPastLessons] = useState<any[]>([]); // @ts-ignore
-  const _pastLessons = pastLessons;
+  const [pastLessons, setPastLessons] = useState<any[]>([]);
 
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -176,7 +175,7 @@ const VideoGeneratorPage: React.FC = () => {
     loadData();
   }, []);
 
-  // Poll for Status
+  // Poll for Video Status
   useEffect(() => {
     let intervalId: any;
     if (lessonId && (status === 'processing' || status === 'planning' || status === 'assets' || status === 'audio')) {
@@ -200,7 +199,7 @@ const VideoGeneratorPage: React.FC = () => {
               resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
             }, 300);
           } else if (data.status === 'failed') {
-            setError(data.error_message || 'generation failed.');
+            setError(data.error_message || 'Video generation failed.');
             setGenerating(false);
             clearInterval(intervalId);
           }
@@ -305,15 +304,15 @@ const VideoGeneratorPage: React.FC = () => {
       case 'python_graphics': return { label: '⚡ Python Graphics', bg: 'bg-blue-50 text-blue-700 border-blue-200' };
       case 'stock_video': return { label: '🎬 Stock Footage', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
       case 'ai_image': return { label: '🎨 AI Concept Art', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
-      case 'ai_video': return { label: '✨ AI Motion ', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
+      case 'ai_video': return { label: '✨ AI Motion Video', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
       default: return { label: '📌 Visual Slide', bg: 'bg-slate-50 text-slate-700 border-slate-200' };
     }
   };
 
   return (
-    <AppLayout title="AI Educational Studio">
+    <AppLayout title="AI Educational Video Studio">
       <SEO 
-        title="AI Studio — TeachGenie" 
+        title="AI Video Studio — TeachGenie" 
         description="Transform any topic, notes, or YouTube link into an educational video with Python graphics, TTS narration, and captions."
       />
 
@@ -323,10 +322,10 @@ const VideoGeneratorPage: React.FC = () => {
         <div className="text-center max-w-2xl mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-bold text-blue-700 mb-3 shadow-xs">
             <Film className="w-3.5 h-3.5 text-blue-600" />
-            <span>AI Educational Generation Compiler</span>
+            <span>AI Educational Video Generation Compiler</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
-            Create Masterclass <span className="text-blue-600">Lessons</span>
+            Create Masterclass <span className="text-blue-600">Video Lessons</span>
           </h1>
           <p className="text-sm text-slate-600">
             Intelligent storyboarding, Python graphics, licensed stock media, synchronized TTS narration & captions.
@@ -360,7 +359,7 @@ const VideoGeneratorPage: React.FC = () => {
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors shrink-0"
                 >
                   {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  <span>Create </span>
+                  <span>Create Video</span>
                 </button>
               </div>
             </div>
@@ -374,7 +373,7 @@ const VideoGeneratorPage: React.FC = () => {
                 {[
                   { id: 'topic', label: 'Topic Only', icon: Globe },
                   { id: 'pdf', label: 'My Uploaded Notes', icon: FileText },
-                  { id: 'youtube', label: 'YouTube URL', icon: },
+                  { id: 'youtube', label: 'YouTube Video URL', icon: Youtube },
                 ].map((s) => (
                   <button
                     key={s.id}
@@ -409,7 +408,7 @@ const VideoGeneratorPage: React.FC = () => {
 
               {sourceType === 'youtube' && (
                 <div className="mt-3 p-3 bg-red-50/60 border border-red-200 rounded-xl">
-                  <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube URL:</label>
+                  <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube Video URL:</label>
                   <input
                     type="url"
                     value={youtubeUrl}
@@ -489,7 +488,7 @@ const VideoGeneratorPage: React.FC = () => {
         {generating && (
           <div className="w-full max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-xs mb-8">
             <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900 mb-1">Compiling Masterclass ...</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Compiling Masterclass Video...</h3>
             <p className="text-xs text-slate-500 mb-4">
               Planning storyboard, generating SVG/Python diagrams, synthesizing TTS narration & compiling FFmpeg stream.
             </p>
@@ -521,16 +520,17 @@ const VideoGeneratorPage: React.FC = () => {
                   download={`${storyboard.topic.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`}
                   className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
                 >
-                  <Download className="w-4 h-4" /> Download MP4 </a>
+                  <Download className="w-4 h-4" /> Download MP4 Video
+                </a>
               )}
             </div>
 
             {/* Navigation Tabs */}
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-6 overflow-x-auto">
               {[
-                { id: 'studio' as const, label: 'Studio & Timeline', icon: },
+                { id: 'studio' as const, label: 'Video Studio & Timeline', icon: PlayCircle },
                 { id: 'transcript' as const, label: 'Transcript & Search', icon: FileText },
-                { id: 'notes' as const, label: 'Lesson Notes & Takeaways', icon: },
+                { id: 'notes' as const, label: 'Lesson Notes & Takeaways', icon: BookOpen },
                 { id: 'telemetry' as const, label: 'Telemetry & Cost KPI', icon: BarChart2 },
               ].map(tab => (
                 <button
@@ -645,7 +645,7 @@ const VideoGeneratorPage: React.FC = () => {
                             disabled={regeneratingScene}
                             className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-xl font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
-                            {regeneratingScene ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <className="w-3.5 h-3.5 text-blue-600" />}
+                            {regeneratingScene ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <RefreshCw className="w-3.5 h-3.5 text-blue-600" />}
                             <span>Regenerate Scene {activeSceneIndex + 1}</span>
                           </button>
                         </div>
@@ -702,7 +702,7 @@ const VideoGeneratorPage: React.FC = () => {
                   <p className="text-lg font-extrabold text-slate-900">{metrics.total_duration_sec}s</p>
                 </div>
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">AI Generated</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">AI Video Generated</p>
                   <p className="text-lg font-extrabold text-blue-600">{metrics.ai_video_seconds}s</p>
                 </div>
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
