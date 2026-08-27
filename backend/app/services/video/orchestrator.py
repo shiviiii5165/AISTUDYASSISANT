@@ -44,7 +44,8 @@ async def generate_video_pipeline(
     """
     t0 = time.time()
     pid = project_id or str(uuid.uuid4())
-    scratch_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "scratch", "videos", pid)
+    import tempfile
+    scratch_dir = os.path.join(tempfile.gettempdir(), "teachgenie_scratch", "videos", pid)
     os.makedirs(scratch_dir, exist_ok=True)
 
     # Initial Project Object
@@ -228,7 +229,8 @@ async def regenerate_single_scene(
     if not target_scene:
         raise ValueError(f"Scene {scene_id} not found in project {project_id}.")
 
-    scratch_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "scratch", "videos", project_id)
+    import tempfile
+    scratch_dir = os.path.join(tempfile.gettempdir(), "teachgenie_scratch", "videos", project_id)
     scene_dir = os.path.join(scratch_dir, f"scene_{target_scene.order:02d}")
 
     # Re-render Graphic Frame

@@ -13,7 +13,9 @@ import math
 from typing import Dict, Any, Tuple, Optional
 
 
-AUDIO_CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "scratch", "tts_cache")
+import tempfile
+
+AUDIO_CACHE_DIR = os.path.join(tempfile.gettempdir(), "teachgenie_scratch", "tts_cache")
 os.makedirs(AUDIO_CACHE_DIR, exist_ok=True)
 
 
