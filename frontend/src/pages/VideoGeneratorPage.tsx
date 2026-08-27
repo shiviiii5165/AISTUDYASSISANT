@@ -5,7 +5,7 @@ import {
   RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
   Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
   Plus, Edit3, ChevronRight, CheckSquare, Search,
-  BarChart2, Zap, Bookmark, Volume2, Maximize2, Youtube
+  BarChart2, Zap, Bookmark, Volume2, Maximize2
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
@@ -373,7 +373,7 @@ const VideoGeneratorPage: React.FC = () => {
                 {[
                   { id: 'topic', label: 'Topic Only', icon: Globe },
                   { id: 'pdf', label: 'My Uploaded Notes', icon: FileText },
-                  { id: 'youtube', label: 'YouTube Video URL', icon: Youtube },
+                  { id: 'youtube', label: 'YouTube Video URL', icon: Video },
                 ].map((s) => (
                   <button
                     key={s.id}

@@ -4,7 +4,7 @@ import {
   CheckCircle2, AlertCircle, ArrowRight, RotateCcw, Lightbulb,
   HelpCircle, ChevronRight, Download, Send, Loader2, PlayCircle, 
   Layers, Compass, Award, Target, MessageSquare, Plus, CheckSquare, 
-  ExternalLink, BrainCircuit, Presentation, Youtube
+  ExternalLink, BrainCircuit, Presentation, Video
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
@@ -845,7 +845,7 @@ const TeachMePage: React.FC = () => {
                   {[
                     { id: 'topic', label: 'Topic Only', icon: Globe },
                     { id: 'pdf', label: 'Uploaded Notes', icon: FileText },
-                    { id: 'youtube', label: 'YouTube Video', icon: Youtube },
+                    { id: 'youtube', label: 'YouTube Video', icon: Video },
                     { id: 'web', label: 'Topic + Web', icon: Sparkles },
                   ].map((s) => (
                     <button
