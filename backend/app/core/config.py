@@ -1,9 +1,10 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
-# Resolve the .env path relative to the backend directory, not the cwd
+# Resolve the .env path relative to the root directory
 _backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_env_file = os.path.join(_backend_dir, ".env")
+_root_dir = os.path.dirname(_backend_dir)
+_env_file = os.path.join(_root_dir, ".env")
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "TeachGenie API"
