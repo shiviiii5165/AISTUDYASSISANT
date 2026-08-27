@@ -38,6 +38,8 @@ def compute_presentation_hash(config: PresentationConfig) -> str:
 
 async def get_cached_presentation(config: PresentationConfig) -> Optional[Dict[str, Any]]:
     """Retrieve cached presentation spec from Supabase deck_cache if present."""
+    if not supabase:
+        return None
     cache_key = compute_presentation_hash(config)
     try:
         res = supabase.table("deck_cache")\
@@ -47,12 +49,14 @@ async def get_cached_presentation(config: PresentationConfig) -> Optional[Dict[s
         if res.data and len(res.data) > 0:
             return res.data[0].get("deck_json")
     except Exception as e:
-        print(f"[Cache] Error checking presentation cache: {e}")
+        print(f"[Cache] Error checking presentation cache (non-fatal): {e}")
     return None
 
 
 async def save_cached_presentation(config: PresentationConfig, spec_json: Dict[str, Any]) -> None:
     """Store generated presentation spec in deck_cache."""
+    if not supabase:
+        return
     cache_key = compute_presentation_hash(config)
     try:
         supabase.table("deck_cache").insert({

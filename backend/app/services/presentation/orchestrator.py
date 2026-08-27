@@ -7,7 +7,7 @@ Coordinates the end-to-end presentation lifecycle:
 """
 import asyncio
 from typing import Dict, Any, Optional, Callable
-from .schemas import PresentationConfig, PresentationSpec, SlideSpec, VisualSpec, DiagramSpec, SlideSourceRef
+from .schemas import PresentationConfig, PresentationSpec, SlideSpec, VisualSpec, VisualKind, DiagramSpec, SlideSourceRef
 from .cache import get_cached_presentation, save_cached_presentation
 from .planner_agent import plan_presentation
 from .content_agent import expand_presentation_content
@@ -70,8 +70,15 @@ async def generate_presentation_pipeline(
         vspec_data = s.get("visual_spec") or {}
         diagram_spec_data = vspec_data.get("diagram_spec")
         
+        # Coerce string -> VisualKind enum safely
+        raw_kind = vspec_data.get("kind", "none")
+        try:
+            kind_enum = VisualKind(raw_kind) if isinstance(raw_kind, str) else raw_kind
+        except ValueError:
+            kind_enum = VisualKind.NONE
+
         vspec = VisualSpec(
-            kind=vspec_data.get("kind", "none"),
+            kind=kind_enum,
             asset_required=vspec_data.get("asset_required", False),
             image_prompt=vspec_data.get("image_prompt", ""),
             image_bytes=vspec_data.get("image_bytes"),
@@ -110,8 +117,9 @@ async def generate_presentation_pipeline(
         slides=structured_slides,
     )
 
-    # Enforce exact slide count contract
-    assert len(spec.slides) == config.slide_count, f"Slide count mismatch: {len(spec.slides)} vs {config.slide_count}"
+    # Enforce exact slide count contract (explicit raise, never use assert in production)
+    if len(spec.slides) != config.slide_count:
+        raise ValueError(f"Slide count mismatch: got {len(spec.slides)}, expected {config.slide_count}")
 
     if on_stage_update:
         on_stage_update("rendering", 95)
@@ -121,8 +129,11 @@ async def generate_presentation_pipeline(
     pptx_bytes = build_presentation_spec(spec)
 
     # 7. Cache PresentationSpec for future requests
-    # Prepare serializable dict without raw bytes
-    serializable_dict = spec.dict()
+    # Prepare serializable dict without raw bytes (Pydantic v2 compatible)
+    try:
+        serializable_dict = spec.model_dump()
+    except AttributeError:
+        serializable_dict = spec.dict()  # Pydantic v1 fallback
     for s in serializable_dict.get("slides", []):
         if s.get("visual"):
             s["visual"]["image_bytes"] = None

@@ -26,22 +26,27 @@ class ModelRouter:
             "planning": [
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
+                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "content_generation": [
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
+                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "technical_content": [
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
+                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "repair": [
                 ("gemini", "gemini-3.5-flash-lite"),
                 ("groq", "llama-3.3-70b-versatile"),
+                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "qa": [
                 ("gemini", "gemini-3.5-flash-lite"),
                 ("groq", "llama-3.3-70b-versatile"),
+                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "embedding": [
                 ("gemini", "gemini-embedding-001"),

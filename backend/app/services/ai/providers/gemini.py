@@ -66,6 +66,7 @@ class GeminiProvider(AIProvider):
     EMBEDDING_MODEL = "gemini-embedding-001"
 
     def __init__(self, api_key: Optional[str] = None, image_api_key: Optional[str] = None):
+        super().__init__(name="gemini")
         raw_key = (api_key or settings.GEMINI_API_KEY or settings.GEMINI_API_KEYS or "").strip()
         self.api_key = raw_key.split(",")[0].strip() if raw_key else ""
         raw_img = (image_api_key or settings.GEMINI_IMAGE_API_KEY or self.api_key).strip()

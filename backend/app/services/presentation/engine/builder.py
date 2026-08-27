@@ -53,10 +53,11 @@ def build_presentation_spec(spec: PresentationSpec) -> bytes:
             deck_title=spec.title,
         )
 
-    # STRICT ASSERTION: Exact Slide Count Contract
-    assert len(prs.slides) == spec.config.slide_count, (
-        f"Generated PPTX slide count ({len(prs.slides)}) does not match requested count ({spec.config.slide_count})"
-    )
+    # STRICT VALIDATION: Exact Slide Count Contract (explicit raise, never use assert in production)
+    if len(prs.slides) != spec.config.slide_count:
+        raise ValueError(
+            f"Generated PPTX slide count ({len(prs.slides)}) does not match requested count ({spec.config.slide_count})"
+        )
 
     buffer = io.BytesIO()
     prs.save(buffer)

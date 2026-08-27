@@ -15,7 +15,7 @@ from app.core.config import settings
 
 class GroqProvider(AIProvider):
     DEFAULT_MODEL = "llama-3.3-70b-versatile"
-    FALLBACK_MODELS = ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"]
+    FALLBACK_MODELS = ["llama-3.3-70b-versatile"]
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="groq")
