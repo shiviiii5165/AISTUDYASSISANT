@@ -16,7 +16,8 @@ from app.core.config import settings
 class OpenRouterProvider(AIProvider):
     def __init__(self, api_key: str = "", base_url: str = "https://openrouter.ai/api/v1"):
         super().__init__(name="openrouter")
-        self.api_key = (api_key or getattr(settings, "OPENROUTER_API_KEY", "")).strip()
+        raw_key = (api_key or getattr(settings, "OPENROUTER_API_KEY", "") or getattr(settings, "OPENROUTER_API_KEYS", "") or "").strip()
+        self.api_key = raw_key.split(",")[0].strip() if raw_key else ""
         self.base_url = base_url
 
     async def generate_text(

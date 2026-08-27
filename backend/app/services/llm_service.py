@@ -138,7 +138,7 @@ async def _call_groq_raw(
     max_tokens: int = 8192,
 ) -> str:
     """Direct Groq REST call (OpenAI-compatible). Raises on any error."""
-    api_key = settings.GROQ_API_KEY.strip()
+    api_key = (settings.GROQ_API_KEY or getattr(settings, "GROQ_API_KEYS", "")).strip().split(",")[0].strip()
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     headers = {

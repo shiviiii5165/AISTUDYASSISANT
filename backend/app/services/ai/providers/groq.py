@@ -19,7 +19,8 @@ class GroqProvider(AIProvider):
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="groq")
-        self.api_key = (api_key or settings.GROQ_API_KEY).strip()
+        raw_key = (api_key or settings.GROQ_API_KEY or getattr(settings, "GROQ_API_KEYS", "") or "").strip()
+        self.api_key = raw_key.split(",")[0].strip() if raw_key else ""
 
     async def generate_text(
         self,
