@@ -5,7 +5,7 @@ import {
   RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
   Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
   Plus, Edit3, ChevronRight, CheckSquare, Search,
-  BarChart2, Zap, Bookmark, Volume2, Maximize2
+  BarChart2, Zap, Bookmark, Volume2, Maximize2, Youtube
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';

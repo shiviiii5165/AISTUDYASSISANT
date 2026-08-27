@@ -4,7 +4,7 @@ import {
   CheckCircle2, AlertCircle, ArrowRight, RotateCcw, Lightbulb,
   HelpCircle, ChevronRight, Download, Send, Loader2, PlayCircle, 
   Layers, Compass, Award, Target, MessageSquare, Plus, CheckSquare, 
-  ExternalLink, BrainCircuit, Presentation
+  ExternalLink, BrainCircuit, Presentation, Youtube
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
