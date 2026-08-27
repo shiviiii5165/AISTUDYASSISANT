@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, 
-  Download, Loader2, AlertTriangle, Layers, Palette, Users, Zap, Settings2, 
-  Eye, RotateCcw, CheckSquare, Square, BookOpen, Presentation, RefreshCw, Trash2
+    FileText, Globe, Sparkles,    
+  Download, Loader2, AlertTriangle,      
+     Square,  Presentation,  Trash2
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
-import { fetchPdfs, PDFDocument } from '../lib/api';
+import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -427,17 +427,16 @@ const TopicDeckPage: React.FC = () => {
                             <p className="text-xs text-slate-500 line-clamp-1">{d.desc}</p>
                           </div>
                         </div>
-                        {design === d.value && <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />}
+                        {design === d.value && <className="w-4 h-4 text-blue-600 shrink-0" />}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Theme Palette & Audience */}
+                {/* Theme & Audience */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-800 mb-2">
-                    Color Theme Palette
-                  </label>
+                    Color Theme </label>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {THEME_OPTIONS.map((t) => (
                       <button
@@ -515,7 +514,7 @@ const TopicDeckPage: React.FC = () => {
                       }`}
                     >
                       {opt.state ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600 shrink-0" />
+                        <className="w-4 h-4 text-blue-600 shrink-0" />
                       ) : (
                         <Square className="w-4 h-4 text-slate-400 shrink-0" />
                       )}
@@ -579,7 +578,7 @@ const TopicDeckPage: React.FC = () => {
                 onClick={handleGenerate}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 inline-flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Try Again
+                <className="w-3.5 h-3.5" /> Try Again
               </button>
             </div>
           )}
@@ -590,7 +589,7 @@ const TopicDeckPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Presentation Ready
+                    <className="w-3.5 h-3.5" /> Presentation Ready
                   </div>
                   <h2 className="text-2xl font-bold text-slate-900">{resultTitle}</h2>
                   <p className="text-sm text-slate-500 mt-1">
@@ -628,7 +627,7 @@ const TopicDeckPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-500" /> Recent Presentations ({deckHistory.length})
+                  <className="w-4 h-4 text-slate-500" /> Recent Presentations ({deckHistory.length})
                 </h3>
               </div>
               <div className="divide-y divide-slate-100">

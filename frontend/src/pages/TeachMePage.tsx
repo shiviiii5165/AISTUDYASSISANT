@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  GraduationCap, Sparkles, Globe, FileText, Youtube, BookOpen, 
-  CheckCircle2, AlertCircle, ArrowRight, RotateCcw, Lightbulb, 
-  HelpCircle, ChevronRight, Download, Send, Loader2, PlayCircle, 
-  Layers, Compass, Award, Target, MessageSquare, Plus, CheckSquare, 
-  ExternalLink, BrainCircuit
+  GraduationCap, Sparkles, Globe, FileText,   
+       
+    Download, Send, Loader2,  
+    Award, Target,    
+   BrainCircuit, Presentation
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
-import { fetchPdfs, PDFDocument } from '../lib/api';
+import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -74,7 +74,7 @@ const LANGUAGE_OPTIONS = [
   { value: 'hinglish', label: 'Hinglish' },
 ];
 
-const DEPTH_OPTIONS = [
+// const DEPTH_OPTIONS = [
   { value: 'quick', label: 'Quick' },
   { value: 'normal', label: 'Normal' },
   { value: 'deep', label: 'Deep' },
@@ -461,7 +461,7 @@ const TeachMePage: React.FC = () => {
     }
   };
 
-  const getMasteryBadgeColor = (score: number) => {
+  // const getMasteryBadgeColor = (score: number) => {
     if (score >= 0.85) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (score >= 0.50) return 'bg-blue-50 text-blue-700 border-blue-200';
     return 'bg-amber-50 text-amber-700 border-amber-200';
@@ -496,7 +496,7 @@ const TeachMePage: React.FC = () => {
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold cursor-pointer"
                 title="Change Topic or Settings"
               >
-                <Plus className="w-4 h-4" />
+                <className="w-4 h-4" />
               </button>
             </div>
 
@@ -538,7 +538,7 @@ const TeachMePage: React.FC = () => {
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold truncate max-w-[180px]">{i + 1}. {c.name}</span>
                         {isMastered ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <className="w-4 h-4 text-emerald-600 shrink-0" />
                         ) : isCurrent ? (
                           <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
                         ) : (
@@ -556,7 +556,7 @@ const TeachMePage: React.FC = () => {
             {misconceptions.length > 0 && (
               <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl mb-4">
                 <h5 className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5 mb-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" /> Focus Reminders
+                  <className="w-3.5 h-3.5 text-amber-600" /> Focus Reminders
                 </h5>
                 <ul className="text-[11px] text-amber-800 space-y-1 list-disc pl-4">
                   {misconceptions.map((m, i) => (
@@ -606,7 +606,7 @@ const TeachMePage: React.FC = () => {
             {messages.length === 0 && !loading && (
               <div className="max-w-xl mx-auto text-center pt-20">
                 <div className="w-14 h-14 rounded-2xl bg-blue-100/70 border border-blue-200 flex items-center justify-center text-blue-700 mx-auto mb-4">
-                  <BrainCircuit className="w-7 h-7" />
+                  <BrainCircuit, Presentation className="w-7 h-7" />
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 mb-2">Welcome to Teach Me</h2>
                 <p className="text-sm text-slate-600 mb-6">
@@ -616,7 +616,7 @@ const TeachMePage: React.FC = () => {
                   onClick={() => setIsSetupOpen(true)}
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-xs cursor-pointer inline-flex items-center gap-2"
                 >
-                  <Plus className="w-4 h-4" /> Start New Lesson
+                  <className="w-4 h-4" /> Start New Lesson
                 </button>
               </div>
             )}
@@ -684,7 +684,7 @@ const TeachMePage: React.FC = () => {
                     <div className="mt-4 p-4 bg-blue-50/70 border border-blue-200 rounded-xl">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-900">
-                          <Lightbulb className="w-3.5 h-3.5 text-blue-600" /> Quick Understanding Check
+                          <className="w-3.5 h-3.5 text-blue-600" /> Quick Understanding Check
                         </span>
                         <span className="text-[10px] font-semibold uppercase px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">
                           {msg.checkpoint.difficulty || 'Medium'}
@@ -794,7 +794,7 @@ const TeachMePage: React.FC = () => {
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                  <BrainCircuit className="w-6 h-6" />
+                  <BrainCircuit, Presentation className="w-6 h-6" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">Configure Your Lesson</h2>
@@ -845,7 +845,7 @@ const TeachMePage: React.FC = () => {
                   {[
                     { id: 'topic', label: 'Topic Only', icon: Globe },
                     { id: 'pdf', label: 'Uploaded Notes', icon: FileText },
-                    { id: 'youtube', label: 'YouTube Video', icon: Youtube },
+                    { id: 'youtube', label: 'YouTube ', icon: },
                     { id: 'web', label: 'Topic + Web', icon: Sparkles },
                   ].map((s) => (
                     <button
@@ -887,7 +887,7 @@ const TeachMePage: React.FC = () => {
                 {/* YouTube Input */}
                 {sourceType === 'youtube' && (
                   <div className="mt-3 p-3 bg-red-50/60 border border-red-200 rounded-xl">
-                    <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube Video URL:</label>
+                    <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube URL:</label>
                     <input
                       type="url"
                       value={youtubeUrl}
