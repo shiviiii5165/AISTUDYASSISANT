@@ -30,6 +30,8 @@ from ..tokens import (
 # TEXT PRIMITIVES
 # ═══════════════════════════════════════════════════════════════════════════
 
+from ..text_fitter import fit_text_to_box
+
 def add_text_box(
     slide: Slide,
     text: str,
@@ -40,17 +42,20 @@ def add_text_box(
     anchor: int = MSO_ANCHOR.TOP,
     word_wrap: bool = True,
 ) -> None:
-    """Add a styled text box to a slide using a TypeToken."""
+    """Add a styled text box to a slide using a TypeToken, auto-fitting to bounds."""
+    # Fit text to box height
+    actual_token, actual_text = fit_text_to_box(text, token, width, height, word_wrap=word_wrap)
+
     txBox = slide.shapes.add_textbox(left, top, width, height)
     tf = txBox.text_frame
     tf.word_wrap = word_wrap
 
     p = tf.paragraphs[0]
-    p.text = text
-    p.font.name = token.font_name
-    p.font.size = token.size
-    p.font.bold = token.bold
-    p.font.italic = token.italic
+    p.text = actual_text
+    p.font.name = actual_token.font_name
+    p.font.size = actual_token.size
+    p.font.bold = actual_token.bold
+    p.font.italic = actual_token.italic
     if color:
         p.font.color.rgb = color
     p.alignment = alignment
@@ -58,8 +63,8 @@ def add_text_box(
     p.space_before = Pt(0)
 
     # Line spacing
-    if token.line_spacing != 1.0:
-        p.line_spacing = token.line_spacing
+    if actual_token.line_spacing != 1.0:
+        p.line_spacing = actual_token.line_spacing
 
     tf.auto_size = None
     # Anchor (vertical alignment)
@@ -83,14 +88,23 @@ def add_bullet_list(
     glyph: str = BULLET_GLYPH,
     max_bullets: int = 7,
 ) -> None:
-    """Add a formatted bullet list to a slide."""
+    """Add a formatted bullet list to a slide, auto-fitting to bounds."""
+    display_bullets = bullets[:max_bullets]
+    if not display_bullets:
+        return
+        
+    # Combine bullets into a single string to estimate height
+    combined_text = "\n".join(display_bullets)
+    actual_token, actual_text = fit_text_to_box(combined_text, token, width, height)
+    
+    # Re-split actual_text (which might be truncated)
+    final_bullets = actual_text.split("\n")
+
     txBox = slide.shapes.add_textbox(left, top, width, height)
     tf = txBox.text_frame
     tf.word_wrap = True
 
-    display_bullets = bullets[:max_bullets]
-
-    for i, bullet_text in enumerate(display_bullets):
+    for i, bullet_text in enumerate(final_bullets):
         if i == 0:
             p = tf.paragraphs[0]
         else:
@@ -99,8 +113,8 @@ def add_bullet_list(
         # Glyph run
         run_glyph = p.add_run()
         run_glyph.text = f"{glyph}  "
-        run_glyph.font.name = token.font_name
-        run_glyph.font.size = token.size
+        run_glyph.font.name = actual_token.font_name
+        run_glyph.font.size = actual_token.size
         run_glyph.font.bold = True
         if accent_color:
             run_glyph.font.color.rgb = accent_color
@@ -108,16 +122,16 @@ def add_bullet_list(
         # Text run
         run_text = p.add_run()
         run_text.text = bullet_text
-        run_text.font.name = token.font_name
-        run_text.font.size = token.size
-        run_text.font.bold = token.bold
+        run_text.font.name = actual_token.font_name
+        run_text.font.size = actual_token.size
+        run_text.font.bold = actual_token.bold
         if text_color:
             run_text.font.color.rgb = text_color
 
         p.space_after = Pt(6)
         p.space_before = Pt(2)
-        if token.line_spacing != 1.0:
-            p.line_spacing = token.line_spacing
+        if actual_token.line_spacing != 1.0:
+            p.line_spacing = actual_token.line_spacing
 
 
 # ═══════════════════════════════════════════════════════════════════════════

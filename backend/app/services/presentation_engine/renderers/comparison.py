@@ -38,35 +38,28 @@ def render_comparison(slide: Slide, content: SlideContent, theme: ThemeColors, *
         ]
 
     num_cols = min(len(columns), 3)
-    gap = Inches(0.25)
+    gap = Inches(0.4)
     col_width = (CONTENT_WIDTH - (num_cols - 1) * gap) / num_cols
-    card_height = Inches(4.0)
+    content_height = Inches(4.5)
 
-    # Column colors: alternate surface/surface_alt for visual distinction
-    col_fills = [theme.surface, theme.surface_alt, theme.surface]
     col_accents = [theme.primary, theme.secondary, theme.accent]
 
     for i, col in enumerate(columns[:num_cols]):
         x = MARGIN_LEFT + i * (col_width + gap)
         y = ZONE_CONTENT_TOP + Inches(0.2)
 
-        # Card
-        add_card(slide, x, y, col_width, card_height,
-                 fill_color=col_fills[i % len(col_fills)],
-                 border_color=theme.border)
-
-        # Column accent top bar
+        # Column header bar
         add_filled_rect(
-            slide, x, y, col_width, Inches(0.06),
+            slide, x, y, col_width, Inches(0.04),
             col_accents[i % len(col_accents)],
         )
 
         # Column heading
         add_text_box(
             slide, col.heading,
-            x + Inches(0.25), y + Inches(0.2),
-            col_width - Inches(0.5), Inches(0.4),
-            token=Typography.BULLET, color=col_accents[i % len(col_accents)],
+            x, y + Inches(0.15),
+            col_width, Inches(0.4),
+            token=Typography.SLIDE_SUBTITLE, color=col_accents[i % len(col_accents)],
             alignment=PP_ALIGN.LEFT,
         )
 
@@ -74,26 +67,34 @@ def render_comparison(slide: Slide, content: SlideContent, theme: ThemeColors, *
         if col.points:
             add_bullet_list(
                 slide, col.points,
-                x + Inches(0.25), y + Inches(0.7),
-                col_width - Inches(0.5), card_height - Inches(1.0),
-                token=Typography.BULLET_SMALL,
+                x, y + Inches(0.7),
+                col_width, content_height - Inches(1.0),
+                token=Typography.BODY,
                 text_color=theme.text,
                 accent_color=col_accents[i % len(col_accents)],
                 max_bullets=6,
             )
+            
+        # Draw vertical divider for all but the last column
+        if i < num_cols - 1:
+            div_x = x + col_width + (gap / 2)
+            add_filled_rect(
+                slide, div_x, y + Inches(0.1), Inches(0.02), content_height - Inches(0.5),
+                theme.border_light
+            )
 
-    # VS badge between first two columns
+    # Clean text VS badge between first two columns
     if num_cols >= 2:
-        vs_x = MARGIN_LEFT + col_width + gap / 2 - Inches(0.25)
-        vs_y = ZONE_CONTENT_TOP + Inches(1.8)
+        vs_x = MARGIN_LEFT + col_width + (gap / 2) - Inches(0.2)
+        vs_y = ZONE_CONTENT_TOP + Inches(0.25)
         add_filled_rect(
-            slide, vs_x, vs_y, Inches(0.5), Inches(0.4),
-            theme.primary, corner_radius=Inches(0.2),
+            slide, vs_x, vs_y, Inches(0.4), Inches(0.25),
+            theme.background
         )
         add_text_box(
             slide, "VS",
-            vs_x, vs_y, Inches(0.5), Inches(0.4),
-            token=Typography.BADGE, color=theme.text_on_dark,
+            vs_x, vs_y, Inches(0.4), Inches(0.25),
+            token=Typography.BADGE, color=theme.text_muted,
             alignment=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE,
         )
 

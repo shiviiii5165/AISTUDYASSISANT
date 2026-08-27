@@ -63,6 +63,7 @@ You are a world-class presentation designer and lecturer. For each section below
 create PRESENTATION-READY content — concise, visual, and impactful.
 
 CRITICAL: Slides are NOT documents. Never write paragraphs. Every bullet must be a concise, scannable statement.
+Check the 'slide_purpose' of each section. If the purpose demands a specific structure, output it.
 
 Return strict JSON:
 {
@@ -72,24 +73,43 @@ Return strict JSON:
     {
       "id": "...",
       "title": "Compelling, insight-oriented title",
+      "slide_purpose": "Keep the slide_purpose from the input",
       "body_bullets": ["Concise, specific bullet under 80 characters", "..."],
       "example": "A vivid, REAL-WORLD example with specific names, metrics, or mechanisms. 2-3 sentences max.",
-      "speaker_note": "4-5 sentences: what the slide means, what to emphasize, explanation of visual, and transition to next slide.",
+      "speaker_note": "Detailed explanation goes here. 4-5 sentences: what the slide means, what to emphasize, and transition.",
       "visual_hint": "generated_image",
-      "image_prompt": "Professional flat-design educational illustration of [SPECIFIC visual description], clean modern style, white background, no text or labels in image"
+      "image_prompt": "Professional flat-design educational illustration of [SPECIFIC visual description], clean modern style.",
+      
+      "columns": [
+         {"heading": "Column A", "points": ["Point 1", "Point 2"]}
+      ],
+      "layers": [
+         {"name": "Layer 1", "components": ["Comp A", "Comp B"]}
+      ],
+      "metrics": [
+         {"value": "92%", "label": "Cost Reduction", "context": "Explanation"}
+      ],
+      "steps": [
+         {"number": 1, "title": "Step 1", "detail": "Short detail"}
+      ],
+      "milestones": [
+         {"date": "2024", "label": "Milestone", "detail": "Detail"}
+      ]
     }
   ]
 }
 
 CONTENT QUALITY RULES:
-1. "body_bullets": 4-5 bullets max. Each bullet must be under 80 characters. Must contain SPECIFIC facts, numbers, or mechanisms. No vague generalities.
-2. "example": Must cite a REAL company, study, technology, or event. Include specific metrics when possible.
-3. "speaker_note": Include (a) what the slide communicates, (b) what to emphasize verbally, (c) how to explain the visual, (d) transition to next slide.
-4. "visual_hint": Use "generated_image" for concept/explanation slides, "diagram" for architecture/process slides.
-5. "image_prompt": Be EXTREMELY specific about the visual subject, style, composition, and color mood. Never say "image of topic" — describe WHAT should be illustrated.
-6. "key_takeaways": 5 impactful one-liners that a viewer should remember after the presentation.
-7. No LaTeX. Plain text only.
-8. NEVER write paragraphs in body_bullets. Each bullet is a standalone scannable statement.
+1. "body_bullets": 4-5 bullets max. Each bullet must be under 80 characters. Must contain SPECIFIC facts.
+2. "speaker_note": ALL detailed paragraphs belong here. NEVER put paragraphs on the visible slide.
+3. If slide_purpose is 'comparison', you MUST include the "columns" array.
+4. If slide_purpose is 'architecture', you MUST include the "layers" array.
+5. If slide_purpose is 'process_flow', you MUST include the "steps" array.
+6. If slide_purpose is 'timeline', you MUST include the "milestones" array.
+7. If slide_purpose is 'kpi_metrics' or 'case_study', you MUST include the "metrics" array.
+8. If the specialized structure is provided, you can omit 'body_bullets' if they are redundant.
+9. No LaTeX. Plain text only.
+10. NEVER write paragraphs in body_bullets. Each bullet is a standalone scannable statement.
 
 Output JSON only, nothing else.
 """

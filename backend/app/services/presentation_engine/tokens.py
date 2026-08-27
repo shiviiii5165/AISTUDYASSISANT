@@ -96,7 +96,7 @@ class Typography:
     HERO_SUBTITLE  = TypeToken("Calibri", Pt(18), line_spacing=1.2)
 
     # Slide-level
-    SLIDE_TITLE    = TypeToken("Georgia", Pt(28), bold=True, line_spacing=1.1)
+    SLIDE_TITLE    = TypeToken("Georgia", Pt(32), bold=True, line_spacing=1.1)
     SLIDE_SUBTITLE = TypeToken("Calibri", Pt(13), bold=True, line_spacing=1.2)
 
     # Body

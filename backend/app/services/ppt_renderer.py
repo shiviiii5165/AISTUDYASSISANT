@@ -513,10 +513,11 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
         # ── Convert legacy sections → SlideContent objects ──
         slides = []
         for idx, section in enumerate(sections):
-            # Assign purpose from flow (with variety) or auto-detect
-            if idx < len(content_flow):
-                purpose = content_flow[idx]
-            else:
+            # Assign purpose from the LLM-generated section, fallback to CONCEPT
+            raw_purpose = section.get("slide_purpose", section.get("purpose", "concept"))
+            try:
+                purpose = SlidePurpose(raw_purpose)
+            except ValueError:
                 purpose = SlidePurpose.CONCEPT
 
             img_bytes = image_map.get(idx, None)
@@ -532,6 +533,13 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
                 image_prompt=section.get("image_prompt", ""),
                 image_bytes=img_bytes,
                 visual_type=VisualType.AI_IMAGE if img_bytes else VisualType.NONE,
+                
+                # Pass structured fields from LLM
+                columns=[ComparisonColumn(**c) for c in section.get("columns", [])],
+                layers=[ArchitectureLayer(**l) for l in section.get("layers", [])],
+                metrics=[KPIMetric(**m) for m in section.get("metrics", [])],
+                steps=[ProcessStep(**s) for s in section.get("steps", [])],
+                milestones=[TimelineMilestone(**m) for m in section.get("milestones", [])],
             )
             slides.append(sc)
 

@@ -50,9 +50,18 @@ def evaluate_slide_density(content: SlideContent, slide_index: int = 0) -> Slide
         if len(b) > 120:
             issues.append(f"Bullet {i+1} is too long ({len(b)} chars). Shorten to ~80 chars.")
 
-    # Title check
-    if content.title and len(content.title) > 80:
-        issues.append("Title is very long. Consider shortening.")
+    # Title check using TextFitter
+    from .tokens import Typography, CONTENT_WIDTH, ZONE_TITLE_HEIGHT
+    from .text_fitter import estimate_text_height
+    
+    if content.title:
+        # Check title height using actual layout constraints
+        title_h = estimate_text_height(content.title, Typography.SLIDE_TITLE, CONTENT_WIDTH)
+        if title_h.inches > ZONE_TITLE_HEIGHT.inches:
+            issues.append(f"Title is too long and will wrap/shrink to fit. Consider shortening.")
+            
+        if len(content.title) > 80:
+             issues.append("Title exceeds recommended 80 characters.")
 
     passed = density in (DensityLevel.LOW, DensityLevel.MEDIUM)
 

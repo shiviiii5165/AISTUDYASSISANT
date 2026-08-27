@@ -58,7 +58,24 @@ def render_case_study(slide: Slide, content: SlideContent, theme: ThemeColors, *
         )
 
         # Section content
-        if isinstance(points, list) and points:
+        # For Outcome (index 2), if metrics exist, show them prominently instead of bullets
+        if i == 2 and content.metrics:
+            m_top = y + Inches(0.7)
+            for m in content.metrics[:2]:
+                add_text_box(
+                    slide, m.value,
+                    x + Inches(0.2), m_top,
+                    card_w - Inches(0.4), Inches(0.8),
+                    token=Typography.KPI_NUMBER, color=theme.primary,
+                )
+                add_text_box(
+                    slide, m.label,
+                    x + Inches(0.2), m_top + Inches(0.8),
+                    card_w - Inches(0.4), Inches(0.4),
+                    token=Typography.KPI_LABEL, color=theme.text_muted,
+                )
+                m_top += Inches(1.3)
+        elif isinstance(points, list) and points:
             add_bullet_list(
                 slide, points,
                 x + Inches(0.2), y + Inches(0.7),
