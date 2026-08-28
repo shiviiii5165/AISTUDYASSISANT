@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Map, Sparkles, Clock, CheckCircle2, AlertCircle, PlayCircle, BookOpen, 
-  Presentation, Video, HelpCircle, Save, Layers, ListChecks, PenTool, ExternalLink, ChevronDown, ChevronRight, Lock, FileText
+  Presentation, Video, HelpCircle, Save, Layers, ListChecks, PenTool, ExternalLink, ChevronDown, ChevronRight, Lock, FileText, Loader2
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
@@ -54,7 +54,7 @@ const LessonPlannerPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.access_token || ''}`
+          'Authorization': `Bearer ${(user as any)?.access_token || ''}`
         },
         body: JSON.stringify({
           topic: topic || "DBMS Normalization",
@@ -85,7 +85,7 @@ const LessonPlannerPage: React.FC = () => {
   const checkHealth = async (id: string) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lesson-planner/${id}/health`, {
-        headers: { 'Authorization': `Bearer ${user?.access_token || ''}` }
+        headers: { 'Authorization': `Bearer ${(user as any)?.access_token || ''}` }
       });
       if (response.ok) {
         setHealthScore(await response.json());
@@ -108,7 +108,7 @@ const LessonPlannerPage: React.FC = () => {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title="Lesson Planner">
       <SEO title="AI Lesson Planner | TeachGenie" description="Adaptive Course-to-Classroom Intelligence" />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
