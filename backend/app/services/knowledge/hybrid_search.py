@@ -82,6 +82,7 @@ async def hybrid_search_evidence(
                 res = supabase.table("document_chunks")\
                     .select("id, chunk_text, page_number")\
                     .eq("pdf_id", d_id)\
+                    .eq("user_id", user_id)\
                     .limit(top_k)\
                     .execute()
                 for r in (res.data or []):

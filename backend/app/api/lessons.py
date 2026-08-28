@@ -181,13 +181,34 @@ async def get_lesson_status(
     raise HTTPException(status_code=404, detail="Video lesson not found")
 
 
+def _get_signed_url(storage_path: str) -> Optional[str]:
+    """Generate a signed download URL from Supabase storage."""
+    try:
+        url_res = supabase.storage.from_("topic-decks").create_signed_url(storage_path, 3600)
+        
+        if isinstance(url_res, dict):
+            return url_res.get("signedUrl") or url_res.get("signedURL")
+        elif hasattr(url_res, 'signed_url'):
+            return url_res.signed_url
+        elif hasattr(url_res, 'signedUrl'):
+            return url_res.signedUrl
+        else:
+            return str(url_res) if url_res else None
+    except Exception as e:
+        print(f"Failed to create signed URL: {e}")
+        return None
+
 @router.get("/")
 async def list_lessons(current_user=Depends(get_current_user)):
     """List recent video lessons for the user."""
     if supabase:
         try:
-            res = supabase.table("video_lessons").select("id,topic,level,language,status,scene_count,total_duration_seconds,created_at").eq("user_id", current_user.id).order("created_at", desc=True).execute()
-            return res.data or []
+            res = supabase.table("video_lessons").select("id,topic,level,language,status,scene_count,total_duration_seconds,created_at,storage_path").eq("user_id", current_user.id).order("created_at", desc=True).execute()
+            lessons = res.data or []
+            for lesson in lessons:
+                if lesson.get("status") == "ready" and lesson.get("storage_path"):
+                    lesson["download_url"] = _get_signed_url(lesson["storage_path"])
+            return lessons
         except Exception:
             pass
     return []

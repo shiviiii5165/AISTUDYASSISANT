@@ -641,6 +641,16 @@ const TopicDeckPage: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      {deck.download_url && (
+                        <a
+                          href={deck.download_url}
+                          download
+                          className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50 transition-colors"
+                          title="Download presentation"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      )}
                       <button
                         onClick={() => handleDeleteDeck(deck.id)}
                         className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-50 transition-colors"

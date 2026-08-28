@@ -257,7 +257,11 @@ async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)
 @router.get("/")
 async def list_decks(current_user = Depends(get_current_user)):
     res = supabase.table("topic_decks").select("*").eq("user_id", current_user.id).order("created_at", desc=True).execute()
-    return res.data
+    decks = res.data or []
+    for deck in decks:
+        if deck.get("status") == "ready" and deck.get("storage_path"):
+            deck["download_url"] = _get_signed_url(deck["storage_path"])
+    return decks
 
 
 @router.delete("/{deck_id}")

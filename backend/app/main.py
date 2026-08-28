@@ -60,5 +60,9 @@ app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
 app.include_router(decks.router, prefix="/api/decks", tags=["decks"])
 app.include_router(lessons.router, prefix="/api/lessons", tags=["lessons"])
 app.include_router(teach.router, prefix="/api/teach", tags=["teach"])
+from app.api import orchestrator as orchestrator_api
+app.include_router(orchestrator_api.router, prefix="/api/orchestrator", tags=["orchestrator"])
+from app.api import librarian as librarian_api
+app.include_router(librarian_api.router, prefix="/api/librarian", tags=["librarian"])
 
 

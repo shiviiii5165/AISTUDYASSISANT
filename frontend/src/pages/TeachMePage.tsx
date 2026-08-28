@@ -886,14 +886,14 @@ const TeachMePage: React.FC = () => {
 
                 {/* YouTube Input */}
                 {sourceType === 'youtube' && (
-                  <div className="mt-3 p-3 bg-red-50/60 border border-red-200 rounded-xl">
-                    <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube Video URL:</label>
+                  <div className="mt-3 p-3 bg-blue-50/60 border border-blue-200 rounded-xl">
+                    <label className="block text-xs font-semibold text-blue-900 mb-1">Enter Public YouTube Video URL:</label>
                     <input
                       type="url"
                       value={youtubeUrl}
                       onChange={(e) => setYoutubeUrl(e.target.value)}
                       placeholder="https://www.youtube.com/watch?v=..."
-                      className="w-full px-3 py-2 bg-white border border-red-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 )}

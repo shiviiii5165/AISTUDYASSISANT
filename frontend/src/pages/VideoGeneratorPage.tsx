@@ -5,7 +5,7 @@ import {
   RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
   Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
   Plus, Edit3, ChevronRight, CheckSquare, Search,
-  BarChart2, Zap, Bookmark, Volume2, Maximize2
+  BarChart2, Zap, Bookmark, Volume2, Maximize2, Trash2
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
@@ -211,6 +211,22 @@ const VideoGeneratorPage: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [lessonId, status]);
 
+  const handleDeleteLesson = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this video lesson?")) return;
+    const token = useAuthStore.getState().session?.access_token;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPastLessons(prev => prev.filter(l => l.id !== id));
+      }
+    } catch (e) {
+      console.error("Failed to delete lesson", e);
+    }
+  };
+
   // Start Generation
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -407,14 +423,14 @@ const VideoGeneratorPage: React.FC = () => {
               )}
 
               {sourceType === 'youtube' && (
-                <div className="mt-3 p-3 bg-red-50/60 border border-red-200 rounded-xl">
-                  <label className="block text-xs font-semibold text-red-900 mb-1">Enter Public YouTube Video URL:</label>
+                <div className="mt-3 p-3 bg-blue-50/60 border border-blue-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-blue-900 mb-1">Enter Public YouTube Video URL:</label>
                   <input
                     type="url"
                     value={youtubeUrl}
                     onChange={(e) => setYoutubeUrl(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full px-3 py-2 bg-white border border-red-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               )}
@@ -734,6 +750,48 @@ const VideoGeneratorPage: React.FC = () => {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* ═══════════ RECENT VIDEOS ═══════════ */}
+        {pastLessons.length > 0 && !generating && !lessonId && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-500" /> Recent Videos ({pastLessons.length})
+              </h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {pastLessons.map((lesson) => (
+                <div key={lesson.id} className="py-3.5 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate">{lesson.topic}</p>
+                    <p className="text-xs text-slate-400">
+                      {lesson.level || 'B.Tech'}  •  {lesson.language || 'English'}  •  {new Date(lesson.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {lesson.download_url && (
+                      <a
+                        href={lesson.download_url}
+                        download
+                        className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50 transition-colors"
+                        title="Download video"
+                      >
+                        <Download className="w-4 h-4" />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleDeleteLesson(lesson.id)}
+                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-50 transition-colors"
+                      title="Delete video"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
