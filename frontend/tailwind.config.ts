@@ -29,6 +29,27 @@ export default {
         ai: {
           500: '#6366F1',
           50: '#EEF2FF',
+        },
+        surface: {
+          DEFAULT: '#FAF9F6',
+          card: '#FFFFFF',
+        },
+        ink: {
+          DEFAULT: '#1E1B2E',
+          muted: '#6B7280',
+        },
+        genie: {
+          purple: {
+            DEFAULT: '#6D28D9',
+            soft: '#EDE9FE',
+          },
+          amber: {
+            DEFAULT: '#F59E0B',
+            soft: '#FEF3C7',
+          }
+        },
+        border: {
+          soft: '#E9E7F0',
         }
       }
     }

@@ -99,6 +99,50 @@ export async function askQuestion(
   return response.data;
 }
 
+// ─── V2 Pipeline Types & API ──────────────────────────────────────────────────
+
+export interface TutorTurn {
+  message: string;
+  understanding_level: "not_assessed" | "struggling" | "developing" | "solid";
+  concepts_covered: string[];
+  concepts_struggled: string[];
+  is_topic_complete: boolean;
+}
+
+export interface ContentCreatorOutput {
+  job_id: string;
+  content_type: string;
+  status: "processing" | "complete" | "failed";
+  output_url_or_path: string | null;
+  grounded_in_notes: boolean;
+  error_message: string | null;
+  flashcards_data: any | null;
+}
+
+export interface PipelineOutput {
+  response_type: string; // "tutor_turn" | "content" | "direct_message"
+  message: string | null;
+  tutor_data: TutorTurn | null;
+  content_data: ContentCreatorOutput | null;
+  intent: string;
+}
+
+export async function sendMessageV2(
+  message: string,
+  history: ChatMessage[] = []
+): Promise<PipelineOutput> {
+  const response = await api.post('/chat/v2/ask', {
+    message,
+    conversation_history: history,
+  });
+  return response.data;
+}
+
+export async function getContentStatus(jobId: string): Promise<ContentCreatorOutput> {
+  const response = await api.get(`/content-creator/status/${jobId}`);
+  return response.data;
+}
+
 // ─── Handwritten Notes Types & API ──────────────────────────────────────────
 
 export interface NoteUploadResponse {

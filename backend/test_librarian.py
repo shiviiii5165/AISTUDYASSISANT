@@ -161,13 +161,15 @@ def test_empty_topic_returns_immediately(mock_get_docs, mock_search):
 # TEST 6: Vector store raises exception → caught, sufficient: False, no crash
 # ══════════════════════════════════════════════════════════════════════════════
 
+@patch("app.agents.librarian.perform_web_search", new_callable=AsyncMock)
 @patch("app.agents.librarian.hybrid_search_evidence", new_callable=AsyncMock)
 @patch("app.agents.librarian._get_user_document_ids", new_callable=AsyncMock)
-def test_vector_store_exception_caught(mock_get_docs, mock_search):
+def test_vector_store_exception_caught(mock_get_docs, mock_search, mock_web):
     """If hybrid_search_evidence raises an exception, the Librarian catches it
     and returns a valid LibrarianOutput with sufficient=False, not a crash."""
     mock_get_docs.return_value = ["doc-1"]
     mock_search.side_effect = Exception("pgvector connection refused: FATAL: too many connections")
+    mock_web.return_value = []
 
     result = run(retrieve_context("database normalization", "user-123"))
 
@@ -252,6 +254,29 @@ def test_empty_doc_ids_skips_retrieval(mock_get_docs, mock_search, mock_web):
     # hybrid_search_evidence should NEVER be called when doc_ids is empty
     mock_search.assert_not_called()
     assert result.sufficient is False
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TEST 9.5: Empty doc_ids STILL triggers web fallback
+# ══════════════════════════════════════════════════════════════════════════════
+
+@patch("app.agents.librarian.perform_web_search", new_callable=AsyncMock)
+@patch("app.agents.librarian._get_user_document_ids", new_callable=AsyncMock)
+def test_empty_doc_ids_still_triggers_web_fallback(mock_get_docs, mock_web):
+    """Even if a user has no documents, we should still attempt to answer their
+    query using the web fallback."""
+    mock_get_docs.return_value = []  # User has no uploaded documents
+    mock_web.return_value = [
+        {"title": "Quantum Physics for Beginners", "snippet": "A good intro...", "url": "https://example.com/quantum"},
+    ]
+
+    result = run(retrieve_context("quantum physics", "user-no-docs"))
+
+    mock_web.assert_called_once()
+    assert result.sufficient is False
+    assert result.used_web_fallback is True
+    assert len(result.context) == 1
+    assert result.context[0].source == "web"
 
 
 # ══════════════════════════════════════════════════════════════════════════════

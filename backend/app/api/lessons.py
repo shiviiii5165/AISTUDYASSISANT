@@ -103,7 +103,12 @@ async def create_lesson_video(
             project_id=lesson_id,
         )
 
-        return {"lesson_id": lesson_id, "project_id": lesson_id, "status": "processing"}
+        from fastapi import status
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={"lesson_id": lesson_id, "project_id": lesson_id, "status": "processing"}
+        )
 
     except Exception as e:
         import traceback
@@ -115,23 +120,31 @@ async def create_lesson_video(
 async def regenerate_scene_endpoint(
     lesson_id: str,
     request: RegenerateSceneRequest,
+    background_tasks: BackgroundTasks,
     current_user=Depends(get_current_user),
 ):
     """
-    Regenerates a single scene in the video without re-rendering any other scenes.
+    Starts an asynchronous background job to regenerate a single scene in the video.
     """
     try:
-        updated_project = await regenerate_single_scene(
+        background_tasks.add_task(
+            regenerate_single_scene,
             project_id=lesson_id,
             scene_id=request.scene_id,
             user_id=current_user.id,
         )
-        return {
-            "status": "success",
-            "project_id": lesson_id,
-            "scene_id": request.scene_id,
-            "final_video_url": updated_project.final_video_url,
-        }
+        
+        from fastapi import status
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={
+                "status": "processing",
+                "project_id": lesson_id,
+                "scene_id": request.scene_id,
+                "message": "Scene regeneration started."
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scene regeneration failed: {str(e)}")
 

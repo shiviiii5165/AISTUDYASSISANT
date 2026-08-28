@@ -15,3 +15,7 @@ class ChatResponse(BaseModel):
     answer: str
     sources: List[Dict[str, Any]]
     model: str
+
+class PipelineRequest(BaseModel):
+    message: str
+    history: Optional[List[Dict[str, Any]]] = None

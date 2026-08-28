@@ -6,6 +6,7 @@ import traceback
 
 from app.api import auth, pdfs, chat, notes, predict
 from app.core.config import settings
+from app.core.logging import logger
 
 app = FastAPI(title="TeachGenie API", version="1.0.0")
 
@@ -20,14 +21,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.core.security import setup_rate_limiting, SecurityHeadersMiddleware, RequestSizeLimitMiddleware
+app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10_000_000) # 10MB
+app.add_middleware(SecurityHeadersMiddleware)
+setup_rate_limiting(app)
+
+
 # Global exception handler — always returns CORS-safe JSON, never a raw crash
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    tb = traceback.format_exc()
-    print(f"UNHANDLED EXCEPTION on {request.method} {request.url.path}: {exc}\n{tb}")
+    logger.error(f"UNHANDLED EXCEPTION on {request.method} {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal server error: {str(exc)[:300]}"}
+        content={"detail": "Internal server error. Please try again later."}
     )
 
 @app.get("/")
@@ -64,5 +70,10 @@ from app.api import orchestrator as orchestrator_api
 app.include_router(orchestrator_api.router, prefix="/api/orchestrator", tags=["orchestrator"])
 from app.api import librarian as librarian_api
 app.include_router(librarian_api.router, prefix="/api/librarian", tags=["librarian"])
-
+from app.api import tutor as tutor_api
+app.include_router(tutor_api.router, prefix="/api/tutor", tags=["tutor"])
+from app.api import content_creator as content_creator_api
+app.include_router(content_creator_api.router, prefix="/api/content-creator", tags=["content-creator"])
+from app.api import lesson_planner
+app.include_router(lesson_planner.router, prefix="/api/lesson-planner", tags=["lesson-planner"])
 

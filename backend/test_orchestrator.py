@@ -49,6 +49,7 @@ def test_doubt_intent(mock_llm):
         "confidence": 0.95,
         "routed_to": "tutor_agent",
         "direct_reply": None,
+        "content_subtype": None,
     })
 
     result = run(classify_and_route("I don't understand how TCP three-way handshake works"))
@@ -75,6 +76,7 @@ def test_content_request_intent(mock_llm):
         "confidence": 0.97,
         "routed_to": "content_creator_agent",
         "direct_reply": None,
+        "content_subtype": "ppt",
     })
 
     result = run(classify_and_route("Make me a 10-slide PPT on database normalization"))
@@ -83,6 +85,7 @@ def test_content_request_intent(mock_llm):
     assert result.topic == "database normalization"
     assert result.routed_to == "content_creator_agent"
     assert result.confidence >= 0.5
+    assert result.content_subtype == "ppt"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -100,6 +103,7 @@ def test_progress_check_intent(mock_llm):
         "confidence": 0.92,
         "routed_to": "study_planner_agent",
         "direct_reply": None,
+        "content_subtype": None,
     })
 
     result = run(classify_and_route("How many questions did I answer correctly this week?"))
@@ -124,6 +128,7 @@ def test_general_chat_intent(mock_llm):
         "confidence": 0.98,
         "routed_to": "direct_reply",
         "direct_reply": "Good morning! Ready to help you study today!",
+        "content_subtype": None,
     })
 
     result = run(classify_and_route("Hey, good morning! How are you?"))
@@ -148,6 +153,7 @@ def test_ambiguous_triggers_clarify(mock_llm):
         "confidence": 0.35,
         "routed_to": "tutor_agent",
         "direct_reply": None,
+        "content_subtype": None,
     })
 
     result = run(classify_and_route("Can you help me with that thing we discussed?"))
@@ -176,6 +182,7 @@ def test_malformed_json_retry_succeeds(mock_llm):
             "confidence": 0.88,
             "routed_to": "tutor_agent",
             "direct_reply": None,
+            "content_subtype": None,
         }),
     ]
 
@@ -253,6 +260,95 @@ def test_empty_input_returns_clarify(mock_llm):
     assert result.intent == "clarify"
     assert result.routed_to == "direct_reply"
     mock_llm.assert_not_called()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TEST 11: content_request intent with explicit video subtype
+# ══════════════════════════════════════════════════════════════════════════════
+
+@patch("app.agents.orchestrator.call_gemini", new_callable=AsyncMock)
+def test_content_request_video(mock_llm):
+    """Explicit request for a video should set content_subtype='video'."""
+    mock_llm.return_value = json.dumps({
+        "intent": "content_request",
+        "topic": "photosynthesis",
+        "confidence": 0.95,
+        "routed_to": "content_creator_agent",
+        "direct_reply": None,
+        "content_subtype": "video",
+    })
+
+    result = run(classify_and_route("make me a video on photosynthesis"))
+
+    assert result.intent == "content_request"
+    assert result.content_subtype == "video"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TEST 12: content_request intent with explicit flashcards subtype
+# ══════════════════════════════════════════════════════════════════════════════
+
+@patch("app.agents.orchestrator.call_gemini", new_callable=AsyncMock)
+def test_content_request_flashcards(mock_llm):
+    """Explicit request for flashcards should set content_subtype='flashcards'."""
+    mock_llm.return_value = json.dumps({
+        "intent": "content_request",
+        "topic": "history of rome",
+        "confidence": 0.95,
+        "routed_to": "content_creator_agent",
+        "direct_reply": None,
+        "content_subtype": "flashcards",
+    })
+
+    result = run(classify_and_route("give me flashcards for history of rome"))
+
+    assert result.intent == "content_request"
+    assert result.content_subtype == "flashcards"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TEST 13: content_request intent with ambiguous format defaults to unknown
+# ══════════════════════════════════════════════════════════════════════════════
+
+@patch("app.agents.orchestrator.call_gemini", new_callable=AsyncMock)
+def test_content_request_ambiguous_format(mock_llm):
+    """Ambiguous format should result in content_subtype='unknown'."""
+    mock_llm.return_value = json.dumps({
+        "intent": "content_request",
+        "topic": "history of rome",
+        "confidence": 0.95,
+        "routed_to": "content_creator_agent",
+        "direct_reply": None,
+        "content_subtype": "unknown",
+    })
+
+    result = run(classify_and_route("create some study material on history of rome"))
+
+    assert result.intent == "content_request"
+    assert result.content_subtype == "unknown"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TEST 14: invalid content_subtype normalizes to unknown
+# ══════════════════════════════════════════════════════════════════════════════
+
+@patch("app.agents.orchestrator.call_gemini", new_callable=AsyncMock)
+def test_content_request_invalid_subtype(mock_llm):
+    """If the LLM hallucinates a subtype like 'pdf', it should normalize to 'unknown'."""
+    mock_llm.return_value = json.dumps({
+        "intent": "content_request",
+        "topic": "history of rome",
+        "confidence": 0.95,
+        "routed_to": "content_creator_agent",
+        "direct_reply": None,
+        "content_subtype": "pdf",
+    })
+
+    result = run(classify_and_route("generate a pdf on history of rome"))
+
+    assert result.intent == "content_request"
+    assert result.content_subtype == "unknown"
+
 
 
 if __name__ == "__main__":

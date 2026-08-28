@@ -25,7 +25,7 @@ async def perform_web_search(query: str, max_results: int = 3) -> list[dict]:
         return []
 
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
 
         results = []
         with DDGS() as ddgs:
@@ -38,7 +38,7 @@ async def perform_web_search(query: str, max_results: int = 3) -> list[dict]:
         return results
 
     except ImportError:
-        print("[WebSearch] duckduckgo-search is not installed. Skipping web fallback.")
+        print("[WebSearch] ddgs is not installed. Skipping web fallback.")
         return []
     except Exception as e:
         print(f"[WebSearch] DuckDuckGo search failed: {e}")

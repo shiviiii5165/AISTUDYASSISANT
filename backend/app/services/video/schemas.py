@@ -188,6 +188,7 @@ class VideoConfig(BaseModel):
     source_ids: List[str] = Field(default_factory=list)
     youtube_url: Optional[str] = None
     lesson_session_id: Optional[str] = None
+    custom_context: Optional[str] = None
     
     duration: int = 300                     # Total seconds (60, 180, 300, 600, 900)
     quality: VideoQuality = VideoQuality.STANDARD

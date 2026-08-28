@@ -46,11 +46,12 @@ CRITICAL CONTENT QUALITY RULES:
 1. CONCISE VISIBLE BULLETS: Maximum 3-5 bullets per slide. Every bullet must be under 80 characters. Standalone scannable insights, NEVER long paragraphs on the slide.
 2. RICH SPEAKER NOTES: Put all in-depth explanations, teaching guidance, proofs, and transition remarks into `speaker_notes` (3-5 rich sentences).
 3. SPECIALIZED DATA:
-   - If type is 'architecture', provide the `layers` array: [{{"name": "...", "components": ["...", "..."]}}].
-   - If type is 'process_flow', provide the `steps` array: [{{"number": 1, "title": "...", "detail": "..."}}].
-   - If type is 'timeline', provide the `milestones` array: [{{"date": "...", "label": "...", "detail": "..."}}].
-   - If type is 'comparison', provide the `columns` array: [{{"heading": "...", "points": ["...", "..."]}}].
-   - If type is 'kpi_metrics', provide the `metrics` array: [{{"value": "...", "label": "...", "context": "..."}}].
+   - If type is 'architecture', provide the `layers` array: [{{"name": "Short Layer Name (1-3 words, max 25 chars)", "components": ["Short Component (1-2 words)", "..."]}}].
+   - If type is 'process_flow', provide the `steps` array: [{{"number": 1, "title": "Short Step Title (1-3 words)", "detail": "..."}}}].
+   - If type is 'timeline', provide the `milestones` array: [{{"date": "...", "label": "Short label (1-3 words, max 25 chars)", "detail": "..."}}}].
+   - If type is 'comparison', provide the `columns` array: [{{"heading": "Short Heading (1-3 words, max 25 chars)", "points": ["...", "..."]}}].
+     IMPORTANT: Column headings MUST be 1-3 words and under 25 characters. Never use long phrases as headings.
+   - If type is 'kpi_metrics', provide the `metrics` array: [{{"value": "...", "label": "Short label (1-3 words, max 25 chars)", "context": "..."}}].
    - If type is 'quiz', provide `quiz_options` (4 options A, B, C, D) and `quiz_answer`.
 4. EXAMPLES: Provide a vivid, real-world example with concrete names or numbers when helpful.
 5. NO LATEX: Do NOT use $, $$, \\frac, \\text, or any TeX markup. Use plain keyboard symbols.

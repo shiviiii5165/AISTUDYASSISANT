@@ -12,6 +12,8 @@ import VideoGeneratorPage from './pages/VideoGeneratorPage';
 import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import SupportPage from './pages/SupportPage';
+import LessonPlannerPage from './pages/LessonPlannerPage';
+
 import { useAuthStore } from './store/useAuthStore';
 import CookieConsent from './components/CookieConsent';
 
@@ -143,6 +145,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <VideoGeneratorPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/lesson-planner" 
+            element={
+              <ProtectedRoute>
+                <LessonPlannerPage />
               </ProtectedRoute>
             } 
           />

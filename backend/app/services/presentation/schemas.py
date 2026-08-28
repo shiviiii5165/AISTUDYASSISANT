@@ -72,8 +72,7 @@ class VisualSpec(BaseModel):
     image_bytes: Optional[bytes] = None
     diagram_spec: Optional[DiagramSpec] = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class SlideSourceRef(BaseModel):
@@ -116,6 +115,7 @@ class PresentationConfig(BaseModel):
     theme: str = "blue_professional"
     source_type: str = "general"  # "general" | "uploaded_material" | "uploaded_material_plus_web"
     source_id: Optional[str] = None
+    custom_context: Optional[str] = None
     
     # Feature Toggles
     enable_diagrams: bool = True

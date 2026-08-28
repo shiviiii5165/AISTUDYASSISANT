@@ -92,11 +92,14 @@ def build_presentation(
             preset_label=preset_label,
         )
 
-    # 5. Evaluate deck quality (for logging)
-    qa = evaluate_deck_quality(slides)
+    # 5. Evaluate deck quality (density + contrast)
+    qa = evaluate_deck_quality(slides, theme=theme)
     print(f"[QA] Deck QA: {qa['passed']}/{qa['total_slides']} slides passed | "
           f"Layout variety: {qa['variety_score']}% | "
           f"Critical: {qa['critical']}")
+    if qa.get("contrast_issues"):
+        for ci in qa["contrast_issues"]:
+            print(f"[QA][CONTRAST] {ci}")
 
     # 6. Export
     buffer = io.BytesIO()

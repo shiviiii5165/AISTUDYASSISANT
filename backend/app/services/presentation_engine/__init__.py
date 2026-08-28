@@ -137,9 +137,7 @@ class SlideContent(BaseModel):
     speaker_note: str = ""
     transition_note: str = ""     # how to segue to the next slide
 
-    class Config:
-        # Allow bytes fields
-        arbitrary_types_allowed = True
+    model_config = {"arbitrary_types_allowed": True}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -64,6 +64,10 @@ class OrchestratorOutput(BaseModel):
         None,
         description="If intent is 'general_chat' or 'clarify', a short reply to the user.",
     )
+    content_subtype: Optional[str] = Field(
+        None,
+        description="If intent is 'content_request', one of: 'ppt', 'video', 'flashcards', or 'unknown'.",
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -92,28 +96,29 @@ Respond with ONLY a valid JSON object (no markdown, no extra text):
   "topic": "<detected subject/concept string or null>",
   "confidence": <float 0.0-1.0>,
   "routed_to": "<one of: tutor_agent, content_creator_agent, study_planner_agent, direct_reply>",
-  "direct_reply": "<string or null — required only for general_chat and clarify>"
+  "direct_reply": "<string or null — required only for general_chat and clarify>",
+  "content_subtype": "<one of: ppt, video, flashcards, unknown, or null>"
 }
 
 ## Few-Shot Examples:
 
 User: "I don't understand how TCP three-way handshake works"
-Output: {"intent": "doubt", "topic": "TCP three-way handshake", "confidence": 0.95, "routed_to": "tutor_agent", "direct_reply": null}
+Output: {"intent": "doubt", "topic": "TCP three-way handshake", "confidence": 0.95, "routed_to": "tutor_agent", "direct_reply": null, "content_subtype": null}
 
 User: "Make me a 10-slide PPT on database normalization"
-Output: {"intent": "content_request", "topic": "database normalization", "confidence": 0.97, "routed_to": "content_creator_agent", "direct_reply": null}
+Output: {"intent": "content_request", "topic": "database normalization", "confidence": 0.97, "routed_to": "content_creator_agent", "direct_reply": null, "content_subtype": "ppt"}
 
 User: "How many questions did I answer correctly this week?"
-Output: {"intent": "progress_check", "topic": null, "confidence": 0.92, "routed_to": "study_planner_agent", "direct_reply": null}
+Output: {"intent": "progress_check", "topic": null, "confidence": 0.92, "routed_to": "study_planner_agent", "direct_reply": null, "content_subtype": null}
 
 User: "Hey, good morning! How are you doing?"
-Output: {"intent": "general_chat", "topic": null, "confidence": 0.98, "routed_to": "direct_reply", "direct_reply": "Good morning! I'm doing great and ready to help you study. What would you like to learn today?"}
+Output: {"intent": "general_chat", "topic": null, "confidence": 0.98, "routed_to": "direct_reply", "direct_reply": "Good morning! I'm doing great and ready to help you study. What would you like to learn today?", "content_subtype": null}
 
 User: "Can you help me with that thing we discussed?"
-Output: {"intent": "clarify", "topic": null, "confidence": 0.35, "routed_to": "direct_reply", "direct_reply": "I'd love to help! Could you tell me which topic or concept you're referring to so I can assist you better?"}
+Output: {"intent": "clarify", "topic": null, "confidence": 0.35, "routed_to": "direct_reply", "direct_reply": "I'd love to help! Could you tell me which topic or concept you're referring to so I can assist you better?", "content_subtype": null}
 
 User: "Generate flashcards for operating system deadlocks"
-Output: {"intent": "content_request", "topic": "operating system deadlocks", "confidence": 0.96, "routed_to": "content_creator_agent", "direct_reply": null}
+Output: {"intent": "content_request", "topic": "operating system deadlocks", "confidence": 0.96, "routed_to": "content_creator_agent", "direct_reply": null, "content_subtype": "flashcards"}
 
 Now classify the following student message."""
 
@@ -123,7 +128,7 @@ STRICT_RETRY_SUFFIX = """
 CRITICAL: Your previous response was not valid JSON. You MUST respond with ONLY a raw JSON object.
 Do NOT include markdown code fences, explanation text, or anything outside the JSON.
 Example of the EXACT format required:
-{"intent": "doubt", "topic": "example", "confidence": 0.9, "routed_to": "tutor_agent", "direct_reply": null}
+{"intent": "doubt", "topic": "example", "confidence": 0.9, "routed_to": "tutor_agent", "direct_reply": null, "content_subtype": null}
 """
 
 
@@ -196,12 +201,21 @@ def _parse_and_validate(raw_text: str) -> OrchestratorOutput:
     if isinstance(topic, str):
         topic = topic.strip() or None
 
+    content_subtype = None
+    if intent == "content_request":
+        raw_subtype = str(data.get("content_subtype", "")).strip().lower()
+        if raw_subtype in ("ppt", "video", "flashcards"):
+            content_subtype = raw_subtype
+        else:
+            content_subtype = "unknown"
+
     return OrchestratorOutput(
         intent=intent,
         topic=topic,
         confidence=round(confidence, 2),
         routed_to=routed_to,
         direct_reply=direct_reply,
+        content_subtype=content_subtype,
     )
 
 
@@ -213,6 +227,7 @@ def _fallback_clarify() -> OrchestratorOutput:
         confidence=0.0,
         routed_to="direct_reply",
         direct_reply="I'm having a little trouble understanding your request right now. Could you rephrase it?",
+        content_subtype=None,
     )
 
 

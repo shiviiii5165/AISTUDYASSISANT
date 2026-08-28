@@ -149,6 +149,13 @@ async def plan_storyboard(
     )
     if evidence_text:
         prompt_str += f"\n\nSource Reference Grounding:\n{evidence_text}"
+        
+    if config.custom_context:
+        prompt_str += (
+            "\n\nIMPORTANT INSTRUCTION: Use the following source material to generate the storyboard. "
+            "DO NOT fabricate facts beyond this provided context:\n\n"
+            f"{config.custom_context}"
+        )
 
     messages = [
         {"role": "system", "content": prompt_str},

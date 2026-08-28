@@ -74,7 +74,11 @@ def fit_text_to_box(
     """
     if not text:
         return token, text
-        
+
+    # Clamp the floor to the token's starting size — a BADGE at 10pt
+    # should never have a 14pt floor that skips the shrink loop entirely.
+    effective_min = min(min_font_pt, int(token.size.pt))
+
     current_token = TypeToken(
         font_name=token.font_name,
         size=token.size,
@@ -84,14 +88,14 @@ def fit_text_to_box(
     )
     
     # Try shrinking font size
-    while current_token.size.pt >= min_font_pt:
+    while current_token.size.pt >= effective_min:
         h = estimate_text_height(text, current_token, width, word_wrap)
         if h <= max_height:
             return current_token, text
         
         # Reduce by 2pt
         new_pt = current_token.size.pt - 2
-        if new_pt < min_font_pt:
+        if new_pt < effective_min:
             break
             
         current_token = TypeToken(

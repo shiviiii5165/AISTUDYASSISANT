@@ -17,8 +17,24 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             )
         return res.user
     except Exception as e:
+        # Never expose raw exception details from auth failures
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def get_current_admin_user(current_user = Depends(get_current_user)):
+    """Validates that the authenticated user holds an admin role."""
+    # Assuming role is stored in app_metadata or user_metadata in Supabase
+    app_meta = getattr(current_user, "app_metadata", {})
+    user_meta = getattr(current_user, "user_metadata", {})
+    
+    role = app_meta.get("role") or user_meta.get("role")
+    
+    if role not in ["admin", "super_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions. Admin access required."
+        )
+    return current_user

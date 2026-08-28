@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, 
   Download, Loader2, AlertTriangle, Layers, Palette, Users, Zap, Settings2, 
-  Eye, RotateCcw, CheckSquare, Square, BookOpen, Presentation, RefreshCw, Trash2
+  Eye, RotateCcw, CheckSquare, Square, BookOpen, Presentation, RefreshCw, Trash2, Plus, ArrowRight
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
+import GenieFloating from '../components/mascot/GenieFloating';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION OPTIONS
@@ -52,6 +54,21 @@ const SUGGESTED_TOPICS = [
   'Operating System Deadlocks & Memory Management',
   'Database Normalization: 1NF to BCNF',
 ];
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.04
+    }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 const TopicDeckPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
@@ -253,419 +270,471 @@ const TopicDeckPage: React.FC = () => {
         description="Generate deterministic, beautifully designed PowerPoint presentations with exact slide counts, structured diagrams, and verified knowledge grounding." 
       />
 
-      <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC] text-slate-900 pb-16 pt-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
+      <div className="min-h-[calc(100vh-64px)] bg-surface text-ink pb-24 pt-12 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
+        <motion.div 
+          className="max-w-4xl mx-auto"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+        >
           
-          {/* Header Banner */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-3 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Production AI Presentation Engine</span>
+          {/* Header Banner - Screen A Style */}
+          <motion.div variants={staggerItem} className="text-center mb-12 flex flex-col items-center">
+            
+            {/* Status Badges */}
+            <div className="flex items-center justify-center gap-2 mb-8">
+              <div className="px-4 py-1.5 rounded-full bg-genie-amber-soft text-genie-amber font-semibold text-sm shadow-sm flex items-center gap-1.5 border border-border-soft">
+                📊 {deckHistory.length} total created
+              </div>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              Transform Ideas into Professional Slide Decks
+
+            {/* Floating Genie */}
+            <GenieFloating size="lg" className="mb-4" />
+
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
+              <span className="text-ink block mb-1">Transform Ideas into</span>
+              <span className="bg-gradient-to-r from-genie-purple to-genie-amber bg-clip-text text-transparent pb-1">Professional Slide Decks</span>
             </h1>
-            <p className="mt-2 text-slate-600 text-base max-w-2xl mx-auto">
+            <p className="mt-2 text-ink-muted text-lg max-w-2xl mx-auto">
               Choose your knowledge source, exact slide count, and design system. Rendered with clean Python typography.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Main Creator Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 mb-8 transition-all">
-            <form onSubmit={handleGenerate}>
-              
-              {/* 1. Topic Input */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-800 mb-2">
-                  Presentation Topic or Key Concept
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="e.g., Cloud Computing Architecture: Distributed Systems at Scale"
-                    disabled={generating}
-                    className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 font-medium transition-colors text-base"
-                  />
-                  {topic && !generating && (
-                    <button
-                      type="button"
-                      onClick={() => setTopic('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm p-1"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {/* Quick Topic Suggestions */}
-                <div className="mt-2.5 flex flex-wrap gap-2 items-center">
-                  <span className="text-xs font-medium text-slate-500">Suggestions:</span>
-                  {SUGGESTED_TOPICS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setTopic(t)}
-                      className="text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+          <form onSubmit={handleGenerate} className="space-y-10">
+            
+            {/* Topic Input - Big Pill Search Bar */}
+            <motion.div variants={staggerItem} className="max-w-3xl mx-auto w-full">
+              <div className="relative group shadow-sm hover:shadow-md transition-shadow rounded-full bg-surface-card border border-border-soft p-2 flex items-center">
+                <button type="button" className="p-3 text-ink-muted hover:text-genie-purple transition-colors ml-1 pointer-events-none">
+                  <Plus className="w-6 h-6" />
+                </button>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="What would you like to present today?"
+                  disabled={generating}
+                  className="flex-1 bg-transparent border-none text-ink placeholder:text-ink-muted/60 focus:ring-0 text-lg px-2 py-3 focus:outline-none"
+                />
+                {topic && !generating && (
+                  <button
+                    type="button"
+                    onClick={() => setTopic('')}
+                    className="p-2 text-ink-muted hover:text-ink transition-colors mr-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={generating || !topic.trim()}
+                  className="ml-2 w-12 h-12 rounded-full bg-genie-amber text-white flex items-center justify-center hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0 cursor-pointer"
+                >
+                  {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                </button>
               </div>
 
-              {/* 2. Knowledge Source Selector */}
-              <div className="mb-6 pt-4 border-t border-slate-100">
-                <label className="block text-sm font-semibold text-slate-800 mb-2">
-                  Knowledge Grounding Source
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { type: 'general' as const, label: 'General Knowledge', icon: Globe, desc: 'AI subject knowledge' },
-                    { type: 'uploaded_material' as const, label: 'My Uploaded Notes', icon: FileText, desc: 'Grounded in PDF/Notes' },
-                    { type: 'uploaded_material_plus_web' as const, label: 'Document + Web', icon: Sparkles, desc: 'Document + Research' },
-                  ].map((src) => (
-                    <button
+              {/* Suggestion Chips */}
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                {SUGGESTED_TOPICS.map((t) => (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    key={t}
+                    type="button"
+                    onClick={() => setTopic(t)}
+                    className="text-xs px-4 py-2 rounded-full border border-border-soft bg-surface-card text-ink-muted hover:text-ink hover:border-genie-purple/30 hover:bg-genie-purple-soft/30 transition-colors cursor-pointer shadow-sm"
+                  >
+                    {t}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Knowledge Source Selector */}
+            <motion.div variants={staggerItem} className="pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { type: 'general' as const, label: 'General Knowledge', icon: Globe, desc: 'AI subject knowledge' },
+                  { type: 'uploaded_material' as const, label: 'My Uploaded Notes', icon: FileText, desc: 'Grounded in PDF/Notes' },
+                  { type: 'uploaded_material_plus_web' as const, label: 'Document + Web', icon: Sparkles, desc: 'Document + Research' },
+                ].map((src) => {
+                  const isSelected = sourceType === src.type;
+                  return (
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
                       key={src.type}
                       type="button"
                       onClick={() => setSourceType(src.type)}
-                      className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
-                        sourceType === src.type
-                          ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 shadow-xs'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      className={`flex flex-col text-left p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+                        isSelected
+                          ? 'border-genie-purple bg-genie-purple-soft ring-1 ring-genie-purple shadow-sm'
+                          : 'border-border-soft bg-surface-card hover:border-genie-purple/40 shadow-sm hover:shadow-md'
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <src.icon className={`w-4 h-4 ${sourceType === src.type ? 'text-blue-600' : 'text-slate-500'}`} />
-                        <span className="text-sm font-semibold text-slate-900">{src.label}</span>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`p-2 rounded-full ${isSelected ? 'bg-white text-genie-purple' : 'bg-surface text-ink-muted'}`}>
+                          <src.icon className="w-5 h-5" />
+                        </div>
+                        <span className={`text-sm font-semibold ${isSelected ? 'text-genie-purple' : 'text-ink'}`}>{src.label}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{src.desc}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* If Uploaded Material Selected: Show Document Dropdown */}
-                {sourceType !== 'general' && (
-                  <div className="mt-3 p-3.5 bg-blue-50/60 border border-blue-200/80 rounded-xl">
-                    <label className="block text-xs font-semibold text-blue-900 mb-1.5">
-                      Select Source Document from Your Library:
-                    </label>
-                    {userPdfs.length > 0 ? (
-                      <select
-                        value={selectedPdfId}
-                        onChange={(e) => setSelectedPdfId(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                      >
-                        {userPdfs.map((pdf) => (
-                          <option key={pdf.id} value={pdf.id}>
-                            📄 {pdf.name} ({pdf.subject || 'General'}) — {pdf.page_count || 1} pages
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <p className="text-xs text-blue-800">
-                        No uploaded PDFs found. You can upload a PDF in the Library or continue with General Knowledge.
-                      </p>
-                    )}
-                  </div>
-                )}
+                      <span className={`text-xs ml-[3.25rem] ${isSelected ? 'text-genie-purple/80' : 'text-ink-muted'}`}>{src.desc}</span>
+                    </motion.button>
+                  );
+                })}
               </div>
 
-              {/* 3. Exact Slide Count Selector (10..15) */}
-              <div className="mb-6 pt-4 border-t border-slate-100">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-slate-800">
-                    Exact Slide Count
+              {/* If Uploaded Material Selected: Show Document Dropdown */}
+              {sourceType !== 'general' && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }} 
+                  className="mt-4 p-5 bg-genie-purple-soft/50 border border-genie-purple/20 rounded-2xl"
+                >
+                  <label className="block text-sm font-semibold text-genie-purple mb-2">
+                    Select Source Document from Your Library
                   </label>
-                  <span className="text-xs font-medium text-slate-500">
-                    Guaranteed exact count ({slideCount} slides)
-                  </span>
-                </div>
-                <div className="grid grid-cols-6 gap-2">
-                  {SLIDE_COUNT_OPTIONS.map((num) => (
-                    <button
+                  {userPdfs.length > 0 ? (
+                    <select
+                      value={selectedPdfId}
+                      onChange={(e) => setSelectedPdfId(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-card border border-border-soft rounded-full text-sm text-ink focus:outline-none focus:ring-2 focus:ring-genie-purple font-medium shadow-sm appearance-none cursor-pointer"
+                    >
+                      {userPdfs.map((pdf) => (
+                        <option key={pdf.id} value={pdf.id}>
+                          📄 {pdf.name} ({pdf.subject || 'General'}) — {pdf.page_count || 1} pages
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-genie-purple/80 bg-white/50 p-3 rounded-xl">
+                      No uploaded PDFs found. You can upload a PDF in the Library or continue with General Knowledge.
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Exact Slide Count & Options Row */}
+            <motion.div variants={staggerItem} className="flex flex-col gap-6">
+              
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <span className="text-sm font-semibold text-ink-muted mr-2">Exact Slide Count:</span>
+                {SLIDE_COUNT_OPTIONS.map((num) => {
+                  const isSelected = slideCount === num;
+                  return (
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
                       key={num}
                       type="button"
                       onClick={() => setSlideCount(num)}
-                      className={`py-2.5 rounded-xl border text-center font-bold text-sm transition-all cursor-pointer ${
-                        slideCount === num
-                          ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
-                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      className={`px-5 py-2 rounded-full border text-sm font-bold transition-all shadow-sm cursor-pointer ${
+                        isSelected
+                          ? 'border-genie-purple bg-genie-purple text-white shadow-md'
+                          : 'border-border-soft bg-surface-card text-ink hover:bg-surface'
                       }`}
                     >
                       {num} Slides
-                    </button>
-                  ))}
-                </div>
+                    </motion.button>
+                  );
+                })}
               </div>
 
-              {/* 4. Design Systems & Themes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pt-4 border-t border-slate-100">
-                
-                {/* Design Template System */}
+              {/* Design Template System */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">
-                    Design Template System
-                  </label>
-                  <div className="space-y-2">
-                    {DESIGN_OPTIONS.map((d) => (
-                      <button
-                        key={d.value}
-                        type="button"
-                        onClick={() => setDesign(d.value)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                          design === d.value
-                            ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-lg">{d.icon}</span>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">{d.label}</p>
-                            <p className="text-xs text-slate-500 line-clamp-1">{d.desc}</p>
+                  <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">Design Template System</h3>
+                  <div className="space-y-3">
+                    {DESIGN_OPTIONS.map((d) => {
+                      const isSelected = design === d.value;
+                      return (
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          key={d.value}
+                          type="button"
+                          onClick={() => setDesign(d.value)}
+                          className={`w-full flex items-center justify-between p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-sm ${
+                            isSelected
+                              ? 'border-genie-purple bg-genie-purple-soft ring-1 ring-genie-purple'
+                              : 'border-border-soft bg-surface-card hover:border-genie-purple/40 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <span className="text-2xl">{d.icon}</span>
+                            <div>
+                              <p className={`text-sm font-bold ${isSelected ? 'text-genie-purple' : 'text-ink'}`}>{d.label}</p>
+                              <p className={`text-xs mt-0.5 ${isSelected ? 'text-genie-purple/80' : 'text-ink-muted'}`}>{d.desc}</p>
+                            </div>
                           </div>
-                        </div>
-                        {design === d.value && <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />}
-                      </button>
-                    ))}
+                          {isSelected && <CheckCircle2 className="w-5 h-5 text-genie-purple shrink-0" />}
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Theme Palette & Audience */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">
-                    Color Theme Palette
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {THEME_OPTIONS.map((t) => (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => setThemeId(t.value)}
-                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          themeId === t.value
-                            ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex -space-x-1 shrink-0">
-                          {t.colors.map((c, ci) => (
-                            <div key={ci} className="w-3.5 h-3.5 rounded-full border border-white" style={{ backgroundColor: c }} />
-                          ))}
-                        </div>
-                        <span className="text-xs font-semibold text-slate-800 truncate">{t.label}</span>
-                      </button>
-                    ))}
+                  <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">Color Theme Palette</h3>
+                  <div className="flex flex-wrap gap-3 mb-8">
+                    {THEME_OPTIONS.map((t) => {
+                      const isSelected = themeId === t.value;
+                      return (
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          key={t.value}
+                          type="button"
+                          onClick={() => setThemeId(t.value)}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all cursor-pointer shadow-sm relative ${
+                            isSelected
+                              ? 'border-genie-purple bg-genie-purple-soft ring-1 ring-genie-purple shadow-md z-10'
+                              : 'border-border-soft bg-surface-card hover:bg-surface'
+                          }`}
+                        >
+                          <div className="flex -space-x-1.5 shrink-0 shadow-sm rounded-full bg-white p-0.5">
+                            {t.colors.slice(0,2).map((c, ci) => (
+                              <div key={ci} className="w-4 h-4 rounded-full border border-white" style={{ backgroundColor: c }} />
+                            ))}
+                          </div>
+                          <span className={`text-sm font-semibold ${isSelected ? 'text-genie-purple' : 'text-ink'}`}>{t.label}</span>
+                        </motion.button>
+                      );
+                    })}
                   </div>
 
-                  {/* Audience & Language */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Target Audience</label>
+                  <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">Audience & Language</h3>
+                  <div className="flex flex-wrap gap-4">
+                    <div className="relative group">
                       <select
                         value={audience}
                         onChange={(e) => setAudience(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="appearance-none pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-purple shadow-sm min-w-[200px] cursor-pointer"
                       >
                         {AUDIENCE_OPTIONS.map((a) => (
                           <option key={a.value} value={a.value}>{a.label}</option>
                         ))}
                       </select>
+                      <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-ink" />
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Language</label>
+                    <div className="relative group">
                       <select
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="appearance-none pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-purple shadow-sm min-w-[140px] cursor-pointer"
                       >
                         {LANGUAGE_OPTIONS.map((l) => (
                           <option key={l.value} value={l.value}>{l.label}</option>
                         ))}
                       </select>
+                      <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-ink" />
                     </div>
                   </div>
                 </div>
               </div>
+            </motion.div>
 
-              {/* 5. Pedagogical & Visual Toggles */}
-              <div className="mb-8 pt-4 border-t border-slate-100">
-                <label className="block text-sm font-semibold text-slate-800 mb-3">
-                  Presentation Component Features
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {[
-                    { label: 'System & Flow Diagrams', state: enableDiagrams, set: setEnableDiagrams },
-                    { label: 'Selective AI Illustrations', state: enableImages, set: setEnableImages },
-                    { label: 'Rich Speaker Notes', state: enableSpeakerNotes, set: setEnableSpeakerNotes },
-                    { label: 'Document Source Citations', state: enableSources, set: setEnableSources },
-                    { label: 'Real-World Case Examples', state: enableExamples, set: setEnableExamples },
-                    { label: 'Interactive Final Quiz', state: enableQuiz, set: setEnableQuiz },
-                  ].map((opt, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => opt.set(!opt.state)}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-left text-xs font-semibold cursor-pointer transition-colors ${
-                        opt.state
-                          ? 'border-blue-200 bg-blue-50/70 text-blue-900'
-                          : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'
-                      }`}
-                    >
-                      {opt.state ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600 shrink-0" />
-                      ) : (
-                        <Square className="w-4 h-4 text-slate-400 shrink-0" />
-                      )}
-                      <span className="truncate">{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
+            {/* Presentation Component Features (Toggle Pills) */}
+            <motion.div variants={staggerItem} className="pt-6 border-t border-border-soft">
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {[
+                  { label: 'System & Flow Diagrams', state: enableDiagrams, set: setEnableDiagrams },
+                  { label: 'Selective AI Illustrations', state: enableImages, set: setEnableImages },
+                  { label: 'Rich Speaker Notes', state: enableSpeakerNotes, set: setEnableSpeakerNotes },
+                  { label: 'Document Source Citations', state: enableSources, set: setEnableSources },
+                  { label: 'Real-World Case Examples', state: enableExamples, set: setEnableExamples },
+                  { label: 'Interactive Final Quiz', state: enableQuiz, set: setEnableQuiz },
+                ].map((opt, i) => (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    key={i}
+                    type="button"
+                    onClick={() => opt.set(!opt.state)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-full border text-sm font-semibold transition-colors shadow-sm cursor-pointer ${
+                      opt.state
+                        ? 'border-genie-purple bg-genie-purple-soft text-genie-purple ring-1 ring-genie-purple'
+                        : 'border-border-soft bg-surface-card text-ink-muted hover:text-ink hover:bg-surface'
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold ${
+                      opt.state ? 'bg-genie-purple text-white' : 'bg-surface text-ink-muted border border-border-soft'
+                    }`}>
+                      {opt.state ? 'ON' : 'OFF'}
+                    </span>
+                  </motion.button>
+                ))}
               </div>
+            </motion.div>
 
-              {/* Submit Button */}
-              <div>
-                <button
-                  type="submit"
-                  disabled={generating || !topic.trim()}
-                  className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>{stageMessage || 'Generating Presentation...'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Presentation className="w-5 h-5" />
-                      <span>Generate {slideCount}-Slide Presentation (.pptx)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            {/* Submit Button */}
+            <motion.div variants={staggerItem} className="pt-8 flex justify-center">
+              <motion.button
+                whileTap={(!generating && topic.trim()) ? { scale: 0.96 } : {}}
+                type="submit"
+                disabled={generating || !topic.trim()}
+                className="w-full max-w-md py-5 px-8 rounded-full font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-genie-purple to-genie-amber text-white border-0 cursor-pointer"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>{stageMessage || 'Generating Presentation...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Presentation className="w-6 h-6" />
+                    <span>Generate {slideCount}-Slide Presentation (.pptx)</span>
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
+          </form>
 
           {/* ═══════════ LIVE GENERATION PROGRESS TRACKER ═══════════ */}
-          {generating && (
-            <div className="bg-white rounded-2xl border border-blue-200 shadow-sm p-6 mb-8 text-center animate-pulse">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
-                <span>STAGE {currentStage + 1} OF 4</span>
-                <span className="text-blue-600">{progressPercent}% COMPLETE</span>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-100 rounded-full h-2.5 mb-4 overflow-hidden">
-                <div 
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-700 ease-out" 
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
+          <AnimatePresence>
+            {generating && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-surface-card rounded-2xl border border-genie-amber/30 shadow-md p-8 mt-12 text-center relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-genie-purple-soft/20 via-genie-amber-soft/20 to-genie-purple-soft/20 animate-pulse" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between text-xs font-bold text-ink-muted mb-4 uppercase tracking-widest">
+                    <span>Stage {currentStage + 1} of 4</span>
+                    <span className="text-genie-purple">{progressPercent}% Complete</span>
+                  </div>
+                  
+                  <div className="w-full bg-surface rounded-full h-3 mb-6 overflow-hidden border border-border-soft">
+                    <div 
+                      className="bg-gradient-to-r from-genie-purple to-genie-amber h-full rounded-full transition-all duration-700 ease-out" 
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
 
-              <p className="text-base font-bold text-slate-900 mb-1">{stageMessage}</p>
-              <p className="text-xs text-slate-500">Deterministic Python layout engine rendering 16:9 widescreen canvas...</p>
-            </div>
-          )}
+                  <p className="text-lg font-bold text-ink mb-1">{stageMessage}</p>
+                  <p className="text-sm text-ink-muted">Deterministic Python layout engine rendering 16:9 widescreen canvas...</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ═══════════ ERROR STATE ═══════════ */}
-          {errorMessage && !generating && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8 text-center">
-              <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-              <h3 className="text-base font-bold text-red-900 mb-1">Presentation Generation Failed</h3>
-              <p className="text-xs text-red-700 mb-4">{errorMessage}</p>
-              <button
-                onClick={handleGenerate}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 inline-flex items-center gap-1.5"
+          <AnimatePresence>
+            {errorMessage && !generating && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 rounded-2xl p-8 mt-12 text-center shadow-sm"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Try Again
-              </button>
-            </div>
-          )}
+                <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+                <h3 className="text-lg font-bold text-red-900 mb-2">Presentation Generation Failed</h3>
+                <p className="text-sm text-red-700 mb-6">{errorMessage}</p>
+                <button
+                  onClick={handleGenerate}
+                  className="px-6 py-2.5 bg-red-600 text-white rounded-full text-sm font-bold hover:bg-red-700 inline-flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" /> Try Again
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ═══════════ PRESENTATION READY VIEW ═══════════ */}
-          {status === 'ready' && downloadUrl && (
-            <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-6 sm:p-8 mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-2">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Presentation Ready
+          <AnimatePresence>
+            {status === 'ready' && downloadUrl && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                className="bg-surface-card rounded-2xl border border-sage-500/30 shadow-md p-8 mt-12"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-border-soft">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sage-50 text-sage-600 text-sm font-bold mb-3 border border-sage-500/20 shadow-sm">
+                      <CheckCircle2 className="w-4 h-4" /> Presentation Ready
+                    </div>
+                    <h2 className="text-3xl font-bold text-ink">{resultTitle}</h2>
+                    <p className="text-base text-ink-muted mt-2 font-medium">
+                      {finalSlideCount} Slides  •  {design.toUpperCase()} Template  •  16:9 Widescreen (.pptx)
+                    </p>
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900">{resultTitle}</h2>
-                  <p className="text-sm text-slate-500 mt-1">
-                    {finalSlideCount} Slides  •  {design.toUpperCase()} Template  •  16:9 Widescreen (.pptx)
-                  </p>
+                  <a
+                    href={downloadUrl}
+                    download={`${resultTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`}
+                    className="px-8 py-4 bg-sage-600 hover:bg-sage-700 text-white rounded-full font-bold text-base shadow-sm hover:shadow-md flex items-center justify-center gap-2 shrink-0 transition-all cursor-pointer"
+                  >
+                    <Download className="w-5 h-5" /> Download PPTX
+                  </a>
                 </div>
-                <a
-                  href={downloadUrl}
-                  download={`${resultTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`}
-                  className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-2 shrink-0 transition-colors"
-                >
-                  <Download className="w-4 h-4" /> Download PPTX
-                </a>
-              </div>
 
-              {/* Takeaways Preview */}
-              {resultTakeaways.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Core Deck Takeaways</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {resultTakeaways.map((t, i) => (
-                      <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 flex items-start gap-2">
-                        <span className="text-emerald-500 font-bold">✦</span>
-                        <span>{t}</span>
-                      </div>
-                    ))}
+                {resultTakeaways.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="text-sm font-bold text-ink-muted uppercase tracking-wider mb-4">Core Deck Takeaways</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {resultTakeaways.map((t, i) => (
+                        <div key={i} className="p-4 bg-surface rounded-2xl border border-border-soft text-sm text-ink font-medium flex items-start gap-3 shadow-sm">
+                          <span className="text-sage-500 font-bold text-lg leading-none mt-0.5">✦</span>
+                          <span>{t}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ═══════════ PREVIOUS DECKS HISTORY ═══════════ */}
           {deckHistory.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-500" /> Recent Presentations ({deckHistory.length})
-                </h3>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {deckHistory.map((deck) => (
-                  <div key={deck.id} className="py-3.5 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-800 truncate">{deck.topic}</p>
-                      <p className="text-xs text-slate-400">
-                        {deck.slide_count || 12} slides  •  {deck.audience || 'University'}  •  {new Date(deck.created_at).toLocaleDateString()}
-                      </p>
+            <motion.div variants={staggerItem} className="mt-16">
+              <h3 className="text-lg font-bold text-ink mb-6 flex items-center gap-2 px-2">
+                <Clock className="w-5 h-5 text-genie-purple" /> Recent Presentations
+              </h3>
+              <div className="flex flex-col gap-3">
+                {deckHistory.map((deck, idx) => (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.04 }}
+                    whileHover={{ y: -2, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
+                    key={deck.id} 
+                    className="p-5 bg-surface-card rounded-2xl border border-border-soft flex items-center justify-between gap-4 transition-all shadow-sm"
+                  >
+                    <div className="flex items-start gap-4 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-genie-purple-soft flex items-center justify-center shrink-0 mt-0.5">
+                        <Presentation className="w-5 h-5 text-genie-purple" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-ink truncate">{deck.topic}</p>
+                        <p className="text-sm text-ink-muted font-medium mt-0.5">
+                          {deck.slide_count || 12} slides  •  {deck.audience || 'University'}  •  {new Date(deck.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {deck.download_url && (
                         <a
                           href={deck.download_url}
                           download
-                          className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50 transition-colors"
+                          className="p-3 text-ink-muted hover:text-sage-600 hover:bg-sage-50 rounded-full transition-colors cursor-pointer"
                           title="Download presentation"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="w-5 h-5" />
                         </a>
                       )}
                       <button
                         onClick={() => handleDeleteDeck(deck.id)}
-                        className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="p-3 text-ink-muted hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
                         title="Delete presentation"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
-        </div>
+        </motion.div>
       </div>
 
       {showUpgradeModal && (

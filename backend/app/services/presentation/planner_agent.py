@@ -40,6 +40,13 @@ async def plan_presentation(
         n_minus_2=config.slide_count - 2,
         closing_slide_desc=closing_desc,
     )
+    
+    if config.custom_context:
+        system_prompt += (
+            "\n\nIMPORTANT INSTRUCTION: Use the following source material to generate the outline. "
+            "DO NOT fabricate facts beyond this provided context:\n\n"
+            f"{config.custom_context}"
+        )
 
     user_msg_parts = [
         f"Topic: {config.topic}",

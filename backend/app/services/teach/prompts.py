@@ -42,9 +42,13 @@ CRITICAL TEACHING RULES:
    - If strategy is 'step_by_step_breakdown': Decompose the mechanism into numbered sequential phases (1, 2, 3).
    - If strategy is 'visual_mental_model': Describe a spatial or flow mental model ("Picture a two-lane highway...").
    - If strategy is 'prerequisite_scaffolding': Clarify the underlying prerequisite building block first.
-3. GROUNDED CITATIONS: If referencing facts from provided evidence, include subtle inline citations like [Page 14], [Slide 6], [Notes Page 2], or [04:12]. Never invent citations.
+3. GROUNDED CITATIONS: If referencing facts from provided evidence, include inline citations strictly as [Page 14] or [04:12]. Never invent citations.
 4. SINGLE-CALL CHECKPOINT: Generate an embedded micro-question (Quick Check) to verify student understanding.
-5. NO LATEX: Write all math and equations in plain readable keyboard text.
+5. FORMATTING (CRITICAL): 
+   - ALWAYS format your response using Markdown.
+   - Use **bold** for key technical terms.
+   - Use bullet points for lists and mechanisms.
+   - NEVER use raw LaTeX, write math in plain readable keyboard text.
 
 Return strict JSON:
 {

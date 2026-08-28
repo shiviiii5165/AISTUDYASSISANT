@@ -2,10 +2,76 @@
 TeachGenie — QA Engine
 =======================
 Slide and deck-level quality assessment.
-Evaluates density, balance, and readability.
+Evaluates density, balance, contrast, and readability.
 """
-from typing import List
-from . import SlideContent, SlideQAResult, DensityLevel
+from typing import List, Tuple
+from pptx.dml.color import RGBColor
+from . import SlideContent, SlideQAResult, DensityLevel, SlidePurpose, ThemeColors
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONTRAST UTILITIES (WCAG 2.1)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _relative_luminance(c: RGBColor) -> float:
+    """Compute WCAG 2.1 relative luminance from an RGBColor."""
+    def _linearize(v: int) -> float:
+        s = v / 255.0
+        return s / 12.92 if s <= 0.04045 else ((s + 0.055) / 1.055) ** 2.4
+    r, g, b = _linearize(c[0]), _linearize(c[1]), _linearize(c[2])
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast_ratio(fg: RGBColor, bg: RGBColor) -> float:
+    """Return the WCAG contrast ratio between two colors (≥ 1.0)."""
+    l1 = _relative_luminance(fg)
+    l2 = _relative_luminance(bg)
+    lighter = max(l1, l2)
+    darker = min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+# Minimum contrast ratios (WCAG AA)
+MIN_CONTRAST_LARGE_TEXT = 3.0   # ≥ 18pt or 14pt bold
+MIN_CONTRAST_NORMAL_TEXT = 4.5
+
+
+def check_slide_contrast(
+    content: SlideContent,
+    theme: ThemeColors,
+) -> List[str]:
+    """
+    Check known text/background color pairings for a slide against the theme.
+    Returns a list of contrast issue descriptions (empty = all good).
+    """
+    issues: List[str] = []
+
+    # Build the pairs we know each slide type uses
+    pairs: List[Tuple[str, RGBColor, RGBColor, bool]] = []  # (label, fg, bg, is_large)
+
+    if content.purpose in (SlidePurpose.COVER, SlidePurpose.CLOSING):
+        # These use dark_bg as background
+        bg = theme.dark_bg
+        pairs.append(("title text on dark bg", theme.text_on_dark, bg, True))
+        pairs.append(("muted text on dark bg", theme.text_muted, bg, False))
+        pairs.append(("body text on dark surface", theme.text_on_dark, theme.dark_surface, False))
+    else:
+        # Normal content slides use theme.background
+        bg = theme.background
+        pairs.append(("body text on background", theme.text, bg, False))
+        pairs.append(("muted text on background", theme.text_muted, bg, False))
+        pairs.append(("title on background", theme.text, bg, True))
+
+    for label, fg, slide_bg, is_large in pairs:
+        ratio = contrast_ratio(fg, slide_bg)
+        threshold = MIN_CONTRAST_LARGE_TEXT if is_large else MIN_CONTRAST_NORMAL_TEXT
+        if ratio < threshold:
+            issues.append(
+                f"Low contrast: {label} — ratio {ratio:.2f}:1 "
+                f"(minimum {threshold:.1f}:1 required)"
+            )
+
+    return issues
 
 
 def evaluate_slide_density(content: SlideContent, slide_index: int = 0) -> SlideQAResult:
@@ -118,13 +184,25 @@ def auto_compress_slide(content: SlideContent) -> SlideContent:
     return content
 
 
-def evaluate_deck_quality(slides: List[SlideContent]) -> dict:
-    """Evaluate overall deck quality."""
+def evaluate_deck_quality(
+    slides: List[SlideContent],
+    theme: ThemeColors = None,
+) -> dict:
+    """Evaluate overall deck quality (density + contrast)."""
     results = [evaluate_slide_density(s, i) for i, s in enumerate(slides)]
 
     total = len(results)
     passed = sum(1 for r in results if r.passed)
     critical = sum(1 for r in results if r.density == DensityLevel.CRITICAL)
+
+    # Contrast checks (when theme is available)
+    contrast_issues: List[str] = []
+    if theme:
+        for i, s in enumerate(slides):
+            slide_issues = check_slide_contrast(s, theme)
+            for issue in slide_issues:
+                contrast_issues.append(f"Slide {i+1} ({s.purpose.value}): {issue}")
+                critical += 1
 
     # Layout variety check
     purposes = [s.purpose for s in slides]
@@ -138,4 +216,6 @@ def evaluate_deck_quality(slides: List[SlideContent]) -> dict:
         "critical": critical,
         "variety_score": round(variety_score),
         "slide_results": results,
+        "contrast_issues": contrast_issues,
     }
+

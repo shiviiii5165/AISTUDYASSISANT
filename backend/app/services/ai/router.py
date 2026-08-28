@@ -11,6 +11,7 @@ from .base import AIProvider, LLMResponse
 from .providers.gemini import GeminiProvider
 from .providers.groq import GroqProvider
 from .providers.openrouter import OpenRouterProvider
+from .circuit_breaker import health_manager
 
 logger = logging.getLogger("teachgenie.ai.router")
 
@@ -77,17 +78,24 @@ class ModelRouter:
         errors = []
 
         for provider_name, model_name in policies:
+            if not health_manager.can_use_provider(provider_name):
+                logger.debug(f"Skipping {provider_name} due to open circuit.")
+                continue
+
             try:
                 provider = self._get_provider(provider_name)
-                return await provider.generate_text(
+                res = await provider.generate_text(
                     messages=messages,
                     model=model_name,
                     temperature=temperature,
                     max_tokens=max_tokens,
                     timeout=timeout,
                 )
+                health_manager.record_success(provider_name)
+                return res
             except Exception as e:
                 logger.warning(f"Provider {provider_name}/{model_name} failed for task '{task}': {e}")
+                health_manager.record_failure(provider_name)
                 errors.append(f"{provider_name}: {str(e)[:120]}")
 
         raise RuntimeError(f"All providers exhausted for task '{task}'. Errors: {' | '.join(errors)}")
@@ -104,17 +112,24 @@ class ModelRouter:
         errors = []
 
         for provider_name, model_name in policies:
+            if not health_manager.can_use_provider(provider_name):
+                logger.debug(f"Skipping {provider_name} due to open circuit.")
+                continue
+
             try:
                 provider = self._get_provider(provider_name)
-                return await provider.generate_json(
+                res = await provider.generate_json(
                     messages=messages,
                     model=model_name,
                     temperature=temperature,
                     max_tokens=max_tokens,
                     timeout=timeout,
                 )
+                health_manager.record_success(provider_name)
+                return res
             except Exception as e:
                 logger.warning(f"Provider {provider_name}/{model_name} failed JSON generation for task '{task}': {e}")
+                health_manager.record_failure(provider_name)
                 errors.append(f"{provider_name}: {str(e)[:120]}")
 
         raise RuntimeError(f"All providers exhausted for JSON task '{task}'. Errors: {' | '.join(errors)}")

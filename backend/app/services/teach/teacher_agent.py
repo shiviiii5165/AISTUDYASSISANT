@@ -185,12 +185,19 @@ async def teach_current_concept(
 
     # 4. Assemble context package
     user_msg = custom_instruction or f"Teach the concept: {active_concept.name if active_concept else state.topic}. Explain clearly and present one Quick Check question."
+    history_turns = 2
+    if state.depth == LearningDepth.QUICK:
+        history_turns = 1
+    elif state.depth == LearningDepth.DEEP:
+        history_turns = 3
+
     messages = assemble_teaching_context(
         system_prompt=system_prompt,
         state=state,
         concept=active_concept,
         evidence_items=evidence_items,
         user_message=user_msg,
+        include_history_turns=history_turns,
     )
 
     # 5. Generate response via ModelRouter

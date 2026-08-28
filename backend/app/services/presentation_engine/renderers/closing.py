@@ -47,7 +47,7 @@ def render_closing(slide: Slide, content: SlideContent, theme: ThemeColors, **kw
         add_text_box(
             slide, items_text,
             Inches(1.5), Inches(4.8), Inches(10.3), Inches(1.0),
-            token=Typography.CAPTION, color=theme.border,
+            token=Typography.CAPTION, color=theme.text_on_dark,
             alignment=PP_ALIGN.CENTER,
         )
 

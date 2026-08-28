@@ -73,7 +73,16 @@ async def generate_narration_audio(
     word_count = len(text_clean.split())
     estimated_duration = max(3.0, round((word_count / 140.0) * 60.0, 1))
 
-    # 3. Attempt gTTS or Edge TTS if installed
+    # 3. Attempt high-quality edge-tts
+    try:
+        import edge_tts
+        communicate = edge_tts.Communicate(text_clean, voice)
+        await communicate.save(output_path)
+        return output_path, estimated_duration
+    except Exception as edge_e:
+        print(f"[TTS] edge-tts failed: {edge_e}. Falling back to gTTS.")
+        
+    # 4. Attempt gTTS fallback
     try:
         from gtts import gTTS
         lang_code = "hi" if language.lower() in ["hindi", "hinglish"] else "en"
@@ -81,6 +90,7 @@ async def generate_narration_audio(
         tts.save(output_path)
         return output_path, estimated_duration
     except Exception as e:
+        print(f"[TTS] gTTS fallback failed: {e}. Falling back to offline tone.")
         # Fallback to deterministic tone/silence audio for robust offline operation
         generate_offline_tone_audio(output_path, duration_sec=estimated_duration)
         return output_path, estimated_duration

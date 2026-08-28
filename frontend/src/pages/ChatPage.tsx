@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Send, FileText, Loader2, ChevronDown, Sparkles, ArrowDown } from 'lucide-react';
-import { fetchPdfs, askQuestion } from '../lib/api';
-import type { PDFDocument, ChatMessage, ChatSource } from '../lib/api';
+import { fetchPdfs, askQuestion, sendMessageV2 } from '../lib/api';
+import type { PDFDocument, ChatMessage, ChatSource, PipelineOutput } from '../lib/api';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import VoiceInputButton from '../components/voice/VoiceInputButton';
@@ -14,17 +14,23 @@ import ExamPredictorCard from '../components/chat/ExamPredictorCard';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import { Lock } from 'lucide-react';
 import GenieAvatar from '../components/GenieAvatar';
+import ContentPollCard from '../components/chat/ContentPollCard';
 
 interface DisplayMessage {
   role: 'user' | 'assistant';
   content: string;
   sources?: ChatSource[];
+  isV2?: boolean;
+  pipelineOutput?: PipelineOutput;
 }
 
 const ChatPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialPdfId = searchParams.get('pdf') || '';
+  const initialV2 = searchParams.get('v2') === 'true';
   const { user: currentUser } = useAuthStore();
+
+  const [useV2, setUseV2] = useState(initialV2);
 
   const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
   const [selectedPdfId, setSelectedPdfId] = useState(initialPdfId);
@@ -86,14 +92,25 @@ const ChatPage: React.FC = () => {
         content: m.content,
       }));
 
-      const response = await askQuestion(selectedPdfId, question, selectedMode, history);
+      if (useV2) {
+        const response = await sendMessageV2(question, history);
+        const assistantMessage: DisplayMessage = {
+          role: 'assistant',
+          content: response.message || '',
+          isV2: true,
+          pipelineOutput: response
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        const response = await askQuestion(selectedPdfId, question, selectedMode, history);
 
-      const assistantMessage: DisplayMessage = {
-        role: 'assistant',
-        content: response.answer,
-        sources: response.sources,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+        const assistantMessage: DisplayMessage = {
+          role: 'assistant',
+          content: response.answer,
+          sources: response.sources,
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (err: any) {
       if (err.response?.status === 403 && err.response?.data?.detail?.error) {
         setUpgradeMessage(err.response.data.detail.message);
@@ -132,7 +149,42 @@ const ChatPage: React.FC = () => {
   }, []);
 
   function renderMessage(msg: DisplayMessage) {
-    // Detect if the response contains an MCQ JSON block
+    if (msg.isV2 && msg.pipelineOutput) {
+      const out = msg.pipelineOutput;
+
+      if (out.response_type === 'direct_message') {
+        return (
+          <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {msg.content}
+            </ReactMarkdown>
+          </div>
+        );
+      }
+
+      if (out.response_type === 'tutor_turn' && out.tutor_data) {
+        return (
+          <div className="space-y-2">
+            <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {out.tutor_data.message}
+              </ReactMarkdown>
+            </div>
+            {out.tutor_data.understanding_level && (
+              <div className="inline-block px-2 py-0.5 mt-2 rounded-full text-[10px] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] uppercase tracking-wider border border-[var(--border)]">
+                State: {out.tutor_data.understanding_level.replace('_', ' ')}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      if (out.response_type === 'content' && out.content_data) {
+        return <ContentPollCard initialData={out.content_data} />;
+      }
+    }
+
+    // Detect if the response contains an MCQ JSON block (V1 logic)
     const mcqMatch = msg.content.match(/```json\n([\s\S]*?)\n```/);
 
     if (mcqMatch && currentUser && selectedPdfId) {
@@ -207,10 +259,11 @@ const ChatPage: React.FC = () => {
       />
       <div className="flex flex-col h-full">
         {/* PDF Selector Bar */}
-        <div className="px-4 md:px-6 py-2.5 border-b border-[var(--border)] bg-white flex items-center gap-2 md:gap-3 shrink-0 flex-wrap">
-          <FileText className="w-4 h-4 text-[var(--accent-indigo)] shrink-0 hidden sm:block" />
-          <span className="text-xs font-medium text-[var(--text-muted)] hidden sm:block">Chatting with:</span>
-          <div className="relative">
+        <div className="px-4 md:px-6 py-2.5 border-b border-[var(--border)] bg-white flex items-center gap-2 md:gap-3 shrink-0 flex-wrap justify-between">
+          <div className="flex items-center gap-2 md:gap-3">
+            <FileText className="w-4 h-4 text-[var(--accent-indigo)] shrink-0 hidden sm:block" />
+            <span className="text-xs font-medium text-[var(--text-muted)] hidden sm:block">Chatting with:</span>
+            <div className="relative">
             <button
               onClick={() => setShowPdfDropdown(!showPdfDropdown)}
               className="flex items-center gap-2 px-2.5 py-1.5 border border-[var(--border)] rounded-lg text-xs font-semibold hover:bg-[var(--bg-hover)] transition-colors min-w-[140px] md:min-w-[200px] text-left"
@@ -256,15 +309,41 @@ const ChatPage: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
 
-          {messages.length > 0 && (
-            <button
-              onClick={() => setMessages([])}
-              className="ml-auto text-xs text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors"
-            >
-              Clear chat
-            </button>
-          )}
+        <div className="flex items-center gap-4 ml-auto">
+            {/* V2 Toggle */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xs font-semibold text-[var(--accent-indigo)]">V2 Pipeline</span>
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={useV2}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setUseV2(checked);
+                    setSearchParams(prev => {
+                      if (checked) prev.set('v2', 'true');
+                      else prev.delete('v2');
+                      return prev;
+                    });
+                  }} 
+                />
+                <div className={`block w-10 h-6 rounded-full transition-colors ${useV2 ? 'bg-[var(--accent-green)]' : 'bg-gray-300'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${useV2 ? 'transform translate-x-4' : ''}`}></div>
+              </div>
+            </label>
+
+            {messages.length > 0 && (
+              <button
+                onClick={() => setMessages([])}
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors"
+              >
+                Clear chat
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Messages Area */}

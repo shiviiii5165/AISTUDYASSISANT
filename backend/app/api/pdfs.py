@@ -25,6 +25,14 @@ async def upload_pdf(
         os.makedirs(temp_dir, exist_ok=True)
         temp_path = os.path.join(temp_dir, f"{pdf_id}.pdf")
         file_bytes = await file.read()
+        
+        # Strict validation: Check for PDF magic bytes (%PDF-)
+        if not file_bytes.startswith(b'%PDF-'):
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Invalid file format. Only true PDF files are allowed."
+            )
+            
         with open(temp_path, "wb") as f:
             f.write(file_bytes)
         

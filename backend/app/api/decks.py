@@ -140,14 +140,52 @@ async def step_render(
         raise HTTPException(status_code=500, detail=str(e)[:500])
 
 
+async def _background_generate_deck(
+    deck_id: str,
+    user_id: str,
+    config: PresentationConfig
+):
+    try:
+        # Run Pipeline
+        spec, pptx_bytes = await generate_presentation_pipeline(config, user_id=user_id)
+
+        # Upload to Supabase Storage
+        file_path = f"{user_id}/{deck_id}.pptx"
+        try:
+            supabase.storage.from_("topic-decks").upload(
+                file_path,
+                pptx_bytes,
+                {"content-type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
+            )
+        except Exception as storage_err:
+            print(f"[Decks API] Storage upload note: {storage_err}")
+
+        supabase.table("topic_decks").update({
+            "status": "ready",
+            "storage_path": file_path,
+            "slide_count": len(spec.slides)
+        }).eq("id", deck_id).execute()
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        try:
+            supabase.table("topic_decks").update({
+                "status": "failed",
+                "error_message": str(e)[:500]
+            }).eq("id", deck_id).execute()
+        except:
+            pass
+
 @router.post("/generate-advanced")
 async def generate_advanced(
     request: GenerateDeckRequest,
+    background_tasks: BackgroundTasks,
     current_user = Depends(get_current_user),
     _ = Depends(require_pro),
     __ = Depends(check_topic_deck_limit)
 ):
-    """One-click advanced presentation generation pipeline with strict slide count guarantee."""
+    """One-click advanced presentation generation pipeline mapped to a background queue."""
     try:
         # 1. Create DB record
         res = supabase.table("topic_decks").insert({
@@ -179,36 +217,19 @@ async def generate_advanced(
             enable_quiz=options.get("quiz", False),
         )
 
-        # 3. Run Pipeline
-        spec, pptx_bytes = await generate_presentation_pipeline(config, user_id=current_user.id)
+        # 3. Queue Background Task
+        background_tasks.add_task(_background_generate_deck, deck_id, current_user.id, config)
 
-        # 4. Upload to Supabase Storage
-        file_path = f"{current_user.id}/{deck_id}.pptx"
-        try:
-            supabase.storage.from_("topic-decks").upload(
-                file_path,
-                pptx_bytes,
-                {"content-type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
-            )
-        except Exception as storage_err:
-            print(f"[Decks API] Storage upload note: {storage_err}")
-
-        download_url = _get_signed_url(file_path)
-
-        supabase.table("topic_decks").update({
-            "status": "ready",
-            "storage_path": file_path,
-            "slide_count": len(spec.slides)
-        }).eq("id", deck_id).execute()
-
-        return {
-            "deck_id": deck_id,
-            "status": "ready",
-            "download_url": download_url,
-            "slide_count": len(spec.slides),
-            "deck_title": spec.title,
-            "key_takeaways": spec.key_takeaways,
-        }
+        from fastapi import status
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={
+                "deck_id": deck_id,
+                "status": "processing",
+                "message": "Generation started in the background. Poll /{deck_id} for status."
+            }
+        )
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
-from app.models.chat import ChatRequest, ChatResponse
+from app.models.chat import ChatRequest, ChatResponse, PipelineRequest
+from app.agents.pipeline import handle_student_message, PipelineOutput
 from app.services.rag_service import answer_question
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import check_daily_question_limit, require_pro
@@ -28,3 +29,27 @@ async def ask_question(request: ChatRequest, current_user=Depends(check_daily_qu
             sources=[],
             model="error"
         )
+
+
+@router.post("/v2/ask", response_model=PipelineOutput)
+async def ask_question_v2(request: PipelineRequest, current_user=Depends(get_current_user)):
+    """
+    V2 chat endpoint that routes through the new multi-agent pipeline (Orchestrator -> Librarian -> Tutor/Content).
+    """
+    try:
+        result = await handle_student_message(
+            user_id=current_user.id,
+            message=request.message,
+            conversation_history=request.history
+        )
+        return result
+    except Exception as e:
+        import traceback
+        print(f"FULL ERROR in /v2/ask: {traceback.format_exc()}")
+        # We always want to return a valid PipelineOutput even if the pipeline itself fails
+        return PipelineOutput(
+            response_type="direct_message",
+            message="The study assistant is currently unavailable. Please try again later.",
+            intent="error"
+        )
+

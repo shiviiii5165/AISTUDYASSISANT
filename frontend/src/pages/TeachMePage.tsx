@@ -11,6 +11,8 @@ import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -109,6 +111,7 @@ const TeachMePage: React.FC = () => {
   const [concepts, setConcepts] = useState<Concept[]>([]);
   const [currentConceptId, setCurrentConceptId] = useState<string>('');
   const [overallMastery, setOverallMastery] = useState<number>(0.0);
+  const [activeCommand, setActiveCommand] = useState<string | null>(null);
   const [misconceptions, setMisconceptions] = useState<string[]>([]);
   const [messages, setMessages] = useState<MessageItem[]>([]);
   
@@ -369,6 +372,7 @@ const TeachMePage: React.FC = () => {
     if (!sessionId || loading) return;
 
     setLoading(true);
+    setActiveCommand(command);
     const token = useAuthStore.getState().session?.access_token;
     const apiUrl = import.meta.env.VITE_API_URL || '';
 
@@ -421,6 +425,7 @@ const TeachMePage: React.FC = () => {
       console.error('Command dispatch error:', err);
     } finally {
       setLoading(false);
+      setActiveCommand(null);
     }
   };
 
@@ -642,8 +647,29 @@ const TeachMePage: React.FC = () => {
                   </div>
 
                   {/* Body Text */}
-                  <div className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-normal">
-                    {msg.content}
+                  <div className="text-sm sm:text-base leading-relaxed font-normal prose prose-slate prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100 max-w-none">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        // Detect [Page X] or [Slide Y] or [04:12] and render as a pill
+                        p: ({node, children}) => {
+                           return <p className="mb-4 last:mb-0">{children}</p>;
+                        },
+                        strong: ({node, children}) => {
+                           return <strong className="font-bold text-slate-900">{children}</strong>;
+                        }
+                      }}
+                    >
+                      {msg.content.replace(/\[([^\]]+?)\]/g, (match, p1) => {
+                        // Very naive approach: If the brackets contain words like Page, Slide, or a timestamp, wrap it in backticks so it renders as code, which we can style. Or just return standard markdown for it.
+                        // Actually, let's just let markdown parse it and we can style `code` elements if we wrap them here, OR we can replace with an HTML span because ReactMarkdown supports raw HTML if rehype-raw is used.
+                        // Without rehype-raw, we can just bold it or use a specific format.
+                        if (p1.match(/^(Page|Slide|Note|Video|\d{1,2}:\d{2})/i)) {
+                           return `**[${p1}]**`;
+                        }
+                        return match;
+                      })}
+                    </ReactMarkdown>
                   </div>
 
                   {/* Source Citations */}
@@ -721,9 +747,22 @@ const TeachMePage: React.FC = () => {
             ))}
 
             {loading && (
-              <div className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-2xl max-w-sm shadow-xs animate-pulse">
-                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                <span className="text-xs font-semibold text-slate-700">Professor Genie is thinking & adapting...</span>
+              <div className="flex items-start gap-4">
+                <div className="max-w-2xl bg-white border border-slate-200 rounded-2xl rounded-bl-none p-5 shadow-sm space-y-4 w-full">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                       <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      {activeCommand ? 'Professor Genie is adapting...' : 'Professor Genie is thinking...'}
+                    </span>
+                  </div>
+                  <div className="space-y-3 animate-pulse">
+                    <div className="h-4 bg-slate-100 rounded w-3/4"></div>
+                    <div className="h-4 bg-slate-100 rounded w-full"></div>
+                    <div className="h-4 bg-slate-100 rounded w-5/6"></div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -752,12 +791,13 @@ const TeachMePage: React.FC = () => {
                     type="button"
                     onClick={() => handleCommand(act.cmd)}
                     disabled={loading}
-                    className={`px-3 py-1.5 rounded-lg border font-semibold whitespace-nowrap transition-colors cursor-pointer text-xs ${
+                    className={`px-3 py-1.5 rounded-lg border font-semibold whitespace-nowrap transition-colors cursor-pointer text-xs flex items-center gap-1.5 ${
                       act.primary
                         ? 'border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100'
                         : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
+                    } disabled:opacity-50`}
                   >
+                    {activeCommand === act.cmd ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                     {act.label}
                   </button>
                 ))}
