@@ -5,12 +5,14 @@ import {
   RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
   Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
   Plus, Edit3, ChevronRight, CheckSquare, Search,
-  BarChart2, Zap, Bookmark, Volume2, Maximize2, Trash2
+  BarChart2, Zap, Bookmark, Volume2, Maximize2, Trash2, ArrowRight
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
+import GreetingHeader from '../components/GreetingHeader';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES & CONFIG
@@ -332,32 +334,24 @@ const VideoGeneratorPage: React.FC = () => {
         description="Transform any topic, notes, or YouTube link into an educational video with Python graphics, TTS narration, and captions."
       />
 
-      <div className="flex flex-col items-center justify-start min-h-[calc(100vh-64px)] pt-8 px-4 pb-16 bg-[#F8FAFC]">
-        
-        {/* Header */}
-        <div className="text-center max-w-2xl mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-bold text-blue-700 mb-3 shadow-xs">
-            <Film className="w-3.5 h-3.5 text-blue-600" />
-            <span>AI Educational Video Generation Compiler</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
-            Create Masterclass <span className="text-blue-600">Video Lessons</span>
-          </h1>
-          <p className="text-sm text-slate-600">
-            Intelligent storyboarding, Python graphics, licensed stock media, synchronized TTS narration & captions.
-          </p>
-        </div>
+      <div className="min-h-[calc(100vh-64px)] bg-surface text-ink pb-24 pt-12 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
+        <div className="max-w-4xl mx-auto">
 
-        {/* Input & Configuration Card */}
-        <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs mb-8">
-          <form onSubmit={handleGenerate}>
-            
-            {/* Topic Input */}
-            <div className="mb-5">
-              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-                What do you want to learn?
-              </label>
-              <div className="flex items-center gap-2">
+          {/* Header — Greeting (Director Genie) */}
+          <GreetingHeader
+            subtitle="Ready to direct your next video lesson?"
+            avatarImageSrc="/director-genie.png"
+            avatarGlowVariant="spotlight"
+          />
+
+          <form onSubmit={handleGenerate} className="space-y-8 mt-8">
+
+            {/* Topic Input — Pill Search Bar */}
+            <div className="max-w-3xl mx-auto w-full">
+              <div className="relative group shadow-sm hover:shadow-md transition-shadow rounded-full bg-surface-card border border-border-soft p-2 flex items-center">
+                <button type="button" className="p-3 text-ink-muted hover:text-genie-amber transition-colors ml-1 pointer-events-none">
+                  <Film className="w-6 h-6" />
+                </button>
                 <input
                   type="text"
                   value={topic}
@@ -365,158 +359,208 @@ const VideoGeneratorPage: React.FC = () => {
                     setTopic(e.target.value);
                     parseNaturalLanguagePrompt(e.target.value);
                   }}
-                  placeholder="e.g. Operating Systems Deadlock in Hinglish for B.Tech (5 min), or TCP Congestion Control..."
+                  placeholder="e.g. Operating Systems Deadlock in Hinglish for B.Tech (5 min)..."
                   disabled={generating}
-                  className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 bg-transparent border-none text-ink placeholder:text-ink-muted/60 focus:ring-0 text-lg px-2 py-3 focus:outline-none"
                 />
+                {topic && !generating && (
+                  <button
+                    type="button"
+                    onClick={() => setTopic('')}
+                    className="p-2 text-ink-muted hover:text-ink transition-colors mr-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={generating || !topic.trim()}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors shrink-0"
+                  className="ml-2 w-12 h-12 rounded-full bg-genie-amber text-white flex items-center justify-center hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0 cursor-pointer"
                 >
-                  {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  <span>Create Video</span>
+                  {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Knowledge Source Selection */}
-            <div className="mb-5">
-              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-                Knowledge Grounding Source
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {/* Knowledge Source Selector — Large Cards */}
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { id: 'topic', label: 'Topic Only', icon: Globe },
-                  { id: 'pdf', label: 'My Uploaded Notes', icon: FileText },
-                  { id: 'youtube', label: 'YouTube Video URL', icon: Video },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setSourceType(s.id)}
-                    className={`p-3 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors ${
-                      sourceType === s.id
-                        ? 'border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <s.icon className={`w-4 h-4 ${sourceType === s.id ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <span>{s.label}</span>
-                  </button>
-                ))}
+                  { type: 'topic' as const, label: 'General Knowledge', icon: Globe, desc: 'AI subject knowledge' },
+                  { type: 'pdf' as const, label: 'My Uploaded Notes', icon: FileText, desc: 'Grounded in PDF/Notes' },
+                  { type: 'youtube' as const, label: 'YouTube Video', icon: Video, desc: 'Learn from a video URL' },
+                ].map((src) => {
+                  const isSelected = sourceType === src.type;
+                  return (
+                    <button
+                      key={src.type}
+                      type="button"
+                      onClick={() => setSourceType(src.type)}
+                      className={`flex flex-col text-left p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+                        isSelected
+                          ? 'border-genie-amber bg-genie-amber-soft ring-1 ring-genie-amber shadow-sm'
+                          : 'border-border-soft bg-surface-card hover:border-genie-amber/40 shadow-sm hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`p-2 rounded-full ${isSelected ? 'bg-white text-genie-amber' : 'bg-surface text-ink-muted'}`}>
+                          <src.icon className="w-5 h-5" />
+                        </div>
+                        <span className={`text-sm font-semibold ${isSelected ? 'text-amber-800' : 'text-ink'}`}>{src.label}</span>
+                      </div>
+                      <span className={`text-xs ml-[3.25rem] ${isSelected ? 'text-amber-700/80' : 'text-ink-muted'}`}>{src.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
 
+              {/* PDF Selector Dropdown */}
               {sourceType === 'pdf' && (
-                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Select Document from Library:</label>
-                  <select
-                    value={selectedPdfId}
-                    onChange={(e) => setSelectedPdfId(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    {userPdfs.map(p => (
-                      <option key={p.id} value={p.id}>📄 {p.name} ({p.page_count || 1} pages)</option>
-                    ))}
-                  </select>
+                <div className="mt-4 p-5 bg-genie-amber-soft/50 border border-genie-amber/20 rounded-2xl">
+                  <label className="block text-sm font-semibold text-amber-800 mb-2">
+                    Select Source Document from Your Library
+                  </label>
+                  {userPdfs.length > 0 ? (
+                    <select
+                      value={selectedPdfId}
+                      onChange={(e) => setSelectedPdfId(e.target.value)}
+                      className="w-full px-4 py-3 bg-surface-card border border-border-soft rounded-full text-sm text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber font-medium shadow-sm appearance-none cursor-pointer"
+                    >
+                      {userPdfs.map(p => (
+                        <option key={p.id} value={p.id}>📄 {p.name} ({p.page_count || 1} pages)</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-amber-700/80 bg-white/50 p-3 rounded-xl">
+                      No uploaded PDFs found. Upload a PDF in the Library or continue with General Knowledge.
+                    </p>
+                  )}
                 </div>
               )}
 
+              {/* YouTube URL Input */}
               {sourceType === 'youtube' && (
-                <div className="mt-3 p-3 bg-blue-50/60 border border-blue-200 rounded-xl">
-                  <label className="block text-xs font-semibold text-blue-900 mb-1">Enter Public YouTube Video URL:</label>
+                <div className="mt-4 p-5 bg-genie-amber-soft/50 border border-genie-amber/20 rounded-2xl">
+                  <label className="block text-sm font-semibold text-amber-800 mb-2">
+                    Enter Public YouTube Video URL
+                  </label>
                   <input
                     type="url"
                     value={youtubeUrl}
                     onChange={(e) => setYoutubeUrl(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-4 py-3 bg-surface-card border border-border-soft rounded-full text-sm text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber font-medium shadow-sm"
                   />
                 </div>
               )}
             </div>
 
-            {/* Quality, Duration, Style, and AI Visual Intensity Controls */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
-              
+            {/* Duration, Quality, Style, Language — Styled Selects */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {/* Duration */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Duration</label>
+              <div className="relative group">
+                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Duration</label>
                 <select
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
                 >
                   {DURATION_OPTIONS.map(d => (
                     <option key={d.val} value={d.val}>{d.label}</option>
                   ))}
                 </select>
+                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
               </div>
 
               {/* Quality Tier */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Quality Tier</label>
+              <div className="relative group">
+                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Quality</label>
                 <select
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
                 >
                   {QUALITY_OPTIONS.map(q => (
                     <option key={q.value} value={q.value}>{q.label}</option>
                   ))}
                 </select>
+                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
               </div>
 
               {/* Style */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Visual Style</label>
+              <div className="relative group">
+                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Style</label>
                 <select
                   value={style}
                   onChange={(e) => setStyle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
                 >
                   {STYLE_OPTIONS.map(s => (
                     <option key={s.value} value={s.value}>{s.label}</option>
                   ))}
                 </select>
+                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
               </div>
 
               {/* Language */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Language</label>
+              <div className="relative group">
+                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Language</label>
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
                 >
                   {LANGUAGE_OPTIONS.map(l => (
                     <option key={l} value={l}>{l}</option>
                   ))}
                 </select>
+                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
               </div>
+            </div>
 
+            {/* Submit Button */}
+            <div className="pt-4 flex justify-center">
+              <button
+                type="submit"
+                disabled={generating || !topic.trim()}
+                className="w-full max-w-md py-5 px-8 rounded-full font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-genie-amber to-amber-600 text-white border-0 cursor-pointer"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Compiling Video...</span>
+                  </>
+                ) : (
+                  <>
+                    <Film className="w-6 h-6" />
+                    <span>Create {duration}-Minute Video Lesson</span>
+                  </>
+                )}
+              </button>
             </div>
 
           </form>
-        </div>
 
         {/* Progress State */}
         {generating && (
-          <div className="w-full max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-xs mb-8">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900 mb-1">Compiling Masterclass Video...</h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Planning storyboard, generating SVG/Python diagrams, synthesizing TTS narration & compiling FFmpeg stream.
-            </p>
-            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-              <div className="bg-blue-600 h-2 rounded-full w-2/3 animate-pulse" />
+          <div className="w-full max-w-xl mx-auto bg-surface-card border border-genie-amber/30 rounded-2xl p-8 text-center shadow-md mt-12 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-genie-amber-soft/20 via-amber-50/20 to-genie-amber-soft/20 animate-pulse" />
+            <div className="relative z-10">
+              <Loader2 className="w-8 h-8 text-genie-amber animate-spin mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-ink mb-1">Compiling Your Video Lesson...</h3>
+              <p className="text-sm text-ink-muted mb-4">
+                Planning storyboard, generating diagrams, synthesizing TTS narration & compiling FFmpeg stream.
+              </p>
+              <div className="w-full bg-surface rounded-full h-3 overflow-hidden border border-border-soft">
+                <div className="bg-gradient-to-r from-genie-amber to-amber-500 h-full rounded-full w-2/3 animate-pulse" />
+              </div>
             </div>
           </div>
         )}
 
         {/* ═══════════ VIDEO STUDIO RESULTS ═══════════ */}
         {storyboard && (
-          <div ref={resultsRef} className="w-full max-w-5xl bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs mb-10">
+          <div ref={resultsRef} className="w-full max-w-5xl bg-surface-card border border-border-soft rounded-2xl p-6 sm:p-8 shadow-sm mt-12 mb-10">
             
             {/* Header / Download */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 mb-6">
@@ -755,7 +799,7 @@ const VideoGeneratorPage: React.FC = () => {
 
         {/* ═══════════ RECENT VIDEOS ═══════════ */}
         {pastLessons.length > 0 && !generating && !lessonId && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs mt-8">
+          <div className="bg-surface-card rounded-2xl border border-border-soft p-6 shadow-sm mt-12">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-500" /> Recent Videos ({pastLessons.length})
@@ -795,6 +839,7 @@ const VideoGeneratorPage: React.FC = () => {
           </div>
         )}
 
+        </div>
       </div>
     </AppLayout>
   );

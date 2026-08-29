@@ -10,7 +10,7 @@ import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
-import GenieFloating from '../components/mascot/GenieFloating';
+import GreetingHeader from '../components/GreetingHeader';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION OPTIONS
@@ -278,27 +278,12 @@ const TopicDeckPage: React.FC = () => {
           animate="show"
         >
           
-          {/* Header Banner - Screen A Style */}
-          <motion.div variants={staggerItem} className="text-center mb-12 flex flex-col items-center">
-            
-            {/* Status Badges */}
-            <div className="flex items-center justify-center gap-2 mb-8">
-              <div className="px-4 py-1.5 rounded-full bg-genie-amber-soft text-genie-amber font-semibold text-sm shadow-sm flex items-center gap-1.5 border border-border-soft">
-                📊 {deckHistory.length} total created
-              </div>
-            </div>
-
-            {/* Floating Genie */}
-            <GenieFloating size="lg" className="mb-4" />
-
-            {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-              <span className="text-ink block mb-1">Transform Ideas into</span>
-              <span className="bg-gradient-to-r from-genie-purple to-genie-amber bg-clip-text text-transparent pb-1">Professional Slide Decks</span>
-            </h1>
-            <p className="mt-2 text-ink-muted text-lg max-w-2xl mx-auto">
-              Choose your knowledge source, exact slide count, and design system. Rendered with clean Python typography.
-            </p>
+          {/* Header — Greeting */}
+          <motion.div variants={staggerItem}>
+            <GreetingHeader 
+              subtitle="What would you like to present today?" 
+              avatarImageSrc="/scholar-genie-chibi.png"
+            />
           </motion.div>
 
           <form onSubmit={handleGenerate} className="space-y-10">
@@ -685,8 +670,11 @@ const TopicDeckPage: React.FC = () => {
           {/* ═══════════ PREVIOUS DECKS HISTORY ═══════════ */}
           {deckHistory.length > 0 && (
             <motion.div variants={staggerItem} className="mt-16">
-              <h3 className="text-lg font-bold text-ink mb-6 flex items-center gap-2 px-2">
+              <h3 className="text-lg font-bold text-ink mb-6 flex items-center gap-3 px-2">
                 <Clock className="w-5 h-5 text-genie-purple" /> Recent Presentations
+                <span className="text-xs font-semibold text-ink-muted bg-surface px-3 py-1 rounded-full border border-border-soft">
+                  {deckHistory.length} total
+                </span>
               </h3>
               <div className="flex flex-col gap-3">
                 {deckHistory.map((deck, idx) => (

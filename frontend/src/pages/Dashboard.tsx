@@ -6,7 +6,7 @@ import { Search, BookOpen, Loader2, ArrowRight, FileText, MessageSquare, Sparkle
 import { fetchPdfs } from '../lib/api';
 import type { PDFDocument } from '../lib/api';
 import { useAuthStore } from '../store/useAuthStore';
-import GenieAvatar from '../components/GenieAvatar';
+import GreetingHeader from '../components/GreetingHeader';
 
 const SUBJECT_COLORS: Record<string, { bg: string; text: string }> = {
   Physics: { bg: 'bg-blue-50', text: 'text-blue-600' },
@@ -54,13 +54,6 @@ const Dashboard: React.FC = () => {
       }
     })();
   }, []);
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
 
   const firstName = user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
   const readyPdfs = pdfs.filter(p => p.status === 'ready');
@@ -112,15 +105,7 @@ const Dashboard: React.FC = () => {
       <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-10">
         
         {/* Hero Section */}
-        <div className="flex flex-col items-center justify-center text-center space-y-4 pt-4 pb-2">
-          <GenieAvatar size="lg" />
-          <h1 className="text-4xl md:text-5xl tracking-tight mt-2 animate-slideUp" style={{ animationDelay: '0.1s' }}>
-            {getGreeting()}, <span className="text-gold-shimmer font-bold">{firstName}</span>.
-          </h1>
-          <p className="text-[var(--text-secondary)] text-lg animate-slideUp" style={{ animationDelay: '0.2s' }}>
-            What would you like to teach today?
-          </p>
-        </div>
+        <GreetingHeader avatarImageSrc="/scholar-genie-chibi.png" />
 
         {/* Quick Ask */}
         <div className="relative group animate-slideUp" style={{ animationDelay: '0.3s' }}>

@@ -8,6 +8,10 @@ interface GenieAvatarProps {
   isGenerating?: boolean;
   isSuccess?: boolean;
   isError?: boolean;
+  /** Override the default mascot image path (default: /logo.png) */
+  imageSrc?: string;
+  /** Glow color variant: 'default' (amber lamp glow) or 'spotlight' (warm rose/amber stage spotlight) */
+  glowVariant?: 'default' | 'spotlight';
 }
 
 const SIZE_MAP = {
@@ -31,6 +35,8 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
   isGenerating = false,
   isSuccess = false,
   isError = false,
+  imageSrc = '/logo.png',
+  glowVariant = 'default',
 }) => {
   const prefersReducedMotion = useReducedMotion();
   const [activeBeat, setActiveBeat] = useState<string | null>(null);
@@ -168,14 +174,16 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
       className="relative flex items-center justify-center"
       style={{ width: dims.container, height: dims.container }}
     >
-      {/* Lamp glow effect (behind the genie) */}
+      {/* Glow effect (behind the genie) — variant-aware */}
       {!prefersReducedMotion && (
         <motion.div
           className="absolute rounded-full"
           style={{
             width: dims.container * 0.9,
             height: dims.container * 0.9,
-            background: 'radial-gradient(circle, rgba(232,163,61,0.25) 0%, rgba(201,138,59,0.08) 50%, transparent 70%)',
+            background: glowVariant === 'spotlight'
+              ? 'radial-gradient(circle, rgba(251,191,36,0.30) 0%, rgba(244,114,82,0.12) 40%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(232,163,61,0.25) 0%, rgba(201,138,59,0.08) 50%, transparent 70%)',
           }}
           animate={{
             opacity: isGenerating ? [0.4, 0.8, 0.4] : [0.3, 0.6, 0.3],
@@ -227,7 +235,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
         className="relative z-10"
       >
         <img
-          src="/logo.png"
+          src={imageSrc}
           alt="TeachGenie — your AI teaching companion"
           style={{
             width: dims.img,
