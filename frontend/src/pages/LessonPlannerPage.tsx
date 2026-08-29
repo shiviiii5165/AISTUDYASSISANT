@@ -50,7 +50,7 @@ const LessonPlannerPage: React.FC = () => {
   const generateRoadmap = async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lesson-planner/generate`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ const LessonPlannerPage: React.FC = () => {
 
   const checkHealth = async (id: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/lesson-planner/${id}/health`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${id}/health`, {
         headers: { 'Authorization': `Bearer ${(user as any)?.access_token || ''}` }
       });
       if (response.ok) {
