@@ -9,6 +9,8 @@ interface GreetingHeaderProps {
   avatarImageSrc?: string;
   /** Override the glow variant: 'default' (amber lamp) or 'spotlight' (warm rose/amber stage glow) */
   avatarGlowVariant?: 'default' | 'spotlight';
+  /** Avatar size ('sm' | 'md' | 'lg' | 'xl' | '2xl') */
+  avatarSize?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
 /**
@@ -19,6 +21,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   subtitle = 'What would you like to teach today?',
   avatarImageSrc,
   avatarGlowVariant,
+  avatarSize = 'xl',
 }) => {
   const { user } = useAuthStore();
 
@@ -37,7 +40,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-4 pt-4 pb-2">
       <GenieAvatar
-        size="lg"
+        size={avatarSize}
         {...(avatarImageSrc ? { imageSrc: avatarImageSrc } : {})}
         {...(avatarGlowVariant ? { glowVariant: avatarGlowVariant } : {})}
       />

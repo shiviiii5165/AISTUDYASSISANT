@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 
 interface GenieAvatarProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   isTyping?: boolean;
   isGenerating?: boolean;
   isSuccess?: boolean;
@@ -12,12 +12,15 @@ interface GenieAvatarProps {
   imageSrc?: string;
   /** Glow color variant: 'default' (amber lamp glow) or 'spotlight' (warm rose/amber stage spotlight) */
   glowVariant?: 'default' | 'spotlight';
+  className?: string;
 }
 
 const SIZE_MAP = {
-  sm: { container: 48, img: 40 },
-  md: { container: 96, img: 80 },
-  lg: { container: 140, img: 120 },
+  sm: { container: 52, img: 44 },
+  md: { container: 100, img: 88 },
+  lg: { container: 180, img: 160 },
+  xl: { container: 210, img: 190 },
+  '2xl': { container: 260, img: 240 },
 };
 
 // Personality beats — random micro-animations
@@ -37,6 +40,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
   isError = false,
   imageSrc = '/logo.png',
   glowVariant = 'default',
+  className = '',
 }) => {
   const prefersReducedMotion = useReducedMotion();
   const [activeBeat, setActiveBeat] = useState<string | null>(null);
@@ -171,7 +175,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
 
   return (
     <div
-      className="relative flex items-center justify-center"
+      className={`relative flex items-center justify-center ${className}`}
       style={{ width: dims.container, height: dims.container }}
     >
       {/* Glow effect (behind the genie) — variant-aware */}
