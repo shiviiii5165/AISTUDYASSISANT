@@ -29,6 +29,8 @@ MAX_VIDEO_DURATION_SEC = 600
 
 # In-memory store for tracking background generation jobs
 _JOB_STORE = {}
+# Parallel map of job_id -> owning user_id, used to enforce ownership on status polls
+_JOB_OWNERS = {}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -85,11 +87,16 @@ def _get_job(job_id: str) -> Optional[ContentCreatorOutput]:
     return _JOB_STORE.get(job_id)
 
 
+def _get_job_owner(job_id: str) -> Optional[str]:
+    """Return the user_id that created a job, or None if unknown."""
+    return _JOB_OWNERS.get(job_id)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # AGENT CORE
 # ─────────────────────────────────────────────────────────────────────────────
 
-async def create_content(request: ContentRequest) -> ContentCreatorOutput:
+async def create_content(request: ContentRequest, user_id: Optional[str] = None) -> ContentCreatorOutput:
     """
     Main entry point for the Content Creator.
     Validates requests, enforces guardrails, and either returns sync output (flashcards)
@@ -140,6 +147,7 @@ async def create_content(request: ContentRequest) -> ContentCreatorOutput:
         grounded_in_notes=grounded,
     )
     _JOB_STORE[job_id] = output
+    _JOB_OWNERS[job_id] = user_id
 
     # Spawn background task
     asyncio.create_task(_run_async_generation(job_id, request, grounding_text, grounded))

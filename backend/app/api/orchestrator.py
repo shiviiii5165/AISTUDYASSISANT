@@ -9,11 +9,12 @@ existing route. It exists purely for independent testing of the Orchestrator
 agent before wiring it into the main conversation flow.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from typing import Optional
 
 from app.agents.orchestrator import classify_and_route, OrchestratorOutput
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -28,7 +29,7 @@ class OrchestratorRequest(BaseModel):
 
 
 @router.post("/route", response_model=OrchestratorOutput)
-async def route_message(request: OrchestratorRequest):
+async def route_message(request: OrchestratorRequest, current_user=Depends(get_current_user)):
     """
     Classify a user message and return the routing decision.
     Returns structured JSON with intent, topic, confidence, routed_to,
