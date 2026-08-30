@@ -21,6 +21,9 @@ frontend/*.local
 frontend/.npm
 frontend/.yarn
 
+# Local dev artifacts
+scratch/
+
 # OS generated files
 .DS_Store
 .DS_Store?
