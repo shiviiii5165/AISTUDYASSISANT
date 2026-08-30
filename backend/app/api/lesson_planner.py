@@ -27,6 +27,9 @@ router = APIRouter()
 
 # In-memory store fallback for test suites and offline operation
 _MEMORY_ROADMAPS: Dict[str, LearningRoadmap] = {}
+# Parallel map of roadmap_id -> owning user_id, since LearningRoadmap carries no
+# user_id. Used to enforce ownership on the in-memory cache branch of _get_roadmap.
+_MEMORY_ROADMAP_OWNERS: Dict[str, str] = {}
 
 
 # Request Models
@@ -86,6 +89,7 @@ class CreateRemedialRequest(BaseModel):
 # Helper to persist or retrieve roadmap
 def _save_roadmap(roadmap: LearningRoadmap, user_id: str):
     _MEMORY_ROADMAPS[roadmap.id] = roadmap
+    _MEMORY_ROADMAP_OWNERS[roadmap.id] = user_id
     if supabase:
         try:
             supabase.table("learning_roadmaps").upsert({
@@ -129,9 +133,12 @@ def _save_roadmap(roadmap: LearningRoadmap, user_id: str):
 
 
 def _get_roadmap(roadmap_id: str, user_id: str) -> Optional[LearningRoadmap]:
-    # Check memory first
+    # Check memory first — but only return it if this user owns the roadmap.
     if roadmap_id in _MEMORY_ROADMAPS:
-        return _MEMORY_ROADMAPS[roadmap_id]
+        if _MEMORY_ROADMAP_OWNERS.get(roadmap_id) == user_id:
+            return _MEMORY_ROADMAPS[roadmap_id]
+        # Owner mismatch (or unknown owner): fall through to the user-scoped
+        # Supabase query rather than serving another user's cached roadmap.
 
     if supabase:
         try:
@@ -165,6 +172,7 @@ def _get_roadmap(roadmap_id: str, user_id: str) -> Optional[LearningRoadmap]:
                     version=r_data.get("version", 1)
                 )
                 _MEMORY_ROADMAPS[roadmap_id] = roadmap
+                _MEMORY_ROADMAP_OWNERS[roadmap_id] = user_id
                 return roadmap
         except Exception as e:
             logger.warning(f"Supabase read error: {e}")

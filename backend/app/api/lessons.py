@@ -160,6 +160,9 @@ async def get_lesson_status(
     # Check in-memory active store first
     if lesson_id in PROJECT_STORE:
         proj = PROJECT_STORE[lesson_id]
+        # Enforce ownership on the in-memory branch, matching the Supabase fallback.
+        if getattr(proj, "user_id", None) != current_user.id:
+            raise HTTPException(status_code=404, detail="Video lesson not found")
         return {
             "status": proj.status,
             "topic": proj.topic,
