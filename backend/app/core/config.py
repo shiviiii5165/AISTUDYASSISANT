@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     
 
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://aistudyassisant.onrender.com"
 
     model_config = SettingsConfigDict(
         env_file=_env_file if os.path.exists(_env_file) else None,
