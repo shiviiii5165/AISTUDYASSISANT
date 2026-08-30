@@ -12,3 +12,4 @@ httpx
 pydantic
 pydantic-settings
 python-pptx
+slowapi
