@@ -14,6 +14,7 @@ from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro
 from app.services.vector_service import get_all_chunks_text
 from app.services.llm_service import call_gemini
+from app.core.logging import logger
 
 router = APIRouter()
 
@@ -64,7 +65,7 @@ async def predict_exam_questions(
 
     # 1. Fetch all chunks for the document
     try:
-        chunks = get_all_chunks_text(request.pdfId, limit=30)
+        chunks = get_all_chunks_text(request.pdfId, current_user.id, limit=30)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -97,10 +98,10 @@ async def predict_exam_questions(
             max_tokens=4000,
             temperature=0.3,
         )
-        print(f"Gemini prediction response length: {len(ai_response)}")
+        logger.info(f"Gemini prediction response length: {len(ai_response)}")
 
     except Exception as e:
-        print(f"Gemini API error: {e}")
+        logger.error(f"Gemini API error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"AI prediction failed: {str(e)}",
@@ -119,8 +120,8 @@ async def predict_exam_questions(
         return parsed
 
     except json.JSONDecodeError as e:
-        print(f"JSON parse error: {e}")
-        print(f"Raw response: {ai_response[:500]}")
+        logger.error(f"JSON parse error: {e}")
+        logger.error(f"Raw response: {ai_response[:500]}")
         # Return the raw response wrapped in a fallback structure
         return {
             "predictions": [],

@@ -5,6 +5,7 @@ from app.services.llm_service import call_gemini
 from app.services.embedding_service import get_embeddings
 from app.services.vector_store import search_relevant_chunks, get_all_chunks
 from app.core.config import settings
+from app.core.logging import logger
 
 def clean_source_preview(text: str) -> str:
     """Strip LaTeX commands from source preview text so raw \\text{} symbols never reach the UI."""
@@ -129,7 +130,7 @@ async def process_chunk_batch(messages: list, batch_index: int, retries: int = 2
                 temperature=0.3
             )
         except Exception as e:
-            print(f"Error in batch {batch_index}, attempt {attempt + 1}: {e}")
+            logger.error(f"Error in batch {batch_index}, attempt {attempt + 1}: {e}")
             if attempt == retries:
                 return f"[Error processing batch {batch_index}: {str(e)}]"
             await asyncio.sleep(2)
@@ -162,19 +163,19 @@ async def synthesize_batches(batch_results: list[str], mode: str, question: str)
 async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = "Quick Answer", chat_history: list = None) -> dict:
     if chat_history is None:
         chat_history = []
-    print(f"Generating answer for PDF {pdf_id}. Mode: {mode}")
+    logger.info(f"Generating answer for PDF {pdf_id}. Mode: {mode}")
     
     # 1. Routing Logic
     is_global_mode = mode != "Quick Answer"
     
     if is_global_mode:
-        print("Global Mode detected. Fetching full chapter context...")
+        logger.info("Global Mode detected. Fetching full chapter context...")
         all_chunks = get_all_chunks(pdf_id, user_id)
         if not all_chunks:
             return {"answer": "No content found in this PDF.", "sources": [], "model": "gemini-3.6-flash"}
         chunks_to_process = all_chunks
     else:
-        print("Quick Answer Mode detected. Performing vector search...")
+        logger.info("Quick Answer Mode detected. Performing vector search...")
         query_embedding = get_embeddings([question])[0]
         chunks_to_process = search_relevant_chunks(pdf_id, user_id, query_embedding, top_k=15)
         if not chunks_to_process:
@@ -188,7 +189,7 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
         # Group chunks into batches (e.g., 10 chunks per batch to stay well within safe limits and get detailed extraction)
         BATCH_SIZE = 15
         batches = [chunks_to_process[i:i + BATCH_SIZE] for i in range(0, len(chunks_to_process), BATCH_SIZE)]
-        print(f"Split document into {len(batches)} batches for hierarchical processing.")
+        logger.info(f"Split document into {len(batches)} batches for hierarchical processing.")
         
         tasks = []
         for i, batch in enumerate(batches):

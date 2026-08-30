@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.models.chat import ChatRequest, ChatResponse, PipelineRequest
 from app.agents.pipeline import handle_student_message, PipelineOutput
 from app.services.rag_service import answer_question
@@ -21,13 +21,14 @@ async def ask_question(request: ChatRequest, current_user=Depends(check_daily_qu
             chat_history=request.history or []
         )
         return ChatResponse(**result)
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         print(f"FULL ERROR: {traceback.format_exc()}")  # log server-side only
-        return ChatResponse(
-            answer="I had trouble generating a response just now. Please try asking again.",
-            sources=[],
-            model="error"
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="I had trouble generating a response just now. Please try asking again."
         )
 
 
@@ -43,13 +44,13 @@ async def ask_question_v2(request: PipelineRequest, current_user=Depends(get_cur
             conversation_history=request.history
         )
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         print(f"FULL ERROR in /v2/ask: {traceback.format_exc()}")
-        # We always want to return a valid PipelineOutput even if the pipeline itself fails
-        return PipelineOutput(
-            response_type="direct_message",
-            message="The study assistant is currently unavailable. Please try again later.",
-            intent="error"
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The study assistant is currently unavailable. Please try again later."
         )
 

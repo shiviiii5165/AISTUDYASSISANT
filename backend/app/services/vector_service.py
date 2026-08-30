@@ -94,15 +94,17 @@ def query_chunks_for_rag(pdf_id: str, user_id: str, query: str, top_k: int = 5) 
         raise e
 
 
-def get_all_chunks_text(pdf_id: str, limit: int = 30) -> list[str]:
+def get_all_chunks_text(pdf_id: str, user_id: str, limit: int = 30) -> list[str]:
     """
     Fetch all chunk texts for a document, ordered by chunk_index.
     Used by the exam predictor to get full context.
+    Scoped to the owning user_id to prevent cross-tenant reads.
     """
     try:
         response = supabase.rpc("get_top_chunks", {
             "match_pdf_id": pdf_id,
             "match_count": limit,
+            "filter_user_id": user_id,
         }).execute()
 
         results = response.data
