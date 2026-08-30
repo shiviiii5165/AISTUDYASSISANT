@@ -28,7 +28,10 @@ def verify_session_ownership(session_id: str, user_id: str) -> bool:
     plan = get_lesson_plan(session_id)
     if plan and plan.user_id:
         return plan.user_id == user_id
-    return True  # If no user_id recorded yet, allow initialization
+    # Fail closed: a session with no recorded owner (or that does not exist) is
+    # not owned by anyone. start_teaching_session always sets user_id on the
+    # state/plan at creation, so a legitimate session never reaches here.
+    return False
 
 
 async def search_material(

@@ -5,6 +5,7 @@ from app.services.vector_store import store_chunks
 from app.db.supabase_client import supabase
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import check_pdf_upload_limit
+from app.core.logging import logger
 import uuid, os
 
 router = APIRouter()
@@ -60,7 +61,7 @@ async def upload_pdf(
         return {"pdf_id": pdf_id, "status": "processing"}
 
     except Exception as e:
-        print(f"Upload failed: {str(e)}")
+        logger.error(f"Upload failed: {str(e)}")
         # If it failed, clean up the temp file if it was created
         if 'temp_path' in locals() and os.path.exists(temp_path):
             os.remove(temp_path)
@@ -91,13 +92,14 @@ def process_pdf_background(pdf_id: str, temp_path: str):
             "page_count": page_count
         }).eq("id", pdf_id).execute()
     except Exception as e:
-        # Mark as error if processing fails, and save error in subject so we can see it
+        # Mark as error if processing fails; record the reason in the dedicated
+        # error_message column instead of overwriting the user-facing subject.
         error_str = str(e)
         supabase.table("pdfs").update({
             "status": "error",
-            "subject": f"ERROR: {error_str}"[:200]  # truncate just in case
+            "error_message": f"ERROR: {error_str}"[:200]  # truncate just in case
         }).eq("id", pdf_id).execute()
-        print(f"Error processing PDF {pdf_id}: {error_str}")
+        logger.error(f"Error processing PDF {pdf_id}: {error_str}")
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)

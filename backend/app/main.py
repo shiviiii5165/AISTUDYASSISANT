@@ -16,7 +16,10 @@ origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if "*" not in origins else ["*"],
-    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|http://localhost:\d+",
+    # Scope the regex to our own deployed subdomains only. Do NOT match arbitrary
+    # *.vercel.app / *.onrender.com subdomains, which are open public hosting and
+    # would trust any attacker-controlled site on those platforms.
+    allow_origin_regex=r"https://(prepmind|aistudyassisant)\.(vercel\.app|onrender\.com)|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
