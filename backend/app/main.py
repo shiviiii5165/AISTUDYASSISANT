@@ -80,4 +80,6 @@ from app.api import content_creator as content_creator_api
 app.include_router(content_creator_api.router, prefix="/api/content-creator", tags=["content-creator"])
 from app.api import lesson_planner
 app.include_router(lesson_planner.router, prefix="/api/lesson-planner", tags=["lesson-planner"])
+from app.api import quiz as quiz_api
+app.include_router(quiz_api.router, prefix="/api/quiz", tags=["quiz"])
 
