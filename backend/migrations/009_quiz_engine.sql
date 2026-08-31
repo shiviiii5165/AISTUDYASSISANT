@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS quizzes (
   organization_id UUID,                           -- reserved for V2 class/cohort
   course_id TEXT,
   lesson_id TEXT,
-  roadmap_id TEXT REFERENCES learning_roadmaps(id) ON DELETE SET NULL,
-  stage_id TEXT,
+  roadmap_id UUID REFERENCES learning_roadmaps(id) ON DELETE SET NULL,
+  stage_id UUID REFERENCES roadmap_stages(id) ON DELETE SET NULL,
   teach_session_id TEXT,                           -- Teach Me → Test Me lineage
 
   -- Source provenance. `source_type` mirrors knowledge.SourceType; `source_ids`
