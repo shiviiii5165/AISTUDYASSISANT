@@ -40,7 +40,7 @@ const SupportPage: React.FC = () => {
           {/* Contact Form */}
           <div className="bg-white p-6 rounded-2xl border border-[var(--border)] shadow-[var(--shadow-sm)]">
             <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[var(--accent-indigo)]" />
+              <MessageSquare className="w-5 h-5 text-[var(--accent-green-text)]" />
               Contact Support
             </h2>
             
@@ -69,7 +69,7 @@ const SupportPage: React.FC = () => {
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder="E.g., Issue with PDF upload"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-indigo)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
                   />
                 </div>
                 <div>
@@ -80,7 +80,7 @@ const SupportPage: React.FC = () => {
                     placeholder="Please describe your issue or question in detail..."
                     required
                     rows={4}
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-indigo)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm resize-none"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm resize-none"
                   />
                 </div>
                 <button
@@ -128,7 +128,7 @@ const SupportPage: React.FC = () => {
               <Mail className="w-6 h-6 text-[var(--text-muted)] mx-auto mb-2" />
               <p className="text-xs text-[var(--text-secondary)]">
                 Prefer email? Contact us directly at <br/>
-                <a href="mailto:support@teachgenie.online" className="font-medium text-[var(--accent-indigo)] hover:underline">support@teachgenie.online</a>
+                <a href="mailto:support@teachgenie.online" className="font-medium text-[var(--accent-green-text)] hover:underline">support@teachgenie.online</a>
               </p>
             </div>
           </div>

@@ -108,9 +108,9 @@ const HandwrittenUpload: React.FC<HandwrittenUploadProps> = ({ selectedSubject, 
 
       {!selectedFile && !result && (
         /* Upload buttons */
-        <div className="border-2 border-dashed border-[var(--border)] rounded-2xl p-8 text-center hover:border-[var(--accent-indigo)] transition-colors">
+        <div className="border-2 border-dashed border-[var(--border)] rounded-2xl p-8 text-center hover:border-[var(--accent-green)] transition-colors">
           <div className="mx-auto w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-4">
-            <FileText className="w-7 h-7 text-[var(--accent-indigo)]" />
+            <FileText className="w-7 h-7 text-[var(--accent-green-text)]" />
           </div>
           <h3 className="text-lg font-bold mb-1 text-[var(--text-primary)]">
             Upload Handwritten Notes
@@ -121,7 +121,7 @@ const HandwrittenUpload: React.FC<HandwrittenUploadProps> = ({ selectedSubject, 
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--accent-indigo)] text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--accent-green)] text-white rounded-xl font-semibold text-sm hover:bg-[var(--accent-green-hover)] transition-colors shadow-sm"
             >
               <ImagePlus className="w-4 h-4" />
               Upload Photo
@@ -169,15 +169,15 @@ const HandwrittenUpload: React.FC<HandwrittenUploadProps> = ({ selectedSubject, 
 
               {uploading ? (
                 <div className="flex items-center gap-2 mt-4 px-4 py-2.5 bg-indigo-50 rounded-xl">
-                  <Loader2 className="w-4 h-4 text-[var(--accent-indigo)] animate-spin" />
-                  <span className="text-sm font-medium text-[var(--accent-indigo)]">
+                  <Loader2 className="w-4 h-4 text-[var(--accent-green-text)] animate-spin" />
+                  <span className="text-sm font-medium text-[var(--accent-green-text)]">
                     Reading your handwriting...
                   </span>
                 </div>
               ) : (
                 <button
                   onClick={handleUpload}
-                  className="mt-4 px-5 py-2.5 bg-[var(--accent-indigo)] text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+                  className="mt-4 px-5 py-2.5 bg-[var(--accent-green)] text-white rounded-xl font-semibold text-sm hover:bg-[var(--accent-green-hover)] transition-colors shadow-sm"
                 >
                   Process Notes
                 </button>
@@ -209,7 +209,7 @@ const HandwrittenUpload: React.FC<HandwrittenUploadProps> = ({ selectedSubject, 
               onClick={handleStartChatting}
               className="px-5 py-2.5 bg-[var(--accent-green)] text-white rounded-xl font-semibold text-sm hover:bg-green-700 transition-colors shadow-sm"
             >
-              Looks good — Start Chatting
+              Looks good, start chatting
             </button>
             <button
               onClick={handleReset}

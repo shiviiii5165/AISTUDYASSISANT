@@ -5,7 +5,7 @@ import GenieAvatar from './GenieAvatar';
 interface GreetingHeaderProps {
   /** Override the default subtitle text */
   subtitle?: string;
-  /** Override the default mascot image (default: /logo.png — the Scholar Genie) */
+  /** Override the default mascot image (default: /logo.png, the Scholar Genie) */
   avatarImageSrc?: string;
   /** Override the glow variant: 'default' (amber lamp) or 'spotlight' (warm rose/amber stage glow) */
   avatarGlowVariant?: 'default' | 'spotlight';
@@ -14,14 +14,18 @@ interface GreetingHeaderProps {
 }
 
 /**
- * Shared greeting header with time-of-day greeting, user's first name,
- * and the GenieAvatar mascot. Reusable across Dashboard, PPT Generator, etc.
+ * Shared greeting header with time-of-day greeting, the user's first name and
+ * the GenieAvatar mascot. Used by Dashboard, PPT Generator and Video Generator.
+ *
+ * Laid out as a compact row rather than a centred hero: these are daily-use
+ * working screens, so the greeting should cost one line of vertical space, not
+ * a screenful. Renders an h2 because AppLayout's topbar owns the page h1.
  */
 const GreetingHeader: React.FC<GreetingHeaderProps> = ({
-  subtitle = 'What would you like to teach today?',
+  subtitle = 'What would you like to work on today?',
   avatarImageSrc,
   avatarGlowVariant,
-  avatarSize = 'xl',
+  avatarSize = 'md',
 }) => {
   const { user } = useAuthStore();
 
@@ -38,27 +42,18 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
     'Student';
 
   return (
-    <div className="flex flex-col items-center justify-center text-center space-y-4 pt-4 pb-2">
+    <div className="flex items-center gap-4">
       <GenieAvatar
         size={avatarSize}
         {...(avatarImageSrc ? { imageSrc: avatarImageSrc } : {})}
         {...(avatarGlowVariant ? { glowVariant: avatarGlowVariant } : {})}
       />
-      <h1
-        className="text-4xl md:text-5xl tracking-tight mt-2 animate-slideUp font-extrabold"
-        style={{ animationDelay: '0.1s' }}
-      >
-        <span className="bg-gradient-to-r from-ink to-genie-amber bg-clip-text text-transparent">
-          {getGreeting()},
-        </span>{' '}
-        <span className="text-genie-amber">{firstName}</span>.
-      </h1>
-      <p
-        className="text-[var(--text-secondary)] text-lg animate-slideUp"
-        style={{ animationDelay: '0.2s' }}
-      >
-        {subtitle}
-      </p>
+      <div className="min-w-0">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+          {getGreeting()}, {firstName}.
+        </h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">{subtitle}</p>
+      </div>
     </div>
   );
 };

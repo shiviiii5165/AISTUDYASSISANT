@@ -20,7 +20,7 @@ const MCQGeneratorPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
         title="MCQ Generator from PDF - TeachGenie"
         description="Generate Multiple Choice Questions (MCQs) automatically from your PDF notes. Test your knowledge and prepare for exams with TeachGenie."
@@ -29,11 +29,11 @@ const MCQGeneratorPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
           <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
-        </div>
-        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-colors">
+        </button>
+        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
         </button>
       </nav>
@@ -52,7 +52,7 @@ const MCQGeneratorPage: React.FC = () => {
           <p className="text-[var(--text-secondary)] mb-6 max-w-lg mx-auto">
             Reading isn't enough. Active recall is the key to scoring high marks. Generate practice questions in seconds and test your understanding before the actual exam.
           </p>
-          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2 hover:bg-green-700 transition-colors">
+          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2 hover:bg-[var(--accent-green-hover)] transition-colors">
             Generate MCQs Now <ArrowRight className="w-5 h-5" />
           </button>
         </div>

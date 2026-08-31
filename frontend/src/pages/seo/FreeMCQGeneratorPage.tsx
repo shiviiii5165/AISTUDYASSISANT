@@ -27,7 +27,7 @@ const FreeMCQGeneratorPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
         title="Free MCQ Generator from PDF - TeachGenie"
         description="Generate unlimited MCQs from your PDF notes automatically. TeachGenie's free AI MCQ generator helps you practice and prepare for exams faster."
@@ -36,11 +36,11 @@ const FreeMCQGeneratorPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <img src="/logo.png" alt="TeachGenie Logo" className="w-8 h-8 object-contain" />
           <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
-        </div>
-        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-colors">
+        </button>
+        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
         </button>
       </nav>
@@ -60,7 +60,7 @@ const FreeMCQGeneratorPage: React.FC = () => {
             <p className="text-[var(--text-secondary)]">Upload your PDF and let the AI extract the most important concepts into testable questions.</p>
           </div>
           <div className="p-6 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-            <Target className="w-8 h-8 text-[var(--accent-indigo)] mb-4" />
+            <Target className="w-8 h-8 text-[var(--accent-green-text)] mb-4" />
             <h3 className="text-xl font-bold mb-2">Targeted Practice</h3>
             <p className="text-[var(--text-secondary)]">Identify exactly which sub-topics you are weak in based on your quiz scores.</p>
           </div>
@@ -86,7 +86,7 @@ const FreeMCQGeneratorPage: React.FC = () => {
         </div>
         
         <div className="text-center">
-          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 hover:bg-green-700 transition-colors">
+          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 hover:bg-[var(--accent-green-hover)] transition-colors">
             Generate Free MCQs <ArrowRight className="w-5 h-5" />
           </button>
         </div>

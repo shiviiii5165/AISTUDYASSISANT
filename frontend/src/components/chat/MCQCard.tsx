@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ListChecks } from "lucide-react";
 import { saveQuizScore } from "../../services/scoreTracker";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -254,7 +255,7 @@ function SessionResultsBanner({
       {weakTopics.length > 0 && (
         <div>
           <div style={{ fontSize: "12px", fontWeight: 500, color: "#b91c1c", marginBottom: "8px" }}>
-            Weak topics — practice these:
+            Weak topics, practice these:
           </div>
           {weakTopics.map(({ topic, pct: tPct }) => (
             <div key={topic} style={{
@@ -391,11 +392,11 @@ export default function MCQCard({ session, userId, onSessionComplete }: MCQCardP
           alignItems: "center",
           justifyContent: "center",
         }}>
-          <span style={{ fontSize: "14px" }}>📝</span>
+          <ListChecks size={14} color="#166534" aria-hidden="true" />
         </div>
         <div>
           <div style={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>
-            Quick Quiz — {session.questions.length} questions
+            Quick quiz, {session.questions.length} questions
           </div>
           <div style={{ fontSize: "11px", color: "#9ca3af" }}>
             {Object.keys(answers).length} of {session.questions.length} answered

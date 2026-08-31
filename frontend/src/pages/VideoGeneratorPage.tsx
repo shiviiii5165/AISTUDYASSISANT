@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  PlayCircle, Clock, Globe, Filter, Sparkles, ChevronDown, 
-  Loader2, BookOpen, Brain, HelpCircle, Lightbulb, FileText, 
-  RotateCcw, CheckCircle2, AlertCircle, Layers, Video, 
-  Download, RefreshCw, Sliders, Palette, ShieldCheck, Film, 
-  Plus, Edit3, ChevronRight, CheckSquare, Search,
-  BarChart2, Zap, Bookmark, Volume2, Maximize2, Trash2, ArrowRight
+import {
+  PlayCircle, Clock, Globe, Loader2, BookOpen, FileText,
+  CheckCircle2, AlertCircle, Video, Download, RefreshCw, Film,
+  Search, BarChart2, Bookmark, Trash2, ArrowRight, X,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
@@ -71,16 +67,16 @@ interface StoryboardData {
 }
 
 const QUALITY_OPTIONS = [
-  { value: 'quick', label: 'Quick', desc: 'Fast rendering with Python diagrams & stock footage' },
+  { value: 'quick', label: 'Quick', desc: 'Fast rendering with diagrams and stock footage' },
   { value: 'standard', label: 'Standard', desc: 'Balanced mix of graphics, stock, and AI visuals' },
-  { value: 'premium', label: 'Premium', desc: 'Higher fidelity visuals, richer transitions & AI motion' },
+  { value: 'premium', label: 'Premium', desc: 'Higher fidelity visuals and richer transitions' },
 ];
 
 const STYLE_OPTIONS = [
   { value: 'academic', label: 'Academic Clean', desc: 'Structured university lecture style' },
   { value: 'modern_explainer', label: 'Modern Explainer', desc: 'Fast-paced, high visual clarity' },
-  { value: 'technical', label: 'Technical Deep Dive', desc: 'Architectures, terminal code & equations' },
-  { value: 'visual_learning', label: 'Visual Learning', desc: 'Diagrams, mental models & concept flows' },
+  { value: 'technical', label: 'Technical Deep Dive', desc: 'Architectures, code and equations' },
+  { value: 'visual_learning', label: 'Visual Learning', desc: 'Diagrams, mental models and concept flows' },
   { value: 'cinematic', label: 'Documentary', desc: 'Rich b-roll and narrative storytelling' },
 ];
 
@@ -95,6 +91,14 @@ const DURATION_OPTIONS = [
 const LEVEL_OPTIONS = ['Class 9', 'Class 10', 'Class 11', 'Class 12', 'B.Tech', 'Undergrad', 'Graduate'];
 const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Hinglish'];
 
+/** Visual-type labels. Emoji removed; every badge carries a word. */
+const VISUAL_BADGES: Record<string, string> = {
+  python_graphics: 'Rendered graphics',
+  stock_video: 'Stock footage',
+  ai_image: 'AI concept art',
+  ai_video: 'AI motion video',
+};
+
 const VideoGeneratorPage: React.FC = () => {
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState('B.Tech');
@@ -102,8 +106,7 @@ const VideoGeneratorPage: React.FC = () => {
   const [language, setLanguage] = useState('English');
   const [quality, setQuality] = useState('standard');
   const [style, setStyle] = useState('academic');
-  const [aiIntensity, setAiIntensity] = useState<'minimal' | 'balanced' | 'maximum'>('balanced');
-  
+
   // Knowledge Sources
   const [sourceType, setSourceType] = useState('topic');
   const [selectedPdfId, setSelectedPdfId] = useState('');
@@ -119,7 +122,10 @@ const VideoGeneratorPage: React.FC = () => {
   const [finalVideoUrl, setFinalVideoUrl] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<VideoMetrics | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+  /* Replaces two window.alert() calls in handleRegenerateScene. Same
+     trigger and message, rendered inline and announced politely. */
+  const [sceneNotice, setSceneNotice] = useState<string | null>(null);
+
   // Studio & Navigation State
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'studio' | 'transcript' | 'notes' | 'telemetry'>('studio');
@@ -132,7 +138,7 @@ const VideoGeneratorPage: React.FC = () => {
   // Natural Language Prompt Parser
   const parseNaturalLanguagePrompt = (text: string) => {
     const lower = text.toLowerCase();
-    
+
     // Duration detection
     if (lower.includes('1 minute') || lower.includes('1 min') || lower.includes('1m')) setDuration('1');
     else if (lower.includes('3 minute') || lower.includes('3 min') || lower.includes('3m')) setDuration('3');
@@ -162,7 +168,7 @@ const VideoGeneratorPage: React.FC = () => {
         const token = useAuthStore.getState().session?.access_token;
         const pdfs = await fetchPdfs();
         setUserPdfs(pdfs.filter(p => p.status === 'ready'));
-        
+
         const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lessons/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -188,9 +194,9 @@ const VideoGeneratorPage: React.FC = () => {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = await res.json();
-          
+
           setStatus(data.status);
-          
+
           if (data.status === 'ready' && data.lesson_json) {
             setStoryboard(data.lesson_json);
             if (data.final_video_url) setFinalVideoUrl(data.final_video_url);
@@ -214,6 +220,8 @@ const VideoGeneratorPage: React.FC = () => {
   }, [lessonId, status]);
 
   const handleDeleteLesson = async (id: string) => {
+    // Native confirm kept deliberately: deletion is irreversible and the
+    // guarantee must stay exactly as reliable as before.
     if (!window.confirm("Are you sure you want to delete this video lesson?")) return;
     const token = useAuthStore.getState().session?.access_token;
     try {
@@ -240,6 +248,7 @@ const VideoGeneratorPage: React.FC = () => {
     setFinalVideoUrl(null);
     setMetrics(null);
     setError(null);
+    setSceneNotice(null);
     setStatus('processing');
     setActiveSceneIndex(0);
 
@@ -285,6 +294,7 @@ const VideoGeneratorPage: React.FC = () => {
     if (!lessonId || regeneratingScene) return;
 
     setRegeneratingScene(true);
+    setSceneNotice(null);
     const token = useAuthStore.getState().session?.access_token;
     const apiUrl = import.meta.env.VITE_API_URL || '';
 
@@ -302,307 +312,384 @@ const VideoGeneratorPage: React.FC = () => {
       const data = await res.json();
       if (data.final_video_url) setFinalVideoUrl(data.final_video_url);
 
-      alert(`Scene ${sceneId} updated and final video re-composed successfully!`);
+      setSceneNotice(`Scene ${sceneId} updated and the final video was recomposed.`);
     } catch (err: any) {
       console.error(err);
-      alert('Could not regenerate scene. Please try again.');
+      setSceneNotice('Could not regenerate scene. Please try again.');
     } finally {
       setRegeneratingScene(false);
     }
   };
 
   const toggleBookmark = (idx: number) => {
-    setBookmarks(prev => 
+    setBookmarks(prev =>
       prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
     );
   };
 
-  const getVisualBadge = (type: string) => {
-    switch (type) {
-      case 'python_graphics': return { label: '⚡ Python Graphics', bg: 'bg-blue-50 text-blue-700 border-blue-200' };
-      case 'stock_video': return { label: '🎬 Stock Footage', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-      case 'ai_image': return { label: '🎨 AI Concept Art', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
-      case 'ai_video': return { label: '✨ AI Motion Video', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
-      default: return { label: '📌 Visual Slide', bg: 'bg-slate-50 text-slate-700 border-slate-200' };
-    }
-  };
+  const visualBadge = (type: string) => VISUAL_BADGES[type] || 'Visual slide';
+
+  const selectClass =
+    'w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none';
+
+  const TABS = [
+    { id: 'studio' as const, label: 'Scenes', icon: PlayCircle },
+    { id: 'transcript' as const, label: 'Transcript', icon: FileText },
+    { id: 'notes' as const, label: 'Lesson notes', icon: BookOpen },
+    { id: 'telemetry' as const, label: 'Cost and usage', icon: BarChart2 },
+  ];
 
   return (
-    <AppLayout title="AI Educational Video Studio">
-      <SEO 
-        title="AI Video Studio — TeachGenie" 
-        description="Transform any topic, notes, or YouTube link into an educational video with Python graphics, TTS narration, and captions."
+    <AppLayout title="Video Generator">
+      <SEO
+        title="AI Video Studio | TeachGenie"
+        description="Transform any topic, notes, or YouTube link into an educational video with generated graphics, narration, and captions."
       />
 
-      <div className="min-h-[calc(100vh-64px)] bg-surface text-ink pb-24 pt-12 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
-        <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
 
-          {/* Header — Greeting (Director Genie) */}
+        <div className="mb-8">
           <GreetingHeader
-            subtitle="Ready to direct your next video lesson?"
+            subtitle="Turn a topic, your notes, or a video link into a narrated lesson."
             avatarImageSrc="/director-genie.png"
             avatarGlowVariant="spotlight"
           />
+        </div>
 
-          <form onSubmit={handleGenerate} className="space-y-8 mt-8">
+        <form onSubmit={handleGenerate} className="space-y-6">
 
-            {/* Topic Input — Pill Search Bar */}
-            <div className="max-w-3xl mx-auto w-full">
-              <div className="relative group shadow-sm hover:shadow-md transition-shadow rounded-full bg-surface-card border border-border-soft p-2 flex items-center">
-                <button type="button" className="p-3 text-ink-muted hover:text-genie-amber transition-colors ml-1 pointer-events-none">
-                  <Film className="w-6 h-6" />
-                </button>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => {
-                    setTopic(e.target.value);
-                    parseNaturalLanguagePrompt(e.target.value);
-                  }}
-                  placeholder="e.g. Operating Systems Deadlock in Hinglish for B.Tech (5 min)..."
-                  disabled={generating}
-                  className="flex-1 bg-transparent border-none text-ink placeholder:text-ink-muted/60 focus:ring-0 text-lg px-2 py-3 focus:outline-none"
-                />
-                {topic && !generating && (
-                  <button
-                    type="button"
-                    onClick={() => setTopic('')}
-                    className="p-2 text-ink-muted hover:text-ink transition-colors mr-1 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
+          {/* Topic */}
+          <div>
+            <label htmlFor="video-topic" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+              Video topic
+            </label>
+            <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-2 focus-within:border-[var(--accent-green)]">
+              <Film className="ml-2 h-5 w-5 shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
+              <input
+                id="video-topic"
+                type="text"
+                value={topic}
+                onChange={(e) => {
+                  setTopic(e.target.value);
+                  parseNaturalLanguagePrompt(e.target.value);
+                }}
+                placeholder="Operating systems deadlock in Hinglish for B.Tech, 5 min"
+                disabled={generating}
+                className="min-w-0 flex-1 border-none bg-transparent px-2 py-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
+              />
+              {topic && !generating && (
                 <button
-                  type="submit"
-                  disabled={generating || !topic.trim()}
-                  className="ml-2 w-12 h-12 rounded-full bg-genie-amber text-white flex items-center justify-center hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0 cursor-pointer"
+                  type="button"
+                  onClick={() => setTopic('')}
+                  aria-label="Clear topic"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                 >
-                  {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
-              </div>
-            </div>
-
-            {/* Knowledge Source Selector — Large Cards */}
-            <div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { type: 'topic' as const, label: 'General Knowledge', icon: Globe, desc: 'AI subject knowledge' },
-                  { type: 'pdf' as const, label: 'My Uploaded Notes', icon: FileText, desc: 'Grounded in PDF/Notes' },
-                  { type: 'youtube' as const, label: 'YouTube Video', icon: Video, desc: 'Learn from a video URL' },
-                ].map((src) => {
-                  const isSelected = sourceType === src.type;
-                  return (
-                    <button
-                      key={src.type}
-                      type="button"
-                      onClick={() => setSourceType(src.type)}
-                      className={`flex flex-col text-left p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
-                        isSelected
-                          ? 'border-genie-amber bg-genie-amber-soft ring-1 ring-genie-amber shadow-sm'
-                          : 'border-border-soft bg-surface-card hover:border-genie-amber/40 shadow-sm hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`p-2 rounded-full ${isSelected ? 'bg-white text-genie-amber' : 'bg-surface text-ink-muted'}`}>
-                          <src.icon className="w-5 h-5" />
-                        </div>
-                        <span className={`text-sm font-semibold ${isSelected ? 'text-amber-800' : 'text-ink'}`}>{src.label}</span>
-                      </div>
-                      <span className={`text-xs ml-[3.25rem] ${isSelected ? 'text-amber-700/80' : 'text-ink-muted'}`}>{src.desc}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* PDF Selector Dropdown */}
-              {sourceType === 'pdf' && (
-                <div className="mt-4 p-5 bg-genie-amber-soft/50 border border-genie-amber/20 rounded-2xl">
-                  <label className="block text-sm font-semibold text-amber-800 mb-2">
-                    Select Source Document from Your Library
-                  </label>
-                  {userPdfs.length > 0 ? (
-                    <select
-                      value={selectedPdfId}
-                      onChange={(e) => setSelectedPdfId(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-card border border-border-soft rounded-full text-sm text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber font-medium shadow-sm appearance-none cursor-pointer"
-                    >
-                      {userPdfs.map(p => (
-                        <option key={p.id} value={p.id}>📄 {p.name} ({p.page_count || 1} pages)</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="text-sm text-amber-700/80 bg-white/50 p-3 rounded-xl">
-                      No uploaded PDFs found. Upload a PDF in the Library or continue with General Knowledge.
-                    </p>
-                  )}
-                </div>
               )}
-
-              {/* YouTube URL Input */}
-              {sourceType === 'youtube' && (
-                <div className="mt-4 p-5 bg-genie-amber-soft/50 border border-genie-amber/20 rounded-2xl">
-                  <label className="block text-sm font-semibold text-amber-800 mb-2">
-                    Enter Public YouTube Video URL
-                  </label>
-                  <input
-                    type="url"
-                    value={youtubeUrl}
-                    onChange={(e) => setYoutubeUrl(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full px-4 py-3 bg-surface-card border border-border-soft rounded-full text-sm text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber font-medium shadow-sm"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Duration, Quality, Style, Language — Styled Selects */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* Duration */}
-              <div className="relative group">
-                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Duration</label>
-                <select
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
-                >
-                  {DURATION_OPTIONS.map(d => (
-                    <option key={d.val} value={d.val}>{d.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
-              </div>
-
-              {/* Quality Tier */}
-              <div className="relative group">
-                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Quality</label>
-                <select
-                  value={quality}
-                  onChange={(e) => setQuality(e.target.value)}
-                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
-                >
-                  {QUALITY_OPTIONS.map(q => (
-                    <option key={q.value} value={q.value}>{q.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
-              </div>
-
-              {/* Style */}
-              <div className="relative group">
-                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Style</label>
-                <select
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
-                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
-                >
-                  {STYLE_OPTIONS.map(s => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
-              </div>
-
-              {/* Language */}
-              <div className="relative group">
-                <label className="block text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Language</label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="appearance-none w-full pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-amber shadow-sm cursor-pointer"
-                >
-                  {LANGUAGE_OPTIONS.map(l => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 bottom-3.5 pointer-events-none group-hover:text-ink" />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-4 flex justify-center">
               <button
                 type="submit"
                 disabled={generating || !topic.trim()}
-                className="w-full max-w-md py-5 px-8 rounded-full font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-genie-amber to-amber-600 text-white border-0 cursor-pointer"
+                aria-label="Create video lesson"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-green)] text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {generating ? (
-                  <>
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    <span>Compiling Video...</span>
-                  </>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                 ) : (
-                  <>
-                    <Film className="w-6 h-6" />
-                    <span>Create {duration}-Minute Video Lesson</span>
-                  </>
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 )}
               </button>
             </div>
+            <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
+              Mentioning a length, language or level in the topic sets those options automatically.
+            </p>
+          </div>
 
-          </form>
+          {/* Knowledge source */}
+          <fieldset>
+            <legend className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
+              Knowledge source
+            </legend>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { type: 'topic' as const, label: 'General knowledge', icon: Globe, desc: 'Model subject knowledge' },
+                { type: 'pdf' as const, label: 'My uploaded notes', icon: FileText, desc: 'Grounded in your documents' },
+                { type: 'youtube' as const, label: 'YouTube video', icon: Video, desc: 'Learn from a video URL' },
+              ].map((src) => {
+                const isSelected = sourceType === src.type;
+                return (
+                  <button
+                    key={src.type}
+                    type="button"
+                    onClick={() => setSourceType(src.type)}
+                    aria-pressed={isSelected}
+                    className={`flex flex-col rounded-xl border p-4 text-left transition-colors ${
+                      isSelected
+                        ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]'
+                        : 'border-[var(--border)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]'
+                    }`}
+                  >
+                    <span className="mb-2 flex items-center gap-2.5">
+                      <src.icon
+                        className={`h-5 w-5 shrink-0 ${isSelected ? 'text-[var(--accent-green-text)]' : 'text-[var(--text-secondary)]'}`}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{src.label}</span>
+                    </span>
+                    <span className="text-xs text-[var(--text-secondary)]">{src.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Progress State */}
-        {generating && (
-          <div className="w-full max-w-xl mx-auto bg-surface-card border border-genie-amber/30 rounded-2xl p-8 text-center shadow-md mt-12 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-genie-amber-soft/20 via-amber-50/20 to-genie-amber-soft/20 animate-pulse" />
-            <div className="relative z-10">
-              <Loader2 className="w-8 h-8 text-genie-amber animate-spin mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-ink mb-1">Compiling Your Video Lesson...</h3>
-              <p className="text-sm text-ink-muted mb-4">
-                Planning storyboard, generating diagrams, synthesizing TTS narration & compiling FFmpeg stream.
-              </p>
-              <div className="w-full bg-surface rounded-full h-3 overflow-hidden border border-border-soft">
-                <div className="bg-gradient-to-r from-genie-amber to-amber-500 h-full rounded-full w-2/3 animate-pulse" />
+            {sourceType === 'pdf' && (
+              <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+                <label htmlFor="video-source-pdf" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+                  Source document
+                </label>
+                {userPdfs.length > 0 ? (
+                  <select
+                    id="video-source-pdf"
+                    value={selectedPdfId}
+                    onChange={(e) => setSelectedPdfId(e.target.value)}
+                    className={selectClass}
+                  >
+                    {userPdfs.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.page_count || 1} pages)
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    No uploaded documents found. Upload one in your Library, or continue with
+                    general knowledge.
+                  </p>
+                )}
               </div>
+            )}
+
+            {sourceType === 'youtube' && (
+              <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+                <label htmlFor="video-youtube" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+                  Public YouTube video URL
+                </label>
+                <input
+                  id="video-youtube"
+                  type="url"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v="
+                  className={selectClass}
+                />
+              </div>
+            )}
+          </fieldset>
+
+          {/* Options */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div>
+              <label htmlFor="video-duration" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                Duration
+              </label>
+              <select
+                id="video-duration"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className={selectClass}
+              >
+                {DURATION_OPTIONS.map(d => (
+                  <option key={d.val} value={d.val}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="video-quality" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                Quality
+              </label>
+              <select
+                id="video-quality"
+                value={quality}
+                onChange={(e) => setQuality(e.target.value)}
+                className={selectClass}
+              >
+                {QUALITY_OPTIONS.map(q => (
+                  <option key={q.value} value={q.value}>{q.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="video-style" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                Style
+              </label>
+              <select
+                id="video-style"
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+                className={selectClass}
+              >
+                {STYLE_OPTIONS.map(s => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="video-language" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                Language
+              </label>
+              <select
+                id="video-language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className={selectClass}
+              >
+                {LANGUAGE_OPTIONS.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="video-level" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+              Level
+            </label>
+            <select
+              id="video-level"
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className={`${selectClass} sm:max-w-xs`}
+            >
+              {LEVEL_OPTIONS.map(l => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            disabled={generating || !topic.trim()}
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--accent-green)] px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                <span>Compiling video</span>
+              </>
+            ) : (
+              <>
+                <Film className="h-5 w-5" aria-hidden="true" />
+                <span>Create {duration} minute video lesson</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Progress */}
+        {generating && (
+          <div
+            className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6"
+            aria-live="polite"
+          >
+            <div className="mb-3 flex items-center gap-2.5">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--accent-green-text)]" aria-hidden="true" />
+              <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
+                Compiling your video lesson
+              </h2>
+            </div>
+            <p className="mb-4 text-sm text-[var(--text-secondary)]">
+              Planning the storyboard, building visuals, recording narration and assembling the
+              final video. This can take several minutes.
+            </p>
+            {/* Indeterminate: the backend reports a status, not a percentage. */}
+            <div
+              className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-secondary)]"
+              role="progressbar"
+              aria-label="Compiling video"
+            >
+              <div className="h-full w-1/3 animate-pulse rounded-full bg-[var(--accent-green)]" />
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && !generating && (
+          <div role="alert" className="mt-8 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-5">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" aria-hidden="true" />
+            <div>
+              <h2 className="font-display text-base font-semibold text-red-900">
+                Video generation failed
+              </h2>
+              <p className="mt-1 text-sm text-red-800">{error}</p>
             </div>
           </div>
         )}
 
         {/* ═══════════ VIDEO STUDIO RESULTS ═══════════ */}
         {storyboard && (
-          <div ref={resultsRef} className="w-full max-w-5xl bg-surface-card border border-border-soft rounded-2xl p-6 sm:p-8 shadow-sm mt-12 mb-10">
-            
-            {/* Header / Download */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
-                    ✓ Ready to Watch
+          <div
+            ref={resultsRef}
+            className="mb-10 mt-8 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 sm:p-6"
+          >
+
+            <div className="mb-6 flex flex-col gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-[var(--accent-green-light)] px-2 py-0.5 text-[11px] font-semibold text-[var(--accent-green-text)]">
+                    <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                    Ready to watch
                   </span>
-                  <span className="text-xs font-semibold text-slate-400 capitalize">{storyboard.style} Style</span>
+                  <span className="text-xs font-medium capitalize text-[var(--text-secondary)]">
+                    {storyboard.style} style
+                  </span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{storyboard.topic}</h2>
+                <h2 className="font-display text-xl font-bold text-[var(--text-primary)] sm:text-2xl">
+                  {storyboard.topic}
+                </h2>
               </div>
 
               {finalVideoUrl && (
                 <a
                   href={finalVideoUrl}
                   download={`${storyboard.topic.replace(/[^a-zA-Z0-9]/g, '_')}.mp4`}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
+                  className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--accent-green)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
                 >
-                  <Download className="w-4 h-4" /> Download MP4 Video
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Download MP4
                 </a>
               )}
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-6 overflow-x-auto">
-              {[
-                { id: 'studio' as const, label: 'Video Studio & Timeline', icon: PlayCircle },
-                { id: 'transcript' as const, label: 'Transcript & Search', icon: FileText },
-                { id: 'notes' as const, label: 'Lesson Notes & Takeaways', icon: BookOpen },
-                { id: 'telemetry' as const, label: 'Telemetry & Cost KPI', icon: BarChart2 },
-              ].map(tab => (
+            {sceneNotice && (
+              <p
+                aria-live="polite"
+                className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-secondary)]"
+              >
+                {sceneNotice}
+              </p>
+            )}
+
+            {/* Tabs */}
+            <div role="tablist" aria-label="Video details" className="mb-5 flex items-center gap-1.5 overflow-x-auto border-b border-[var(--border)] pb-3">
+              {TABS.map(tab => (
                 <button
                   key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`tab-${tab.id}`}
+                  aria-selected={activeTab === tab.id}
+                  aria-controls={`panel-${tab.id}`}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'text-slate-600 hover:bg-slate-50'
+                      ? 'bg-[var(--accent-green-light)] text-[var(--accent-green-text)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <tab.icon className="w-3.5 h-3.5" />
+                  <tab.icon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -610,86 +697,103 @@ const VideoGeneratorPage: React.FC = () => {
 
             {/* TAB: STUDIO */}
             {activeTab === 'studio' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                
-                {/* Scene List Timeline */}
-                <div className="lg:col-span-1 space-y-2 max-h-[500px] overflow-y-auto pr-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scene Timeline ({storyboard.scenes.length} Scenes)</p>
-                  </div>
-                  {storyboard.scenes.map((s, i) => {
-                    const badge = getVisualBadge(s.visual_type);
-                    const isCurrent = i === activeSceneIndex;
-                    const isBookmarked = bookmarks.includes(i);
+              <div id="panel-studio" role="tabpanel" aria-labelledby="tab-studio" className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
 
-                    return (
-                      <div
-                        key={s.scene_id}
-                        onClick={() => setActiveSceneIndex(i)}
-                        className={`p-3 rounded-xl border transition-all cursor-pointer relative ${
-                          isCurrent
-                            ? 'border-blue-600 bg-blue-50/70 shadow-xs'
-                            : 'border-slate-200 bg-white hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-slate-900 truncate max-w-[130px]">{i + 1}. {s.caption || s.purpose}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400 font-semibold">{s.duration}s</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleBookmark(i);
-                              }}
-                              className="text-slate-400 hover:text-amber-500"
-                            >
-                              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'text-amber-500 fill-amber-500' : ''}`} />
-                            </button>
-                          </div>
-                        </div>
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold border ${badge.bg}`}>
-                          {badge.label}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div className="lg:col-span-1">
+                  <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                    Scene timeline, <span className="tabular-nums">{storyboard.scenes.length}</span> scenes
+                  </h3>
+                  <ul className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
+                    {storyboard.scenes.map((s, i) => {
+                      const isCurrent = i === activeSceneIndex;
+                      const isBookmarked = bookmarks.includes(i);
+
+                      return (
+                        <li key={s.scene_id} className="relative">
+                          {/* Real button: the scene list was previously a div
+                              with onClick and unreachable by keyboard. */}
+                          <button
+                            type="button"
+                            onClick={() => setActiveSceneIndex(i)}
+                            aria-current={isCurrent ? 'true' : undefined}
+                            className={`w-full rounded-xl border p-3 pr-9 text-left transition-colors ${
+                              isCurrent
+                                ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]'
+                                : 'border-[var(--border)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]'
+                            }`}
+                          >
+                            <span className="mb-1 flex items-center justify-between gap-2 text-xs">
+                              <span className="truncate font-semibold text-[var(--text-primary)]">
+                                {i + 1}. {s.caption || s.purpose}
+                              </span>
+                              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[var(--text-secondary)]">
+                                {s.duration}s
+                              </span>
+                            </span>
+                            <span className="inline-block rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]">
+                              {visualBadge(s.visual_type)}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleBookmark(i)}
+                            aria-pressed={isBookmarked}
+                            aria-label={`${isBookmarked ? 'Remove bookmark from' : 'Bookmark'} scene ${i + 1}`}
+                            className="absolute right-2 top-2 rounded p-1 text-[var(--text-muted)] transition-colors hover:text-[var(--accent-green-text)]"
+                          >
+                            <Bookmark
+                              className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-[var(--accent-green-text)] text-[var(--accent-green-text)]' : ''}`}
+                              aria-hidden="true"
+                            />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
 
-                {/* Active Scene Detail & Inspector Drawer */}
-                <div className="lg:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-5">
+                {/* Active scene */}
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5 lg:col-span-2">
                   {storyboard.scenes[activeSceneIndex] && (() => {
                     const sc = storyboard.scenes[activeSceneIndex];
-                    const badge = getVisualBadge(sc.visual_type);
 
                     return (
                       <div>
-                        <div className="flex items-center justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-green)] text-xs font-bold tabular-nums text-white">
                               {activeSceneIndex + 1}
                             </span>
-                            <h3 className="font-bold text-sm text-slate-900">{sc.caption || sc.purpose}</h3>
+                            <h3 className="truncate font-display text-sm font-semibold text-[var(--text-primary)]">
+                              {sc.caption || sc.purpose}
+                            </h3>
                           </div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badge.bg}`}>
-                            {badge.label}
+                          <span className="shrink-0 rounded border border-[var(--border)] bg-[var(--bg-card)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary)]">
+                            {visualBadge(sc.visual_type)}
                           </span>
                         </div>
 
-                        {/* Narration Script */}
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4">
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">🎙️ Narration Track</p>
-                          <p className="text-sm text-slate-800 leading-relaxed font-medium">{sc.narration}</p>
+                        <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+                          <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                            Narration
+                          </h4>
+                          <p className="text-sm leading-relaxed text-[var(--text-primary)]">
+                            {sc.narration}
+                          </p>
                         </div>
 
-                        {/* Visual Content Specification */}
                         {sc.visual_spec && (
-                          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📊 Scene Visual Breakdown</p>
+                          <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+                            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                              Scene visuals
+                            </h4>
                             {sc.visual_spec.title && (
-                              <p className="text-xs font-bold text-slate-900 mb-1">{sc.visual_spec.title}</p>
+                              <p className="mb-1 text-xs font-semibold text-[var(--text-primary)]">
+                                {sc.visual_spec.title}
+                              </p>
                             )}
                             {sc.visual_spec.bullets && sc.visual_spec.bullets.length > 0 && (
-                              <ul className="text-xs text-slate-600 space-y-1 list-disc pl-4">
+                              <ul className="list-disc space-y-1 pl-4 text-xs text-[var(--text-secondary)]">
                                 {sc.visual_spec.bullets.map((b, bi) => (
                                   <li key={bi}>{b}</li>
                                 ))}
@@ -698,17 +802,19 @@ const VideoGeneratorPage: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Scene Regeneration Action */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            onClick={() => handleRegenerateScene(sc.scene_id)}
-                            disabled={regeneratingScene}
-                            className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-xl font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                          >
-                            {regeneratingScene ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <RefreshCw className="w-3.5 h-3.5 text-blue-600" />}
-                            <span>Regenerate Scene {activeSceneIndex + 1}</span>
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRegenerateScene(sc.scene_id)}
+                          disabled={regeneratingScene}
+                          className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)] disabled:opacity-50"
+                        >
+                          {regeneratingScene ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5 text-[var(--accent-green-text)]" aria-hidden="true" />
+                          )}
+                          <span>Regenerate scene {activeSceneIndex + 1}</span>
+                        </button>
                       </div>
                     );
                   })()}
@@ -717,79 +823,107 @@ const VideoGeneratorPage: React.FC = () => {
               </div>
             )}
 
-            {/* TAB: TRANSCRIPT & SEARCH */}
+            {/* TAB: TRANSCRIPT */}
             {activeTab === 'transcript' && (
-              <div className="space-y-4 mb-8">
+              <div id="panel-transcript" role="tabpanel" aria-labelledby="tab-transcript" className="mb-6 space-y-4">
                 <div className="relative">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <Search
+                    className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--text-muted)]"
+                    aria-hidden="true"
+                  />
+                  <label htmlFor="transcript-search" className="sr-only">Search transcript</label>
                   <input
+                    id="transcript-search"
                     type="text"
                     value={transcriptSearch}
                     onChange={(e) => setTranscriptSearch(e.target.value)}
-                    placeholder="Search video transcript (e.g. congestion, slow start, lock)..."
-                    className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Search the transcript"
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] py-2.5 pl-9 pr-4 text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-green)] focus:outline-none"
                   />
                 </div>
 
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                <ul className="max-h-[400px] space-y-2 overflow-y-auto">
                   {storyboard.scenes
                     .filter(s => !transcriptSearch || s.narration.toLowerCase().includes(transcriptSearch.toLowerCase()))
                     .map((s, i) => (
-                      <div
-                        key={s.scene_id}
-                        onClick={() => {
-                          setActiveSceneIndex(i);
-                          setActiveTab('studio');
-                        }}
-                        className="p-3 bg-slate-50 hover:bg-blue-50/50 border border-slate-200 rounded-xl cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-bold text-blue-600">Scene {i + 1}</span>
-                          <span className="text-[10px] text-slate-400">({s.duration}s)</span>
-                        </div>
-                        <p className="text-xs text-slate-700 leading-relaxed">{s.narration}</p>
-                      </div>
+                      <li key={s.scene_id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveSceneIndex(i);
+                            setActiveTab('studio');
+                          }}
+                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3 text-left transition-colors hover:bg-[var(--bg-hover)]"
+                        >
+                          <span className="mb-1 flex items-center gap-2">
+                            <span className="text-[11px] font-semibold text-[var(--accent-green-text)]">
+                              Scene {i + 1}
+                            </span>
+                            <span className="text-[10px] tabular-nums text-[var(--text-muted)]">
+                              {s.duration}s
+                            </span>
+                          </span>
+                          <span className="block text-xs leading-relaxed text-[var(--text-secondary)]">
+                            {s.narration}
+                          </span>
+                        </button>
+                      </li>
                     ))}
-                </div>
+                </ul>
               </div>
             )}
 
-            {/* TAB: TELEMETRY & COST KPI */}
+            {/* TAB: COST AND USAGE */}
             {activeTab === 'telemetry' && metrics && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">Total Duration</p>
-                  <p className="text-lg font-extrabold text-slate-900">{metrics.total_duration_sec}s</p>
-                </div>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">AI Video Generated</p>
-                  <p className="text-lg font-extrabold text-blue-600">{metrics.ai_video_seconds}s</p>
-                </div>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">AI Generation Ratio</p>
-                  <p className="text-lg font-extrabold text-emerald-600">{(metrics.ai_generation_ratio * 100).toFixed(1)}%</p>
-                </div>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">Est. Cost / Min</p>
-                  <p className="text-lg font-extrabold text-slate-900">${metrics.cost_per_minute_usd}</p>
-                </div>
-              </div>
+              <dl
+                id="panel-telemetry"
+                role="tabpanel"
+                aria-labelledby="tab-telemetry"
+                className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4"
+              >
+                {[
+                  { label: 'Total duration', value: `${metrics.total_duration_sec}s` },
+                  { label: 'AI video generated', value: `${metrics.ai_video_seconds}s` },
+                  { label: 'AI generation ratio', value: `${(metrics.ai_generation_ratio * 100).toFixed(1)}%` },
+                  { label: 'Est. cost per minute', value: `$${metrics.cost_per_minute_usd}` },
+                ].map((m) => (
+                  <div key={m.label} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+                    <dt className="mb-1 text-[11px] font-semibold uppercase text-[var(--text-secondary)]">
+                      {m.label}
+                    </dt>
+                    <dd className="font-display text-lg font-bold tabular-nums text-[var(--text-primary)]">
+                      {m.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             )}
 
-            {/* TAB: SUMMARY NOTES */}
+            {/* TAB: NOTES */}
             {activeTab === 'notes' && (
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+              <div
+                id="panel-notes"
+                role="tabpanel"
+                aria-labelledby="tab-notes"
+                className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5"
+              >
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Learning Objectives</h4>
-                  <ul className="text-xs text-slate-700 space-y-1 list-disc pl-4">
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+                    Learning objectives
+                  </h3>
+                  <ul className="list-disc space-y-1 pl-4 text-xs text-[var(--text-secondary)]">
                     {storyboard.learning_objectives.map((obj, i) => (
                       <li key={i}>{obj}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5">Educational Synthesis</h4>
-                  <p className="text-xs text-slate-700 leading-relaxed">{storyboard.summary_notes}</p>
+                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+                    Summary
+                  </h3>
+                  <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                    {storyboard.summary_notes}
+                  </p>
                 </div>
               </div>
             )}
@@ -799,47 +933,52 @@ const VideoGeneratorPage: React.FC = () => {
 
         {/* ═══════════ RECENT VIDEOS ═══════════ */}
         {pastLessons.length > 0 && !generating && !lessonId && (
-          <div className="bg-surface-card rounded-2xl border border-border-soft p-6 shadow-sm mt-12">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-500" /> Recent Videos ({pastLessons.length})
-              </h3>
-            </div>
-            <div className="divide-y divide-slate-100">
+          <section className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-[var(--text-primary)]">
+              <Clock className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+              Recent videos
+              <span className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-0.5 text-xs font-medium tabular-nums text-[var(--text-secondary)]">
+                {pastLessons.length}
+              </span>
+            </h2>
+            <ul className="divide-y divide-[var(--border)]">
               {pastLessons.map((lesson) => (
-                <div key={lesson.id} className="py-3.5 flex items-center justify-between gap-4">
+                <li key={lesson.id} className="flex items-center justify-between gap-4 py-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-800 truncate">{lesson.topic}</p>
-                    <p className="text-xs text-slate-400">
-                      {lesson.level || 'B.Tech'}  •  {lesson.language || 'English'}  •  {new Date(lesson.created_at).toLocaleDateString()}
+                    <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                      {lesson.topic}
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {lesson.level || 'B.Tech'}, {lesson.language || 'English'},{' '}
+                      {new Date(lesson.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     {lesson.download_url && (
                       <a
                         href={lesson.download_url}
                         download
-                        className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-50 transition-colors"
-                        title="Download video"
+                        aria-label={`Download ${lesson.topic}`}
+                        className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--accent-green-light)] hover:text-[var(--accent-green-text)]"
                       >
-                        <Download className="w-4 h-4" />
+                        <Download className="h-4 w-4" aria-hidden="true" />
                       </a>
                     )}
                     <button
+                      type="button"
                       onClick={() => handleDeleteLesson(lesson.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-50 transition-colors"
-                      title="Delete video"
+                      aria-label={`Delete ${lesson.topic}`}
+                      className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-red-50 hover:text-red-700"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
-          </div>
+            </ul>
+          </section>
         )}
 
-        </div>
       </div>
     </AppLayout>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Send, FileText, Loader2, ChevronDown, Sparkles, ArrowDown } from 'lucide-react';
+import { Send, FileText, Loader2, ChevronDown, Sparkles } from 'lucide-react';
 import { fetchPdfs, askQuestion, sendMessageV2 } from '../lib/api';
 import type { PDFDocument, ChatMessage, ChatSource, PipelineOutput } from '../lib/api';
 import AppLayout from '../components/AppLayout';
@@ -12,7 +12,6 @@ import { useAuthStore } from '../store/useAuthStore';
 import MCQCard from '../components/chat/MCQCard';
 import ExamPredictorCard from '../components/chat/ExamPredictorCard';
 import UpgradeModal from '../components/billing/UpgradeModal';
-import { Lock } from 'lucide-react';
 import GenieAvatar from '../components/GenieAvatar';
 import ContentPollCard from '../components/chat/ContentPollCard';
 
@@ -23,6 +22,32 @@ interface DisplayMessage {
   isV2?: boolean;
   pipelineOutput?: PipelineOutput;
 }
+
+/** Shared markdown styling. Was repeated verbatim five times. */
+const PROSE =
+  'prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-[var(--text-primary)] ' +
+  'prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] ' +
+  'prose-code:text-[var(--accent-green-text)] prose-code:bg-[var(--accent-green-light)] prose-code:px-1 ' +
+  'prose-code:py-0.5 prose-code:rounded';
+
+const ANSWER_MODES = [
+  'Quick Answer',
+  'Full Chapter Crux',
+  'No Fact Miss',
+  'Formula Coverage',
+  'Exam Shield Notes',
+  'Generate MCQs',
+  'Predicted Exam Questions',
+  'Kid Mode',
+  'Professor Mode',
+];
+
+const SUGGESTIONS = [
+  'Summarize the key concepts',
+  'Explain the first chapter',
+  'What are the important formulas?',
+  'List all definitions',
+];
 
 const ChatPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -120,7 +145,7 @@ const ChatPage: React.FC = () => {
       } else {
         const errorMessage: DisplayMessage = {
           role: 'assistant',
-          content: '⚠️ Sorry, I encountered an error processing your question. Please try again.',
+          content: 'Sorry, something went wrong answering that. Please try again.',
         };
         setMessages(prev => [...prev, errorMessage]);
         console.error('Chat error:', err);
@@ -154,7 +179,7 @@ const ChatPage: React.FC = () => {
 
       if (out.response_type === 'direct_message') {
         return (
-          <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+          <div className={PROSE}>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {msg.content}
             </ReactMarkdown>
@@ -165,15 +190,15 @@ const ChatPage: React.FC = () => {
       if (out.response_type === 'tutor_turn' && out.tutor_data) {
         return (
           <div className="space-y-2">
-            <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+            <div className={PROSE}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {out.tutor_data.message}
               </ReactMarkdown>
             </div>
             {out.tutor_data.understanding_level && (
-              <div className="inline-block px-2 py-0.5 mt-2 rounded-full text-[10px] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] uppercase tracking-wider border border-[var(--border)]">
+              <p className="mt-2 inline-block rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                 State: {out.tutor_data.understanding_level.replace('_', ' ')}
-              </div>
+              </p>
             )}
           </div>
         );
@@ -197,7 +222,7 @@ const ChatPage: React.FC = () => {
           return (
             <div className="space-y-4">
               {textBeforeJson && (
-                <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+                <div className={PROSE}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {textBeforeJson}
                   </ReactMarkdown>
@@ -216,13 +241,13 @@ const ChatPage: React.FC = () => {
         // Otherwise it's an MCQ session
         const session = parsed;
         session.pdfId = selectedPdfId;
-        
+
         const textBeforeJson = msg.content.split('```json')[0].trim();
-        
+
         return (
           <div className="space-y-4">
             {textBeforeJson && (
-              <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+              <div className={PROSE}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {textBeforeJson}
                 </ReactMarkdown>
@@ -238,12 +263,12 @@ const ChatPage: React.FC = () => {
           </div>
         );
       } catch {
-        // JSON parsing failed — fall through and render as plain text
+        // JSON parsing failed, fall through and render as plain text
       }
     }
 
     return (
-      <div className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-li:text-[var(--text-primary)] prose-code:text-[var(--accent-indigo)] prose-code:bg-[var(--accent-indigo-light)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+      <div className={PROSE}>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {msg.content}
         </ReactMarkdown>
@@ -253,72 +278,99 @@ const ChatPage: React.FC = () => {
 
   return (
     <AppLayout title="AI Chat">
-      <SEO 
-        title={selectedPdf ? `Chat with ${selectedPdf.name}` : "AI Chat"} 
-        description="Ask questions, generate MCQs, and understand complex topics directly from your uploaded study materials." 
+      <SEO
+        title={selectedPdf ? `Chat with ${selectedPdf.name}` : "AI Chat"}
+        description="Ask questions, generate MCQs, and understand complex topics directly from your uploaded study materials."
       />
-      <div className="flex flex-col h-full">
-        {/* PDF Selector Bar */}
-        <div className="px-4 md:px-6 py-2.5 border-b border-[var(--border)] bg-white flex items-center gap-2 md:gap-3 shrink-0 flex-wrap justify-between">
+      <div className="flex h-full flex-col">
+        {/* Document selector bar */}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 md:gap-3 md:px-6">
           <div className="flex items-center gap-2 md:gap-3">
-            <FileText className="w-4 h-4 text-[var(--accent-indigo)] shrink-0 hidden sm:block" />
-            <span className="text-xs font-medium text-[var(--text-muted)] hidden sm:block">Chatting with:</span>
+            <FileText
+              className="hidden h-4 w-4 shrink-0 text-[var(--text-secondary)] sm:block"
+              aria-hidden="true"
+            />
+            <span className="hidden text-xs font-medium text-[var(--text-secondary)] sm:block">
+              Chatting with
+            </span>
             <div className="relative">
-            <button
-              onClick={() => setShowPdfDropdown(!showPdfDropdown)}
-              className="flex items-center gap-2 px-2.5 py-1.5 border border-[var(--border)] rounded-lg text-xs font-semibold hover:bg-[var(--bg-hover)] transition-colors min-w-[140px] md:min-w-[200px] text-left"
-              disabled={loadingPdfs}
-            >
-              {loadingPdfs ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : selectedPdf ? (
-                <span className="truncate">{selectedPdf.name}</span>
-              ) : (
-                <span className="text-[var(--text-muted)]">Select a PDF...</span>
-              )}
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] ml-auto shrink-0" />
-            </button>
-
-            {showPdfDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-[var(--border)] rounded-xl shadow-lg z-30 py-1 min-w-[280px] max-h-64 overflow-y-auto">
-                {pdfs.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-[var(--text-muted)]">
-                    No PDFs ready. Upload one first.
-                  </div>
+              <button
+                type="button"
+                onClick={() => setShowPdfDropdown(!showPdfDropdown)}
+                aria-expanded={showPdfDropdown}
+                aria-haspopup="listbox"
+                className="flex min-w-[140px] items-center gap-2 rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-left text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)] md:min-w-[200px]"
+                disabled={loadingPdfs}
+              >
+                {loadingPdfs ? (
+                  <span className="text-[var(--text-secondary)]">Loading documents</span>
+                ) : selectedPdf ? (
+                  <span className="truncate">{selectedPdf.name}</span>
                 ) : (
-                  pdfs.map((pdf) => (
-                    <button
-                      key={pdf.id}
-                      onClick={() => {
-                        setSelectedPdfId(pdf.id);
-                        setShowPdfDropdown(false);
-                        setMessages([]);
-                      }}
-                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--bg-hover)] transition-colors flex items-center gap-3 ${
-                        selectedPdfId === pdf.id ? 'bg-[var(--accent-green)]/5 font-semibold' : ''
-                      }`}
-                    >
-                      <FileText className="w-4 h-4 text-[var(--accent-indigo)] shrink-0" />
-                      <div className="truncate">
-                        <div className="truncate font-medium">{pdf.name}</div>
-                        <div className="text-xs text-[var(--text-muted)]">{pdf.subject} • {pdf.page_count || '?'} pages</div>
-                      </div>
-                    </button>
-                  ))
+                  <span className="text-[var(--text-secondary)]">Select a document</span>
                 )}
-              </div>
-            )}
-          </div>
-        </div>
+                <ChevronDown
+                  className="ml-auto h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]"
+                  aria-hidden="true"
+                />
+              </button>
 
-        <div className="flex items-center gap-4 ml-auto">
-            {/* V2 Toggle */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <span className="text-xs font-semibold text-[var(--accent-indigo)]">V2 Pipeline</span>
-              <div className="relative">
-                <input 
-                  type="checkbox" 
-                  className="sr-only" 
+              {showPdfDropdown && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowPdfDropdown(false)} />
+                  <ul
+                    role="listbox"
+                    aria-label="Your documents"
+                    className="absolute left-0 top-full z-30 mt-1 max-h-64 min-w-[280px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-1 shadow-[var(--shadow-lg)]"
+                  >
+                    {pdfs.length === 0 ? (
+                      <li className="px-4 py-3 text-sm text-[var(--text-secondary)]">
+                        No documents ready. Upload one first.
+                      </li>
+                    ) : (
+                      pdfs.map((pdf) => (
+                        <li key={pdf.id} role="option" aria-selected={selectedPdfId === pdf.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPdfId(pdf.id);
+                              setShowPdfDropdown(false);
+                              setMessages([]);
+                            }}
+                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--bg-hover)] ${
+                              selectedPdfId === pdf.id
+                                ? 'bg-[var(--accent-green-light)] font-semibold'
+                                : ''
+                            }`}
+                          >
+                            <FileText
+                              className="h-4 w-4 shrink-0 text-[var(--text-secondary)]"
+                              aria-hidden="true"
+                            />
+                            <span className="min-w-0 truncate">
+                              <span className="block truncate font-medium">{pdf.name}</span>
+                              <span className="block text-xs text-[var(--text-secondary)]">
+                                {pdf.subject}, {pdf.page_count || '?'} pages
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="ml-auto flex items-center gap-4">
+            {/* V2 pipeline toggle. Drives sendMessageV2 against /chat/v2/ask. */}
+            <label className="flex cursor-pointer items-center gap-2">
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">V2 Pipeline</span>
+              <span className="relative inline-flex">
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
                   checked={useV2}
                   onChange={(e) => {
                     const checked = e.target.checked;
@@ -328,17 +380,28 @@ const ChatPage: React.FC = () => {
                       else prev.delete('v2');
                       return prev;
                     });
-                  }} 
+                  }}
                 />
-                <div className={`block w-10 h-6 rounded-full transition-colors ${useV2 ? 'bg-[var(--accent-green)]' : 'bg-gray-300'}`}></div>
-                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${useV2 ? 'transform translate-x-4' : ''}`}></div>
-              </div>
+                <span
+                  aria-hidden="true"
+                  className={`block h-6 w-10 rounded-full transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-green-text)] ${
+                    useV2 ? 'bg-[var(--accent-green)]' : 'bg-[var(--border-strong)]'
+                  }`}
+                />
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-transform ${
+                    useV2 ? 'translate-x-4' : ''
+                  }`}
+                />
+              </span>
             </label>
 
             {messages.length > 0 && (
               <button
+                type="button"
                 onClick={() => setMessages([])}
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-red)] transition-colors"
+                className="rounded text-xs font-medium text-[var(--text-secondary)] transition-colors hover:text-red-700"
               >
                 Clear chat
               </button>
@@ -346,43 +409,39 @@ const ChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
           {!selectedPdfId ? (
-            /* Empty state: no PDF selected */
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-fadeIn">
+            <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
               <GenieAvatar size="md" />
-              <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-2">
-                Select a PDF to start chatting
-              </h3>
-              <p className="text-[var(--text-secondary)] text-sm max-w-md">
-                Choose one of your uploaded PDFs from the dropdown above, then ask any question about its content.
+              <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
+                Select a document to start
+              </h2>
+              <p className="max-w-md text-sm text-[var(--text-secondary)]">
+                Choose one of your uploaded documents from the menu above, then ask any question
+                about its content.
               </p>
             </div>
           ) : messages.length === 0 && !loading ? (
-            /* Empty state: PDF selected but no messages */
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-fadeIn">
+            <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
               <GenieAvatar size="md" />
-              <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-2">
-                Ask anything about "{selectedPdf?.name}"
-              </h3>
-              <p className="text-[var(--text-secondary)] text-sm max-w-md mb-6">
-                I'll answer from the content of your PDF with page citations. Try questions in Hindi or English!
+              <h2 className="font-display max-w-lg text-xl font-semibold text-[var(--text-primary)]">
+                Ask anything about {selectedPdf?.name}
+              </h2>
+              <p className="mb-4 max-w-md text-sm text-[var(--text-secondary)]">
+                Answers come from the content of your document, with page citations. English, Hindi
+                and Hinglish all work.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-                {[
-                  'Summarize the key concepts',
-                  'Explain the first chapter',
-                  'What are the important formulas?',
-                  'List all definitions',
-                ].map((suggestion) => (
+              <div className="flex max-w-lg flex-wrap justify-center gap-2">
+                {SUGGESTIONS.map((suggestion) => (
                   <button
                     key={suggestion}
+                    type="button"
                     onClick={() => {
                       setInputValue(suggestion);
                       inputRef.current?.focus();
                     }}
-                    className="px-4 py-2 text-xs font-semibold bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:shadow-md hover:text-[var(--text-primary)] hover:-translate-y-0.5 transition-all"
+                    className="rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--accent-green)] hover:text-[var(--text-primary)]"
                   >
                     {suggestion}
                   </button>
@@ -390,46 +449,60 @@ const ChatPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* Chat messages */
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div
+              className="mx-auto max-w-3xl space-y-6"
+              aria-live="polite"
+              aria-busy={loading}
+            >
               {messages.map((message, index) => (
-                <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  key={index}
+                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-[var(--accent-indigo-light)] flex items-center justify-center shrink-0 mt-1 border border-[var(--border)] shadow-sm">
-                      <Sparkles className="w-4 h-4 text-[var(--accent-indigo)]" />
-                    </div>
+                    <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--accent-green-light)]">
+                      <Sparkles
+                        className="h-4 w-4 text-[var(--accent-green-text)]"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">TeachGenie</span>
+                    </span>
                   )}
                   <div
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-3.5 py-2.5 md:px-4 md:py-3 ${
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 md:max-w-[75%] md:px-4 md:py-3 ${
                       message.role === 'user'
-                        ? 'bg-[var(--text-primary)] text-white rounded-br-md shadow-sm'
-                        : 'bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-bl-md shadow-sm'
+                        ? 'rounded-br-md bg-[var(--text-primary)] text-white'
+                        : 'rounded-bl-md border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)]'
                     }`}
                   >
                     {message.role === 'assistant' ? (
                       renderMessage(message)
                     ) : (
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
                     )}
 
                     {/* Source citations */}
                     {message.sources && message.sources.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-[var(--border)]">
-                        <p className="text-xs font-semibold text-[var(--text-muted)] mb-2 flex items-center gap-1">
-                          <ArrowDown className="w-3 h-3" />
+                      <div className="mt-3 border-t border-[var(--border)] pt-3">
+                        <h3 className="mb-2 text-xs font-semibold text-[var(--text-secondary)]">
                           Sources
-                        </p>
-                        <div className="space-y-1.5">
+                        </h3>
+                        <ul className="space-y-1.5">
                           {message.sources.map((source, i) => (
-                            <div key={i} className="text-xs text-[var(--text-secondary)] bg-[var(--bg-secondary)] rounded-lg px-2.5 py-1.5">
-                              <span className="font-bold text-[var(--accent-indigo)]">
+                            <li
+                              key={i}
+                              className="rounded-lg bg-[var(--bg-secondary)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]"
+                            >
+                              <span className="font-semibold text-[var(--accent-green-text)]">
                                 {source.page === 'Note' ? 'Note' : `Page ${source.page}`}
                               </span>
-                              <span className="mx-1.5 text-[var(--border-strong)]">•</span>
-                              <span className="opacity-80">{source.text}</span>
-                            </div>
+                              <span className="mx-1.5 text-[var(--border-strong)]" aria-hidden="true">
+                                |
+                              </span>
+                              <span>{source.text}</span>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     )}
                   </div>
@@ -438,16 +511,29 @@ const ChatPage: React.FC = () => {
 
               {/* Typing indicator */}
               {loading && (
-                <div className="flex gap-3 justify-start animate-fadeIn">
-                  <div className="w-8 h-8 rounded-full bg-[var(--accent-indigo-light)] flex items-center justify-center shrink-0 mt-1 border border-[var(--border)] shadow-sm">
-                    <Sparkles className="w-4 h-4 text-[var(--accent-indigo)]" />
-                  </div>
-                  <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-[var(--accent-indigo)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-[var(--accent-indigo)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-[var(--accent-indigo)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
+                <div className="flex justify-start gap-3">
+                  <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--accent-green-light)]">
+                    <Sparkles
+                      className="h-4 w-4 text-[var(--accent-green-text)]"
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <div className="rounded-2xl rounded-bl-md border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
+                    <span className="sr-only">Thinking</span>
+                    <span className="flex items-center gap-1.5" aria-hidden="true">
+                      <span
+                        className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-green)]"
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <span
+                        className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-green)]"
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <span
+                        className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-green)]"
+                        style={{ animationDelay: '300ms' }}
+                      />
+                    </span>
                   </div>
                 </div>
               )}
@@ -456,61 +542,49 @@ const ChatPage: React.FC = () => {
           )}
         </div>
 
-        {/* Input Bar */}
+        {/* Composer */}
         {selectedPdfId && (
-          <div className="px-4 md:px-6 py-3 border-t border-[var(--border)] bg-white shrink-0">
-            <div className="max-w-3xl mx-auto mb-2 overflow-x-auto pb-1.5 scrollbar-thin flex gap-1.5">
-              {[
-                'Quick Answer',
-                'Full Chapter Crux',
-                'No Fact Miss',
-                'Formula Coverage',
-                'Exam Shield Notes',
-                'Generate MCQs',
-                'Predicted Exam Questions',
-                'Kid Mode',
-                'Professor Mode'
-              ].map((mode) => {
-                const isLocked = false; // Plan requirement removed
-                
-                return (
-                  <button
-                    key={mode}
-                    onClick={() => {
-                      if (isLocked) {
-                        setUpgradeMessage(`Unlock ${mode} with TeachGenie Pro.`);
-                        setShowUpgradeModal(true);
-                      } else {
-                        setSelectedMode(mode);
-                      }
-                    }}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1 border ${
-                      selectedMode === mode
-                        ? 'bg-gradient-to-r from-[var(--accent-indigo)] to-[#2A4A6E] text-white border-transparent shadow-md'
-                        : isLocked
-                        ? 'bg-[var(--bg-secondary)] border-transparent text-[var(--text-muted)] hover:bg-gray-200'
-                        : 'bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:shadow-sm'
-                    }`}
-                  >
-                    {isLocked && <Lock className="w-2.5 h-2.5" />}
-                    {mode}
-                  </button>
-                );
-              })}
+          <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 md:px-6">
+            <div
+              className="scrollbar-thin mx-auto mb-2 flex max-w-3xl gap-1.5 overflow-x-auto pb-1.5"
+              role="group"
+              aria-label="Answer mode"
+            >
+              {ANSWER_MODES.map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setSelectedMode(mode)}
+                  aria-pressed={selectedMode === mode}
+                  className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    selectedMode === mode
+                      ? 'border-transparent bg-[var(--accent-green)] text-white'
+                      : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
             </div>
-            <div className="max-w-3xl mx-auto flex items-end gap-2 relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-indigo)] rounded-xl opacity-0 group-focus-within:opacity-20 group-focus-within:animate-[borderGlow_3s_infinite] transition-all blur-sm pointer-events-none" />
-              <div className="flex-1 relative">
+
+            <div className="mx-auto flex max-w-3xl items-end gap-2">
+              <div className="relative flex-1">
+                <label htmlFor="chat-input" className="sr-only">
+                  Ask a question about your document
+                </label>
                 <textarea
+                  id="chat-input"
                   ref={inputRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isVoiceActive ? "Listening... speak your question" : "Ask a question about your PDF..."}
+                  placeholder={
+                    isVoiceActive ? 'Listening, speak your question' : 'Ask a question about your document'
+                  }
                   rows={1}
                   disabled={loading}
-                  className="w-full resize-none px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-1 focus:ring-[var(--accent-amber)] focus:border-[var(--accent-amber)] bg-[var(--bg-card)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm leading-relaxed disabled:opacity-50 max-h-32 overflow-y-auto shadow-inner relative z-10"
-                  style={{ minHeight: '44px', color: isVoiceActive ? 'var(--accent-green)' : 'inherit' }}
+                  className="max-h-32 w-full resize-none overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-green)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-green)] disabled:opacity-50"
+                  style={{ minHeight: '44px', color: isVoiceActive ? 'var(--accent-green-text)' : 'inherit' }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -518,7 +592,7 @@ const ChatPage: React.FC = () => {
                   }}
                 />
               </div>
-              
+
               <VoiceInputButton
                 onResult={(text) => {
                   setInputValue(text);
@@ -533,27 +607,30 @@ const ChatPage: React.FC = () => {
               />
 
               <button
+                type="button"
                 onClick={() => handleSend()}
                 disabled={!inputValue.trim() || loading}
-                className="btn-gold p-3 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-md relative z-10 w-[44px] h-[44px]"
+                aria-label="Send question"
+                className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl bg-[var(--accent-green)] text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Send className="w-5 h-5" />
+                  <Send className="h-5 w-5" aria-hidden="true" />
                 )}
               </button>
             </div>
-            <p className="text-center text-xs text-[var(--text-muted)] mt-2 max-w-3xl mx-auto">
-              TeachGenie answers from your PDF content only. Ask in Hindi or English.
+
+            <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-[var(--text-muted)]">
+              Answers come from your document content only. English, Hindi and Hinglish all work.
             </p>
           </div>
         )}
       </div>
-      <UpgradeModal 
-        isOpen={showUpgradeModal} 
-        onClose={() => setShowUpgradeModal(false)} 
-        message={upgradeMessage} 
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        message={upgradeMessage}
       />
     </AppLayout>
   );

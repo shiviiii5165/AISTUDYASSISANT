@@ -36,7 +36,7 @@ const BlogPostPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
         title={post.title}
         description={post.description}
@@ -45,11 +45,11 @@ const BlogPostPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
           <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
-        </div>
-        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-colors">
+        </button>
+        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
         </button>
       </nav>
