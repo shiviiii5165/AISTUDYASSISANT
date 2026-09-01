@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Clock, FileText, Globe, Sparkles, CheckCircle2, Download, Loader2,
   AlertTriangle, Palette, Settings2, RotateCcw, BookOpen, Presentation,
@@ -72,18 +73,21 @@ const staggerItem = {
 };
 
 const TopicDeckPage: React.FC = () => {
-  const [topic, setTopic] = useState('');
+  const location = useLocation();
+  const presetConfig = location.state?.presetConfig;
+
+  const [topic, setTopic] = useState(presetConfig?.topic || '');
 
   // Presentation Parameters
-  const [slideCount, setSlideCount] = useState<number>(12);
-  const [design, setDesign] = useState<string>('academic');
-  const [themeId, setThemeId] = useState<string>('blue_professional');
-  const [audience, setAudience] = useState<string>('university');
-  const [language, setLanguage] = useState<string>('english');
-  const [depth] = useState<string>('full');
+  const [slideCount, setSlideCount] = useState<number>(presetConfig?.slide_count || 12);
+  const [design, setDesign] = useState<string>(presetConfig?.design || 'academic');
+  const [themeId, setThemeId] = useState<string>(presetConfig?.theme || 'blue_professional');
+  const [audience, setAudience] = useState<string>(presetConfig?.audience || 'university');
+  const [language, setLanguage] = useState<string>(presetConfig?.language || 'english');
+  const [depth] = useState<string>(presetConfig?.depth || 'full');
 
   // Knowledge Source
-  const [sourceType, setSourceType] = useState<'general' | 'uploaded_material' | 'uploaded_material_plus_web'>('general');
+  const [sourceType, setSourceType] = useState<'general' | 'uploaded_material' | 'uploaded_material_plus_web'>(presetConfig?.source_type || 'general');
   const [selectedPdfId, setSelectedPdfId] = useState<string>('');
   const [userPdfs, setUserPdfs] = useState<PDFDocument[]>([]);
   const [, setLoadingPdfs] = useState<boolean>(false);
@@ -148,9 +152,9 @@ const TopicDeckPage: React.FC = () => {
     initData();
   }, []);
 
-  const handleGenerate = async (e?: React.FormEvent) => {
+  const handleGenerate = async (e?: React.FormEvent, overridePayload?: any) => {
     if (e) e.preventDefault();
-    if (!topic.trim() || generating) return;
+    if ((!topic.trim() && !overridePayload) || generating) return;
 
     setGenerating(true);
     setDownloadUrl(null);
@@ -162,7 +166,7 @@ const TopicDeckPage: React.FC = () => {
     const token = useAuthStore.getState().session?.access_token;
     const apiUrl = import.meta.env.VITE_API_URL || '';
 
-    const payload = {
+    const payload = overridePayload || {
       topic: topic.trim(),
       slide_count: slideCount,
       depth,
@@ -171,6 +175,7 @@ const TopicDeckPage: React.FC = () => {
       theme: themeId,
       source_type: sourceType,
       source_id: sourceType !== 'general' ? selectedPdfId : null,
+      custom_context: presetConfig?.custom_context,
       options: {
         diagrams: enableDiagrams,
         images: enableImages,
@@ -270,6 +275,8 @@ const TopicDeckPage: React.FC = () => {
   };
 
   const handleDeleteDeck = async (deckId: string) => {
+    if (!window.confirm("Are you sure you want to delete this deck?")) return;
+    
     const token = useAuthStore.getState().session?.access_token;
     if (!token) return;
     try {
