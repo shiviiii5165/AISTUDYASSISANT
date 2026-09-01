@@ -4,6 +4,7 @@ Next-Gen Video Compiler Orchestrator — Resumable Job State Machine & Telemetry
 Coordinates Storyboard Planning, Visual Routing, Python/SVG Graphics, Stock Media,
 TTS Audio Timeline, Synchronized Captions, FFmpeg Composition, and Scene Regeneration.
 """
+from app.core.logging import logger
 import os
 import uuid
 import time
@@ -60,7 +61,7 @@ async def generate_video_pipeline(
                     {"status": "failed", "error_message": str(e)[:500]}
                 ).eq("id", pid).execute()
             except Exception as db_err:
-                print(f"[VideoOrchestrator] Could not mark job failed: {db_err}")
+                logger.error(f"[VideoOrchestrator] Could not mark job failed: {db_err}")
         raise
 
 
@@ -196,6 +197,7 @@ async def _generate_video_pipeline_impl(
 
     # 7. Upload to Supabase Storage if available
     final_video_url = None
+    storage_error: str | None = None
     if supabase:
         try:
             storage_path = f"{user_id}/videos/{pid}.mp4"
@@ -204,7 +206,13 @@ async def _generate_video_pipeline_impl(
                     supabase.storage.from_("topic-decks").upload(storage_path, f.read(), {"content-type": "video/mp4"})
                 url_res = supabase.storage.from_("topic-decks").create_signed_url(storage_path, 7200)
                 final_video_url = url_res.get("signedUrl") if isinstance(url_res, dict) else getattr(url_res, "signed_url", None)
+        except Exception as e:
+            storage_error = str(e)[:400]
+            logger.error(f"[VideoOrchestrator] Storage upload failed: {e}")
 
+        # Persist DB row with the ACTUAL outcome — never "ready" if the upload failed.
+        final_status = "ready" if final_video_url else "error"
+        try:
             supabase.table("video_lessons").upsert({
                 "id": pid,
                 "user_id": user_id,
@@ -212,13 +220,14 @@ async def _generate_video_pipeline_impl(
                 "level": config.audience,
                 "duration": str(config.duration // 60),
                 "language": config.language,
-                "status": "ready",
+                "status": final_status,
                 "scene_count": len(storyboard.scenes),
                 "total_duration_seconds": config.duration,
                 "lesson_json": storyboard.dict(),
+                **({"error_message": f"Storage upload failed: {storage_error}"} if storage_error else {}),
             }).execute()
-        except Exception as e:
-            print(f"[VideoOrchestrator] Storage notice: {e}")
+        except Exception as db_e:
+            logger.error(f"[VideoOrchestrator] DB upsert failed: {db_e}")
 
     render_time = time.time() - t0
     ai_ratio = round(current_ai_sec / max(1, config.duration), 3)
@@ -238,8 +247,9 @@ async def _generate_video_pipeline_impl(
         ai_generation_ratio=ai_ratio,
     )
 
-    project.state = JobState.COMPLETED
-    project.status = "ready"
+    # Status reflects the actual upload outcome, not optimistic assumption.
+    project.state = JobState.COMPLETED if final_video_url else JobState.FAILED if hasattr(JobState, "FAILED") else JobState.COMPLETED
+    project.status = "ready" if final_video_url else "error"
     project.progress = 100
     project.final_video_url = final_video_url
     project.captions_url = srt_path
