@@ -361,7 +361,7 @@ const VideoGeneratorPage: React.FC = () => {
         <div className="mb-8">
           <GreetingHeader
             subtitle="Turn a topic, your notes, or a video link into a narrated lesson."
-            avatarImageSrc="/director-genie.png"
+            avatarImageSrc="/images/tutor_avatar.jpg"
             avatarGlowVariant="spotlight"
           />
         </div>
