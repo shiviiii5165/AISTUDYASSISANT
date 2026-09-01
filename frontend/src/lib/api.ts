@@ -61,6 +61,7 @@ export interface ChatResponse {
   answer: string;
   sources: ChatSource[];
   model: string;
+  session_id?: string;
 }
 
 // ─── API Helpers ─────────────────────────────────────────────────────────────
@@ -92,17 +93,19 @@ export async function deletePdf(pdfId: string): Promise<void> {
   await api.delete(`/pdfs/${pdfId}`);
 }
 
-export async function askQuestion(
-  pdfId: string,
-  question: string,
-  mode: string = 'Quick Answer',
-  history: ChatMessage[] = []
-): Promise<ChatResponse> {
+export async function askQuestion(params: {
+  pdf_id?: string;
+  question: string;
+  mode?: string;
+  history?: ChatMessage[];
+  session_id?: string;
+}): Promise<ChatResponse> {
   const response = await api.post('/chat/ask', {
-    pdf_id: pdfId,
-    question,
-    mode,
-    history,
+    pdf_id: params.pdf_id,
+    question: params.question,
+    mode: params.mode || 'Quick Answer',
+    history: params.history || [],
+    session_id: params.session_id,
   });
   return response.data;
 }
@@ -133,17 +136,20 @@ export interface PipelineOutput {
   tutor_data: TutorTurn | null;
   content_data: ContentCreatorOutput | null;
   intent: string;
+  session_id?: string;
 }
 
-export async function sendMessageV2(
-  message: string,
-  pdfId: string,
-  history: ChatMessage[] = []
-): Promise<PipelineOutput> {
+export async function sendMessageV2(params: {
+  message: string;
+  pdf_id?: string;
+  history?: ChatMessage[];
+  session_id?: string;
+}): Promise<PipelineOutput> {
   const response = await api.post('/chat/v2/ask', {
-    message,
-    pdf_id: pdfId,
-    history,
+    message: params.message,
+    pdf_id: params.pdf_id,
+    history: params.history || [],
+    session_id: params.session_id,
   });
   return response.data;
 }
