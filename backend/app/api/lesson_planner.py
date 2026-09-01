@@ -453,7 +453,13 @@ async def generate_stage_ppt(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    ppt_config = PPTAdapter.create_presentation_config(roadmap, stage)
+    try:
+        ppt_config = PPTAdapter.create_presentation_config(roadmap, stage)
+    except Exception as e:
+        # Surface a clean error (which passes through CORS middleware) instead of
+        # an unhandled 500 that arrives at the browser as a missing-CORS-header error.
+        logger.error(f"PPT config build failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not build presentation config: {e}")
     # Update resource recommendation status
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.PPT:

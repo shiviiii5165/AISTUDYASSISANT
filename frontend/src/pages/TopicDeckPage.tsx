@@ -221,15 +221,45 @@ const TopicDeckPage: React.FC = () => {
       }
 
       const data = await res.json();
+
+      // Synchronous completion (legacy path): use it directly.
       if (data.status === 'ready' && data.download_url) {
         setStatus('ready');
         setDownloadUrl(data.download_url);
         setFinalSlideCount(data.slide_count || slideCount);
         setResultTitle(data.deck_title || topic);
         setResultTakeaways(data.key_takeaways || []);
-      } else {
-        throw new Error('Presentation generated but download URL missing.');
+        return;
       }
+
+      // Async path: the backend now returns 202 { deck_id, status: "processing" }
+      // and generates in the background. Poll /{deck_id} until ready or failed.
+      const deckId = data.deck_id;
+      if (!deckId) {
+        throw new Error('Presentation generation did not start correctly.');
+      }
+
+      const deadline = Date.now() + 5 * 60 * 1000; // 5 min cap
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const pollRes = await fetch(`${apiUrl}/api/decks/${deckId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!pollRes.ok) continue;
+        const pollData = await pollRes.json();
+        if (pollData.status === 'ready' && pollData.download_url) {
+          setStatus('ready');
+          setDownloadUrl(pollData.download_url);
+          setFinalSlideCount(pollData.slide_count || slideCount);
+          setResultTitle(pollData.deck_title || topic);
+          setResultTakeaways(pollData.key_takeaways || []);
+          return;
+        }
+        if (pollData.status === 'failed') {
+          throw new Error(pollData.error_message || 'Presentation generation failed.');
+        }
+      }
+      throw new Error('Presentation generation timed out. Please try again.');
     } catch (err: any) {
       console.error('[TopicDeckPage] Generation error:', err);
       setErrorMessage(err.message || 'An unexpected error occurred during generation.');
