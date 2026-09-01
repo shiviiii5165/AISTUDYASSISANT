@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Clock, CheckCircle2, PlayCircle, BookOpen,
@@ -8,6 +8,7 @@ import {
   Plus, Share2, Download, Compass, X,
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
+import HistorySidebar from '../components/HistorySidebar';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -124,6 +125,10 @@ const RESOURCE_STATUS_LABELS: Partial<Record<ResourceStatus, string>> = {
 };
 
 const LessonPlannerPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialRoadmapId = searchParams.get('id') || null;
+
   // Prompt & Config States
   const [promptInput, setPromptInput] = useState('');
   const [selectedSources, setSelectedSources] = useState<string[]>(['Topic', 'Syllabus']);
@@ -140,7 +145,6 @@ const LessonPlannerPage: React.FC = () => {
   });
 
   // Roadmap & Stage States
-  const navigate = useNavigate();
   const [roadmap, setRoadmap] = useState<LearningRoadmap | null>(null);
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'differentiation'>('details');
@@ -152,6 +156,50 @@ const LessonPlannerPage: React.FC = () => {
      as a success. Previously some failures reported success. */
   const [errorNotification, setErrorNotification] = useState<string | null>(null);
   const [isTriggeringResource, setIsTriggeringResource] = useState<string | null>(null);
+  
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/`, {
+          headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setHistoryItems(data.roadmaps || []);
+        }
+        
+        // Auto-load roadmap if id in URL
+        if (initialRoadmapId && !roadmap) {
+          loadRoadmap(initialRoadmapId);
+        }
+      } catch (err) {
+        console.error('Failed to load history:', err);
+      }
+    };
+    fetchHistory();
+  }, [initialRoadmapId]);
+
+  const loadRoadmap = async (id: string) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${id}`, {
+        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRoadmap(data.roadmap);
+        setSearchParams(prev => { prev.set('id', id); return prev; });
+        if (data.roadmap.stages.length > 0) setSelectedStageId(data.roadmap.stages[0].id);
+        fetchHealth(id);
+      } else {
+        throw new Error('Failed to fetch');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorNotification('Failed to load past roadmap.');
+    }
+  };
 
   const selectedStage = roadmap?.stages.find(s => s.id === selectedStageId) || roadmap?.stages[0] || null;
 
@@ -201,6 +249,8 @@ const LessonPlannerPage: React.FC = () => {
         setSelectedStageId(data.stages[0].id);
       }
       fetchHealth(data.id);
+      // add to history top
+      setHistoryItems(prev => [{ id: data.id, title: data.topic, date: new Date().toISOString() }, ...prev]);
     } catch (err) {
       console.error(err);
       setErrorNotification('Could not generate the roadmap. Please check your connection and try again.');
@@ -430,6 +480,7 @@ const LessonPlannerPage: React.FC = () => {
         }
       });
       if (response.ok) {
+        await loadRoadmap(roadmap.id);
         setActionNotification('Study pack generated from the lesson plan.');
       } else {
         setErrorNotification('Could not generate the study pack. Please try again.');
@@ -485,13 +536,22 @@ const LessonPlannerPage: React.FC = () => {
     'w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none';
 
   return (
-    <AppLayout title="AI Lesson Planner">
-      <SEO
-        title="AI Lesson Planner | TeachGenie"
-        description="Adaptive learning roadmaps with prerequisite sequencing, stage timings, and per-stage teaching resources."
+    <AppLayout title="Lesson Planner">
+      <SEO 
+        title="AI Lesson Planner" 
+        description="Generate comprehensive lesson roadmaps." 
       />
-
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex h-full w-full">
+        <HistorySidebar
+          title="Roadmaps"
+          items={historyItems}
+          selectedId={roadmap?.id || null}
+          onSelect={loadRoadmap}
+          onNew={() => { setRoadmap(null); setSearchParams(prev => { prev.delete('id'); return prev; }); }}
+        />
+        
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 md:py-8">
+          <div className="mx-auto max-w-5xl space-y-6">
 
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 md:flex-row md:items-center">
@@ -1272,10 +1332,11 @@ const LessonPlannerPage: React.FC = () => {
 
               </div>
             )}
-
           </div>
         )}
 
+          </div>
+        </div>
       </div>
     </AppLayout>
   );
