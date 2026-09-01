@@ -41,7 +41,7 @@ const SupportPage: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl border border-[var(--border)] shadow-[var(--shadow-sm)]">
             <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-[var(--accent-green-text)]" />
-              Contact Support
+              Contact support
             </h2>
             
             {submitted ? (
