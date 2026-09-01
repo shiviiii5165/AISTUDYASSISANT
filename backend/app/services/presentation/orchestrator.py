@@ -46,8 +46,8 @@ async def generate_presentation_pipeline(
     if on_stage_update:
         on_stage_update("content", 45)
 
-    # 2. CONTENT AGENT (Batched in 5s)
-    logger.info(f"[Orchestrator] Step 2: Expanding content across 5-slide batches...")
+    # 2. CONTENT AGENT (Single Batched Request)
+    logger.info(f"[Orchestrator] Step 2: Expanding content in a single batched request...")
     expanded_slides = await expand_presentation_content(config, user_id=user_id, outline_data=outline_data)
 
     if on_stage_update:
