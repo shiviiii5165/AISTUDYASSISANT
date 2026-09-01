@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import AppLayout from '../components/AppLayout';
+import PublicHeader from '../components/PublicHeader';
 import SEO from '../components/SEO';
 import { Mail, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 const SupportPage: React.FC = () => {
   const { user } = useAuthStore();
+  const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -24,8 +26,8 @@ const SupportPage: React.FC = () => {
     }, 5000);
   };
 
-  return (
-    <AppLayout title="Support">
+  const content = (
+    <>
       <SEO 
         title="Support & Help Center" 
         description="Get help with TeachGenie, report issues, and find answers to common questions." 
@@ -56,9 +58,13 @@ const SupportPage: React.FC = () => {
                   <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Email Address</label>
                   <input
                     type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-gray-50 text-[var(--text-muted)] text-sm cursor-not-allowed"
+                    value={user?.email || email}
+                    onChange={(e) => !user && setEmail(e.target.value)}
+                    disabled={!!user}
+                    required
+                    className={`w-full px-3 py-2.5 rounded-lg border border-[var(--border)] text-sm ${
+                      user ? 'bg-gray-50 text-[var(--text-muted)] cursor-not-allowed' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] transition-all'
+                    }`}
                   />
                 </div>
                 <div>
@@ -134,7 +140,16 @@ const SupportPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
+  );
+
+  return user ? (
+    <AppLayout title="Support">{content}</AppLayout>
+  ) : (
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
+      <PublicHeader />
+      {content}
+    </div>
   );
 };
 
