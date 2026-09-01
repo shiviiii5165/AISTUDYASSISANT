@@ -47,7 +47,7 @@ const PricingPage: React.FC = () => {
               }}
               className="w-full py-3 px-4 bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] font-semibold rounded-xl border border-[var(--border)] transition-colors mb-8"
             >
-              {user ? 'Current Plan' : 'Start Free'}
+              {user ? 'Current Plan' : 'Start free'}
             </button>
             <div className="space-y-4 flex-1">
               <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">Features included:</h3>
