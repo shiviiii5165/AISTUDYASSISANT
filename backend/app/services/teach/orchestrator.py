@@ -221,7 +221,7 @@ def generate_deterministic_summary(state: LearningState, plan: LessonPlan) -> st
     avg_mastery = sum(state.mastery.values()) / max(1, len(state.mastery))
     
     lines = [
-        f"🎉 **Lesson Complete: {plan.topic}**\n",
+        f"Lesson Complete: {plan.topic}\\n",
         f"- **Concepts Mastered**: {mastered_count} / {total_count}",
         f"- **Average Topic Mastery**: {int(avg_mastery * 100)}%",
     ]
