@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Local test credentials (live JWTs) — never commit
+backend/test_tokens.json
+
 # Python
 backend/venv/
 **/__pycache__/
