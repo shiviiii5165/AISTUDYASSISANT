@@ -132,7 +132,7 @@ const LessonPlannerPage: React.FC = () => {
     topic: 'DBMS Normalization',
     course: 'Database Management Systems',
     level: 'B.Tech',
-    language: 'hinglish',
+    language: 'english',
     class_type: 'Interactive Lecture',
     duration_minutes: 60,
     goal: 'Step-by-step normal forms with decomposition examples.'
@@ -698,9 +698,9 @@ const LessonPlannerPage: React.FC = () => {
                       onChange={(e) => setParsedConfig({ ...parsedConfig, language: e.target.value })}
                       className={fieldClass}
                     >
-                      <option value="hinglish">Hinglish</option>
                       <option value="english">English</option>
                       <option value="hindi">Hindi</option>
+                      <option value="hinglish">Hinglish</option>
                     </select>
                   </div>
                 </div>
