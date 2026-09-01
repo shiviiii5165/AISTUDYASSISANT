@@ -4,7 +4,7 @@ Pydantic Request & Response Models for the Quiz Engine API
 Request/response contracts for the §54 endpoint list. These are the wire types;
 the domain types live in app.services.quiz.schemas.
 """
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Literal
 from pydantic import BaseModel, Field
 
 
@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 class QuizConfigModel(BaseModel):
     question_count: int = 10
-    difficulty: str = "medium"                       # easy|medium|hard
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
     types: List[str] = Field(default_factory=lambda: ["mcq"])
     language: str = "english"
     shuffle_questions: bool = True
