@@ -87,7 +87,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, message })
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-green)] py-3.5 font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : 'Upgrade Now'}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : 'Upgrade now'}
           </button>
           <p className="text-center text-[10px] text-[var(--text-muted)] mt-3">
             Secure payment powered by Cashfree
