@@ -4,6 +4,7 @@ TeachGenie — Layout Engine
 Maps SlidePurpose → renderer function.
 Handles fallback layouts when content doesn't fit a specialized renderer.
 """
+from app.core.logging import logger
 from pptx.slide import Slide
 from . import SlideContent, SlidePurpose, ThemeColors
 from .tokens import get_theme
@@ -72,17 +73,17 @@ def render_slide(
     try:
         renderer(slide, content, theme, **kwargs)
     except Exception as e:
-        print(f"[WARN] Renderer for {purpose.value} failed: {e}")
+        logger.error(f"[WARN] Renderer for {purpose.value} failed: {e}")
         # Try fallback
         fallback_purpose = FALLBACK_CHAIN.get(purpose)
         if fallback_purpose:
             fallback_renderer = RENDERER_MAP.get(fallback_purpose, render_concept)
             try:
                 fallback_renderer(slide, content, theme, **kwargs)
-                print(f"  [OK] Fallback to {fallback_purpose.value} succeeded")
+                logger.info(f"  [OK] Fallback to {fallback_purpose.value} succeeded")
                 return
             except Exception as e2:
-                print(f"  [WARN] Fallback also failed: {e2}")
+                logger.error(f"  [WARN] Fallback also failed: {e2}")
 
         # Ultimate fallback: concept slide
         try:
