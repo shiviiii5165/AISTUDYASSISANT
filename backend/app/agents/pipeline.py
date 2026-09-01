@@ -1,3 +1,4 @@
+from app.core.logging import logger
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 import traceback
@@ -19,6 +20,7 @@ class PipelineOutput(BaseModel):
 async def handle_student_message(
     user_id: str,
     message: str,
+    pdf_id: Optional[str] = None,
     conversation_history: Optional[List[Dict[str, Any]]] = None
 ) -> PipelineOutput:
     """
@@ -30,7 +32,7 @@ async def handle_student_message(
     try:
         orch_out: OrchestratorOutput = await classify_and_route(message, history)
     except Exception as e:
-        print(f"[Pipeline] Orchestrator exception: {e}")
+        logger.error(f"[Pipeline] Orchestrator exception: {e}")
         return PipelineOutput(
             response_type="direct_message",
             message="Sorry, I'm having trouble understanding right now. Let's try that again.",
@@ -48,7 +50,7 @@ async def handle_student_message(
                 try:
                     librarian_ctx = await retrieve_context(topic=orch_out.topic, user_id=user_id)
                 except Exception as lib_e:
-                    print(f"[Pipeline] Librarian exception during doubt flow: {lib_e}")
+                    logger.error(f"[Pipeline] Librarian exception during doubt flow: {lib_e}")
                     # Librarian failure shouldn't crash the tutor. Pass empty context.
                     librarian_ctx = LibrarianOutput(context=[], related_context=[], sufficient=False, used_web_fallback=False)
             else:
@@ -66,7 +68,7 @@ async def handle_student_message(
                 intent=intent
             )
         except Exception as e:
-            print(f"[Pipeline] Tutor exception: {e}")
+            logger.error(f"[Pipeline] Tutor exception: {e}")
             return PipelineOutput(
                 response_type="direct_message",
                 message="I encountered an issue while trying to help you. Could you rephrase your question?",
@@ -88,7 +90,7 @@ async def handle_student_message(
                 try:
                     librarian_ctx = await retrieve_context(topic=orch_out.topic, user_id=user_id)
                 except Exception as lib_e:
-                    print(f"[Pipeline] Librarian exception during content flow: {lib_e}")
+                    logger.error(f"[Pipeline] Librarian exception during content flow: {lib_e}")
                     librarian_ctx = None
             
             # Map Orchestrator subtype string to Enum
@@ -107,7 +109,7 @@ async def handle_student_message(
                 intent=intent
             )
         except Exception as e:
-            print(f"[Pipeline] Content Creator exception: {e}\n{traceback.format_exc()}")
+            logger.error(f"[Pipeline] Content Creator exception: {e}\n{traceback.format_exc()}")
             return PipelineOutput(
                 response_type="direct_message",
                 message="I ran into a problem while trying to generate that content. Please try again later.",
@@ -127,6 +129,44 @@ async def handle_student_message(
             message=orch_out.direct_reply or "Could you clarify?",
             intent=intent
         )
+
+    elif intent == "document_summary":
+        if not pdf_id:
+            return PipelineOutput(
+                response_type="direct_message",
+                message="I don't see a document selected. Please open a PDF first so I can summarize it for you.",
+                intent=intent
+            )
+            
+        try:
+            from app.services.rag_service import answer_question
+            # Re-use V1's RAG pipeline directly
+            result = await answer_question(
+                pdf_id=pdf_id,
+                user_id=user_id,
+                question=message,
+                mode="Full Chapter Crux",  # Standard high-level summary mode
+                chat_history=history
+            )
+            return PipelineOutput(
+                response_type="direct_message",
+                message=result.get("answer", "Here is a summary of the document."),
+                intent=intent
+            )
+        except Exception as e:
+            err_msg = str(e)
+            logger.error(f"[Pipeline] document_summary exception: {e}")
+            if "API calls failed" in err_msg or "Embedding generation failed" in err_msg:
+                return PipelineOutput(
+                    response_type="direct_message",
+                    message="The AI is currently overloaded. Please try again in a few moments.",
+                    intent=intent
+                )
+            return PipelineOutput(
+                response_type="direct_message",
+                message="I had trouble reading the document for a summary. Please try again.",
+                intent=intent
+            )
 
     else:
         # Fallback for completely unknown intent string
