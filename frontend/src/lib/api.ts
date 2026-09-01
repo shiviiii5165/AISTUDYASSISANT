@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
+import { useAuthStore } from '../store/useAuthStore';
 
 // Use VITE_API_URL if set, otherwise empty string (requests go to same origin, where Vercel rewrites route them to the serverless function)
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -14,10 +15,17 @@ export const api = axios.create({
 // Automatically add the Supabase JWT token to every request
 api.interceptors.request.use(
   async (config) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    // Try to get token synchronously from the store first (much faster and more reliable if already initialized)
+    let token = useAuthStore.getState().session?.access_token;
     
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+    // Fallback to supabase.auth.getSession() if store is empty (e.g. initial load race conditions)
+    if (!token) {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token;
+    }
+    
+    if (token) {
+      config.headers.set('Authorization', `Bearer ${token}`);
     }
     
     return config;
@@ -53,6 +61,7 @@ export interface ChatResponse {
   answer: string;
   sources: ChatSource[];
   model: string;
+  session_id?: string;
 }
 
 // ─── API Helpers ─────────────────────────────────────────────────────────────
@@ -84,17 +93,19 @@ export async function deletePdf(pdfId: string): Promise<void> {
   await api.delete(`/pdfs/${pdfId}`);
 }
 
-export async function askQuestion(
-  pdfId: string,
-  question: string,
-  mode: string = 'Quick Answer',
-  history: ChatMessage[] = []
-): Promise<ChatResponse> {
+export async function askQuestion(params: {
+  pdf_id?: string;
+  question: string;
+  mode?: string;
+  history?: ChatMessage[];
+  session_id?: string;
+}): Promise<ChatResponse> {
   const response = await api.post('/chat/ask', {
-    pdf_id: pdfId,
-    question,
-    mode,
-    history,
+    pdf_id: params.pdf_id,
+    question: params.question,
+    mode: params.mode || 'Quick Answer',
+    history: params.history || [],
+    session_id: params.session_id,
   });
   return response.data;
 }
@@ -125,15 +136,20 @@ export interface PipelineOutput {
   tutor_data: TutorTurn | null;
   content_data: ContentCreatorOutput | null;
   intent: string;
+  session_id?: string;
 }
 
-export async function sendMessageV2(
-  message: string,
-  history: ChatMessage[] = []
-): Promise<PipelineOutput> {
+export async function sendMessageV2(params: {
+  message: string;
+  pdf_id?: string;
+  history?: ChatMessage[];
+  session_id?: string;
+}): Promise<PipelineOutput> {
   const response = await api.post('/chat/v2/ask', {
-    message,
-    conversation_history: history,
+    message: params.message,
+    pdf_id: params.pdf_id,
+    history: params.history || [],
+    session_id: params.session_id,
   });
   return response.data;
 }

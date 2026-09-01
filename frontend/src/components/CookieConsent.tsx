@@ -44,22 +44,24 @@ const CookieConsent: React.FC = () => {
 
   return (
     <div 
-      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:max-w-sm z-50 animate-slideUp"
+      className="fixed bottom-4 left-4 right-4 z-50 md:bottom-6 md:left-auto md:right-6 md:max-w-sm"
+      role="region"
+      aria-label="Cookie preferences"
     >
-      <div className="bg-white rounded-xl shadow-[var(--shadow-lg)] border border-[var(--border)] overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[var(--shadow-lg)]">
         {!showPreferences ? (
           <div className="p-4">
-            <p className="text-sm font-semibold text-[var(--text-primary)] mb-1">🍪 Cookie Preferences</p>
+            <p className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Cookie preferences</p>
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed mb-3">
               We use cookies to keep your study sessions secure. Optional analytics cookies help us improve.{' '}
-              <a href="/privacy-policy" className="text-[var(--accent-indigo)] hover:underline">Learn more</a>
+              <a href="/privacy-policy" className="font-medium text-[var(--accent-green-text)] underline">Learn more</a>
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleRejectNonEssential}
                 className="flex-1 px-3 py-2 text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
               >
-                Essential Only
+                Essential only
               </button>
               <button
                 onClick={() => setShowPreferences(true)}
@@ -69,15 +71,15 @@ const CookieConsent: React.FC = () => {
               </button>
               <button
                 onClick={handleAcceptAll}
-                className="flex-1 px-3 py-2 text-xs font-semibold text-white bg-[var(--accent-green)] hover:bg-green-700 rounded-lg transition-colors"
+                className="flex-1 rounded-lg bg-[var(--accent-green)] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
               >
-                Accept All
+                Accept all
               </button>
             </div>
           </div>
         ) : (
           <div className="p-4">
-            <p className="text-sm font-semibold text-[var(--text-primary)] mb-3">Manage Cookies</p>
+            <p className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Manage cookies</p>
             <div className="space-y-2.5 mb-3">
               <label className="flex items-center gap-2.5 p-2.5 bg-[var(--bg-secondary)] rounded-lg">
                 <input type="checkbox" checked disabled className="w-3.5 h-3.5 accent-[var(--accent-green)] cursor-not-allowed" />
@@ -86,7 +88,7 @@ const CookieConsent: React.FC = () => {
                   <p className="text-[10px] text-[var(--text-muted)]">Login, session, security</p>
                 </div>
               </label>
-              <label className="flex items-center gap-2.5 p-2.5 bg-white border border-[var(--border)] rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors">
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-2.5 transition-colors hover:bg-[var(--bg-hover)]">
                 <input
                   type="checkbox"
                   checked={preferences.analytics}
@@ -104,11 +106,11 @@ const CookieConsent: React.FC = () => {
                 onClick={handleAcceptAll}
                 className="flex-1 px-3 py-2 text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
               >
-                Accept All
+                Accept all
               </button>
               <button
                 onClick={handleSavePreferences}
-                className="flex-1 px-3 py-2 text-xs font-semibold text-white bg-[var(--accent-indigo)] hover:bg-indigo-700 rounded-lg transition-colors"
+                className="flex-1 rounded-lg bg-[var(--accent-green)] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
               >
                 Save
               </button>

@@ -27,6 +27,9 @@ router = APIRouter()
 
 # In-memory store fallback for test suites and offline operation
 _MEMORY_ROADMAPS: Dict[str, LearningRoadmap] = {}
+# Parallel map of roadmap_id -> owning user_id, since LearningRoadmap carries no
+# user_id. Used to enforce ownership on the in-memory cache branch of _get_roadmap.
+_MEMORY_ROADMAP_OWNERS: Dict[str, str] = {}
 
 
 # Request Models
@@ -86,6 +89,7 @@ class CreateRemedialRequest(BaseModel):
 # Helper to persist or retrieve roadmap
 def _save_roadmap(roadmap: LearningRoadmap, user_id: str):
     _MEMORY_ROADMAPS[roadmap.id] = roadmap
+    _MEMORY_ROADMAP_OWNERS[roadmap.id] = user_id
     if supabase:
         try:
             supabase.table("learning_roadmaps").upsert({
@@ -129,9 +133,12 @@ def _save_roadmap(roadmap: LearningRoadmap, user_id: str):
 
 
 def _get_roadmap(roadmap_id: str, user_id: str) -> Optional[LearningRoadmap]:
-    # Check memory first
+    # Check memory first — but only return it if this user owns the roadmap.
     if roadmap_id in _MEMORY_ROADMAPS:
-        return _MEMORY_ROADMAPS[roadmap_id]
+        if _MEMORY_ROADMAP_OWNERS.get(roadmap_id) == user_id:
+            return _MEMORY_ROADMAPS[roadmap_id]
+        # Owner mismatch (or unknown owner): fall through to the user-scoped
+        # Supabase query rather than serving another user's cached roadmap.
 
     if supabase:
         try:
@@ -165,6 +172,7 @@ def _get_roadmap(roadmap_id: str, user_id: str) -> Optional[LearningRoadmap]:
                     version=r_data.get("version", 1)
                 )
                 _MEMORY_ROADMAPS[roadmap_id] = roadmap
+                _MEMORY_ROADMAP_OWNERS[roadmap_id] = user_id
                 return roadmap
         except Exception as e:
             logger.warning(f"Supabase read error: {e}")
@@ -206,6 +214,18 @@ async def generate_roadmap(
     roadmap.created_by = user_id
     _save_roadmap(roadmap, user_id)
     return roadmap
+
+
+@router.get("/")
+async def get_roadmaps(current_user = Depends(get_current_user)):
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    if supabase:
+        try:
+            res = supabase.table("learning_roadmaps").select("id, topic, title, description, created_at").eq("user_id", user_id).order("created_at", desc=True).execute()
+            return {"roadmaps": res.data or []}
+        except Exception as e:
+            logger.error(f"Failed to fetch roadmaps: {e}")
+    return {"roadmaps": []}
 
 
 @router.get("/{roadmap_id}", response_model=LearningRoadmap)
@@ -445,7 +465,13 @@ async def generate_stage_ppt(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    ppt_config = PPTAdapter.create_presentation_config(roadmap, stage)
+    try:
+        ppt_config = PPTAdapter.create_presentation_config(roadmap, stage)
+    except Exception as e:
+        # Surface a clean error (which passes through CORS middleware) instead of
+        # an unhandled 500 that arrives at the browser as a missing-CORS-header error.
+        logger.error(f"PPT config build failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not build presentation config: {e}")
     # Update resource recommendation status
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.PPT:
@@ -470,7 +496,12 @@ async def generate_stage_video(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    video_config = VideoAdapter.create_video_config(roadmap, stage)
+    try:
+        video_config = VideoAdapter.create_video_config(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Video config build failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not build video config: {e}")
+        
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.VIDEO:
             rec.status = ResourceStatus.READY
@@ -494,7 +525,12 @@ async def generate_stage_quiz(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    quiz_spec = QuizAdapter.generate_stage_quiz_spec(roadmap, stage)
+    try:
+        quiz_spec = QuizAdapter.generate_stage_quiz_spec(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Quiz generation failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not generate quiz: {e}")
+        
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.QUIZ:
             rec.status = ResourceStatus.READY
@@ -518,7 +554,12 @@ async def generate_stage_notes(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    notes = NotesAdapter.generate_stage_notes(roadmap, stage)
+    try:
+        notes = NotesAdapter.generate_stage_notes(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Notes generation failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not generate notes: {e}")
+        
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.NOTES:
             rec.status = ResourceStatus.READY
@@ -542,7 +583,12 @@ async def get_teach_me_brief(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    brief = TeachMeAdapter.create_teach_me_context(roadmap, stage)
+    try:
+        brief = TeachMeAdapter.create_teach_me_context(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Teach Me context build failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not build Teach Me context: {e}")
+        
     stage.status = StageStatus.IN_PROGRESS
     _save_roadmap(roadmap, user_id)
     return {"message": "Teach Me context ready", "brief": brief}

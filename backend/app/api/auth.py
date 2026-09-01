@@ -5,6 +5,19 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
+
+def _public_user(user) -> dict:
+    """Return only non-sensitive, client-relevant fields from a Supabase user."""
+    if user is None:
+        return None
+    metadata = getattr(user, "user_metadata", None) or {}
+    return {
+        "id": getattr(user, "id", None),
+        "email": getattr(user, "email", None),
+        "full_name": metadata.get("full_name") or metadata.get("name"),
+    }
+
+
 class UserCreate(BaseModel):
     email: str
     password: str
@@ -25,7 +38,7 @@ async def signup(user: UserCreate):
             }
         }
     })
-    return {"message": "User created successfully", "user": res.user}
+    return {"message": "User created successfully", "user": _public_user(res.user)}
 
 @router.post("/login")
 async def login(user: UserLogin):
@@ -33,8 +46,17 @@ async def login(user: UserLogin):
         "email": user.email,
         "password": user.password
     })
-    return {"session": res.session}
+    session = res.session
+    return {
+        "session": {
+            "access_token": getattr(session, "access_token", None),
+            "refresh_token": getattr(session, "refresh_token", None),
+            "expires_at": getattr(session, "expires_at", None),
+            "token_type": getattr(session, "token_type", None),
+            "user": _public_user(getattr(session, "user", None)),
+        }
+    }
 
 @router.get("/me")
 async def get_me(current_user=Depends(get_current_user)):
-    return {"user": current_user}
+    return {"user": _public_user(current_user)}

@@ -5,6 +5,7 @@ Determines visual strategies per slide.
 Prefers deterministic Python diagram rendering (flowcharts, architectures, timelines, comparisons).
 Only generates AI images when genuine explanatory value is added (capped at 2-4 per deck).
 """
+from app.core.logging import logger
 import asyncio
 from typing import List, Dict, Any, Optional
 from app.services.ai import router
@@ -82,6 +83,6 @@ async def resolve_slide_visuals(
                 if not isinstance(img_res, Exception) and img_res:
                     slides[idx]["visual_spec"]["image_bytes"] = img_res
         except Exception as e:
-            print(f"[VisualAgent] Parallel image generation error: {e}")
+            logger.error(f"[VisualAgent] Parallel image generation error: {e}")
 
     return slides

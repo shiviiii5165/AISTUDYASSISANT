@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ArrowUp, Clock, FileText, Globe, Sparkles, Filter, ChevronDown, CheckCircle2, 
-  Download, Loader2, AlertTriangle, Layers, Palette, Users, Zap, Settings2, 
-  Eye, RotateCcw, CheckSquare, Square, BookOpen, Presentation, RefreshCw, Trash2, Plus, ArrowRight
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import {
+  Clock, FileText, Globe, Sparkles, CheckCircle2, Download, Loader2,
+  AlertTriangle, Palette, Settings2, RotateCcw, BookOpen, Presentation,
+  Trash2, ArrowRight, GraduationCap, PenTool, LayoutGrid, Newspaper, Brain, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
+import HistorySidebar from '../components/HistorySidebar';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
@@ -18,12 +20,13 @@ import GreetingHeader from '../components/GreetingHeader';
 
 const SLIDE_COUNT_OPTIONS = [10, 11, 12, 13, 14, 15];
 
+/** `value` strings are unchanged; the emoji icons became library glyphs. */
 const DESIGN_OPTIONS = [
-  { value: 'academic', label: 'Academic Clean', icon: '🎓', desc: 'University lecture with structured learning progression' },
-  { value: 'minimal', label: 'Modern Minimal', icon: '✨', desc: 'Canva-style spacious layout with focal takeaways' },
-  { value: 'technical', label: 'Technical Grid', icon: '⚙️', desc: 'Architecture diagrams, pipelines & component grids' },
-  { value: 'editorial', label: 'Editorial', icon: '📰', desc: 'Magazine & report composition with asymmetric balance' },
-  { value: 'visual', label: 'Visual Learning', icon: '🧠', desc: 'Diagram-first visual pedagogy with concise micro-text' },
+  { value: 'academic', label: 'Academic Clean', icon: GraduationCap, desc: 'University lecture with structured learning progression' },
+  { value: 'minimal', label: 'Modern Minimal', icon: PenTool, desc: 'Spacious layout with focal takeaways' },
+  { value: 'technical', label: 'Technical Grid', icon: LayoutGrid, desc: 'Architecture diagrams, pipelines and component grids' },
+  { value: 'editorial', label: 'Editorial', icon: Newspaper, desc: 'Magazine and report composition with asymmetric balance' },
+  { value: 'visual', label: 'Visual Learning', icon: Brain, desc: 'Diagram-first visual pedagogy with concise micro-text' },
 ];
 
 const THEME_OPTIONS = [
@@ -71,22 +74,24 @@ const staggerItem = {
 };
 
 const TopicDeckPage: React.FC = () => {
-  const { user: currentUser } = useAuthStore();
-  const [topic, setTopic] = useState('');
-  
+  const location = useLocation();
+  const presetConfig = location.state?.presetConfig;
+
+  const [topic, setTopic] = useState(presetConfig?.topic || '');
+
   // Presentation Parameters
-  const [slideCount, setSlideCount] = useState<number>(12);
-  const [design, setDesign] = useState<string>('academic');
-  const [themeId, setThemeId] = useState<string>('blue_professional');
-  const [audience, setAudience] = useState<string>('university');
-  const [language, setLanguage] = useState<string>('english');
-  const [depth, setDepth] = useState<string>('full');
+  const [slideCount, setSlideCount] = useState<number>(presetConfig?.slide_count || 12);
+  const [design, setDesign] = useState<string>(presetConfig?.design || 'academic');
+  const [themeId, setThemeId] = useState<string>(presetConfig?.theme || 'blue_professional');
+  const [audience, setAudience] = useState<string>(presetConfig?.audience || 'university');
+  const [language, setLanguage] = useState<string>(presetConfig?.language || 'english');
+  const [depth] = useState<string>(presetConfig?.depth || 'full');
 
   // Knowledge Source
-  const [sourceType, setSourceType] = useState<'general' | 'uploaded_material' | 'uploaded_material_plus_web'>('general');
+  const [sourceType, setSourceType] = useState<'general' | 'uploaded_material' | 'uploaded_material_plus_web'>(presetConfig?.source_type || 'general');
   const [selectedPdfId, setSelectedPdfId] = useState<string>('');
   const [userPdfs, setUserPdfs] = useState<PDFDocument[]>([]);
-  const [loadingPdfs, setLoadingPdfs] = useState<boolean>(false);
+  const [, setLoadingPdfs] = useState<boolean>(false);
 
   // Feature Options Toggles
   const [enableDiagrams, setEnableDiagrams] = useState<boolean>(true);
@@ -98,9 +103,7 @@ const TopicDeckPage: React.FC = () => {
 
   // Generation & Status State
   const [generating, setGenerating] = useState<boolean>(false);
-  const [currentStage, setCurrentStage] = useState<number>(0);
   const [stageMessage, setStageMessage] = useState<string>('');
-  const [progressPercent, setProgressPercent] = useState<number>(0);
   const [status, setStatus] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [finalSlideCount, setFinalSlideCount] = useState<number | null>(null);
@@ -117,7 +120,7 @@ const TopicDeckPage: React.FC = () => {
     const initData = async () => {
       const token = useAuthStore.getState().session?.access_token;
       if (!token) return;
-      
+
       // Load user PDFs
       try {
         setLoadingPdfs(true);
@@ -150,23 +153,21 @@ const TopicDeckPage: React.FC = () => {
     initData();
   }, []);
 
-  const handleGenerate = async (e?: React.FormEvent) => {
+  const handleGenerate = async (e?: React.FormEvent, overridePayload?: any) => {
     if (e) e.preventDefault();
-    if (!topic.trim() || generating) return;
+    if ((!topic.trim() && !overridePayload) || generating) return;
 
     setGenerating(true);
     setDownloadUrl(null);
     setFinalSlideCount(null);
     setErrorMessage(null);
     setStatus('processing');
-    setCurrentStage(0);
-    setProgressPercent(15);
-    setStageMessage('Designing narrative arc & slide blueprint...');
+    setStageMessage('Designing the narrative arc and slide blueprint');
 
     const token = useAuthStore.getState().session?.access_token;
     const apiUrl = import.meta.env.VITE_API_URL || '';
 
-    const payload = {
+    const payload = overridePayload || {
       topic: topic.trim(),
       slide_count: slideCount,
       depth,
@@ -175,6 +176,7 @@ const TopicDeckPage: React.FC = () => {
       theme: themeId,
       source_type: sourceType,
       source_id: sourceType !== 'general' ? selectedPdfId : null,
+      custom_context: presetConfig?.custom_context,
       options: {
         diagrams: enableDiagrams,
         images: enableImages,
@@ -186,23 +188,18 @@ const TopicDeckPage: React.FC = () => {
     };
 
     try {
-      // Advance stage timers for UX feedback
+      /* These timers only rotate the status text. The backend reports no
+         progress, so no percentage is shown: the bar is indeterminate. */
       const timer1 = setTimeout(() => {
-        setCurrentStage(1);
-        setProgressPercent(45);
-        setStageMessage('Generating scannable content & rich speaker notes in batches...');
+        setStageMessage('Writing slide content and speaker notes');
       }, 3000);
 
       const timer2 = setTimeout(() => {
-        setCurrentStage(2);
-        setProgressPercent(75);
-        setStageMessage('Resolving deterministic diagrams & visual assets...');
+        setStageMessage('Building diagrams and visual assets');
       }, 8000);
 
       const timer3 = setTimeout(() => {
-        setCurrentStage(3);
-        setProgressPercent(90);
-        setStageMessage('Executing Python QA bounds inspection & slide formatting...');
+        setStageMessage('Laying out and checking the slides');
       }, 14000);
 
       const res = await fetch(`${apiUrl}/api/decks/generate-advanced`, {
@@ -230,16 +227,45 @@ const TopicDeckPage: React.FC = () => {
       }
 
       const data = await res.json();
+
+      // Synchronous completion (legacy path): use it directly.
       if (data.status === 'ready' && data.download_url) {
         setStatus('ready');
-        setProgressPercent(100);
         setDownloadUrl(data.download_url);
         setFinalSlideCount(data.slide_count || slideCount);
         setResultTitle(data.deck_title || topic);
         setResultTakeaways(data.key_takeaways || []);
-      } else {
-        throw new Error('Presentation generated but download URL missing.');
+        return;
       }
+
+      // Async path: the backend now returns 202 { deck_id, status: "processing" }
+      // and generates in the background. Poll /{deck_id} until ready or failed.
+      const deckId = data.deck_id;
+      if (!deckId) {
+        throw new Error('Presentation generation did not start correctly.');
+      }
+
+      const deadline = Date.now() + 5 * 60 * 1000; // 5 min cap
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const pollRes = await fetch(`${apiUrl}/api/decks/${deckId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!pollRes.ok) continue;
+        const pollData = await pollRes.json();
+        if (pollData.status === 'ready' && pollData.download_url) {
+          setStatus('ready');
+          setDownloadUrl(pollData.download_url);
+          setFinalSlideCount(pollData.slide_count || slideCount);
+          setResultTitle(pollData.deck_title || topic);
+          setResultTakeaways(pollData.key_takeaways || []);
+          return;
+        }
+        if (pollData.status === 'failed') {
+          throw new Error(pollData.error_message || 'Presentation generation failed.');
+        }
+      }
+      throw new Error('Presentation generation timed out. Please try again.');
     } catch (err: any) {
       console.error('[TopicDeckPage] Generation error:', err);
       setErrorMessage(err.message || 'An unexpected error occurred during generation.');
@@ -250,6 +276,8 @@ const TopicDeckPage: React.FC = () => {
   };
 
   const handleDeleteDeck = async (deckId: string) => {
+    if (!window.confirm("Are you sure you want to delete this deck?")) return;
+    
     const token = useAuthStore.getState().session?.access_token;
     if (!token) return;
     try {
@@ -263,472 +291,538 @@ const TopicDeckPage: React.FC = () => {
     }
   };
 
+  const selectedClass = (isSelected: boolean) =>
+    isSelected
+      ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]'
+      : 'border-[var(--border)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]';
+
   return (
-    <AppLayout title="AI Presentation Studio">
+    <AppLayout title="PPT Generator">
       <SEO 
-        title="TeachGenie AI Presentation Studio — NotebookLM Quality PPTs" 
-        description="Generate deterministic, beautifully designed PowerPoint presentations with exact slide counts, structured diagrams, and verified knowledge grounding." 
+        title="AI PowerPoint Generator | TeachGenie"
+        description="Convert syllabus topics and notes into fully styled PowerPoint presentations."
       />
+      <div className="flex h-full w-full">
+        <HistorySidebar
+          title="Presentations"
+          items={deckHistory.map(d => ({ id: d.id, title: d.topic, date: d.created_at }))}
+          selectedId={null} // Decks don't have a "selected" viewer state yet, they just download
+          onSelect={(id) => {
+            const deck = deckHistory.find(d => d.id === id);
+            if (deck?.download_url) {
+              window.open(deck.download_url, '_blank');
+            } else if (deck) {
+              setTopic(deck.topic);
+            }
+          }}
+          onNew={() => { setStatus(null); setTopic(''); }}
+        />
+        
+        <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl">
+            <motion.div variants={staggerContainer} initial="hidden" animate="show">
 
-      <div className="min-h-[calc(100vh-64px)] bg-surface text-ink pb-24 pt-12 px-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
-        <motion.div 
-          className="max-w-4xl mx-auto"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-        >
-          
-          {/* Header — Greeting */}
-          <motion.div variants={staggerItem}>
-            <GreetingHeader 
-              subtitle="What would you like to present today?" 
-              avatarImageSrc="/scholar-genie-chibi.png"
-            />
-          </motion.div>
-
-          <form onSubmit={handleGenerate} className="space-y-10">
-            
-            {/* Topic Input - Big Pill Search Bar */}
-            <motion.div variants={staggerItem} className="max-w-3xl mx-auto w-full">
-              <div className="relative group shadow-sm hover:shadow-md transition-shadow rounded-full bg-surface-card border border-border-soft p-2 flex items-center">
-                <button type="button" className="p-3 text-ink-muted hover:text-genie-purple transition-colors ml-1 pointer-events-none">
-                  <Plus className="w-6 h-6" />
-                </button>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="What would you like to present today?"
-                  disabled={generating}
-                  className="flex-1 bg-transparent border-none text-ink placeholder:text-ink-muted/60 focus:ring-0 text-lg px-2 py-3 focus:outline-none"
+              <motion.div variants={staggerItem} className="mb-8">
+                <GreetingHeader
+                  subtitle="Describe a topic and get an editable deck with speaker notes."
+                  avatarImageSrc="/images/tutor_avatar.jpg"
                 />
-                {topic && !generating && (
-                  <button
-                    type="button"
-                    onClick={() => setTopic('')}
-                    className="p-2 text-ink-muted hover:text-ink transition-colors mr-1 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={generating || !topic.trim()}
-                  className="ml-2 w-12 h-12 rounded-full bg-genie-amber text-white flex items-center justify-center hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0 cursor-pointer"
-                >
-                  {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-                </button>
-              </div>
+              </motion.div>
 
-              {/* Suggestion Chips */}
-              <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                {SUGGESTED_TOPICS.map((t) => (
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    key={t}
-                    type="button"
-                    onClick={() => setTopic(t)}
-                    className="text-xs px-4 py-2 rounded-full border border-border-soft bg-surface-card text-ink-muted hover:text-ink hover:border-genie-purple/30 hover:bg-genie-purple-soft/30 transition-colors cursor-pointer shadow-sm"
-                  >
-                    {t}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
+              <form onSubmit={handleGenerate} className="space-y-8">
 
-            {/* Knowledge Source Selector */}
-            <motion.div variants={staggerItem} className="pt-2">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { type: 'general' as const, label: 'General Knowledge', icon: Globe, desc: 'AI subject knowledge' },
-                  { type: 'uploaded_material' as const, label: 'My Uploaded Notes', icon: FileText, desc: 'Grounded in PDF/Notes' },
-                  { type: 'uploaded_material_plus_web' as const, label: 'Document + Web', icon: Sparkles, desc: 'Document + Research' },
-                ].map((src) => {
-                  const isSelected = sourceType === src.type;
-                  return (
-                    <motion.button
-                      whileTap={{ scale: 0.98 }}
-                      key={src.type}
-                      type="button"
-                      onClick={() => setSourceType(src.type)}
-                      className={`flex flex-col text-left p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
-                        isSelected
-                          ? 'border-genie-purple bg-genie-purple-soft ring-1 ring-genie-purple shadow-sm'
-                          : 'border-border-soft bg-surface-card hover:border-genie-purple/40 shadow-sm hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`p-2 rounded-full ${isSelected ? 'bg-white text-genie-purple' : 'bg-surface text-ink-muted'}`}>
-                          <src.icon className="w-5 h-5" />
-                        </div>
-                        <span className={`text-sm font-semibold ${isSelected ? 'text-genie-purple' : 'text-ink'}`}>{src.label}</span>
-                      </div>
-                      <span className={`text-xs ml-[3.25rem] ${isSelected ? 'text-genie-purple/80' : 'text-ink-muted'}`}>{src.desc}</span>
-                    </motion.button>
-                  );
-                })}
-              </div>
-
-              {/* If Uploaded Material Selected: Show Document Dropdown */}
-              {sourceType !== 'general' && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }} 
-                  animate={{ opacity: 1, height: 'auto' }} 
-                  className="mt-4 p-5 bg-genie-purple-soft/50 border border-genie-purple/20 rounded-2xl"
-                >
-                  <label className="block text-sm font-semibold text-genie-purple mb-2">
-                    Select Source Document from Your Library
+                {/* Topic */}
+                <motion.div variants={staggerItem}>
+                  <label htmlFor="deck-topic" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+                    Presentation topic
                   </label>
-                  {userPdfs.length > 0 ? (
-                    <select
-                      value={selectedPdfId}
-                      onChange={(e) => setSelectedPdfId(e.target.value)}
-                      className="w-full px-4 py-3 bg-surface-card border border-border-soft rounded-full text-sm text-ink focus:outline-none focus:ring-2 focus:ring-genie-purple font-medium shadow-sm appearance-none cursor-pointer"
-                    >
-                      {userPdfs.map((pdf) => (
-                        <option key={pdf.id} value={pdf.id}>
-                          📄 {pdf.name} ({pdf.subject || 'General'}) — {pdf.page_count || 1} pages
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="text-sm text-genie-purple/80 bg-white/50 p-3 rounded-xl">
-                      No uploaded PDFs found. You can upload a PDF in the Library or continue with General Knowledge.
-                    </p>
-                  )}
-                </motion.div>
-              )}
-            </motion.div>
-
-            {/* Exact Slide Count & Options Row */}
-            <motion.div variants={staggerItem} className="flex flex-col gap-6">
-              
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <span className="text-sm font-semibold text-ink-muted mr-2">Exact Slide Count:</span>
-                {SLIDE_COUNT_OPTIONS.map((num) => {
-                  const isSelected = slideCount === num;
-                  return (
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      key={num}
-                      type="button"
-                      onClick={() => setSlideCount(num)}
-                      className={`px-5 py-2 rounded-full border text-sm font-bold transition-all shadow-sm cursor-pointer ${
-                        isSelected
-                          ? 'border-genie-purple bg-genie-purple text-white shadow-md'
-                          : 'border-border-soft bg-surface-card text-ink hover:bg-surface'
-                      }`}
-                    >
-                      {num} Slides
-                    </motion.button>
-                  );
-                })}
-              </div>
-
-              {/* Design Template System */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">Design Template System</h3>
-                  <div className="space-y-3">
-                    {DESIGN_OPTIONS.map((d) => {
-                      const isSelected = design === d.value;
-                      return (
-                        <motion.button
-                          whileTap={{ scale: 0.98 }}
-                          key={d.value}
-                          type="button"
-                          onClick={() => setDesign(d.value)}
-                          className={`w-full flex items-center justify-between p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-sm ${
-                            isSelected
-                              ? 'border-genie-purple bg-genie-purple-soft ring-1 ring-genie-purple'
-                              : 'border-border-soft bg-surface-card hover:border-genie-purple/40 hover:shadow-md'
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <span className="text-2xl">{d.icon}</span>
-                            <div>
-                              <p className={`text-sm font-bold ${isSelected ? 'text-genie-purple' : 'text-ink'}`}>{d.label}</p>
-                              <p className={`text-xs mt-0.5 ${isSelected ? 'text-genie-purple/80' : 'text-ink-muted'}`}>{d.desc}</p>
-                            </div>
-                          </div>
-                          {isSelected && <CheckCircle2 className="w-5 h-5 text-genie-purple shrink-0" />}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Theme Palette & Audience */}
-                <div>
-                  <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">Color Theme Palette</h3>
-                  <div className="flex flex-wrap gap-3 mb-8">
-                    {THEME_OPTIONS.map((t) => {
-                      const isSelected = themeId === t.value;
-                      return (
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          key={t.value}
-                          type="button"
-                          onClick={() => setThemeId(t.value)}
-                          className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all cursor-pointer shadow-sm relative ${
-                            isSelected
-                              ? 'border-genie-purple bg-genie-purple-soft ring-1 ring-genie-purple shadow-md z-10'
-                              : 'border-border-soft bg-surface-card hover:bg-surface'
-                          }`}
-                        >
-                          <div className="flex -space-x-1.5 shrink-0 shadow-sm rounded-full bg-white p-0.5">
-                            {t.colors.slice(0,2).map((c, ci) => (
-                              <div key={ci} className="w-4 h-4 rounded-full border border-white" style={{ backgroundColor: c }} />
-                            ))}
-                          </div>
-                          <span className={`text-sm font-semibold ${isSelected ? 'text-genie-purple' : 'text-ink'}`}>{t.label}</span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-
-                  <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">Audience & Language</h3>
-                  <div className="flex flex-wrap gap-4">
-                    <div className="relative group">
-                      <select
-                        value={audience}
-                        onChange={(e) => setAudience(e.target.value)}
-                        className="appearance-none pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-purple shadow-sm min-w-[200px] cursor-pointer"
-                      >
-                        {AUDIENCE_OPTIONS.map((a) => (
-                          <option key={a.value} value={a.value}>{a.label}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-ink" />
-                    </div>
-                    <div className="relative group">
-                      <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="appearance-none pl-5 pr-10 py-3 bg-surface-card border border-border-soft rounded-full text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-genie-purple shadow-sm min-w-[140px] cursor-pointer"
-                      >
-                        {LANGUAGE_OPTIONS.map((l) => (
-                          <option key={l.value} value={l.value}>{l.label}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="w-4 h-4 text-ink-muted absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-ink" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Presentation Component Features (Toggle Pills) */}
-            <motion.div variants={staggerItem} className="pt-6 border-t border-border-soft">
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                {[
-                  { label: 'System & Flow Diagrams', state: enableDiagrams, set: setEnableDiagrams },
-                  { label: 'Selective AI Illustrations', state: enableImages, set: setEnableImages },
-                  { label: 'Rich Speaker Notes', state: enableSpeakerNotes, set: setEnableSpeakerNotes },
-                  { label: 'Document Source Citations', state: enableSources, set: setEnableSources },
-                  { label: 'Real-World Case Examples', state: enableExamples, set: setEnableExamples },
-                  { label: 'Interactive Final Quiz', state: enableQuiz, set: setEnableQuiz },
-                ].map((opt, i) => (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    key={i}
-                    type="button"
-                    onClick={() => opt.set(!opt.state)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-full border text-sm font-semibold transition-colors shadow-sm cursor-pointer ${
-                      opt.state
-                        ? 'border-genie-purple bg-genie-purple-soft text-genie-purple ring-1 ring-genie-purple'
-                        : 'border-border-soft bg-surface-card text-ink-muted hover:text-ink hover:bg-surface'
-                    }`}
-                  >
-                    <span>{opt.label}</span>
-                    <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold ${
-                      opt.state ? 'bg-genie-purple text-white' : 'bg-surface text-ink-muted border border-border-soft'
-                    }`}>
-                      {opt.state ? 'ON' : 'OFF'}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Submit Button */}
-            <motion.div variants={staggerItem} className="pt-8 flex justify-center">
-              <motion.button
-                whileTap={(!generating && topic.trim()) ? { scale: 0.96 } : {}}
-                type="submit"
-                disabled={generating || !topic.trim()}
-                className="w-full max-w-md py-5 px-8 rounded-full font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-genie-purple to-genie-amber text-white border-0 cursor-pointer"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    <span>{stageMessage || 'Generating Presentation...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Presentation className="w-6 h-6" />
-                    <span>Generate {slideCount}-Slide Presentation (.pptx)</span>
-                  </>
-                )}
-              </motion.button>
-            </motion.div>
-          </form>
-
-          {/* ═══════════ LIVE GENERATION PROGRESS TRACKER ═══════════ */}
-          <AnimatePresence>
-            {generating && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-surface-card rounded-2xl border border-genie-amber/30 shadow-md p-8 mt-12 text-center relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-genie-purple-soft/20 via-genie-amber-soft/20 to-genie-purple-soft/20 animate-pulse" />
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between text-xs font-bold text-ink-muted mb-4 uppercase tracking-widest">
-                    <span>Stage {currentStage + 1} of 4</span>
-                    <span className="text-genie-purple">{progressPercent}% Complete</span>
-                  </div>
-                  
-                  <div className="w-full bg-surface rounded-full h-3 mb-6 overflow-hidden border border-border-soft">
-                    <div 
-                      className="bg-gradient-to-r from-genie-purple to-genie-amber h-full rounded-full transition-all duration-700 ease-out" 
-                      style={{ width: `${progressPercent}%` }}
+                  <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-2 focus-within:border-[var(--accent-green)]">
+                    <input
+                      id="deck-topic"
+                      type="text"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="Kubernetes architecture and orchestration"
+                      disabled={generating}
+                      className="min-w-0 flex-1 border-none bg-transparent px-3 py-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
                     />
+                    {topic && !generating && (
+                      <button
+                        type="button"
+                        onClick={() => setTopic('')}
+                        aria-label="Clear topic"
+                        className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={generating || !topic.trim()}
+                      aria-label="Generate presentation"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-green)] text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {generating ? (
+                        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </button>
                   </div>
 
-                  <p className="text-lg font-bold text-ink mb-1">{stageMessage}</p>
-                  <p className="text-sm text-ink-muted">Deterministic Python layout engine rendering 16:9 widescreen canvas...</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {SUGGESTED_TOPICS.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setTopic(t)}
+                        className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-[var(--accent-green)] hover:text-[var(--text-primary)]"
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
 
-          {/* ═══════════ ERROR STATE ═══════════ */}
-          <AnimatePresence>
-            {errorMessage && !generating && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 rounded-2xl p-8 mt-12 text-center shadow-sm"
-              >
-                <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-red-900 mb-2">Presentation Generation Failed</h3>
-                <p className="text-sm text-red-700 mb-6">{errorMessage}</p>
-                <button
-                  onClick={handleGenerate}
-                  className="px-6 py-2.5 bg-red-600 text-white rounded-full text-sm font-bold hover:bg-red-700 inline-flex items-center gap-2 shadow-sm cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4" /> Try Again
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {/* Knowledge source */}
+                <motion.fieldset variants={staggerItem}>
+                  <legend className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
+                    Knowledge source
+                  </legend>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {[
+                      { type: 'general' as const, label: 'General knowledge', icon: Globe, desc: 'Model subject knowledge' },
+                      { type: 'uploaded_material' as const, label: 'My uploaded notes', icon: FileText, desc: 'Grounded in your documents' },
+                      { type: 'uploaded_material_plus_web' as const, label: 'Document and web', icon: Sparkles, desc: 'Documents plus research' },
+                    ].map((src) => {
+                      const isSelected = sourceType === src.type;
+                      return (
+                        <button
+                          key={src.type}
+                          type="button"
+                          onClick={() => setSourceType(src.type)}
+                          aria-pressed={isSelected}
+                          className={`flex flex-col rounded-xl border p-4 text-left transition-colors ${selectedClass(isSelected)}`}
+                        >
+                          <span className="mb-2 flex items-center gap-2.5">
+                            <src.icon
+                              className={`h-5 w-5 shrink-0 ${isSelected ? 'text-[var(--accent-green-text)]' : 'text-[var(--text-secondary)]'}`}
+                              aria-hidden="true"
+                            />
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">{src.label}</span>
+                          </span>
+                          <span className="text-xs text-[var(--text-secondary)]">{src.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-          {/* ═══════════ PRESENTATION READY VIEW ═══════════ */}
-          <AnimatePresence>
-            {status === 'ready' && downloadUrl && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                className="bg-surface-card rounded-2xl border border-sage-500/30 shadow-md p-8 mt-12"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-border-soft">
+                  {sourceType !== 'general' && (
+                    <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+                      <label htmlFor="deck-source" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+                        Source document
+                      </label>
+                      {userPdfs.length > 0 ? (
+                        <select
+                          id="deck-source"
+                          value={selectedPdfId}
+                          onChange={(e) => setSelectedPdfId(e.target.value)}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none"
+                        >
+                          {userPdfs.map((pdf) => (
+                            <option key={pdf.id} value={pdf.id}>
+                              {pdf.name} ({pdf.subject || 'General'}), {pdf.page_count || 1} pages
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-sm text-[var(--text-secondary)]">
+                          No uploaded documents found. Upload one in your Library, or continue with
+                          general knowledge.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </motion.fieldset>
+
+                {/* Slide count */}
+                <motion.fieldset variants={staggerItem}>
+                  <legend className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
+                    Slide count
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {SLIDE_COUNT_OPTIONS.map((num) => {
+                      const isSelected = slideCount === num;
+                      return (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setSlideCount(num)}
+                          aria-pressed={isSelected}
+                          className={`rounded-lg border px-4 py-2 text-sm font-semibold tabular-nums transition-colors ${
+                            isSelected
+                              ? 'border-[var(--accent-green)] bg-[var(--accent-green)] text-white'
+                              : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.fieldset>
+
+                {/* Design + theme + audience */}
+                <motion.div variants={staggerItem} className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <fieldset>
+                    <legend className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                      <Settings2 className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                      Design template
+                    </legend>
+                    <div className="space-y-2">
+                      {DESIGN_OPTIONS.map((d) => {
+                        const isSelected = design === d.value;
+                        return (
+                          <button
+                            key={d.value}
+                            type="button"
+                            onClick={() => setDesign(d.value)}
+                            aria-pressed={isSelected}
+                            className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-colors ${selectedClass(isSelected)}`}
+                          >
+                            <span className="flex items-center gap-3">
+                              <d.icon
+                                className={`h-5 w-5 shrink-0 ${isSelected ? 'text-[var(--accent-green-text)]' : 'text-[var(--text-secondary)]'}`}
+                                aria-hidden="true"
+                              />
+                              <span>
+                                <span className="block text-sm font-semibold text-[var(--text-primary)]">{d.label}</span>
+                                <span className="mt-0.5 block text-xs text-[var(--text-secondary)]">{d.desc}</span>
+                              </span>
+                            </span>
+                            {isSelected && (
+                              <CheckCircle2
+                                className="h-5 w-5 shrink-0 text-[var(--accent-green-text)]"
+                                aria-hidden="true"
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+
                   <div>
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sage-50 text-sage-600 text-sm font-bold mb-3 border border-sage-500/20 shadow-sm">
-                      <CheckCircle2 className="w-4 h-4" /> Presentation Ready
-                    </div>
-                    <h2 className="text-3xl font-bold text-ink">{resultTitle}</h2>
-                    <p className="text-base text-ink-muted mt-2 font-medium">
-                      {finalSlideCount} Slides  •  {design.toUpperCase()} Template  •  16:9 Widescreen (.pptx)
-                    </p>
-                  </div>
-                  <a
-                    href={downloadUrl}
-                    download={`${resultTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`}
-                    className="px-8 py-4 bg-sage-600 hover:bg-sage-700 text-white rounded-full font-bold text-base shadow-sm hover:shadow-md flex items-center justify-center gap-2 shrink-0 transition-all cursor-pointer"
-                  >
-                    <Download className="w-5 h-5" /> Download PPTX
-                  </a>
-                </div>
+                    <fieldset className="mb-6">
+                      <legend className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                        <Palette className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                        Slide colour theme
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        {THEME_OPTIONS.map((t) => {
+                          const isSelected = themeId === t.value;
+                          return (
+                            <button
+                              key={t.value}
+                              type="button"
+                              onClick={() => setThemeId(t.value)}
+                              aria-pressed={isSelected}
+                              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${selectedClass(isSelected)}`}
+                            >
+                              {/* Swatches preview the generated deck, not this UI. */}
+                              <span className="flex -space-x-1.5" aria-hidden="true">
+                                {t.colors.slice(0, 2).map((c, ci) => (
+                                  <span
+                                    key={ci}
+                                    className="h-4 w-4 rounded-full border border-white"
+                                    style={{ backgroundColor: c }}
+                                  />
+                                ))}
+                              </span>
+                              <span className="text-sm font-medium text-[var(--text-primary)]">{t.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
 
-                {resultTakeaways.length > 0 && (
-                  <div className="mt-8">
-                    <h4 className="text-sm font-bold text-ink-muted uppercase tracking-wider mb-4">Core Deck Takeaways</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {resultTakeaways.map((t, i) => (
-                        <div key={i} className="p-4 bg-surface rounded-2xl border border-border-soft text-sm text-ink font-medium flex items-start gap-3 shadow-sm">
-                          <span className="text-sage-500 font-bold text-lg leading-none mt-0.5">✦</span>
-                          <span>{t}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ═══════════ PREVIOUS DECKS HISTORY ═══════════ */}
-          {deckHistory.length > 0 && (
-            <motion.div variants={staggerItem} className="mt-16">
-              <h3 className="text-lg font-bold text-ink mb-6 flex items-center gap-3 px-2">
-                <Clock className="w-5 h-5 text-genie-purple" /> Recent Presentations
-                <span className="text-xs font-semibold text-ink-muted bg-surface px-3 py-1 rounded-full border border-border-soft">
-                  {deckHistory.length} total
-                </span>
-              </h3>
-              <div className="flex flex-col gap-3">
-                {deckHistory.map((deck, idx) => (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.04 }}
-                    whileHover={{ y: -2, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
-                    key={deck.id} 
-                    className="p-5 bg-surface-card rounded-2xl border border-border-soft flex items-center justify-between gap-4 transition-all shadow-sm"
-                  >
-                    <div className="flex items-start gap-4 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-genie-purple-soft flex items-center justify-center shrink-0 mt-0.5">
-                        <Presentation className="w-5 h-5 text-genie-purple" />
+                    <div className="space-y-3">
+                      <div>
+                        <label htmlFor="deck-audience" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                          Audience
+                        </label>
+                        <select
+                          id="deck-audience"
+                          value={audience}
+                          onChange={(e) => setAudience(e.target.value)}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none"
+                        >
+                          {AUDIENCE_OPTIONS.map((a) => (
+                            <option key={a.value} value={a.value}>{a.label}</option>
+                          ))}
+                        </select>
                       </div>
                       <div>
-                        <p className="text-base font-bold text-ink truncate">{deck.topic}</p>
-                        <p className="text-sm text-ink-muted font-medium mt-0.5">
-                          {deck.slide_count || 12} slides  •  {deck.audience || 'University'}  •  {new Date(deck.created_at).toLocaleDateString()}
-                        </p>
+                        <label htmlFor="deck-language" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                          Language
+                        </label>
+                        <select
+                          id="deck-language"
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none"
+                        >
+                          {LANGUAGE_OPTIONS.map((l) => (
+                            <option key={l.value} value={l.value}>{l.label}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {deck.download_url && (
-                        <a
-                          href={deck.download_url}
-                          download
-                          className="p-3 text-ink-muted hover:text-sage-600 hover:bg-sage-50 rounded-full transition-colors cursor-pointer"
-                          title="Download presentation"
-                        >
-                          <Download className="w-5 h-5" />
-                        </a>
-                      )}
+                  </div>
+                </motion.div>
+
+                {/* Feature toggles */}
+                <motion.fieldset variants={staggerItem} className="border-t border-[var(--border)] pt-6">
+                  <legend className="sr-only">Presentation features</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: 'System and flow diagrams', state: enableDiagrams, set: setEnableDiagrams },
+                      { label: 'AI illustrations', state: enableImages, set: setEnableImages },
+                      { label: 'Speaker notes', state: enableSpeakerNotes, set: setEnableSpeakerNotes },
+                      { label: 'Source citations', state: enableSources, set: setEnableSources },
+                      { label: 'Real-world examples', state: enableExamples, set: setEnableExamples },
+                      { label: 'Final quiz slide', state: enableQuiz, set: setEnableQuiz },
+                    ].map((opt, i) => (
                       <button
-                        onClick={() => handleDeleteDeck(deck.id)}
-                        className="p-3 text-ink-muted hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer"
-                        title="Delete presentation"
+                        key={i}
+                        type="button"
+                        onClick={() => opt.set(!opt.state)}
+                        aria-pressed={opt.state}
+                        className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                          opt.state
+                            ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)] text-[var(--accent-green-text)]'
+                            : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                        }`}
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <span>{opt.label}</span>
+                        {/* State is a word, never colour alone. */}
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                          opt.state
+                            ? 'bg-[var(--accent-green)] text-white'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
+                        }`}>
+                          {opt.state ? 'On' : 'Off'}
+                        </span>
                       </button>
+                    ))}
+                  </div>
+                </motion.fieldset>
+
+                <motion.div variants={staggerItem}>
+                  <button
+                    type="submit"
+                    disabled={generating || !topic.trim()}
+                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--accent-green)] px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                        <span>{stageMessage || 'Generating presentation'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Presentation className="h-5 w-5" aria-hidden="true" />
+                        <span>Generate {slideCount} slide presentation</span>
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              </form>
+
+              {/* ═══════════ GENERATION PROGRESS ═══════════ */}
+              <AnimatePresence>
+                {generating && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6"
+                    aria-live="polite"
+                  >
+                    {/* Indeterminate: the backend reports no progress, so no
+                        percentage is claimed. */}
+                    <div
+                      className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-secondary)]"
+                      role="progressbar"
+                      aria-label="Generating presentation"
+                    >
+                      <div className="h-full w-1/3 animate-pulse rounded-full bg-[var(--accent-green)]" />
+                    </div>
+                    <p className="font-display text-base font-semibold text-[var(--text-primary)]">
+                      {stageMessage}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                      This usually takes under a minute. The deck renders as 16:9 widescreen PPTX.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ═══════════ ERROR STATE ═══════════ */}
+              <AnimatePresence>
+                {errorMessage && !generating && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    role="alert"
+                    className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6"
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" aria-hidden="true" />
+                      <div className="min-w-0 flex-1">
+                        <h2 className="font-display text-base font-semibold text-red-900">
+                          Presentation generation failed
+                        </h2>
+                        <p className="mt-1 text-sm text-red-800">{errorMessage}</p>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerate()}
+                          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-800"
+                        >
+                          <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                          Try again
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+                )}
+              </AnimatePresence>
 
-        </motion.div>
+              {/* ═══════════ READY ═══════════ */}
+              <AnimatePresence>
+                {status === 'ready' && downloadUrl && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 rounded-xl border border-[var(--accent-green)] bg-[var(--bg-card)] p-6"
+                  >
+                    <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-6 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent-green-light)] px-2.5 py-1 text-xs font-semibold text-[var(--accent-green-text)]">
+                          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          Presentation ready
+                        </p>
+                        <h2 className="font-display text-2xl font-bold text-[var(--text-primary)]">
+                          {resultTitle}
+                        </h2>
+                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                          <span className="tabular-nums">{finalSlideCount}</span> slides, {design} template, 16:9 widescreen PPTX
+                        </p>
+                      </div>
+                      <a
+                        href={downloadUrl}
+                        download={`${resultTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`}
+                        className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--accent-green)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
+                      >
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                        Download PPTX
+                      </a>
+                    </div>
+
+                    {resultTakeaways.length > 0 && (
+                      <div className="mt-6">
+                        <h3 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
+                          Key takeaways
+                        </h3>
+                        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                          {resultTakeaways.map((t, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3.5 text-sm text-[var(--text-primary)]"
+                            >
+                              <BookOpen
+                                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-green-text)]"
+                                aria-hidden="true"
+                              />
+                              <span>{t}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ═══════════ HISTORY ═══════════ */}
+              {deckHistory.length > 0 && (
+                <section className="mt-10">
+                  <h2 className="mb-4 flex items-center gap-2.5 font-display text-base font-semibold text-[var(--text-primary)]">
+                    <Clock className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                    Recent presentations
+                    <span className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-0.5 text-xs font-medium tabular-nums text-[var(--text-secondary)]">
+                      {deckHistory.length}
+                    </span>
+                  </h2>
+                  <ul className="flex flex-col gap-2">
+                    {deckHistory.map((deck) => (
+                      <li
+                        key={deck.id}
+                        className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-green-light)]">
+                            <Presentation
+                              className="h-4 w-4 text-[var(--accent-green-text)]"
+                              aria-hidden="true"
+                            />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                              {deck.topic}
+                            </p>
+                            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                              <span className="tabular-nums">{deck.slide_count || 12}</span> slides,{' '}
+                              {deck.audience || 'University'},{' '}
+                              {new Date(deck.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {deck.download_url && (
+                            <a
+                              href={deck.download_url}
+                              download
+                              aria-label={`Download ${deck.topic}`}
+                              className="rounded-lg p-2.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--accent-green-light)] hover:text-[var(--accent-green-text)]"
+                            >
+                              <Download className="h-4 w-4" aria-hidden="true" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDeck(deck.id)}
+                            aria-label={`Delete ${deck.topic}`}
+                            className="rounded-lg p-2.5 text-[var(--text-secondary)] transition-colors hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+            </motion.div>
+          </div>
+        </div>
       </div>
 
       {showUpgradeModal && (
-        <UpgradeModal 
-          isOpen={showUpgradeModal} 
-          onClose={() => setShowUpgradeModal(false)} 
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
         />
       )}
     </AppLayout>

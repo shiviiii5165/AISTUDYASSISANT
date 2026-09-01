@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import AppLayout from '../components/AppLayout';
+import PublicHeader from '../components/PublicHeader';
 import SEO from '../components/SEO';
 import { Mail, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 const SupportPage: React.FC = () => {
   const { user } = useAuthStore();
+  const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -24,8 +26,8 @@ const SupportPage: React.FC = () => {
     }, 5000);
   };
 
-  return (
-    <AppLayout title="Support">
+  const content = (
+    <>
       <SEO 
         title="Support & Help Center" 
         description="Get help with TeachGenie, report issues, and find answers to common questions." 
@@ -40,8 +42,8 @@ const SupportPage: React.FC = () => {
           {/* Contact Form */}
           <div className="bg-white p-6 rounded-2xl border border-[var(--border)] shadow-[var(--shadow-sm)]">
             <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[var(--accent-indigo)]" />
-              Contact Support
+              <MessageSquare className="w-5 h-5 text-[var(--accent-green-text)]" />
+              Contact support
             </h2>
             
             {submitted ? (
@@ -56,9 +58,13 @@ const SupportPage: React.FC = () => {
                   <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Email Address</label>
                   <input
                     type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-gray-50 text-[var(--text-muted)] text-sm cursor-not-allowed"
+                    value={user?.email || email}
+                    onChange={(e) => !user && setEmail(e.target.value)}
+                    disabled={!!user}
+                    required
+                    className={`w-full px-3 py-2.5 rounded-lg border border-[var(--border)] text-sm ${
+                      user ? 'bg-gray-50 text-[var(--text-muted)] cursor-not-allowed' : 'bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] transition-all'
+                    }`}
                   />
                 </div>
                 <div>
@@ -69,7 +75,7 @@ const SupportPage: React.FC = () => {
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder="E.g., Issue with PDF upload"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-indigo)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm"
                   />
                 </div>
                 <div>
@@ -80,7 +86,7 @@ const SupportPage: React.FC = () => {
                     placeholder="Please describe your issue or question in detail..."
                     required
                     rows={4}
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-indigo)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm resize-none"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm resize-none"
                   />
                 </div>
                 <button
@@ -128,13 +134,22 @@ const SupportPage: React.FC = () => {
               <Mail className="w-6 h-6 text-[var(--text-muted)] mx-auto mb-2" />
               <p className="text-xs text-[var(--text-secondary)]">
                 Prefer email? Contact us directly at <br/>
-                <a href="mailto:support@teachgenie.online" className="font-medium text-[var(--accent-indigo)] hover:underline">support@teachgenie.online</a>
+                <a href="mailto:support@teachgenie.online" className="font-medium text-[var(--accent-green-text)] hover:underline">support@teachgenie.online</a>
               </p>
             </div>
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
+  );
+
+  return user ? (
+    <AppLayout title="Support">{content}</AppLayout>
+  ) : (
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
+      <PublicHeader />
+      {content}
+    </div>
   );
 };
 

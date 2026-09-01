@@ -326,5 +326,5 @@ CARD_BORDER_WIDTH = Pt(1)    # subtle 1pt borders only
 # ═══════════════════════════════════════════════════════════════════════════
 
 BULLET_GLYPH = "▸"
-TAKEAWAY_GLYPH = "✦"
+TAKEAWAY_GLYPH = "-"
 STEP_GLYPH = "●"  # for process flows

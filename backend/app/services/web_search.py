@@ -6,6 +6,7 @@ duckduckgo-search library. Used by the Librarian agent as a fallback
 when a student's internal notes are insufficient to answer a query.
 """
 
+from app.core.logging import logger
 from typing import Optional
 
 
@@ -38,8 +39,8 @@ async def perform_web_search(query: str, max_results: int = 3) -> list[dict]:
         return results
 
     except ImportError:
-        print("[WebSearch] ddgs is not installed. Skipping web fallback.")
+        logger.info("[WebSearch] ddgs is not installed. Skipping web fallback.")
         return []
     except Exception as e:
-        print(f"[WebSearch] DuckDuckGo search failed: {e}")
+        logger.error(f"[WebSearch] DuckDuckGo search failed: {e}")
         return []
