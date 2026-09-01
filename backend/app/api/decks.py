@@ -254,6 +254,11 @@ def _get_signed_url(storage_path: str) -> Optional[str]:
         return None
 
 
+@router.get("/")
+async def get_decks(current_user = Depends(get_current_user)):
+    res = supabase.table("topic_decks").select("id, topic, status, created_at, slide_count").eq("user_id", current_user.id).order("created_at", desc=True).execute()
+    return {"decks": res.data or []}
+
 @router.get("/{deck_id}")
 async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)):
     res = supabase.table("topic_decks").select("*").eq("id", deck_id).eq("user_id", current_user.id).maybe_single().execute()
