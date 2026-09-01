@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   GraduationCap, Sparkles, Globe, FileText, CheckCircle2, AlertCircle,
   Lightbulb, Download, Send, Loader2, Award, Target, Plus,
@@ -92,21 +93,26 @@ const QUICK_COMMANDS: { label: string; cmd: string; primary?: boolean }[] = [
   { label: 'Explain it back', cmd: 'explain_it_back' },
   { label: 'Ask question', cmd: 'ask_question' },
   { label: 'Exam points', cmd: 'exam_points' },
+  { label: 'Test me', cmd: 'test_me', primary: true },
   { label: 'Continue to next concept', cmd: 'continue', primary: true },
 ];
 
 const TeachMePage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const presetBrief = location.state?.presetBrief;
+
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState<boolean>(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   // Setup Parameters
-  const [topic, setTopic] = useState<string>('');
-  const [level, setLevel] = useState<string>('btech');
-  const [language, setLanguage] = useState<string>('english');
+  const [topic, setTopic] = useState<string>(presetBrief?.topic || '');
+  const [level, setLevel] = useState<string>(presetBrief?.level || 'btech');
+  const [language, setLanguage] = useState<string>(presetBrief?.language || 'english');
   const [mode, setMode] = useState<string>('interactive_teacher');
   const [depth] = useState<string>('normal');
-  const [sourceType, setSourceType] = useState<string>('topic');
+  const [sourceType, setSourceType] = useState<string>(presetBrief?.source_type || 'topic');
   const [selectedPdfId, setSelectedPdfId] = useState<string>('');
   const [youtubeUrl, setYoutubeUrl] = useState<string>('');
 
@@ -156,9 +162,9 @@ const TeachMePage: React.FC = () => {
   }, [messages, loading]);
 
   // Start Teaching Session
-  const handleStartSession = async (e?: React.FormEvent) => {
+  const handleStartSession = async (e?: React.FormEvent, overridePayload?: any) => {
     if (e) e.preventDefault();
-    if (!topic.trim() || loading) return;
+    if ((!topic.trim() && !overridePayload) || loading) return;
 
     setLoading(true);
     setIsSetupOpen(false);
@@ -173,7 +179,7 @@ const TeachMePage: React.FC = () => {
     try {
       const sourceIds = (sourceType !== 'topic' && selectedPdfId) ? [selectedPdfId] : [];
 
-      const payload = {
+      const payload = overridePayload || {
         topic: topic.trim(),
         level,
         language,
@@ -382,6 +388,16 @@ const TeachMePage: React.FC = () => {
   // Quick Command Dispatcher
   const handleCommand = async (command: string) => {
     if (!sessionId || loading) return;
+
+    if (command === 'test_me') {
+      const presetConfig = {
+        topic: topic,
+        source_type: sourceType,
+        teach_session_id: sessionId,
+      };
+      navigate('/quizzes', { state: { presetConfig, presetPdfId: selectedPdfId } });
+      return;
+    }
 
     setLoading(true);
     setActiveCommand(command);
