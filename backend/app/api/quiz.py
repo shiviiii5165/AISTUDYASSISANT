@@ -11,12 +11,10 @@ Security invariants:
   * Every quiz/source access is ownership-checked server-side (§38, §39).
   * Scoring is server-side only (§10, §38); no client score is ever accepted.
 
-Phase-3 gate: generation and single-question regeneration require the RAG
-retrieval path. Migrations 007/008 are unverified in this environment (no DB
-access to confirm), so those two endpoints return 503 rather than build against
-a possibly-unpatched, cross-tenant-leaking retrieval path. The ownership check
-still runs first, so the security boundary is exercised even while generation is
-gated.
+Retrieval path (Phase 3, now live): hybrid_search_evidence via
+match_document_chunks RPC, user_id-scoped. Confirmed safe post-audit
+migrations 007/008 (cross-tenant isolation fix applied). The 503 gate
+is removed; generation is live.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from app.core.security import limiter
@@ -30,18 +28,12 @@ from app.models.quiz import (
 )
 from app.services.quiz import repository as repo
 from app.services.quiz import attempts as attempt_svc
+from app.services.quiz.generator import run_quiz_generation, run_single_question_regeneration
 from app.services.quiz.schemas import (
     Quiz, QuizMode, QuizStatus, TEACHER_STATUSES, STUDENT_STATUSES,
 )
 
 router = APIRouter()
-
-_GENERATION_BLOCKED_DETAIL = (
-    "Quiz generation is temporarily unavailable: the source-retrieval path "
-    "depends on migrations 007/008 (cross-tenant isolation) which are not "
-    "verified applied in this environment. Generation is gated until the "
-    "isolation verifier passes against the live database."
-)
 
 
 def _handle_ownership(exc: Exception):
@@ -52,7 +44,7 @@ def _handle_ownership(exc: Exception):
     raise exc
 
 
-# ─── Generation (§54: POST /quizzes) — Phase 3 gated ─────────────────────────
+# ─── Generation (§54: POST /quizzes) ─────────────────────────────────────────
 
 @router.post("/quizzes")
 @limiter.limit("10/minute")
@@ -62,16 +54,21 @@ async def generate_quiz(request: Request, payload: GenerateQuizRequest, current_
     if existing:
         return {"quiz": existing, "idempotent_replay": True}
 
-    # Ownership MUST be verified before any retrieval (§39). This runs even
-    # while generation is gated, so the boundary is enforced now.
+    # Ownership MUST be verified before any retrieval (§39).
     try:
         repo.verify_source_ownership(payload.source_type, payload.source_ids, current_user.id)
     except Exception as e:
         _handle_ownership(e)
 
-    # Phase-3 retrieval + generation is blocked on the migration gate.
-    raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail=_GENERATION_BLOCKED_DETAIL)
+    try:
+        result = await run_quiz_generation(payload, current_user.id)
+        return result
+    except Exception as e:
+        err = str(e)
+        print(f"[QuizAPI] Generation error: {e}")
+        if "provider" in err.lower() or "llm" in err.lower() or "exhausted" in err.lower():
+            raise HTTPException(status_code=503, detail=f"AI generation unavailable: {err[:200]}")
+        raise HTTPException(status_code=500, detail=f"Quiz generation failed: {err[:200]}")
 
 
 # ─── Quiz read/list/status/delete ────────────────────────────────────────────
@@ -169,12 +166,24 @@ async def reorder(quiz_id: str, request: ReorderQuestionsRequest,
 @router.post("/questions/{question_id}/regenerate")
 async def regenerate_question(question_id: str, request: RegenerateQuestionRequest,
                               current_user=Depends(get_current_user)):
-    # Ownership enforced now; the regeneration itself needs retrieval context and
-    # is wired in Phase 3. A failed regeneration must leave the original intact
-    # (§58) — hence this never mutates before generation succeeds.
-    _authorize_question(question_id, current_user.id)
-    raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail=_GENERATION_BLOCKED_DETAIL)
+    # Ownership verified first (§58 — original must remain intact until generation succeeds).
+    original = _authorize_question(question_id, current_user.id)
+    quiz = repo.verify_quiz_owner(original["quiz_id"], current_user.id)
+
+    try:
+        result = await run_single_question_regeneration(
+            question=original,
+            quiz=quiz,
+            instruction=request.instruction,
+            user_id=current_user.id,
+        )
+    except Exception as e:
+        # §58: on failure, leave original intact — do NOT mutate here.
+        raise HTTPException(status_code=500, detail=f"Regeneration failed: {str(e)[:200]}")
+
+    # Only overwrite the DB row once we have a validated replacement.
+    repo.update_question(question_id, result["question_data"])
+    return {"question_id": question_id, "token_usage": result["token_usage"]}
 
 
 # ─── Attempt lifecycle (§54, §57) ────────────────────────────────────────────
