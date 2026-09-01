@@ -18,7 +18,8 @@ a possibly-unpatched, cross-tenant-leaking retrieval path. The ownership check
 still runs first, so the security boundary is exercised even while generation is
 gated.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from app.core.security import limiter
 from typing import Dict, Any
 
 from app.core.dependencies import get_current_user
@@ -54,16 +55,17 @@ def _handle_ownership(exc: Exception):
 # ─── Generation (§54: POST /quizzes) — Phase 3 gated ─────────────────────────
 
 @router.post("/quizzes")
-async def generate_quiz(request: GenerateQuizRequest, current_user=Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def generate_quiz(request: Request, payload: GenerateQuizRequest, current_user=Depends(get_current_user)):
     # Idempotent generation (§55): same key → same quiz.
-    existing = repo.get_quiz_by_idempotency(current_user.id, request.idempotency_key or "")
+    existing = repo.get_quiz_by_idempotency(current_user.id, payload.idempotency_key or "")
     if existing:
         return {"quiz": existing, "idempotent_replay": True}
 
     # Ownership MUST be verified before any retrieval (§39). This runs even
     # while generation is gated, so the boundary is enforced now.
     try:
-        repo.verify_source_ownership(request.source_type, request.source_ids, current_user.id)
+        repo.verify_source_ownership(payload.source_type, payload.source_ids, current_user.id)
     except Exception as e:
         _handle_ownership(e)
 
