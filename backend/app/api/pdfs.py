@@ -78,14 +78,26 @@ def process_pdf_background(pdf_id: str, temp_path: str):
         
         # Calculate total pages
         page_count = len(pages) if pages else 0
-        
+
+        # Guard: a document that yields no chunks (blank / scanned / text-less PDF)
+        # is not usable for retrieval. Do not mark it "ready" and lie about success —
+        # record an honest error instead. (OCR auto-routing is a separate feature.)
+        if not chunks:
+            supabase.table("pdfs").update({
+                "status": "error",
+                "error_message": "No extractable text found in this document",
+                "page_count": page_count,
+            }).eq("id", pdf_id).execute()
+            logger.error(f"PDF {pdf_id}: zero chunks extracted; marked status=error (no extractable text).")
+            return
+
         # Batch embeddings (max 100 at a time)
         batch_size = 100
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i+batch_size]
             embeddings = get_embeddings([c["text"] for c in batch])
             store_chunks(pdf_id, batch, embeddings)
-        
+
         # Update status and page count
         supabase.table("pdfs").update({
             "status": "ready",
@@ -124,15 +136,15 @@ async def get_pdf_status(pdf_id: str, current_user=Depends(get_current_user)):
         .select("id, status, page_count") \
         .eq("id", pdf_id) \
         .eq("user_id", current_user.id) \
-        .single() \
+        .maybe_single() \
         .execute()
     
-    if not result.data:
+    if not result or not result.data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found"
         )
-    
+
     return result.data
 
 
@@ -144,15 +156,15 @@ async def delete_pdf(pdf_id: str, current_user=Depends(get_current_user)):
         .select("id, user_id") \
         .eq("id", pdf_id) \
         .eq("user_id", current_user.id) \
-        .single() \
+        .maybe_single() \
         .execute()
     
-    if not result.data:
+    if not result or not result.data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found"
         )
-    
+
     # Delete from Supabase Storage
     try:
         supabase.storage.from_("pdfs").remove([f"{current_user.id}/{pdf_id}.pdf"])
