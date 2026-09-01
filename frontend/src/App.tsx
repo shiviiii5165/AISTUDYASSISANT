@@ -13,6 +13,8 @@ import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import SupportPage from './pages/SupportPage';
 import LessonPlannerPage from './pages/LessonPlannerPage';
+import QuizGeneratorPage from './pages/QuizGeneratorPage';
+import QuizPage from './pages/QuizPage';
 
 import { useAuthStore } from './store/useAuthStore';
 import CookieConsent from './components/CookieConsent';
@@ -137,6 +139,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <TopicDeckPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/quizzes" 
+            element={
+              <ProtectedRoute>
+                <QuizGeneratorPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/quiz/:quizId" 
+            element={
+              <ProtectedRoute>
+                <QuizPage />
               </ProtectedRoute>
             } 
           />
