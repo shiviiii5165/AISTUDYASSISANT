@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, Search, Loader2, Trash2, MessageSquare, ChevronDown, RefreshCw } from 'lucide-react';
+import { Upload, FileText, Search, Loader2, Trash2, MessageSquare, ChevronDown, RefreshCw, HelpCircle } from 'lucide-react';
 import { fetchPdfs, uploadPdf, deletePdf, getPdfStatus } from '../lib/api';
 import type { PDFDocument } from '../lib/api';
 import { SUBJECTS, subjectStyle } from '../lib/subjects';
@@ -352,20 +352,36 @@ const LibraryPage: React.FC = () => {
                           present in the tab order for keyboard users. */}
                       <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                         {isReady && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/chat?pdf=${pdf.id}`);
-                            }}
-                            aria-label={`Chat with ${pdf.name}`}
-                            className="rounded-lg p-1.5 transition-colors hover:bg-[var(--accent-green-light)]"
-                          >
-                            <MessageSquare
-                              className="h-4 w-4 text-[var(--accent-green-text)]"
-                              aria-hidden="true"
-                            />
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/chat?pdf=${pdf.id}`);
+                              }}
+                              aria-label={`Chat with ${pdf.name}`}
+                              className="rounded-lg p-1.5 transition-colors hover:bg-[var(--accent-green-light)]"
+                            >
+                              <MessageSquare
+                                className="h-4 w-4 text-[var(--accent-green-text)]"
+                                aria-hidden="true"
+                              />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/quizzes', { state: { presetPdfId: pdf.id } });
+                              }}
+                              aria-label={`Generate Quiz from ${pdf.name}`}
+                              className="rounded-lg p-1.5 transition-colors hover:bg-[var(--accent-green-light)]"
+                            >
+                              <HelpCircle
+                                className="h-4 w-4 text-[var(--accent-green-text)]"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </>
                         )}
                         <button
                           type="button"
