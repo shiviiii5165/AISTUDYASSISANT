@@ -216,6 +216,18 @@ async def generate_roadmap(
     return roadmap
 
 
+@router.get("/")
+async def get_roadmaps(current_user = Depends(get_current_user)):
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    if supabase:
+        try:
+            res = supabase.table("learning_roadmaps").select("id, topic, title, description, created_at").eq("user_id", user_id).order("created_at", desc=True).execute()
+            return {"roadmaps": res.data or []}
+        except Exception as e:
+            logger.error(f"Failed to fetch roadmaps: {e}")
+    return {"roadmaps": []}
+
+
 @router.get("/{roadmap_id}", response_model=LearningRoadmap)
 async def get_roadmap(
     roadmap_id: str,
