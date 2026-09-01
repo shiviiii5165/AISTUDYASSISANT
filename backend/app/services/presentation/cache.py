@@ -4,6 +4,7 @@ Presentation Engine — Semantic & Deterministic Cache
 Calculates normalized request hashes to return cached presentations instantly
 without wasting model tokens or re-rendering identical decks.
 """
+from app.core.logging import logger
 import hashlib
 import json
 from typing import Optional, Dict, Any
@@ -49,7 +50,7 @@ async def get_cached_presentation(config: PresentationConfig) -> Optional[Dict[s
         if res.data and len(res.data) > 0:
             return res.data[0].get("deck_json")
     except Exception as e:
-        print(f"[Cache] Error checking presentation cache (non-fatal): {e}")
+        logger.error(f"[Cache] Error checking presentation cache (non-fatal): {e}")
     return None
 
 
@@ -66,4 +67,4 @@ async def save_cached_presentation(config: PresentationConfig, spec_json: Dict[s
             "deck_json": spec_json,
         }).execute()
     except Exception as e:
-        print(f"[Cache] Warning: Could not cache presentation: {e}")
+        logger.warning(f"[Cache] Warning: Could not cache presentation: {e}")
