@@ -40,6 +40,36 @@ async def generate_video_pipeline(
     project_id: Optional[str] = None,
 ) -> VideoProject:
     """
+    Public entrypoint. Runs the pipeline and, on any failure, marks the job as
+    'failed' (in-memory + DB) instead of leaving it stuck 'processing' or — worse —
+    shipping a corrupt video. The compositor now raises on ffmpeg errors.
+    """
+    try:
+        return await _generate_video_pipeline_impl(config, user_id, project_id)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        pid = project_id
+        proj = PROJECT_STORE.get(pid) if pid else None
+        if proj is not None:
+            proj.status = "failed"
+            proj.state = JobState.FAILED if hasattr(JobState, "FAILED") else proj.state
+        if supabase and pid:
+            try:
+                supabase.table("video_lessons").update(
+                    {"status": "failed", "error_message": str(e)[:500]}
+                ).eq("id", pid).execute()
+            except Exception as db_err:
+                print(f"[VideoOrchestrator] Could not mark job failed: {db_err}")
+        raise
+
+
+async def _generate_video_pipeline_impl(
+    config: VideoConfig,
+    user_id: str,
+    project_id: Optional[str] = None,
+) -> VideoProject:
+    """
     Executes the end-to-end educational video compilation pipeline with state transitions.
     """
     t0 = time.time()
@@ -156,7 +186,13 @@ async def generate_video_pipeline(
     project.state = JobState.QA
     project.progress = 95
     is_sb_valid, _ = validate_storyboard_quality(storyboard, config.duration)
-    is_media_valid, _ = validate_rendered_scene_media(storyboard.scenes)
+    is_media_valid, media_reason = validate_rendered_scene_media(storyboard.scenes)
+    # Do not upload/mark a video "ready" if the rendered media failed QA — that is
+    # what previously shipped corrupt files the browser could not parse.
+    if not is_media_valid:
+        raise RuntimeError(f"Rendered media failed QA validation: {media_reason}")
+    if not os.path.exists(final_mp4_path) or os.path.getsize(final_mp4_path) < 1024:
+        raise RuntimeError("Final video file is missing or too small to be a valid MP4.")
 
     # 7. Upload to Supabase Storage if available
     final_video_url = None
