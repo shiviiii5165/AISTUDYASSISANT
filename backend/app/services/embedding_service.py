@@ -1,3 +1,4 @@
+from app.core.logging import logger
 import time
 import httpx
 from app.core.config import settings
@@ -28,7 +29,7 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
 
-    print(f"Generating Gemini embeddings for {len(texts)} chunks via REST...")
+    logger.info(f"Generating Gemini embeddings for {len(texts)} chunks via REST...")
 
     requests = [
         {
@@ -58,7 +59,7 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
                     f"{resp.status_code} from embedding API", request=resp.request, response=resp
                 )
                 backoff = min(8.0, 1.5 * (attempt + 1))
-                print(f"Embedding API {resp.status_code} (attempt {attempt + 1}/{max_attempts}); "
+                logger.info(f"Embedding API {resp.status_code} (attempt {attempt + 1}/{max_attempts}); "
                       f"rotating key and retrying in {backoff:.1f}s")
                 time.sleep(backoff)
                 continue
@@ -71,7 +72,7 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
             return embeddings
         except Exception as e:
             last_exc = e
-            print(f"Gemini Embedding Error (attempt {attempt + 1}/{max_attempts}): {e}")
+            logger.error(f"Gemini Embedding Error (attempt {attempt + 1}/{max_attempts}): {e}")
             time.sleep(min(8.0, 1.5 * (attempt + 1)))
 
     # Exhausted retries — raise so the caller can surface a clear, retryable error.
