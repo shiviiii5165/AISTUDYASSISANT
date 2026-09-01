@@ -4,6 +4,7 @@ Multi-Source Hybrid Knowledge Search & Evidence Retriever
 Combines vector embeddings, keyword matching, metadata filtering, and
 source-aware formatting for PDF, PPT, Handwritten Notes, and YouTube sources.
 """
+from app.core.logging import logger
 import re
 from typing import List, Dict, Any, Optional, Union
 from app.db.supabase_client import supabase
@@ -46,7 +47,7 @@ async def hybrid_search_evidence(
                     "source_type": r.get("source_type", "pdf"),
                 }
         except Exception as e:
-            print(f"[HybridSearch] Metadata fetch error: {e}")
+            logger.error(f"[HybridSearch] Metadata fetch error: {e}")
 
     # 2. Vector search via Supabase RPC or direct query
     all_raw_results = []
@@ -71,9 +72,9 @@ async def hybrid_search_evidence(
                             item["pdf_id"] = d_id
                             all_raw_results.append(item)
                 except Exception as rpc_err:
-                    print(f"[HybridSearch] RPC match failed for {d_id}: {rpc_err}")
+                    logger.error(f"[HybridSearch] RPC match failed for {d_id}: {rpc_err}")
     except Exception as e:
-        print(f"[HybridSearch] Vector search failed: {e}")
+        logger.error(f"[HybridSearch] Vector search failed: {e}")
 
     # Fallback to direct table query if RPC was empty or unavailable
     if not all_raw_results and supabase:
@@ -93,7 +94,7 @@ async def hybrid_search_evidence(
                         "similarity": 0.6,
                     })
             except Exception as direct_err:
-                print(f"[HybridSearch] Direct fallback error: {direct_err}")
+                logger.error(f"[HybridSearch] Direct fallback error: {direct_err}")
 
     # 3. Process, Keyword-Boost, and Convert to EvidenceItem
     evidence_items: List[EvidenceItem] = []
