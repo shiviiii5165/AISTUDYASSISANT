@@ -168,7 +168,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
               >
                 <LogOut className="h-5 w-5" aria-hidden="true" />
-                Sign Out
+                Log out
               </button>
             </div>
           </aside>
