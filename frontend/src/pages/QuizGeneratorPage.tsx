@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
+import HistorySidebar from '../components/HistorySidebar';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
@@ -62,23 +63,37 @@ const QuizGeneratorPage: React.FC = () => {
   const [generating, setGenerating] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const [quizHistory, setQuizHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const initData = async () => {
       const token = useAuthStore.getState().session?.access_token;
       if (!token) return;
+
       try {
         setLoadingPdfs(true);
         const pdfs = await fetchPdfs();
         const readyPdfs = pdfs.filter(p => p.status === 'ready');
         setUserPdfs(readyPdfs);
-        if (readyPdfs.length > 0 && !selectedPdfId) {
+        if (readyPdfs.length > 0) {
           setSelectedPdfId(readyPdfs[0].id);
         }
       } catch (e) {
         console.error('Failed to load user PDFs', e);
       } finally {
         setLoadingPdfs(false);
+      }
+
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/quiz/quizzes`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setQuizHistory(data.quizzes || []);
+        }
+      } catch (e) {
+        console.error('Failed to fetch quiz history', e);
       }
     };
     initData();
@@ -143,12 +158,22 @@ const QuizGeneratorPage: React.FC = () => {
         description="Generate structured quizzes with explanations from your documents or any topic."
       />
 
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex h-full w-full">
+        <HistorySidebar
+          title="Quizzes"
+          items={quizHistory.map(q => ({ id: q.id, title: q.topic, date: q.created_at }))}
+          selectedId={null}
+          onSelect={(id) => navigate(`/quiz/${id}`)}
+          onNew={() => setTopic('')}
+        />
+        
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl">
         <motion.div variants={staggerContainer} initial="hidden" animate="show">
           <motion.div variants={staggerItem} className="mb-8">
             <GreetingHeader
               subtitle="Configure your topic, difficulty, and format to generate a comprehensive quiz."
-              avatarImageSrc="/scholar-genie-chibi.png"
+              avatarImageSrc="/images/tutor_avatar.jpg"
             />
           </motion.div>
 
@@ -414,7 +439,9 @@ const QuizGeneratorPage: React.FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+          </motion.div>
+          </div>
+        </div>
       </div>
       <UpgradeModal
         isOpen={showUpgradeModal}
