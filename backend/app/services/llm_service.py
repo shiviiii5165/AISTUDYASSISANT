@@ -1,3 +1,4 @@
+from app.core.logging import logger
 import re
 import json
 import httpx
@@ -200,7 +201,7 @@ async def call_gemini(
                     temperature=temperature, max_tokens=max_tokens,
                 )
                 if gm != model:
-                    print(f"⚡ Primary Gemini/{model} failed, succeeded with Gemini/{gm}")
+                    logger.error(f"Primary Gemini/{model} failed, succeeded with Gemini/{gm}")
                 return result
             except Exception as e:
                 err_str = str(e)
@@ -212,7 +213,7 @@ async def call_gemini(
                     await asyncio.sleep(1.5 * (attempt + 1))
 
     # ── Phase 2: Cascade through Groq models ───────────────────────────────
-    print(f"⚡ All Gemini models failed, falling back to Groq...")
+    logger.error(f"All Gemini models failed, falling back to Groq...")
     
     for gq in GROQ_MODELS:
         try:
@@ -220,7 +221,7 @@ async def call_gemini(
                 messages=messages, model=gq,
                 temperature=temperature, max_tokens=max_tokens,
             )
-            print(f"✅ Groq/{gq} fallback succeeded")
+            logger.info(f"Groq/{gq} fallback succeeded")
             return result
         except Exception as e:
             err_str = str(e)
@@ -294,7 +295,7 @@ async def call_best_llm(
     required_json_keys: list = None,
 ) -> str:
     """
-    🏆 PARALLEL RACING — Calls Gemini AND Groq simultaneously.
+    PARALLEL RACING — Calls Gemini AND Groq simultaneously.
     Both run at the same time, we pick the HIGHEST QUALITY response.
     If one fails, the other's result is used automatically.
     
@@ -329,8 +330,8 @@ async def call_best_llm(
     
     # Both failed → cascade through all providers
     if not gemini_ok and not groq_ok:
-        print(f"⚠️ Both parallel calls failed. Gemini: {gemini_result} | Groq: {groq_result}")
-        print("🔄 Falling back to cascading fallback chain...")
+        logger.error(f"Both parallel calls failed. Gemini: {gemini_result} | Groq: {groq_result}")
+        logger.info("Falling back to cascading fallback chain...")
         return await call_gemini(
             messages=messages,
             temperature=temperature,
@@ -339,19 +340,19 @@ async def call_best_llm(
     
     # Only one succeeded → use that
     if gemini_ok and not groq_ok:
-        print("🏆 Race result: Only Gemini succeeded")
+        logger.info("Race result: Only Gemini succeeded")
         return gemini_result
     
     if groq_ok and not gemini_ok:
-        print("🏆 Race result: Only Groq succeeded")
+        logger.info("Race result: Only Groq succeeded")
         return groq_result
     
-    # 🔥 BOTH SUCCEEDED — Pick the BEST quality response
+    # BOTH SUCCEEDED — Pick the BEST quality response
     gemini_score = _score_json_quality(gemini_result, required_json_keys)
     groq_score = _score_json_quality(groq_result, required_json_keys)
     
     winner = "Gemini" if gemini_score >= groq_score else "Groq"
-    print(f"🏆 Race result: {winner} wins! (Gemini={gemini_score}, Groq={groq_score})")
+    logger.info(f"Race result: {winner} wins! (Gemini={gemini_score}, Groq={groq_score})")
     
     return gemini_result if gemini_score >= groq_score else groq_result
 
@@ -362,7 +363,7 @@ async def call_parallel_merge(
     max_tokens: int = 8192,
 ) -> list[str]:
     """
-    🔀 PARALLEL MERGE — Calls ALL available providers and returns ALL successful 
+    PARALLEL MERGE — Calls ALL available providers and returns ALL successful 
     results. Used when we want to MERGE/COMBINE outputs from multiple LLMs
     for maximum richness (e.g., generating slide content from multiple perspectives).
     """
