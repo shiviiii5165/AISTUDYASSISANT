@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, Sparkles, Zap } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
+import PublicHeader from '../components/PublicHeader';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import { useAuthStore } from '../store/useAuthStore';
 import SEO from '../components/SEO';
@@ -13,8 +14,8 @@ const PricingPage: React.FC = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
 
-  return (
-    <AppLayout title="Pricing">
+  const content = (
+    <>
       <SEO 
         title="Pricing" 
         description="Simple, student-friendly pricing. Upgrade to TeachGenie Pro for unlimited AI chat, advanced modes, and predicted exam questions." 
@@ -150,7 +151,16 @@ const PricingPage: React.FC = () => {
         isOpen={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)} 
       />
-    </AppLayout>
+    </>
+  );
+
+  return user ? (
+    <AppLayout title="Pricing">{content}</AppLayout>
+  ) : (
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
+      <PublicHeader />
+      {content}
+    </div>
   );
 };
 
