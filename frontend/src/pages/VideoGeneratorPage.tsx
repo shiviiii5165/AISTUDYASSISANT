@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   PlayCircle, Clock, Globe, Loader2, BookOpen, FileText,
   CheckCircle2, AlertCircle, Video, Download, RefreshCw, Film,
@@ -100,10 +101,17 @@ const VISUAL_BADGES: Record<string, string> = {
 };
 
 const VideoGeneratorPage: React.FC = () => {
-  const [topic, setTopic] = useState('');
-  const [level, setLevel] = useState('B.Tech');
-  const [duration, setDuration] = useState('5');
-  const [language, setLanguage] = useState('English');
+  const location = useLocation();
+  const presetConfig = location.state?.presetConfig;
+
+  const [topic, setTopic] = useState(presetConfig?.topic || '');
+  const [level, setLevel] = useState(presetConfig?.level || 'B.Tech');
+  const [duration, setDuration] = useState(presetConfig?.target_duration_minutes?.toString() || '5');
+  const [language, setLanguage] = useState(
+    presetConfig?.language 
+      ? presetConfig.language.charAt(0).toUpperCase() + presetConfig.language.slice(1) 
+      : 'English'
+  );
   const [quality, setQuality] = useState('standard');
   const [style, setStyle] = useState('academic');
 
@@ -238,9 +246,9 @@ const VideoGeneratorPage: React.FC = () => {
   };
 
   // Start Generation
-  const handleGenerate = async (e?: React.FormEvent) => {
+  const handleGenerate = async (e?: React.FormEvent, overridePayload?: any) => {
     if (e) e.preventDefault();
-    if (!topic.trim() || generating) return;
+    if ((!topic.trim() && !overridePayload) || generating) return;
 
     setGenerating(true);
     setLessonId(null);
@@ -258,23 +266,25 @@ const VideoGeneratorPage: React.FC = () => {
     try {
       const sourceIds = (sourceType === 'pdf' && selectedPdfId) ? [selectedPdfId] : [];
 
+      const payload = overridePayload || {
+        topic: topic.trim(),
+        level,
+        duration,
+        language: language.toLowerCase(),
+        style,
+        quality,
+        source_type: sourceType,
+        source_ids: sourceIds,
+        youtube_url: youtubeUrl.trim() || null,
+      };
+
       const res = await fetch(`${apiUrl}/api/lessons/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          topic: topic.trim(),
-          level,
-          duration,
-          language: language.toLowerCase(),
-          style,
-          quality,
-          source_type: sourceType,
-          source_ids: sourceIds,
-          youtube_url: youtubeUrl.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error('Failed to initiate video generation');
