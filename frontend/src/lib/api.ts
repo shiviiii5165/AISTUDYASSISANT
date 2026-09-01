@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase';
+import { useAuthStore } from '../store/useAuthStore';
 
 // Use VITE_API_URL if set, otherwise empty string (requests go to same origin, where Vercel rewrites route them to the serverless function)
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -14,10 +15,17 @@ export const api = axios.create({
 // Automatically add the Supabase JWT token to every request
 api.interceptors.request.use(
   async (config) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    // Try to get token synchronously from the store first (much faster and more reliable if already initialized)
+    let token = useAuthStore.getState().session?.access_token;
     
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+    // Fallback to supabase.auth.getSession() if store is empty (e.g. initial load race conditions)
+    if (!token) {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token;
+    }
+    
+    if (token) {
+      config.headers.set('Authorization', `Bearer ${token}`);
     }
     
     return config;
@@ -129,11 +137,13 @@ export interface PipelineOutput {
 
 export async function sendMessageV2(
   message: string,
+  pdfId: string,
   history: ChatMessage[] = []
 ): Promise<PipelineOutput> {
   const response = await api.post('/chat/v2/ask', {
     message,
-    conversation_history: history,
+    pdf_id: pdfId,
+    history,
   });
   return response.data;
 }
