@@ -4,8 +4,34 @@ import json
 import httpx
 import asyncio
 from app.core.config import settings
+import hashlib
+import time
 
+class SimpleTTLCache:
+    def __init__(self, ttl: int):
+        self.ttl = ttl
+        self.cache = {}
+    
+    def get(self, key):
+        if key in self.cache:
+            val, expiry = self.cache[key]
+            if time.time() < expiry:
+                return val
+            else:
+                del self.cache[key]
+        return None
+        
+    def set(self, key, value):
+        # Prevent unbounded growth by limiting size
+        if len(self.cache) > 1000:
+            self.cache.clear()
+        self.cache[key] = (value, time.time() + self.ttl)
 
+llm_cache = SimpleTTLCache(ttl=43200)
+
+def _generate_cache_key(messages: list, model: str, temperature: float) -> str:
+    key_data = json.dumps(messages, sort_keys=True) + model + str(temperature)
+    return hashlib.sha256(key_data.encode()).hexdigest()
 # ══════════════════════════════════════════════════════════════════════════════
 # JSON REPAIR UTILITIES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -116,6 +142,7 @@ async def _call_gemini_raw(
         "generationConfig": {
             "temperature": temperature,
             "maxOutputTokens": max_tokens,
+            "responseMimeType": "application/json",
         },
     }
     if system_instruction:
@@ -187,6 +214,12 @@ async def call_gemini(
     
     If ANY provider succeeds, the user never sees an error.
     """
+    cache_key = _generate_cache_key(messages, model, temperature)
+    cached_val = llm_cache.get(cache_key)
+    if cached_val:
+        logger.info(f"LLM Cache HIT for model {model}")
+        return cached_val
+
     errors = []
 
     # ── Phase 1: Try all Gemini models ──────────────────────────────────────
@@ -202,6 +235,7 @@ async def call_gemini(
                 )
                 if gm != model:
                     logger.error(f"Primary Gemini/{model} failed, succeeded with Gemini/{gm}")
+                llm_cache.set(cache_key, result)
                 return result
             except Exception as e:
                 err_str = str(e)
@@ -222,6 +256,7 @@ async def call_gemini(
                 temperature=temperature, max_tokens=max_tokens,
             )
             logger.info(f"Groq/{gq} fallback succeeded")
+            llm_cache.set(cache_key, result)
             return result
         except Exception as e:
             err_str = str(e)
