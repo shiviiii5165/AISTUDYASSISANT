@@ -18,4 +18,5 @@ class ChatResponse(BaseModel):
 
 class PipelineRequest(BaseModel):
     message: str
+    pdf_id: Optional[str] = None
     history: Optional[List[Dict[str, Any]]] = None
