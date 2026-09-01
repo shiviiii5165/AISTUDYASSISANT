@@ -206,7 +206,7 @@ class NotesAdapter:
             "## Key Takeaways",
             "\n".join([f"- **Objective:** {o.description}" for o in stage.objectives]) or f"- {stage.description}",
             "\n## Common Pitfalls & Misconceptions",
-            "\n".join([f"- ⚠️ *{m}*" for m in stage.expected_misconceptions]) if stage.expected_misconceptions else "- Master all edge conditions carefully.",
+            "\n".join([f"- [Warning] *{m}*" for m in stage.expected_misconceptions]) if stage.expected_misconceptions else "- Master all edge conditions carefully.",
             "\n## Practice Checkpoints",
             "\n".join([f"{i+1}. {q}" for i, q in enumerate(stage.checkpoint_questions)]) if stage.checkpoint_questions else "- Review worked examples."
         ]
