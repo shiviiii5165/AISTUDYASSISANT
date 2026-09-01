@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
@@ -26,14 +27,28 @@ app.add_middleware(
 )
 
 from app.core.security import setup_rate_limiting, SecurityHeadersMiddleware, RequestSizeLimitMiddleware
+from slowapi.middleware import SlowAPIMiddleware
+
 app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10_000_000) # 10MB
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(SlowAPIMiddleware)
 setup_rate_limiting(app)
 
 
-# Global exception handler — always returns CORS-safe JSON, never a raw crash
+# Global exception handler — always returns CORS-safe JSON, never a raw crash.
+# HTTPException and RequestValidationError are passed through to FastAPI's own
+# handlers so deliberate 4xx/5xx codes (e.g. the Phase-3 503 gate) are
+# preserved and not accidentally flattened into 500.
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=getattr(exc, "headers", None) or {},
+        )
+    if isinstance(exc, RequestValidationError):
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
     logger.error(f"UNHANDLED EXCEPTION on {request.method} {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
