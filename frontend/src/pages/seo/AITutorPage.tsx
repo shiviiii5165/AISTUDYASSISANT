@@ -27,7 +27,7 @@ const AITutorPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
         title="AI Tutor for Students - Your Personal Study Assistant"
         description="Looking for an AI tutor for students? TeachGenie acts as your personal AI study assistant. Upload notes, ask doubts, and prepare for exams easily."
@@ -36,11 +36,11 @@ const AITutorPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
           <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
-        </div>
-        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-colors">
+        </button>
+        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
         </button>
       </nav>
@@ -60,7 +60,7 @@ const AITutorPage: React.FC = () => {
             <p className="text-[var(--text-secondary)]">Get step-by-step explanations for math, science, and more.</p>
           </div>
           <div className="p-6 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-            <MessageSquare className="w-8 h-8 text-[var(--accent-indigo)] mb-4" />
+            <MessageSquare className="w-8 h-8 text-[var(--accent-green-text)] mb-4" />
             <h3 className="text-xl font-bold mb-2">24/7 Doubt Solving</h3>
             <p className="text-[var(--text-secondary)]">Your AI tutor is always awake and ready to answer your questions.</p>
           </div>
@@ -86,7 +86,7 @@ const AITutorPage: React.FC = () => {
         </div>
         
         <div className="text-center">
-          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 hover:bg-green-700 transition-colors">
+          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 hover:bg-[var(--accent-green-hover)] transition-colors">
             Start Learning Now <ArrowRight className="w-5 h-5" />
           </button>
         </div>

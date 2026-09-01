@@ -4,6 +4,7 @@ TTS Narration Engine & Audio Cache
 Generates educational speech audio from scene narration scripts with deterministic
 local caching (text_hash + voice + language) and fallback support.
 """
+from app.core.logging import logger
 import os
 import io
 import hashlib
@@ -80,7 +81,7 @@ async def generate_narration_audio(
         await communicate.save(output_path)
         return output_path, estimated_duration
     except Exception as edge_e:
-        print(f"[TTS] edge-tts failed: {edge_e}. Falling back to gTTS.")
+        logger.error(f"[TTS] edge-tts failed: {edge_e}. Falling back to gTTS.")
         
     # 4. Attempt gTTS fallback
     try:
@@ -90,7 +91,7 @@ async def generate_narration_audio(
         tts.save(output_path)
         return output_path, estimated_duration
     except Exception as e:
-        print(f"[TTS] gTTS fallback failed: {e}. Falling back to offline tone.")
+        logger.error(f"[TTS] gTTS fallback failed: {e}. Falling back to offline tone.")
         # Fallback to deterministic tone/silence audio for robust offline operation
         generate_offline_tone_audio(output_path, duration_sec=estimated_duration)
         return output_path, estimated_duration

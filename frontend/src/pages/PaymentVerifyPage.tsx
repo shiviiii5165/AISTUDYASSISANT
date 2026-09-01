@@ -49,7 +49,7 @@ const PaymentVerifyPage: React.FC = () => {
         <div className="bg-white p-8 md:p-12 rounded-2xl shadow-xl max-w-md w-full text-center border border-[var(--border)]">
           {status === 'verifying' && (
             <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-              <Loader2 className="w-16 h-16 text-[var(--accent-indigo)] animate-spin mb-6" />
+              <Loader2 className="w-16 h-16 text-[var(--accent-green-text)] animate-spin mb-6" />
               <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Verifying Payment</h2>
               <p className="text-[var(--text-secondary)]">
                 Please wait while we confirm your payment with the gateway. Do not close this window.
@@ -66,7 +66,7 @@ const PaymentVerifyPage: React.FC = () => {
               <p className="text-[var(--text-secondary)] mb-6">
                 Your payment was successful. You are now a Pro member.
               </p>
-              <div className="text-sm font-medium text-[var(--accent-indigo)] flex items-center gap-2">
+              <div className="text-sm font-medium text-[var(--accent-green-text)] flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Redirecting to dashboard...
               </div>

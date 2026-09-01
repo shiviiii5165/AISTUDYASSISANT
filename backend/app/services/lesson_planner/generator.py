@@ -31,7 +31,7 @@ class RoadmapGenerator:
             "topic": "DBMS Normalization",
             "course": "Database Management Systems",
             "level": "B.Tech",
-            "language": "hinglish",
+            "language": "english",
             "class_type": "Interactive Lecture",
             "duration_minutes": 60,
             "goal": "Explain normal forms with step-by-step decomposition examples and checkpoints.",
@@ -54,7 +54,7 @@ Return JSON matching:
   "topic": "Concise subject topic",
   "course": "Broader course name (e.g. Operating Systems, DBMS)",
   "level": "Audience level (e.g. B.Tech, Grade 11, High School, Introductory)",
-  "language": "english | hindi | hinglish",
+  "language": "english | hindi | hinglish — default to 'english'; only choose 'hindi' or 'hinglish' if the teacher EXPLICITLY asks for that output language (e.g. 'explain in Hindi', 'Hinglish me'). Do NOT infer it merely from the script/language the prompt itself is written in.",
   "class_type": "Lecture | Interactive Lecture | Tutorial | Lab | Seminar | Workshop | Revision | Exam Review | Remedial",
   "duration_minutes": {default_config['duration_minutes']},
   "goal": "Core teaching outcome"
@@ -93,7 +93,7 @@ Return ONLY JSON.
     async def generate_draft_roadmap(
         topic: str,
         level: str = "B.Tech",
-        language: str = "hinglish",
+        language: str = "english",
         class_type: str = "Interactive Lecture",
         target_duration_minutes: int = 60,
         custom_context: Optional[str] = None,

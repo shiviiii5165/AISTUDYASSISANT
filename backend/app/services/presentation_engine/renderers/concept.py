@@ -79,7 +79,7 @@ def render_concept(slide: Slide, content: SlideContent, theme: ThemeColors, **kw
             border_color=theme.border_light,
         )
         add_text_box(
-            slide, "💡 Example",
+            slide, "Example",
             MARGIN_LEFT + Inches(0.3), card_top + Inches(0.15),
             Inches(2), Inches(0.3),
             token=Typography.BADGE,

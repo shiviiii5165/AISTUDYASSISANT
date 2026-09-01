@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
@@ -13,6 +13,8 @@ import PricingPage from './pages/PricingPage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import SupportPage from './pages/SupportPage';
 import LessonPlannerPage from './pages/LessonPlannerPage';
+import QuizGeneratorPage from './pages/QuizGeneratorPage';
+import QuizPage from './pages/QuizPage';
 
 import { useAuthStore } from './store/useAuthStore';
 import CookieConsent from './components/CookieConsent';
@@ -41,7 +43,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-[var(--accent-green)] border-t-transparent rounded-full animate-spin" />
           <span className="text-[var(--text-secondary)] text-sm font-medium">Loading...</span>
@@ -57,6 +59,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const main = document.querySelector('main');
+    if (main) {
+      main.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   const { initializeAuth } = useAuthStore();
 
@@ -67,6 +83,7 @@ function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <CookieConsent />
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -141,6 +158,22 @@ function App() {
             } 
           />
           <Route 
+            path="/quizzes" 
+            element={
+              <ProtectedRoute>
+                <QuizGeneratorPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/quiz/:quizId" 
+            element={
+              <ProtectedRoute>
+                <QuizPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/video" 
             element={
               <ProtectedRoute>
@@ -156,14 +189,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/support" 
-            element={
-              <ProtectedRoute>
-                <SupportPage />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/support" element={<SupportPage />} />
         </Routes>
       </BrowserRouter>
     </HelmetProvider>

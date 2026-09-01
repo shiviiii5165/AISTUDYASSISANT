@@ -13,6 +13,7 @@ from app.core.plan_guards import check_daily_question_limit
 from app.services.video.schemas import VideoConfig, VideoQuality, VideoStyle, AspectRatio
 from app.services.video.orchestrator import generate_video_pipeline, regenerate_single_scene, PROJECT_STORE
 from app.services.knowledge.sources import SourceType
+from app.core.logging import logger
 
 router = APIRouter()
 
@@ -160,6 +161,9 @@ async def get_lesson_status(
     # Check in-memory active store first
     if lesson_id in PROJECT_STORE:
         proj = PROJECT_STORE[lesson_id]
+        # Enforce ownership on the in-memory branch, matching the Supabase fallback.
+        if getattr(proj, "user_id", None) != current_user.id:
+            raise HTTPException(status_code=404, detail="Video lesson not found")
         return {
             "status": proj.status,
             "topic": proj.topic,
@@ -229,12 +233,51 @@ async def list_lessons(current_user=Depends(get_current_user)):
 
 @router.delete("/{lesson_id}")
 async def delete_lesson(lesson_id: str, current_user=Depends(get_current_user)):
-    """Delete a video lesson."""
+    """Delete a video lesson owned by the current user.
+
+    Reports outcomes honestly: 404 if the lesson does not exist or is not owned
+    by the caller, a real 5xx if the database operation genuinely fails, and 200
+    only when an owned lesson was actually removed.
+    """
     if supabase:
+        # Verify existence + ownership before claiming success.
+        try:
+            res = supabase.table("video_lessons") \
+                .select("id") \
+                .eq("id", lesson_id) \
+                .eq("user_id", current_user.id) \
+                .maybe_single() \
+                .execute()
+        except Exception as e:
+            logger.error(f"Lookup failed while deleting lesson {lesson_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Could not verify lesson before deletion. Please try again.",
+            )
+
+        if not res or not res.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Video lesson not found",
+            )
+
         try:
             supabase.table("video_lessons").delete().eq("id", lesson_id).eq("user_id", current_user.id).execute()
-        except Exception:
-            pass
-    if lesson_id in PROJECT_STORE:
-        del PROJECT_STORE[lesson_id]
+        except Exception as e:
+            logger.error(f"DB delete failed for lesson {lesson_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete lesson.",
+            )
+
+        PROJECT_STORE.pop(lesson_id, None)
+        return {"status": "success"}
+
+    # No database configured — operate on the in-memory store only.
+    if lesson_id not in PROJECT_STORE:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Video lesson not found",
+        )
+    del PROJECT_STORE[lesson_id]
     return {"status": "success"}

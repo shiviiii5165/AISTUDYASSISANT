@@ -4,6 +4,7 @@ YouTube Video Transcript & Concept Segmentation Service
 Extracts transcripts from public YouTube URLs, segments them into timestamped
 evidence chunks (e.g. 00:04:10–00:05:12), and stores them with embeddings.
 """
+from app.core.logging import logger
 import re
 import uuid
 from typing import List, Dict, Any, Optional
@@ -35,12 +36,12 @@ def fetch_youtube_transcript(video_id: str) -> List[Dict[str, Any]]:
         transcript = transcript_list.find_transcript(['en', 'en-US', 'hi', 'auto'])
         return transcript.fetch()
     except Exception as e:
-        print(f"[YouTubeProcessor] Notice: Standard transcript fetch failed ({e}). Attempting direct get_transcript...")
+        logger.error(f"[YouTubeProcessor] Notice: Standard transcript fetch failed ({e}). Attempting direct get_transcript...")
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
             return YouTubeTranscriptApi.get_transcript(video_id)
         except Exception as e2:
-            print(f"[YouTubeProcessor] Transcript unavailable: {e2}")
+            logger.info(f"[YouTubeProcessor] Transcript unavailable: {e2}")
             return []
 
 
@@ -153,7 +154,7 @@ def process_youtube_video_and_store(
                 "source_type": "youtube",
             }).execute()
         except Exception as e:
-            print(f"[YouTubeProcessor] DB insert notice: {e}")
+            logger.info(f"[YouTubeProcessor] DB insert notice: {e}")
 
     # 2. Embed and store chunks
     if chunks:
