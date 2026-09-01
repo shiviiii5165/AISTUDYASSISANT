@@ -4,6 +4,7 @@ Uses existing Gemini embedding_service.py and Supabase pgvector.
 Adapted to existing document_chunks schema: pdf_id, chunk_text, page_number, embedding, chunk_index.
 """
 
+from app.core.logging import logger
 from app.services.embedding_service import get_embeddings
 from app.db.supabase_client import supabase
 
@@ -38,6 +39,13 @@ def store_chunks_from_text(pdf_id: str, text: str, page_number: int = 0) -> int:
         batch = chunks[i:i + batch_size]
         embeddings = get_embeddings(batch)
 
+        if len(embeddings) != len(batch):
+            raise RuntimeError(
+                f"Embedding count mismatch for {pdf_id}: "
+                f"expected {len(batch)}, got {len(embeddings)}. "
+                "Refusing to store partial batch to avoid silent chunk loss."
+            )
+
         records = []
         for idx, (chunk, embedding) in enumerate(zip(batch, embeddings)):
             records.append({
@@ -51,12 +59,12 @@ def store_chunks_from_text(pdf_id: str, text: str, page_number: int = 0) -> int:
         try:
             supabase.table("document_chunks").insert(records).execute()
             total_stored += len(records)
-            print(f"Stored batch of {len(records)} chunks for document {pdf_id}.")
+            logger.info(f"Stored batch of {len(records)} chunks for document {pdf_id}.")
         except Exception as e:
-            print(f"Error storing chunks: {e}")
+            logger.error(f"Error storing chunks: {e}")
             raise e
 
-    print(f"Successfully stored {total_stored} total chunks for document {pdf_id}.")
+    logger.info(f"Successfully stored {total_stored} total chunks for document {pdf_id}.")
     return total_stored
 
 
@@ -79,7 +87,7 @@ def query_chunks_for_rag(pdf_id: str, user_id: str, query: str, top_k: int = 5) 
         ).execute()
 
         results = response.data
-        print(f"Similarity search returned {len(results)} chunks.")
+        logger.info(f"Similarity search returned {len(results)} chunks.")
 
         return [
             {
@@ -90,7 +98,7 @@ def query_chunks_for_rag(pdf_id: str, user_id: str, query: str, top_k: int = 5) 
             for row in results
         ]
     except Exception as e:
-        print(f"Error during similarity search: {e}")
+        logger.error(f"Error during similarity search: {e}")
         raise e
 
 
@@ -108,8 +116,8 @@ def get_all_chunks_text(pdf_id: str, user_id: str, limit: int = 30) -> list[str]
         }).execute()
 
         results = response.data
-        print(f"Fetched {len(results)} chunks for document {pdf_id}.")
+        logger.info(f"Fetched {len(results)} chunks for document {pdf_id}.")
         return [row["chunk_text"] for row in results]
     except Exception as e:
-        print(f"Error fetching all chunks: {e}")
+        logger.error(f"Error fetching all chunks: {e}")
         raise e
