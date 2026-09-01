@@ -5,7 +5,6 @@ Coordinates the end-to-end presentation lifecycle:
 1. Cache Check -> 2. Planner Agent -> 3. Content Agent -> 4. Visual Agent ->
 5. QA Agent & Slide Patch -> 6. Deterministic PPTX Render -> 7. Storage & Signed URL.
 """
-from app.core.logging import logger
 import asyncio
 from typing import Dict, Any, Optional, Callable
 from .schemas import PresentationConfig, PresentationSpec, SlideSpec, VisualSpec, VisualKind, DiagramSpec, SlideSourceRef
@@ -29,7 +28,7 @@ async def generate_presentation_pipeline(
     # 0. Check cache for repeated request
     cached_json = await get_cached_presentation(config)
     if cached_json:
-        logger.info("[Orchestrator] Cache HIT — using cached presentation specification")
+        print("[Orchestrator] Cache HIT — using cached presentation specification")
         spec = PresentationSpec(**cached_json)
         # Render PPTX bytes directly
         from .engine.builder import build_presentation_spec
@@ -40,28 +39,28 @@ async def generate_presentation_pipeline(
         on_stage_update("planning", 15)
 
     # 1. PLANNER AGENT
-    logger.info(f"[Orchestrator] Step 1: Planning {config.slide_count} slides for '{config.topic}'...")
+    print(f"[Orchestrator] Step 1: Planning {config.slide_count} slides for '{config.topic}'...")
     outline_data = await plan_presentation(config, user_id=user_id)
 
     if on_stage_update:
         on_stage_update("content", 45)
 
-    # 2. CONTENT AGENT (Single Batched Request)
-    logger.info(f"[Orchestrator] Step 2: Expanding content in a single batched request...")
+    # 2. CONTENT AGENT (Batched in 5s)
+    print(f"[Orchestrator] Step 2: Expanding content across 5-slide batches...")
     expanded_slides = await expand_presentation_content(config, user_id=user_id, outline_data=outline_data)
 
     if on_stage_update:
         on_stage_update("visuals", 70)
 
     # 3. VISUAL AGENT (Diagrams & Selective AI Images)
-    logger.info(f"[Orchestrator] Step 3: Resolving visuals and diagrams...")
+    print(f"[Orchestrator] Step 3: Resolving visuals and diagrams...")
     slides_with_visuals = await resolve_slide_visuals(config, expanded_slides)
 
     if on_stage_update:
         on_stage_update("qa", 85)
 
     # 4. QA AGENT & TARGETED REPAIR
-    logger.info(f"[Orchestrator] Step 4: Running Python QA bounds & repair loop...")
+    print(f"[Orchestrator] Step 4: Running Python QA bounds & repair loop...")
     final_slide_dicts = await run_presentation_qa(config, slides_with_visuals)
 
     # 5. Build strict PresentationSpec

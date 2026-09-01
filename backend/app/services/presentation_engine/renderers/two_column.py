@@ -72,7 +72,7 @@ def render_two_column(slide: Slide, content: SlideContent, theme: ThemeColors, *
                 fill_color=theme.surface_alt,
                 border_color=theme.border_light,
             )
-            badge = "Example" if content.example else "Key Insight"
+            badge = "💡 Example" if content.example else "🔑 Key Insight"
             add_text_box(
                 slide, badge,
                 right_left + Inches(0.25), ZONE_CONTENT_TOP + Inches(0.2),

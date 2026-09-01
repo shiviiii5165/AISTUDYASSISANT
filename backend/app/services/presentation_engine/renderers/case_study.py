@@ -34,9 +34,9 @@ def render_case_study(slide: Slide, content: SlideContent, theme: ThemeColors, *
     third = max(len(bullets) // 3, 1)
 
     sections_data = [
-        ("Context", bullets[:third] if bullets else [content.body_text or "–"], theme.surface_alt),
-        ("Solution", bullets[third:2*third] if len(bullets) > third else [content.example or "–"], theme.primary_light),
-        ("Outcome", bullets[2*third:] if len(bullets) > 2*third else [content.key_insight or "–"], theme.surface_alt),
+        ("📋  Context", bullets[:third] if bullets else [content.body_text or "–"], theme.surface_alt),
+        ("⚡  Solution", bullets[third:2*third] if len(bullets) > third else [content.example or "–"], theme.primary_light),
+        ("✅  Outcome", bullets[2*third:] if len(bullets) > 2*third else [content.key_insight or "–"], theme.surface_alt),
     ]
 
     gap = Inches(0.2)

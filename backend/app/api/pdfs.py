@@ -5,7 +5,6 @@ from app.services.vector_store import store_chunks
 from app.db.supabase_client import supabase
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import check_pdf_upload_limit
-from app.core.logging import logger
 import uuid, os
 
 router = APIRouter()
@@ -61,7 +60,7 @@ async def upload_pdf(
         return {"pdf_id": pdf_id, "status": "processing"}
 
     except Exception as e:
-        logger.error(f"Upload failed: {str(e)}")
+        print(f"Upload failed: {str(e)}")
         # If it failed, clean up the temp file if it was created
         if 'temp_path' in locals() and os.path.exists(temp_path):
             os.remove(temp_path)
@@ -78,40 +77,27 @@ def process_pdf_background(pdf_id: str, temp_path: str):
         
         # Calculate total pages
         page_count = len(pages) if pages else 0
-
-        # Guard: a document that yields no chunks (blank / scanned / text-less PDF)
-        # is not usable for retrieval. Do not mark it "ready" and lie about success —
-        # record an honest error instead. (OCR auto-routing is a separate feature.)
-        if not chunks:
-            supabase.table("pdfs").update({
-                "status": "error",
-                "error_message": "No extractable text found in this document",
-                "page_count": page_count,
-            }).eq("id", pdf_id).execute()
-            logger.error(f"PDF {pdf_id}: zero chunks extracted; marked status=error (no extractable text).")
-            return
-
+        
         # Batch embeddings (max 100 at a time)
         batch_size = 100
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i+batch_size]
             embeddings = get_embeddings([c["text"] for c in batch])
             store_chunks(pdf_id, batch, embeddings)
-
+        
         # Update status and page count
         supabase.table("pdfs").update({
             "status": "ready",
             "page_count": page_count
         }).eq("id", pdf_id).execute()
     except Exception as e:
-        # Mark as error if processing fails; record the reason in the dedicated
-        # error_message column instead of overwriting the user-facing subject.
+        # Mark as error if processing fails, and save error in subject so we can see it
         error_str = str(e)
         supabase.table("pdfs").update({
             "status": "error",
-            "error_message": f"ERROR: {error_str}"[:200]  # truncate just in case
+            "subject": f"ERROR: {error_str}"[:200]  # truncate just in case
         }).eq("id", pdf_id).execute()
-        logger.error(f"Error processing PDF {pdf_id}: {error_str}")
+        print(f"Error processing PDF {pdf_id}: {error_str}")
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
@@ -136,15 +122,15 @@ async def get_pdf_status(pdf_id: str, current_user=Depends(get_current_user)):
         .select("id, status, page_count") \
         .eq("id", pdf_id) \
         .eq("user_id", current_user.id) \
-        .maybe_single() \
+        .single() \
         .execute()
     
-    if not result or not result.data:
+    if not result.data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found"
         )
-
+    
     return result.data
 
 
@@ -156,15 +142,15 @@ async def delete_pdf(pdf_id: str, current_user=Depends(get_current_user)):
         .select("id, user_id") \
         .eq("id", pdf_id) \
         .eq("user_id", current_user.id) \
-        .maybe_single() \
+        .single() \
         .execute()
     
-    if not result or not result.data:
+    if not result.data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found"
         )
-
+    
     # Delete from Supabase Storage
     try:
         supabase.storage.from_("pdfs").remove([f"{current_user.id}/{pdf_id}.pdf"])

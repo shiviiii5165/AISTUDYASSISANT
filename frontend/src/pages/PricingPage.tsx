@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, Sparkles, Zap } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
-import PublicHeader from '../components/PublicHeader';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import { useAuthStore } from '../store/useAuthStore';
 import SEO from '../components/SEO';
@@ -14,8 +13,8 @@ const PricingPage: React.FC = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
 
-  const content = (
-    <>
+  return (
+    <AppLayout title="Pricing">
       <SEO 
         title="Pricing" 
         description="Simple, student-friendly pricing. Upgrade to TeachGenie Pro for unlimited AI chat, advanced modes, and predicted exam questions." 
@@ -48,7 +47,7 @@ const PricingPage: React.FC = () => {
               }}
               className="w-full py-3 px-4 bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] font-semibold rounded-xl border border-[var(--border)] transition-colors mb-8"
             >
-              {user ? 'Current Plan' : 'Start free'}
+              {user ? 'Current Plan' : 'Start Free'}
             </button>
             <div className="space-y-4 flex-1">
               <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">Features included:</h3>
@@ -91,11 +90,11 @@ const PricingPage: React.FC = () => {
           </div>
 
           {/* Pro Plan */}
-          <div className="bg-white rounded-2xl p-6 md:p-8 border-2 border-[var(--accent-green)] shadow-xl flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-[var(--accent-green)] text-white text-xs font-bold px-3 py-1.5 rounded-bl-lg flex items-center gap-1">
+          <div className="bg-white rounded-2xl p-6 md:p-8 border-2 border-[var(--accent-indigo)] shadow-xl flex flex-col relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-[var(--accent-indigo)] text-white text-xs font-bold px-3 py-1.5 rounded-bl-lg flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5" /> Recommended
             </div>
-            <h2 className="text-xl font-bold text-[var(--accent-green-text)] mb-2 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-[var(--accent-indigo)] mb-2 flex items-center gap-2">
               Pro Plan <Zap className="w-5 h-5" />
             </h2>
             <div className="flex items-baseline gap-1 mb-6">
@@ -115,30 +114,30 @@ const PricingPage: React.FC = () => {
               Upgrade to Pro
             </button>
             <div className="space-y-4 flex-1">
-              <h3 className="text-xs font-bold text-[var(--accent-green-text)] uppercase tracking-wider">Everything in Free, plus:</h3>
+              <h3 className="text-xs font-bold text-[var(--accent-indigo)] uppercase tracking-wider">Everything in Free, plus:</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3 text-sm font-medium text-[var(--text-primary)]">
-                  <Check className="w-5 h-5 text-[var(--accent-green-text)] shrink-0" />
+                  <Check className="w-5 h-5 text-[var(--accent-indigo)] shrink-0" />
                   Unlimited PDF uploads & AI questions
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[var(--text-primary)]">
-                  <Check className="w-5 h-5 text-[var(--accent-green-text)] shrink-0" />
+                  <Check className="w-5 h-5 text-[var(--accent-indigo)] shrink-0" />
                   Full Chapter Crux & No Fact Miss modes
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[var(--text-primary)]">
-                  <Check className="w-5 h-5 text-[var(--accent-green-text)] shrink-0" />
+                  <Check className="w-5 h-5 text-[var(--accent-indigo)] shrink-0" />
                   Formula Coverage & Exam Shield Notes
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[var(--text-primary)]">
-                  <Check className="w-5 h-5 text-[var(--accent-green-text)] shrink-0" />
+                  <Check className="w-5 h-5 text-[var(--accent-indigo)] shrink-0" />
                   Predicted Exam Questions
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[var(--text-primary)]">
-                  <Check className="w-5 h-5 text-[var(--accent-green-text)] shrink-0" />
+                  <Check className="w-5 h-5 text-[var(--accent-indigo)] shrink-0" />
                   Handwritten Notes AI Support
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[var(--text-primary)]">
-                  <Check className="w-5 h-5 text-[var(--accent-green-text)] shrink-0" />
+                  <Check className="w-5 h-5 text-[var(--accent-indigo)] shrink-0" />
                   Priority AI responses
                 </li>
               </ul>
@@ -151,16 +150,7 @@ const PricingPage: React.FC = () => {
         isOpen={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)} 
       />
-    </>
-  );
-
-  return user ? (
-    <AppLayout title="Pricing">{content}</AppLayout>
-  ) : (
-    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
-      <PublicHeader />
-      {content}
-    </div>
+    </AppLayout>
   );
 };
 

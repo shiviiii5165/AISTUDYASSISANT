@@ -58,7 +58,7 @@ const ExamPredictorCard: React.FC<ExamPredictorCardProps> = ({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
-        <div className="w-7 h-7 rounded-lg bg-[var(--accent-green)] flex items-center justify-center">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--accent-indigo)] to-purple-600 flex items-center justify-center">
           <Target className="w-3.5 h-3.5 text-white" />
         </div>
         <div>
@@ -85,7 +85,7 @@ const ExamPredictorCard: React.FC<ExamPredictorCardProps> = ({
           return (
             <div
               key={prediction.id || idx}
-              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-3 hover:border-[var(--accent-green)]/30 transition-colors"
+              className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-4 py-3 hover:border-[var(--accent-indigo)]/30 transition-colors"
             >
               {/* Question */}
               <p className="font-semibold text-sm text-[var(--text-primary)] leading-snug mb-2.5">
@@ -131,7 +131,7 @@ const ExamPredictorCard: React.FC<ExamPredictorCardProps> = ({
         {highLikelihoodTopics.length > 0 && onGenerateMCQs && (
           <button
             onClick={handleGenerateMCQs}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[var(--accent-green)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--accent-green-hover)] transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[var(--accent-indigo)] text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Generate MCQs from these topics

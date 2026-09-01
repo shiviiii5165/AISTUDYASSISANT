@@ -4,7 +4,6 @@ Multi-Track Audio Timeline & Ducking Engine
 Coordinates narration audio, background ambient music, and ducking attenuation
 to produce a clear, broadcast-quality audio mix (Zero LLM Tokens).
 """
-from app.core.logging import logger
 import os
 import shutil
 from typing import List, Dict, Any, Optional
@@ -73,7 +72,7 @@ class AudioTimeline:
                     os.remove(concat_list_file)
                 return output_audio_path
             except Exception as e:
-                logger.info(f"[AudioTimeline] Mix notice: {e}")
+                print(f"[AudioTimeline] Mix notice: {e}")
 
         # Fallback
         shutil.copy2(self.narration_tracks[0].file_path, output_audio_path)

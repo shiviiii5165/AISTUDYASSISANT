@@ -37,25 +37,16 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
         self.max_size_bytes = max_size_bytes
 
     async def dispatch(self, request: Request, call_next):
-        from fastapi.responses import JSONResponse
-
-        content_length = request.headers.get("content-length")
-        transfer_encoding = request.headers.get("transfer-encoding", "").lower()
-
-        if content_length is not None:
-            # Fail closed: an unparseable or oversized Content-Length is
-            # rejected rather than silently passed through.
+        if request.headers.get("content-length"):
             try:
-                declared = int(content_length)
+                content_length = int(request.headers["content-length"])
+                if content_length > self.max_size_bytes:
+                    from fastapi.responses import JSONResponse
+                    return JSONResponse(
+                        status_code=413,
+                        content={"detail": "Payload Too Large"}
+                    )
             except ValueError:
-                return JSONResponse(status_code=413, content={"detail": "Payload Too Large"})
-            if declared < 0 or declared > self.max_size_bytes:
-                return JSONResponse(status_code=413, content={"detail": "Payload Too Large"})
-        elif "chunked" in transfer_encoding:
-            # A chunked body declares no Content-Length, so the cap cannot be
-            # enforced up front. This was the bypass vector — reject it (fail
-            # closed) rather than streaming an unbounded body.
-            return JSONResponse(status_code=411, content={"detail": "Length Required"})
-
+                pass
         return await call_next(request)
 

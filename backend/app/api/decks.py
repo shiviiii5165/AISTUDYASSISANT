@@ -254,18 +254,13 @@ def _get_signed_url(storage_path: str) -> Optional[str]:
         return None
 
 
-@router.get("/")
-async def get_decks(current_user = Depends(get_current_user)):
-    res = supabase.table("topic_decks").select("id, topic, status, created_at, slide_count").eq("user_id", current_user.id).order("created_at", desc=True).execute()
-    return {"decks": res.data or []}
-
 @router.get("/{deck_id}")
 async def get_deck_status(deck_id: str, current_user = Depends(get_current_user)):
-    res = supabase.table("topic_decks").select("*").eq("id", deck_id).eq("user_id", current_user.id).maybe_single().execute()
-
-    if not res or not res.data:
+    res = supabase.table("topic_decks").select("*").eq("id", deck_id).eq("user_id", current_user.id).single().execute()
+    
+    if not res.data:
         raise HTTPException(status_code=404, detail="Deck not found")
-
+        
     deck = res.data
     download_url = None
     
@@ -292,11 +287,11 @@ async def list_decks(current_user = Depends(get_current_user)):
 
 @router.delete("/{deck_id}")
 async def delete_deck(deck_id: str, current_user = Depends(get_current_user)):
-    res = supabase.table("topic_decks").select("storage_path").eq("id", deck_id).eq("user_id", current_user.id).maybe_single().execute()
-
-    if not res or not res.data:
+    res = supabase.table("topic_decks").select("storage_path").eq("id", deck_id).eq("user_id", current_user.id).single().execute()
+    
+    if not res.data:
         raise HTTPException(status_code=404, detail="Deck not found")
-
+        
     if res.data.get("storage_path"):
         try:
             supabase.storage.from_("topic-decks").remove([res.data["storage_path"]])

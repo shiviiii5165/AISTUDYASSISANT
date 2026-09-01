@@ -1,4 +1,3 @@
-from app.core.logging import logger
 import io
 import base64
 import httpx
@@ -177,7 +176,7 @@ async def generate_slide_image(prompt: str) -> Optional[bytes]:
                         if "data" in inline_data:
                             return base64.b64decode(inline_data["data"])
         except Exception as e:
-            logger.error(f"Image generation failed with {model_name}: {e}")
+            print(f"Image generation failed with {model_name}: {e}")
             continue
             
     return None
@@ -316,7 +315,7 @@ def add_content_slide(prs, section: Dict, slide_number: int, total_slides: int,
             pic.line.color.rgb = RGBColor(*palette["secondary"])
             pic.line.width = Pt(1)
         except Exception as e:
-            logger.error(f"Failed to insert image: {e}")
+            print(f"Failed to insert image: {e}")
     
     # ─── Example Box (if no image and example exists) ───
     elif section.get("example"):
@@ -337,7 +336,7 @@ def add_content_slide(prs, section: Dict, slide_number: int, total_slides: int,
         # Example label
         p_label = tf_ex.paragraphs[0]
         run_icon = p_label.add_run()
-        run_icon.text = ""
+        run_icon.text = "💡 "
         run_icon.font.size = Pt(16)
         
         run_label = p_label.add_run()
@@ -421,7 +420,7 @@ def add_closing_slide(prs, deck_data: Dict, palette: Dict):
         for takeaway in takeaways[:5]:
             p = tf_ta.add_paragraph()
             run_marker = p.add_run()
-            run_marker.text = "-  "
+            run_marker.text = "✦  "
             run_marker.font.color.rgb = RGBColor(*palette["accent"])
             run_marker.font.size = Pt(16)
             
@@ -501,7 +500,7 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
             try:
                 image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
             except Exception as e:
-                logger.error(f"Parallel image generation error: {e}")
+                print(f"Parallel image generation error: {e}")
                 image_results = [None] * len(image_tasks)
 
         image_map = {}
@@ -556,11 +555,11 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
             audience=audience,
             preset_label="Academic Presentation",
         )
-        logger.info("[OK] New Presentation Engine rendered successfully")
+        print("[OK] New Presentation Engine rendered successfully")
         return pptx_bytes
 
     except Exception as engine_error:
-        logger.error(f"[WARN] New engine failed, falling back to legacy renderer: {engine_error}")
+        print(f"[WARN] New engine failed, falling back to legacy renderer: {engine_error}")
         import traceback
         traceback.print_exc()
 
@@ -598,7 +597,7 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
         try:
             image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
         except Exception as e:
-            logger.error(f"Parallel image generation error: {e}")
+            print(f"Parallel image generation error: {e}")
             image_results = [None] * len(image_tasks)
     
     # Map results back to section indices
@@ -606,7 +605,7 @@ async def generate_pptx_bytes(deck_data: Dict, audience: str = "university") -> 
     for i, idx in enumerate(image_indices):
         result = image_results[i] if i < len(image_results) else None
         if isinstance(result, Exception):
-            logger.error(f"Image for section {idx} failed: {result}")
+            print(f"Image for section {idx} failed: {result}")
             result = None
         image_map[idx] = result
     

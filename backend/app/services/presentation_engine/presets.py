@@ -13,7 +13,7 @@ PRESET_CONFIGS: Dict[str, dict] = {
     "academic": {
         "label": "Academic / Lecture",
         "description": "University-grade lecture with clear learning progression, concepts, examples, and assessment readiness.",
-        "icon": "",
+        "icon": "🎓",
         "default_slide_flow": [
             SlidePurpose.COVER,
             SlidePurpose.CONCEPT,         # Learning objectives
@@ -41,7 +41,7 @@ PRESET_CONFIGS: Dict[str, dict] = {
     "pitch": {
         "label": "Business / Pitch",
         "description": "Startup pitch or business strategy deck with data-driven insights, KPIs, and compelling narrative.",
-        "icon": "",
+        "icon": "🚀",
         "default_slide_flow": [
             SlidePurpose.COVER,
             SlidePurpose.CONCEPT,         # Problem statement
@@ -68,7 +68,7 @@ PRESET_CONFIGS: Dict[str, dict] = {
     "technical": {
         "label": "Technical / Architecture",
         "description": "System architecture, technical deep-dive, or engineering documentation with diagrams and process flows.",
-        "icon": "",
+        "icon": "⚙️",
         "default_slide_flow": [
             SlidePurpose.COVER,
             SlidePurpose.CONCEPT,         # Overview / context
@@ -96,7 +96,7 @@ PRESET_CONFIGS: Dict[str, dict] = {
     "research": {
         "label": "Research / Analysis",
         "description": "Research findings, data analysis, or academic paper presentation with evidence and methodology.",
-        "icon": "",
+        "icon": "🔬",
         "default_slide_flow": [
             SlidePurpose.COVER,
             SlidePurpose.CONCEPT,         # Research question
@@ -122,7 +122,7 @@ PRESET_CONFIGS: Dict[str, dict] = {
     "teaching": {
         "label": "Teaching / Lesson",
         "description": "Classroom teaching with Bloom's taxonomy alignment, scaffolded learning, and interactive elements.",
-        "icon": "",
+        "icon": "📚",
         "default_slide_flow": [
             SlidePurpose.COVER,
             SlidePurpose.CONCEPT,         # Learning objectives (Bloom's)

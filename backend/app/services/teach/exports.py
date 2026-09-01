@@ -6,7 +6,6 @@ Seamlessly converts structured lesson knowledge into:
 2. Educational Videos (via video.orchestrator)
 3. Diagnostic Chapter Quizzes
 """
-from app.core.logging import logger
 import uuid
 from typing import Dict, Any, Optional
 from .tools import get_lesson_plan, get_learning_state
@@ -85,7 +84,7 @@ async def export_lesson_to_pptx(
                 "slide_count": len(spec.slides),
             }).execute()
         except Exception as e:
-            logger.info(f"[TeachExport] PPT Storage note: {e}")
+            print(f"[TeachExport] PPT Storage note: {e}")
 
     return {
         "deck_id": deck_id,

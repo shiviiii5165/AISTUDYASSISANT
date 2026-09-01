@@ -216,7 +216,7 @@ class LearningRoadmap(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     level: str = "B.Tech"
-    language: str = "english"
+    language: str = "hinglish"
     class_type: ClassType = ClassType.INTERACTIVE_LECTURE
     target_duration_minutes: int = 60
     status: RoadmapStatus = RoadmapStatus.DRAFT

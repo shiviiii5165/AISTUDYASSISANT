@@ -3,7 +3,6 @@ Deck Service — Bridge & Orchestration Support
 ==============================================
 Provides legacy 3-step endpoint compatibility and direct orchestration functions.
 """
-from app.core.logging import logger
 import json
 import asyncio
 from typing import Dict, Any, List, Optional
@@ -129,7 +128,7 @@ async def render_deck_step(
             {"content-type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
         )
     except Exception as storage_err:
-        logger.info(f"[DeckService] Storage upload note: {storage_err}")
+        print(f"[DeckService] Storage upload note: {storage_err}")
 
     # 4. Update topic_decks DB record
     supabase.table("topic_decks").update({

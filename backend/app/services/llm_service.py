@@ -1,37 +1,10 @@
-from app.core.logging import logger
 import re
 import json
 import httpx
 import asyncio
 from app.core.config import settings
-import hashlib
-import time
 
-class SimpleTTLCache:
-    def __init__(self, ttl: int):
-        self.ttl = ttl
-        self.cache = {}
-    
-    def get(self, key):
-        if key in self.cache:
-            val, expiry = self.cache[key]
-            if time.time() < expiry:
-                return val
-            else:
-                del self.cache[key]
-        return None
-        
-    def set(self, key, value):
-        # Prevent unbounded growth by limiting size
-        if len(self.cache) > 1000:
-            self.cache.clear()
-        self.cache[key] = (value, time.time() + self.ttl)
 
-llm_cache = SimpleTTLCache(ttl=43200)
-
-def _generate_cache_key(messages: list, model: str, temperature: float) -> str:
-    key_data = json.dumps(messages, sort_keys=True) + model + str(temperature)
-    return hashlib.sha256(key_data.encode()).hexdigest()
 # ══════════════════════════════════════════════════════════════════════════════
 # JSON REPAIR UTILITIES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -142,7 +115,6 @@ async def _call_gemini_raw(
         "generationConfig": {
             "temperature": temperature,
             "maxOutputTokens": max_tokens,
-            "responseMimeType": "application/json",
         },
     }
     if system_instruction:
@@ -214,12 +186,6 @@ async def call_gemini(
     
     If ANY provider succeeds, the user never sees an error.
     """
-    cache_key = _generate_cache_key(messages, model, temperature)
-    cached_val = llm_cache.get(cache_key)
-    if cached_val:
-        logger.info(f"LLM Cache HIT for model {model}")
-        return cached_val
-
     errors = []
 
     # ── Phase 1: Try all Gemini models ──────────────────────────────────────
@@ -234,8 +200,7 @@ async def call_gemini(
                     temperature=temperature, max_tokens=max_tokens,
                 )
                 if gm != model:
-                    logger.error(f"Primary Gemini/{model} failed, succeeded with Gemini/{gm}")
-                llm_cache.set(cache_key, result)
+                    print(f"⚡ Primary Gemini/{model} failed, succeeded with Gemini/{gm}")
                 return result
             except Exception as e:
                 err_str = str(e)
@@ -247,7 +212,7 @@ async def call_gemini(
                     await asyncio.sleep(1.5 * (attempt + 1))
 
     # ── Phase 2: Cascade through Groq models ───────────────────────────────
-    logger.error(f"All Gemini models failed, falling back to Groq...")
+    print(f"⚡ All Gemini models failed, falling back to Groq...")
     
     for gq in GROQ_MODELS:
         try:
@@ -255,8 +220,7 @@ async def call_gemini(
                 messages=messages, model=gq,
                 temperature=temperature, max_tokens=max_tokens,
             )
-            logger.info(f"Groq/{gq} fallback succeeded")
-            llm_cache.set(cache_key, result)
+            print(f"✅ Groq/{gq} fallback succeeded")
             return result
         except Exception as e:
             err_str = str(e)
@@ -330,7 +294,7 @@ async def call_best_llm(
     required_json_keys: list = None,
 ) -> str:
     """
-    PARALLEL RACING — Calls Gemini AND Groq simultaneously.
+    🏆 PARALLEL RACING — Calls Gemini AND Groq simultaneously.
     Both run at the same time, we pick the HIGHEST QUALITY response.
     If one fails, the other's result is used automatically.
     
@@ -365,8 +329,8 @@ async def call_best_llm(
     
     # Both failed → cascade through all providers
     if not gemini_ok and not groq_ok:
-        logger.error(f"Both parallel calls failed. Gemini: {gemini_result} | Groq: {groq_result}")
-        logger.info("Falling back to cascading fallback chain...")
+        print(f"⚠️ Both parallel calls failed. Gemini: {gemini_result} | Groq: {groq_result}")
+        print("🔄 Falling back to cascading fallback chain...")
         return await call_gemini(
             messages=messages,
             temperature=temperature,
@@ -375,19 +339,19 @@ async def call_best_llm(
     
     # Only one succeeded → use that
     if gemini_ok and not groq_ok:
-        logger.info("Race result: Only Gemini succeeded")
+        print("🏆 Race result: Only Gemini succeeded")
         return gemini_result
     
     if groq_ok and not gemini_ok:
-        logger.info("Race result: Only Groq succeeded")
+        print("🏆 Race result: Only Groq succeeded")
         return groq_result
     
-    # BOTH SUCCEEDED — Pick the BEST quality response
+    # 🔥 BOTH SUCCEEDED — Pick the BEST quality response
     gemini_score = _score_json_quality(gemini_result, required_json_keys)
     groq_score = _score_json_quality(groq_result, required_json_keys)
     
     winner = "Gemini" if gemini_score >= groq_score else "Groq"
-    logger.info(f"Race result: {winner} wins! (Gemini={gemini_score}, Groq={groq_score})")
+    print(f"🏆 Race result: {winner} wins! (Gemini={gemini_score}, Groq={groq_score})")
     
     return gemini_result if gemini_score >= groq_score else groq_result
 
@@ -398,7 +362,7 @@ async def call_parallel_merge(
     max_tokens: int = 8192,
 ) -> list[str]:
     """
-    PARALLEL MERGE — Calls ALL available providers and returns ALL successful 
+    🔀 PARALLEL MERGE — Calls ALL available providers and returns ALL successful 
     results. Used when we want to MERGE/COMBINE outputs from multiple LLMs
     for maximum richness (e.g., generating slide content from multiple perspectives).
     """

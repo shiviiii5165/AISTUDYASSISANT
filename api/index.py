@@ -18,24 +18,18 @@ try:
 except Exception as e:
     import traceback
     from fastapi.responses import JSONResponse
-
+    
+    startup_error = str(e)
     startup_traceback = traceback.format_exc()
-
-    # Log the full traceback server-side only (visible in platform logs), never
-    # to the client. Prefer the structured logger; fall back to stdlib logging
-    # if the app package itself failed to import.
-    try:
-        from app.core.logging import logger
-        logger.error("FATAL STARTUP ERROR: %s", startup_traceback)
-    except Exception:
-        import logging
-        logging.getLogger("teachgenie").error("FATAL STARTUP ERROR: %s", startup_traceback)
-
+    print(f"FATAL STARTUP ERROR: {startup_error}\n{startup_traceback}")
+    
     @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     async def catch_all(path_name: str):
         return JSONResponse(
             status_code=500,
             content={
-                "detail": "Internal server error. The service is temporarily unavailable."
+                "detail": f"Vercel Startup Error: {startup_error}",
+                "hint": "Check that ALL required env vars are set in Vercel dashboard (Settings → Environment Variables). Common missing: GEMINI_IMAGE_API_KEY, CASHFREE_APP_ID, CASHFREE_SECRET_KEY",
+                "traceback": startup_traceback
             }
         )

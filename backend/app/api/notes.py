@@ -14,7 +14,6 @@ from app.core.dependencies import get_current_user
 from app.core.plan_guards import require_pro
 from app.db.supabase_client import supabase
 from app.services.vector_service import store_chunks_from_text
-from app.core.logging import logger
 
 router = APIRouter()
 
@@ -45,28 +44,11 @@ async def upload_handwritten_note(
     file_bytes = await file.read()
     ext, media_type = ALLOWED_TYPES[file.content_type]
 
-    # Validate actual content by magic bytes, not just the client-supplied
-    # Content-Type header (which is trivially spoofable).
-    def _matches_image_magic(data: bytes) -> bool:
-        if data.startswith(b"\xff\xd8\xff"):                       # JPEG
-            return True
-        if data.startswith(b"\x89PNG\r\n\x1a\n"):                  # PNG
-            return True
-        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":          # WEBP
-            return True
-        return False
-
-    if not _matches_image_magic(file_bytes):
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Invalid file content. Only real JPEG, PNG, or WEBP images are allowed.",
-        )
-
     try:
         # 2. Upload original image to Supabase Storage
         storage_path = f"{current_user.id}/{note_id}.{ext}"
         supabase.storage.from_("handwritten-notes").upload(storage_path, file_bytes)
-        logger.info(f"Uploaded image to handwritten-notes/{storage_path}")
+        print(f"Uploaded image to handwritten-notes/{storage_path}")
 
         # 3. Call Gemini REST API for OCR
         b64_img = base64.b64encode(file_bytes).decode("utf-8")
@@ -95,7 +77,7 @@ async def upload_handwritten_note(
         with httpx.Client(timeout=60.0) as client:
             resp = client.post(url, json=payload)
             if resp.status_code != 200:
-                logger.error(f"Gemini API Error: {resp.text}")
+                print(f"Gemini API Error: {resp.text}")
                 raise Exception(f"OCR failed with status {resp.status_code}")
                 
             response_data = resp.json()
@@ -104,7 +86,7 @@ async def upload_handwritten_note(
             
             extracted_text = response_data["candidates"][0]["content"]["parts"][0]["text"]
 
-        logger.info(f"Gemini extracted {len(extracted_text)} characters from handwritten note.")
+        print(f"Gemini extracted {len(extracted_text)} characters from handwritten note.")
 
         if not extracted_text.strip():
             raise HTTPException(
@@ -143,7 +125,7 @@ async def upload_handwritten_note(
         raise
     except Exception as e:
         import traceback
-        logger.error(f"FULL ERROR: {traceback.format_exc()}")
+        print(f"FULL ERROR: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process handwritten note: {str(e)}",
