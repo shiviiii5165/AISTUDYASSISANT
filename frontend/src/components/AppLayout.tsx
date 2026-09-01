@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  BookOpen, MessageSquare, Target, Bell, Menu, X, LogOut, LifeBuoy,
-  Presentation, PlayCircle, GraduationCap, Map,
+  BookOpen, MessageSquare, Target, Menu, X, LogOut, LifeBuoy,
+  Presentation, PlayCircle, GraduationCap, Map, HelpCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
@@ -29,6 +29,7 @@ const NAV_GROUPS: { heading: string; items: { path: string; label: string; icon:
       { path: '/lesson-planner', label: 'AI Lesson Planner', icon: Map },
       { path: '/decks', label: 'PPT Generator', icon: Presentation },
       { path: '/video', label: 'Video Generator', icon: PlayCircle },
+      { path: '/quizzes', label: 'Quiz Generator', icon: HelpCircle },
     ],
   },
 ];
@@ -41,7 +42,6 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
   const { user, signOut } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const getInitials = (name?: string) => {
     return name ? name.charAt(0).toUpperCase() : 'U';
@@ -203,37 +203,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
               <button
                 type="button"
                 onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  setShowProfileMenu(false);
-                }}
-                aria-label="Notifications"
-                aria-expanded={showNotifications}
-                aria-haspopup="true"
-                className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)]"
-              >
-                <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
-              </button>
-              {showNotifications && (
-                <>
-                  <div className="fixed inset-0 z-20" onClick={() => setShowNotifications(false)} />
-                  <div className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-2 shadow-[var(--shadow-lg)]">
-                    <div className="border-b border-[var(--border)] px-4 py-2">
-                      <h2 className="text-sm font-semibold text-[var(--text-primary)]">Notifications</h2>
-                    </div>
-                    <p className="p-4 text-center text-sm text-[var(--text-secondary)]">
-                      No new notifications
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
                   setShowProfileMenu(!showProfileMenu);
-                  setShowNotifications(false);
                 }}
                 aria-label="Account menu"
                 aria-expanded={showProfileMenu}
