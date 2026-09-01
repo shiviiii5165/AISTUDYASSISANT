@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
       <div className="mx-auto max-w-5xl space-y-8 p-4 md:p-6 lg:p-8">
 
         <GreetingHeader
-          avatarImageSrc="/scholar-genie-chibi.png"
+          avatarImageSrc="/images/tutor_avatar.jpg"
           subtitle="Pick up where you left off, or ask a question about any document."
         />
 
@@ -152,7 +152,7 @@ const Dashboard: React.FC = () => {
             </div>
           ) : recentPdfs.length === 0 ? (
             <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-6 py-12 text-center">
-              <BookOpen className="mx-auto mb-3 h-8 w-8 text-[var(--text-muted)]" aria-hidden="true" />
+              <img src="/images/empty_pdf_state.jpg" alt="Empty Library" className="mx-auto mb-4 h-32 w-32 rounded-xl object-cover shadow-sm" />
               <p className="font-display text-base font-semibold text-[var(--text-primary)]">
                 Your library is empty
               </p>
