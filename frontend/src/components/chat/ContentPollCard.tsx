@@ -101,7 +101,7 @@ const ContentPollCard: React.FC<ContentPollCardProps> = ({ initialData }) => {
 
       {data.status === 'complete' && data.content_type === 'flashcards' && data.flashcards_data && (
         <div className="mt-4 space-y-3">
-          <h5 className="font-medium text-sm text-[var(--text-primary)]">Flashcards Ready:</h5>
+          <h5 className="font-medium text-sm text-[var(--text-primary)]">Flashcards ready:</h5>
           <ul className="list-disc pl-4 text-sm text-[var(--text-secondary)] space-y-2">
             {(data.flashcards_data.cards || data.flashcards_data.flashcards || []).map((card: any, idx: number) => (
               <li key={idx}>
