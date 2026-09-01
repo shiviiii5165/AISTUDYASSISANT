@@ -127,4 +127,4 @@ if __name__ == "__main__":
     test_short_label_fits_without_truncation()
     test_long_label_triggers_truncation()
 
-    print("\n✅ All regression tests passed!")
+    print("\\n All regression tests passed!")
