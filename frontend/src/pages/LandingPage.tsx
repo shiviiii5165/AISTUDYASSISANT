@@ -278,25 +278,28 @@ const LandingPage: React.FC = () => {
 
             {/* Right column carries the language range, which is real product
                 configuration (english / hindi / hinglish), not decoration. */}
-            <motion.aside
+            <motion.div
               {...reveal(4)}
-              className="self-end rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 lg:col-span-4"
+              className="lg:col-span-4 flex flex-col gap-6"
             >
-              <p className="font-display text-sm font-semibold text-[var(--text-primary)]">
-                Works in the language you think in
-              </p>
-              <ul className="mt-4 space-y-2.5">
-                {['English', 'Hindi', 'Hinglish'].map((lang) => (
-                  <li key={lang} className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)]">
-                    <Languages className="h-4 w-4 shrink-0 text-[var(--accent-green-text)]" aria-hidden="true" />
-                    {lang}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-5 border-t border-[var(--border)] pt-4 text-sm leading-relaxed text-[var(--text-secondary)]">
-                Ask in Hinglish, get the explanation back the same way.
-              </p>
-            </motion.aside>
+              <img src="/images/hero_01_illustration.jpg" alt="TeachGenie AI Study Brain" className="w-full rounded-2xl shadow-sm border border-[var(--border)] object-cover bg-white" />
+              <aside className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+                <p className="font-display text-sm font-semibold text-[var(--text-primary)]">
+                  Works in the language you think in
+                </p>
+                <ul className="mt-4 space-y-2.5">
+                  {['English', 'Hindi', 'Hinglish'].map((lang) => (
+                    <li key={lang} className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)]">
+                      <Languages className="h-4 w-4 shrink-0 text-[var(--accent-green-text)]" aria-hidden="true" />
+                      {lang}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-5 border-t border-[var(--border)] pt-4 text-sm leading-relaxed text-[var(--text-secondary)]">
+                  Ask in Hinglish, get the explanation back the same way.
+                </p>
+              </aside>
+            </motion.div>
           </div>
         </section>
 
@@ -424,8 +427,9 @@ const LandingPage: React.FC = () => {
           <div className="mt-14 grid auto-rows-auto grid-flow-dense grid-cols-1 gap-4 md:grid-cols-6">
             <motion.article
               {...reveal(0)}
-              className="flex flex-col justify-end rounded-2xl bg-[var(--accent-green-deep)] p-8 md:col-span-4 md:row-span-2 md:p-12"
+              className="relative flex flex-col justify-end overflow-hidden rounded-2xl bg-[var(--accent-green-deep)] p-8 md:col-span-4 md:row-span-2 md:p-12"
             >
+              <img src="/images/bento_02_ai_tutor.jpg" alt="AI Tutor" className="absolute -top-12 -right-12 h-64 w-64 rounded-bl-3xl object-cover opacity-90 shadow-xl" />
               <FileText className="mb-6 h-7 w-7 text-[var(--accent-green-light)]" aria-hidden="true" />
               <h3 className="font-display text-3xl font-bold leading-[1.1] tracking-tight text-white md:text-4xl">
                 The page number comes with the answer
@@ -452,28 +456,34 @@ const LandingPage: React.FC = () => {
 
             <motion.article
               {...reveal(2)}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-7 md:col-span-2"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-7 md:col-span-2 flex flex-col"
             >
-              <ListChecks className="mb-4 h-5 w-5 text-[var(--accent-green-text)]" aria-hidden="true" />
-              <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
-                Practice questions
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
-                Multiple choice sets built from your material, not from a generic question bank.
-              </p>
+              <div className="flex-1">
+                <ListChecks className="mb-4 h-5 w-5 text-[var(--accent-green-text)]" aria-hidden="true" />
+                <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
+                  Practice questions
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+                  Multiple choice sets built from your material, not from a generic question bank.
+                </p>
+              </div>
+              <img src="/images/bento_01_quiz_engine.jpg" alt="Quiz Engine" className="mt-6 h-40 w-full rounded-xl object-cover shadow-sm" />
             </motion.article>
 
             <motion.article
               {...reveal(3)}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-7 md:col-span-3"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-7 md:col-span-3 flex flex-col"
             >
-              <Presentation className="mb-4 h-5 w-5 text-[var(--accent-green-text)]" aria-hidden="true" />
-              <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
-                Decks with speaker notes
-              </h3>
-              <p className="mt-2 max-w-[42ch] text-sm leading-relaxed text-[var(--text-secondary)]">
-                Ten to fifteen slides, six themes, downloadable as a PPTX you can edit.
-              </p>
+              <div className="flex-1">
+                <Presentation className="mb-4 h-5 w-5 text-[var(--accent-green-text)]" aria-hidden="true" />
+                <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
+                  Decks with speaker notes
+                </h3>
+                <p className="mt-2 max-w-[42ch] text-sm leading-relaxed text-[var(--text-secondary)]">
+                  Ten to fifteen slides, six themes, downloadable as a PPTX you can edit.
+                </p>
+              </div>
+              <img src="/images/bento_03_presentation.jpg" alt="Presentation Deck" className="mt-6 w-full h-40 rounded-xl object-cover shadow-sm" />
             </motion.article>
 
             <motion.article
