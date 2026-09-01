@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Clock, CheckCircle2, PlayCircle, BookOpen,
@@ -139,6 +140,7 @@ const LessonPlannerPage: React.FC = () => {
   });
 
   // Roadmap & Stage States
+  const navigate = useNavigate();
   const [roadmap, setRoadmap] = useState<LearningRoadmap | null>(null);
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'differentiation'>('details');
@@ -371,7 +373,38 @@ const LessonPlannerPage: React.FC = () => {
         }
       });
       if (response.ok) {
+        const data = await response.json();
+        
+        // Update local roadmap to mark resource as ready
+        setRoadmap(prev => {
+          if (!prev) return prev;
+          const updatedStages = prev.stages.map(s => {
+            if (s.id === selectedStage.id) {
+              const updatedRecs = s.resource_recommendations?.map(r => {
+                if (r.resource_type === endpoint) {
+                  return { ...r, status: 'ready' as ResourceStatus };
+                }
+                return r;
+              });
+              return { ...s, resource_recommendations: updatedRecs };
+            }
+            return s;
+          });
+          return { ...prev, stages: updatedStages };
+        });
+
         setActionNotification(`Generated ${type} for "${selectedStage.title}".`);
+        
+        if (type === 'PPT') {
+          navigate('/decks', { state: { presetConfig: data.config } });
+        } else if (type === 'Video') {
+          navigate('/video', { state: { presetConfig: data.config } });
+        } else if (type === 'Teach') {
+          navigate('/teach', { state: { presetBrief: data.brief } });
+        } else if (type === 'Quiz') {
+          navigate('/quizzes', { state: { presetConfig: data.config } });
+        }
+        // Notes doesn't have dedicated pages yet, so they just stay here and show notification.
       } else {
         /* Previously this path was silent, and the catch below reported
            success. A failure now reports a failure. */
