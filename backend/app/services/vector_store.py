@@ -26,9 +26,22 @@ def store_chunks(pdf_id: str, chunks: list[dict], embeddings: list[list[float]])
             raise e
     logger.info(f"Successfully inserted all {len(records)} chunks.")
 
+def _verify_ownership(pdf_id: str, user_id: str):
+    """Explicitly verify ownership to prevent swallowing unauthorized access as empty results."""
+    owner_check = supabase.table("pdfs") \
+        .select("id") \
+        .eq("id", pdf_id) \
+        .eq("user_id", user_id) \
+        .execute()
+    if not owner_check.data:
+        logger.warning(f"Ownership check failed: PDF {pdf_id} not owned by user {user_id}.")
+        raise PermissionError(f"PDF {pdf_id} not found or access denied.")
+
 def search_relevant_chunks(pdf_id: str, user_id: str, query_embedding: list[float], top_k=5) -> list[dict]:
     """Search for relevant chunks using Supabase RPC for cosine similarity"""
     try:
+        _verify_ownership(pdf_id, user_id)
+        
         response = supabase.rpc(
             "match_document_chunks",
             {
@@ -58,17 +71,7 @@ def search_relevant_chunks(pdf_id: str, user_id: str, query_embedding: list[floa
 def get_all_chunks(pdf_id: str, user_id: str) -> list[dict]:
     """Fetch all chunks for a specific PDF, bypassing similarity search."""
     try:
-        # The backend uses the service-role key, which bypasses RLS, and
-        # document_chunks has no user_id column. Enforce ownership explicitly
-        # by confirming the PDF belongs to this user before returning any chunks.
-        owner_check = supabase.table("pdfs") \
-            .select("id") \
-            .eq("id", pdf_id) \
-            .eq("user_id", user_id) \
-            .execute()
-        if not owner_check.data:
-            logger.warning(f"Ownership check failed: PDF {pdf_id} not owned by user {user_id}.")
-            return []
+        _verify_ownership(pdf_id, user_id)
 
         response = supabase.table("document_chunks") \
             .select("chunk_text, page_number") \
