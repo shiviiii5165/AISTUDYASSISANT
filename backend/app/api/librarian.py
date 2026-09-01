@@ -7,7 +7,8 @@ optional top_k, then returns the structured LibrarianOutput as JSON.
 Purely additive — does NOT modify chat.py, teach.py, or the Orchestrator.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from app.core.security import limiter
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -25,7 +26,8 @@ class LibrarianRequest(BaseModel):
 
 
 @router.post("/retrieve", response_model=LibrarianOutput)
-async def retrieve_endpoint(request: LibrarianRequest, current_user=Depends(get_current_user)):
+@limiter.limit("20/minute")
+async def retrieve_endpoint(request: Request, payload: LibrarianRequest, current_user=Depends(get_current_user)):
     """
     Retrieve context for a topic from the student's notes, with optional
     web search fallback. Returns structured JSON with context, related_context,
@@ -34,8 +36,8 @@ async def retrieve_endpoint(request: LibrarianRequest, current_user=Depends(get_
     # Always scope retrieval to the authenticated user, ignoring any
     # client-supplied user_id, to prevent cross-tenant note retrieval.
     result = await retrieve_context(
-        topic=request.topic,
+        topic=payload.topic,
         user_id=current_user.id,
-        top_k=request.top_k or 5,
+        top_k=payload.top_k or 5,
     )
     return result
