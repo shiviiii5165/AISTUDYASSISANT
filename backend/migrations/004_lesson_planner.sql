@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS course_graphs (
 );
 
 CREATE TABLE IF NOT EXISTS learning_roadmaps (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   course_id TEXT DEFAULT 'default_course',
   topic TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS learning_roadmaps (
 
 CREATE TABLE IF NOT EXISTS roadmap_stages (
   id TEXT PRIMARY KEY,
-  roadmap_id TEXT REFERENCES learning_roadmaps(id) ON DELETE CASCADE NOT NULL,
+  roadmap_id UUID REFERENCES learning_roadmaps(id) ON DELETE CASCADE NOT NULL,
   concept_id TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS roadmap_stages (
 
 CREATE TABLE IF NOT EXISTS roadmap_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  roadmap_id TEXT REFERENCES learning_roadmaps(id) ON DELETE CASCADE NOT NULL,
+  roadmap_id UUID REFERENCES learning_roadmaps(id) ON DELETE CASCADE NOT NULL,
   stage_id TEXT,
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   event_type TEXT NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS roadmap_events (
 
 CREATE TABLE IF NOT EXISTS roadmap_resources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  roadmap_id TEXT REFERENCES learning_roadmaps(id) ON DELETE CASCADE NOT NULL,
+  roadmap_id UUID REFERENCES learning_roadmaps(id) ON DELETE CASCADE NOT NULL,
   stage_id TEXT NOT NULL,
   resource_type TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'optional',
