@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
@@ -59,6 +59,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const main = document.querySelector('main');
+    if (main) {
+      main.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   const { initializeAuth } = useAuthStore();
 
@@ -69,6 +83,7 @@ function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <CookieConsent />
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -174,14 +189,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/support" 
-            element={
-              <ProtectedRoute>
-                <SupportPage />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/support" element={<SupportPage />} />
         </Routes>
       </BrowserRouter>
     </HelmetProvider>
