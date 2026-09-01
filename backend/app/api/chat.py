@@ -4,11 +4,14 @@ from app.models.chat import ChatRequest, ChatResponse, PipelineRequest
 from app.agents.pipeline import handle_student_message, PipelineOutput
 from app.services.rag_service import answer_question
 from app.core.dependencies import get_current_user
+from app.db.supabase_client import supabase
 from app.core.plan_guards import check_daily_question_limit, require_pro
 router = APIRouter()
 
 @router.post("/ask", response_model=ChatResponse)
 async def ask_question(request: ChatRequest, current_user=Depends(check_daily_question_limit)):
+    session_id = getattr(request, 'session_id', None)
+    user_id = str(current_user.id)
     try:
         try:
             uuid.UUID(request.pdf_id)
@@ -29,6 +32,39 @@ async def ask_question(request: ChatRequest, current_user=Depends(check_daily_qu
             mode=request.mode,
             chat_history=request.history or []
         )
+        
+        # Save to DB if supabase is connected
+        if supabase:
+            try:
+                # If no session, create one
+                if not session_id:
+                    session_res = supabase.table("chat_sessions").insert({
+                        "user_id": user_id,
+                        "title": request.question[:50] + ("..." if len(request.question) > 50 else ""),
+                        "pdf_id": request.pdf_id
+                    }).execute()
+                    session_id = session_res.data[0]['id'] if session_res.data else None
+
+                if session_id:
+                    # Insert user message
+                    supabase.table("chat_messages").insert({
+                        "session_id": session_id,
+                        "role": "user",
+                        "content": request.question
+                    }).execute()
+                    
+                    # Insert assistant message
+                    supabase.table("chat_messages").insert({
+                        "session_id": session_id,
+                        "role": "assistant",
+                        "content": result['answer'],
+                        "sources": result.get('sources', [])
+                    }).execute()
+                    
+                    result['session_id'] = session_id
+            except Exception as e:
+                print(f"Failed to save chat history: {e}")
+                
         return ChatResponse(**result)
     except HTTPException:
         raise
@@ -69,6 +105,44 @@ async def ask_question_v2(request: PipelineRequest, current_user=Depends(get_cur
             pdf_id=request.pdf_id,
             conversation_history=request.history
         )
+        
+        session_id = getattr(request, 'session_id', None)
+        user_id = str(current_user.id)
+        if supabase:
+            try:
+                if not session_id:
+                    session_res = supabase.table("chat_sessions").insert({
+                        "user_id": user_id,
+                        "title": request.message[:50] + ("..." if len(request.message) > 50 else ""),
+                        "pdf_id": request.pdf_id
+                    }).execute()
+                    session_id = session_res.data[0]['id'] if session_res.data else None
+
+                if session_id:
+                    supabase.table("chat_messages").insert({
+                        "session_id": session_id,
+                        "role": "user",
+                        "content": request.message
+                    }).execute()
+                    
+                    # Try to extract the string content depending on response type
+                    assistant_content = ""
+                    if result.response_type == 'direct_message':
+                        assistant_content = result.content
+                    elif result.response_type == 'tutor_turn' and result.tutor_data:
+                        assistant_content = result.tutor_data.message
+                        
+                    if assistant_content:
+                        supabase.table("chat_messages").insert({
+                            "session_id": session_id,
+                            "role": "assistant",
+                            "content": assistant_content
+                        }).execute()
+                    
+                    result.session_id = session_id
+            except Exception as e:
+                print(f"Failed to save v2 chat history: {e}")
+                
         return result
     except HTTPException:
         raise
@@ -88,4 +162,29 @@ async def ask_question_v2(request: PipelineRequest, current_user=Depends(get_cur
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="The study assistant is currently unavailable. Please try again later."
         )
+
+@router.get("/")
+async def list_chats(current_user=Depends(get_current_user)):
+    if not supabase:
+        return {"sessions": []}
+    res = supabase.table("chat_sessions").select("id, title, pdf_id, created_at").eq("user_id", str(current_user.id)).order("created_at", desc=True).execute()
+    return {"sessions": res.data or []}
+
+@router.get("/{session_id}")
+async def get_chat(session_id: str, current_user=Depends(get_current_user)):
+    if not supabase:
+        raise HTTPException(status_code=404, detail="DB not connected")
+        
+    # Verify ownership
+    session_res = supabase.table("chat_sessions").select("*").eq("id", session_id).eq("user_id", str(current_user.id)).maybe_single().execute()
+    if not session_res or not session_res.data:
+        raise HTTPException(status_code=404, detail="Chat not found")
+        
+    # Get messages
+    msgs_res = supabase.table("chat_messages").select("*").eq("session_id", session_id).order("created_at", desc=False).execute()
+    
+    return {
+        "session": session_res.data,
+        "messages": msgs_res.data or []
+    }
 
