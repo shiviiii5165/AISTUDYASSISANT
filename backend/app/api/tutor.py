@@ -7,7 +7,8 @@ conversation history, and student message, then returns TutorTurn as JSON.
 Purely additive — does NOT modify chat.py, teach.py, or the Orchestrator.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from app.core.security import limiter
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -35,15 +36,16 @@ class TutorRequest(BaseModel):
 
 
 @router.post("/turn", response_model=TutorTurn)
-async def tutor_turn_endpoint(request: TutorRequest, current_user=Depends(get_current_user)):
+@limiter.limit("20/minute")
+async def tutor_turn_endpoint(request: Request, payload: TutorRequest, current_user=Depends(get_current_user)):
     """
     Run one turn of the Socratic tutor. Returns the Tutor's response
     and updated learning state as structured JSON.
     """
     result = await tutor_turn(
-        topic=request.topic,
-        librarian_context=request.librarian_context,
-        conversation_history=request.conversation_history,
-        student_message=request.student_message,
+        topic=payload.topic,
+        librarian_context=payload.librarian_context,
+        conversation_history=payload.conversation_history,
+        student_message=payload.student_message,
     )
     return result
