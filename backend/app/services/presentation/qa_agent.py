@@ -4,6 +4,7 @@ QA Agent & Slide-Level Repair Loop
 1. Python Structural QA (Zero Token Cost): Checks bounds, word counts, bullet counts, slide count.
 2. Targeted AI Patch Loop: If a single slide is defective, patches only that specific slide.
 """
+from app.core.logging import logger
 import json
 from typing import List, Dict, Any, Tuple
 from app.services.ai import router
@@ -127,7 +128,7 @@ async def run_presentation_qa(
                     patch_res["slide_no"] = healed.get("slide_no")
                     healed = auto_heal_slide_python(patch_res)
             except Exception as e:
-                print(f"[QA Agent] AI slide patch failed for slide {s.get('slide_no')}: {e}")
+                logger.error(f"[QA Agent] AI slide patch failed for slide {s.get('slide_no')}: {e}")
 
         repaired_slides.append(healed)
 
