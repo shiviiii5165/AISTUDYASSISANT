@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
+from app.core.security import limiter
 from pydantic import BaseModel
 
 from app.agents.content_creator import (
@@ -14,14 +15,15 @@ router = APIRouter()
 
 
 @router.post("/generate", response_model=ContentCreatorOutput)
-async def generate_content_endpoint(request: ContentRequest, current_user=Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def generate_content_endpoint(request: Request, payload: ContentRequest, current_user=Depends(get_current_user)):
     """
     Submits a request to the Content Creator Agent.
     For flashcards, returns the generated flashcards synchronously.
     For PPT and Video, returns a job_id with status='processing'.
     """
     try:
-        output = await create_content(request, user_id=current_user.id)
+        output = await create_content(payload, user_id=current_user.id)
         return output
     except HTTPException:
         raise
