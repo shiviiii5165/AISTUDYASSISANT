@@ -484,7 +484,12 @@ async def generate_stage_video(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    video_config = VideoAdapter.create_video_config(roadmap, stage)
+    try:
+        video_config = VideoAdapter.create_video_config(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Video config build failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not build video config: {e}")
+        
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.VIDEO:
             rec.status = ResourceStatus.READY
@@ -508,7 +513,12 @@ async def generate_stage_quiz(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    quiz_spec = QuizAdapter.generate_stage_quiz_spec(roadmap, stage)
+    try:
+        quiz_spec = QuizAdapter.generate_stage_quiz_spec(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Quiz generation failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not generate quiz: {e}")
+        
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.QUIZ:
             rec.status = ResourceStatus.READY
@@ -532,7 +542,12 @@ async def generate_stage_notes(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    notes = NotesAdapter.generate_stage_notes(roadmap, stage)
+    try:
+        notes = NotesAdapter.generate_stage_notes(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Notes generation failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not generate notes: {e}")
+        
     for rec in stage.resource_recommendations:
         if rec.resource_type == ResourceType.NOTES:
             rec.status = ResourceStatus.READY
@@ -556,7 +571,12 @@ async def get_teach_me_brief(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    brief = TeachMeAdapter.create_teach_me_context(roadmap, stage)
+    try:
+        brief = TeachMeAdapter.create_teach_me_context(roadmap, stage)
+    except Exception as e:
+        logger.error(f"Teach Me context build failed for {roadmap_id}/{stage_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Could not build Teach Me context: {e}")
+        
     stage.status = StageStatus.IN_PROGRESS
     _save_roadmap(roadmap, user_id)
     return {"message": "Teach Me context ready", "brief": brief}
