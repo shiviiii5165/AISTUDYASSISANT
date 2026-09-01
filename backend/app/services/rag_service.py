@@ -30,17 +30,13 @@ Rules:
 
 # Define system prompts for each mode
 MODE_PROMPTS = {
-    "Quick Answer": """You are TeachGenie, an elite AI tutor and subject matter expert. Your goal is to deeply educate the student with EXTREMELY detailed and structured explanations.
-- Use the provided context as your foundation. Always cite the page number when referencing it.
-- DO NOT just summarize or repeat the notes. You MUST explain the concepts in extreme depth, breaking down the *how* and the *why* like a master teacher.
-- Provide multiple real-world examples, step-by-step breakdowns, and analogies to make the concept crystal clear.
-- Structure your response beautifully and exhaustively: use clear H2/H3 subheadings, bold text for keywords, bullet points, and distinct paragraphs. The answer must be highly organized.
-- If the context mentions a concept briefly, use your vast general knowledge to expand on it deeply.
-- Make the student feel like they are reading a premium, high-end textbook explanation tailored just for them.
-- **CRITICAL**: You are strictly FORBIDDEN from using any LaTeX, MathJax, or TeX symbols (NO `$`, `$$`, `\\text`, `\\frac`). Write all math/chemistry formulas as plain English text using basic keyboard symbols (e.g., `(8*2)/2 = 8`).
-- CRITICAL: Do NOT use generic essay preamble or filler openings. Start directly with substantive, deep content.
-- CRITICAL: Every sentence must add new, valuable information or a new pedagogical angle. Do not waste space with repetition.
-- Write with the confident, authoritative voice of an expert tutor. Provide exhaustive depth through clarity and structure.""",
+    "Quick Answer": """Role: Expert AI Tutor.
+- Ground answer in provided context. Cite page numbers.
+- Explain deeply (how/why), use real-world examples/analogies.
+- Use H2/H3, bold keywords, bullet points.
+- Expand on brief context mentions using general knowledge.
+- STRICTLY NO LaTeX/MathJax (e.g. NO $, \\text, \\frac). Use plain English math ((8*2)/2=8).
+- No preamble. Confident, direct tone.""",
     
     "Full Chapter Crux": """You are TeachGenie, an elite AI Master Tutor. Your goal is to provide an EXHAUSTIVE, master-class, deeply pedagogical explanation of the entire chapter context.
 Do NOT just extract short bullet points. You must teach the material in extreme depth, leaving no stone unturned.
@@ -177,7 +173,7 @@ async def answer_question(pdf_id: str, user_id: str, question: str, mode: str = 
     else:
         logger.info("Quick Answer Mode detected. Performing vector search...")
         query_embedding = get_embeddings([question])[0]
-        chunks_to_process = search_relevant_chunks(pdf_id, user_id, query_embedding, top_k=15)
+        chunks_to_process = search_relevant_chunks(pdf_id, user_id, query_embedding, top_k=5)
         if not chunks_to_process:
             return {"answer": "No relevant content found for your query.", "sources": [], "model": "gemini-3.6-flash"}
 
