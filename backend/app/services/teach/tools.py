@@ -78,6 +78,15 @@ def get_learning_state(session_id: str) -> Optional[LearningState]:
     data = SESSION_STORE.get(session_id)
     if data:
         return LearningState(**data) if isinstance(data, dict) else data
+    if supabase:
+        try:
+            res = supabase.table('teach_sessions').select('state_json').eq('id', session_id).execute()
+            if res.data and res.data[0].get('state_json'):
+                state_data = res.data[0]['state_json']
+                SESSION_STORE[session_id] = state_data
+                return LearningState(**state_data)
+        except Exception as e:
+            print(f'Error fetching state: {e}')
     return None
 
 
@@ -88,11 +97,19 @@ def save_learning_state(session_id: str, state: LearningState) -> None:
 
     if supabase:
         try:
-            supabase.table("topic_decks").update({
-                "error_message": None
-            }).eq("id", session_id).execute()
-        except Exception:
-            pass
+            # Upsert into teach_sessions
+            payload = {
+                "id": session_id,
+                "user_id": state.user_id,
+                "topic": state.topic,
+                "level": state.level.value if hasattr(state.level, 'value') else state.level,
+                "mode": state.mode.value if hasattr(state.mode, 'value') else state.mode,
+                "depth": state.depth.value if hasattr(state.depth, 'value') else state.depth,
+                "state_json": state_dict
+            }
+            supabase.table('teach_sessions').upsert(payload, on_conflict='id').execute()
+        except Exception as e:
+            print(f'Error saving state: {e}')
 
 
 def get_lesson_plan(session_id: str) -> Optional[LessonPlan]:
@@ -100,12 +117,37 @@ def get_lesson_plan(session_id: str) -> Optional[LessonPlan]:
     data = PLAN_STORE.get(session_id)
     if data:
         return LessonPlan(**data) if isinstance(data, dict) else data
+    if supabase:
+        try:
+            res = supabase.table('teach_sessions').select('plan_json').eq('id', session_id).execute()
+            if res.data and res.data[0].get('plan_json'):
+                plan_data = res.data[0]['plan_json']
+                PLAN_STORE[session_id] = plan_data
+                return LessonPlan(**plan_data)
+        except Exception as e:
+            print(f'Error fetching plan: {e}')
     return None
 
 
 def save_lesson_plan(session_id: str, plan: LessonPlan) -> None:
     """Persist lesson plan for a session."""
     PLAN_STORE[session_id] = plan.dict()
+
+    if supabase:
+        try:
+            # Upsert into teach_sessions
+            payload = {
+                "id": session_id,
+                "user_id": plan.user_id,
+                "topic": plan.topic,
+                "level": plan.target_level.value if hasattr(plan.target_level, 'value') else plan.target_level,
+                "mode": plan.mode.value if hasattr(plan.mode, 'value') else plan.mode,
+                "depth": plan.depth.value if hasattr(plan.depth, 'value') else plan.depth,
+                "plan_json": plan.dict()
+            }
+            supabase.table('teach_sessions').upsert(payload, on_conflict='id').execute()
+        except Exception as e:
+            print(f'Error saving plan: {e}')
 
 
 def update_mastery_profile(
