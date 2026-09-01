@@ -4,7 +4,6 @@ PowerPoint (.pptx / .ppt) Ingestion & Chunking Service
 Parses presentation files using python-pptx, extracting slide numbers, titles,
 bullet points, tables, and speaker notes with preserved provenance.
 """
-from app.core.logging import logger
 import io
 import os
 import uuid
@@ -147,7 +146,7 @@ def process_pptx_and_store(
                 "source_type": "ppt",
             }).execute()
         except Exception as e:
-            logger.info(f"[PPTProcessor] DB insert notice: {e}")
+            print(f"[PPTProcessor] DB insert notice: {e}")
 
     # 2. Generate embeddings and store chunks
     if chunks:

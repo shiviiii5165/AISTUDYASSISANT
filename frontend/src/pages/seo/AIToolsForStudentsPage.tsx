@@ -27,7 +27,7 @@ const AIToolsForStudentsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <SEO 
         title="Best AI Tools For Students | TeachGenie"
         description="Discover why TeachGenie is among the top AI tools for students. Enhance your study sessions with our AI study assistant, PDF reader, and MCQ generator."
@@ -36,11 +36,11 @@ const AIToolsForStudentsPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
           <img src="/logo.png" alt="TeachGenie Logo" className="w-8 h-8 object-contain" />
           <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
-        </button>
-        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
+        </div>
+        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-colors">
           Get Started
         </button>
       </nav>
@@ -60,7 +60,7 @@ const AIToolsForStudentsPage: React.FC = () => {
             <p className="text-[var(--text-secondary)]">Why use multiple apps? Get a doubt solver, MCQ generator, and AI tutor all in one place.</p>
           </div>
           <div className="p-6 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-            <Laptop className="w-8 h-8 text-[var(--accent-green-text)] mb-4" />
+            <Laptop className="w-8 h-8 text-[var(--accent-indigo)] mb-4" />
             <h3 className="text-xl font-bold mb-2">Interactive Interface</h3>
             <p className="text-[var(--text-secondary)]">Simply upload your PDF notes and start chatting with your materials instantly.</p>
           </div>
@@ -86,7 +86,7 @@ const AIToolsForStudentsPage: React.FC = () => {
         </div>
         
         <div className="text-center">
-          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 hover:bg-[var(--accent-green-hover)] transition-colors">
+          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 hover:bg-green-700 transition-colors">
             Boost Your Grades <ArrowRight className="w-5 h-5" />
           </button>
         </div>

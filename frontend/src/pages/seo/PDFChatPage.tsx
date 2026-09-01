@@ -20,7 +20,7 @@ const PDFChatPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <SEO 
         title="Chat With Your PDF Notes Using AI"
         description="Upload your PDF notes and textbooks to TeachGenie and chat with them using AI. Ask questions, get summaries, and study smarter."
@@ -29,11 +29,11 @@ const PDFChatPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
           <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
-        </button>
-        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
+        </div>
+        <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition-colors">
           Get Started
         </button>
       </nav>
@@ -54,7 +54,7 @@ const PDFChatPage: React.FC = () => {
             2. The AI reads and understands the content.<br/>
             3. Ask any question and get answers cited directly from the PDF.
           </p>
-          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2 hover:bg-[var(--accent-green-hover)] transition-colors">
+          <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2 hover:bg-green-700 transition-colors">
             Upload PDF Now <ArrowRight className="w-5 h-5" />
           </button>
         </div>

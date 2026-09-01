@@ -23,7 +23,7 @@ const SIZE_MAP = {
   '2xl': { container: 260, img: 240 },
 };
 
-// Personality beats, random micro-animations
+// Personality beats — random micro-animations
 const PERSONALITY_BEATS = [
   { name: 'driftRight', duration: 0.8 },
   { name: 'driftLeft', duration: 0.8 },
@@ -178,7 +178,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
       className={`relative flex items-center justify-center ${className}`}
       style={{ width: dims.container, height: dims.container }}
     >
-      {/* Glow effect (behind the genie), variant-aware */}
+      {/* Glow effect (behind the genie) — variant-aware */}
       {!prefersReducedMotion && (
         <motion.div
           className="absolute rounded-full"
@@ -240,7 +240,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
       >
         <img
           src={imageSrc}
-          alt="TeachGenie, your AI teaching companion"
+          alt="TeachGenie — your AI teaching companion"
           style={{
             width: dims.img,
             height: dims.img,

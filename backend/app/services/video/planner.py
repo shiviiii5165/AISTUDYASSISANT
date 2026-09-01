@@ -5,7 +5,6 @@ Storyboard Planning & Teach Me Storyboard Converter
 2. Generates grounded multi-source storyboards for Topic/PDF/PPT/Notes/YouTube requests.
 3. Enforces deterministic duration calculations in pure Python.
 """
-from app.core.logging import logger
 from typing import List, Dict, Any, Optional
 from app.services.ai import router
 from .schemas import (
@@ -129,7 +128,7 @@ async def plan_storyboard(
         try:
             return build_storyboard_from_teach_me_state(config.lesson_session_id, config)
         except Exception as e:
-            logger.info(f"[StoryboardPlanner] Teach Me reuse fallback: {e}")
+            print(f"[StoryboardPlanner] Teach Me reuse fallback: {e}")
 
     # 1. Targeted RAG retrieval if source files exist
     evidence_items: List[EvidenceItem] = []
@@ -171,7 +170,7 @@ async def plan_storyboard(
             max_tokens=3000,
         )
     except Exception as e:
-        logger.info(f"[StoryboardPlanner] LLM provider notice ({e}). Using deterministic storyboard fallback.")
+        print(f"[StoryboardPlanner] LLM provider notice ({e}). Using deterministic storyboard fallback.")
         raw_plan = {
             "topic": config.topic,
             "scenes": [

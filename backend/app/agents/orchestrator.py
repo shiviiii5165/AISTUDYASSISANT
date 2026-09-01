@@ -22,7 +22,7 @@ from app.services.llm_service import call_gemini, safe_json_loads
 # OUTPUT SCHEMA
 # ══════════════════════════════════════════════════════════════════════════════
 
-VALID_INTENTS = {"doubt", "content_request", "progress_check", "general_chat", "clarify", "document_summary"}
+VALID_INTENTS = {"doubt", "content_request", "progress_check", "general_chat", "clarify"}
 VALID_ROUTES = {
     "tutor_agent",
     "librarian_agent",
@@ -39,7 +39,6 @@ INTENT_ROUTE_MAP = {
     "progress_check": "study_planner_agent",
     "general_chat": "direct_reply",
     "clarify": "direct_reply",
-    "document_summary": "direct_reply", # Handled via V1 RAG pipeline which returns direct_reply
 }
 
 
@@ -80,11 +79,10 @@ Your ONLY job is to classify a student's message into exactly one intent categor
 
 ## Intent Categories (pick exactly one):
 1. **doubt** — The student is confused about a concept, asking "why", "how", "what is", requesting an explanation, or saying they don't understand something. Route to: tutor_agent
-2. **content_request** — The student explicitly wants a tangible output generated from scratch: flashcards, a PowerPoint/PPT, a video, notes, or a quiz. Route to: content_creator_agent
+2. **content_request** — The student explicitly wants a tangible output: a summary, flashcards, a PowerPoint/PPT, a video, notes, a quiz, or study material generated. Route to: content_creator_agent
 3. **progress_check** — The student is asking about their own performance, scores, history, study streak, what they've completed, or revision schedule. Route to: study_planner_agent
-4. **document_summary** — The student asks for a summary, crux, or overview of the current PDF/document (e.g. "syllabus summary", "summarize the chapter"). Route to: direct_reply
-5. **general_chat** — Small talk, greetings, thanks, jokes, motivational questions, or anything that doesn't fit the above categories. Route to: direct_reply. You MUST also generate a short, friendly direct_reply.
-6. **clarify** — The message is too vague or ambiguous to classify with confidence. Route to: direct_reply. You MUST also generate a short clarifying question as the direct_reply.
+4. **general_chat** — Small talk, greetings, thanks, jokes, motivational questions, or anything that doesn't fit the above categories. Route to: direct_reply. You MUST also generate a short, friendly direct_reply.
+5. **clarify** — The message is too vague or ambiguous to classify with confidence. Route to: direct_reply. You MUST also generate a short clarifying question as the direct_reply.
 
 ## Confidence Rules:
 - If you are highly confident in the classification, set confidence to 0.8–1.0.
@@ -94,7 +92,7 @@ Your ONLY job is to classify a student's message into exactly one intent categor
 ## Output Format:
 Respond with ONLY a valid JSON object (no markdown, no extra text):
 {
-  "intent": "<one of: doubt, content_request, progress_check, document_summary, general_chat, clarify>",
+  "intent": "<one of: doubt, content_request, progress_check, general_chat, clarify>",
   "topic": "<detected subject/concept string or null>",
   "confidence": <float 0.0-1.0>,
   "routed_to": "<one of: tutor_agent, content_creator_agent, study_planner_agent, direct_reply>",
@@ -148,17 +146,16 @@ def _build_messages(
     if strict:
         system_prompt += STRICT_RETRY_SUFFIX
 
-    # Format recent conversation history as context string (last 4 turns max)
-    if conversation_history:
-        history_text = "\n\n## Recent Conversation History:\n"
-        for turn in conversation_history[-4:]:
-            role = turn.get("role", "user").capitalize()
-            content = turn.get("content", "")
-            if role in ("User", "Assistant") and content:
-                history_text += f"{role}: {content}\n"
-        system_prompt += history_text
-
     messages = [{"role": "system", "content": system_prompt}]
+
+    # Include recent conversation history for context (last 4 turns max)
+    if conversation_history:
+        for turn in conversation_history[-4:]:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+
     messages.append({"role": "user", "content": user_input})
     return messages
 
@@ -260,17 +257,7 @@ async def classify_and_route(
         )
         return _parse_and_validate(raw_text)
     except Exception as e:
-        err_msg = str(e)
         print(f"[Orchestrator] Attempt 1 failed: {e}")
-        if "API calls failed" in err_msg or "Embedding generation failed" in err_msg:
-            return OrchestratorOutput(
-                intent="clarify",
-                topic=None,
-                confidence=0.0,
-                routed_to="direct_reply",
-                direct_reply="The AI is currently overloaded. Please try again in a few moments.",
-                content_subtype=None,
-            )
 
     # ── Attempt 2: Strict prompt (retry) ────────────────────────────────────
     try:
@@ -282,17 +269,7 @@ async def classify_and_route(
         )
         return _parse_and_validate(raw_text)
     except Exception as e:
-        err_msg = str(e)
         print(f"[Orchestrator] Attempt 2 (strict) failed: {e}")
-        if "API calls failed" in err_msg or "Embedding generation failed" in err_msg:
-            return OrchestratorOutput(
-                intent="clarify",
-                topic=None,
-                confidence=0.0,
-                routed_to="direct_reply",
-                direct_reply="The AI is currently overloaded. Please try again in a few moments.",
-                content_subtype=None,
-            )
 
     # ── Fallback: safe clarify ──────────────────────────────────────────────
     return _fallback_clarify()

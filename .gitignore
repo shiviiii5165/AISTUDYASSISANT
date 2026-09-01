@@ -3,9 +3,6 @@
 .env.local
 .env.*.local
 
-# Local test credentials (live JWTs) — never commit
-backend/test_tokens.json
-
 # Python
 backend/venv/
 **/__pycache__/
@@ -24,14 +21,6 @@ frontend/*.local
 frontend/.npm
 frontend/.yarn
 
-# Local dev artifacts
-scratch/
-
-# Local test account config (see backend/scripts/create_test_accounts.py)
-# Emails using @teachgenie.local are fake local-only test accounts created
-# via the Supabase Admin API and should never appear in production data.
-backend/scripts/test_accounts_config.*
-
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -40,7 +29,3 @@ backend/scripts/test_accounts_config.*
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-
-.agents/
-.claude/

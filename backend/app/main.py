@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
@@ -17,38 +16,21 @@ origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if "*" not in origins else ["*"],
-    # Scope the regex to our own deployed subdomains only. Do NOT match arbitrary
-    # *.vercel.app / *.onrender.com subdomains, which are open public hosting and
-    # would trust any attacker-controlled site on those platforms.
-    allow_origin_regex=r"https://(prepmind|aistudyassisant)\.(vercel\.app|onrender\.com)|http://localhost:\d+",
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.onrender\.com|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 from app.core.security import setup_rate_limiting, SecurityHeadersMiddleware, RequestSizeLimitMiddleware
-from slowapi.middleware import SlowAPIMiddleware
-
 app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10_000_000) # 10MB
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(SlowAPIMiddleware)
 setup_rate_limiting(app)
 
 
-# Global exception handler — always returns CORS-safe JSON, never a raw crash.
-# HTTPException and RequestValidationError are passed through to FastAPI's own
-# handlers so deliberate 4xx/5xx codes (e.g. the Phase-3 503 gate) are
-# preserved and not accidentally flattened into 500.
+# Global exception handler — always returns CORS-safe JSON, never a raw crash
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    if isinstance(exc, HTTPException):
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"detail": exc.detail},
-            headers=getattr(exc, "headers", None) or {},
-        )
-    if isinstance(exc, RequestValidationError):
-        return JSONResponse(status_code=422, content={"detail": exc.errors()})
     logger.error(f"UNHANDLED EXCEPTION on {request.method} {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
@@ -95,6 +77,4 @@ from app.api import content_creator as content_creator_api
 app.include_router(content_creator_api.router, prefix="/api/content-creator", tags=["content-creator"])
 from app.api import lesson_planner
 app.include_router(lesson_planner.router, prefix="/api/lesson-planner", tags=["lesson-planner"])
-from app.api import quiz as quiz_api
-app.include_router(quiz_api.router, prefix="/api/quiz", tags=["quiz"])
 

@@ -17,7 +17,7 @@ def render_quote_insight(slide: Slide, content: SlideContent, theme: ThemeColors
 
     # Large quote marks or decorative accent
     add_text_box(
-        slide, "\"",
+        slide, "❝",
         Inches(1.5), Inches(1.2), Inches(1.5), Inches(1.0),
         token=Typography.HERO_TITLE, color=theme.primary_light,
         alignment=PP_ALIGN.LEFT,

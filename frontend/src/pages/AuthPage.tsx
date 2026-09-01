@@ -96,7 +96,7 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--bg-secondary)] p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-secondary)] p-4 relative overflow-hidden">
       <SEO 
         title={isLogin ? 'Log In' : 'Sign Up'} 
         description="Log in or sign up to TeachGenie to access your AI study assistant and chat with your notes." 
@@ -104,7 +104,7 @@ const AuthPage: React.FC = () => {
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-[var(--accent-green)] opacity-[0.04] rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[var(--accent-green)] opacity-[0.04] rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[var(--accent-indigo)] opacity-[0.04] rounded-full blur-3xl" />
       </div>
 
       <div className="bg-white p-6 md:p-8 rounded-xl shadow-[var(--shadow-lg)] w-full max-w-sm border border-[var(--border)] relative z-10">
@@ -215,13 +215,13 @@ const AuthPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[var(--accent-green)] text-white font-semibold py-2.5 rounded-lg shadow-sm hover:bg-[var(--accent-green-hover)] transition-all mt-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+            className="w-full bg-[var(--accent-green)] text-white font-semibold py-2.5 rounded-lg shadow-sm hover:bg-green-700 transition-all mt-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                {isLogin ? 'Log in' : 'Sign up'}
+                {isLogin ? 'Log In' : 'Sign Up'}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -235,7 +235,7 @@ const AuthPage: React.FC = () => {
               setError('');
               setSuccessMsg('');
             }}
-            className="text-[var(--accent-green-text)] font-medium hover:underline text-sm"
+            className="text-[var(--accent-indigo)] font-medium hover:underline text-sm"
             disabled={loading}
           >
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Log in'}

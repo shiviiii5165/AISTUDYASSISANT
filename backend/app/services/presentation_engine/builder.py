@@ -4,7 +4,6 @@ TeachGenie — Presentation Builder
 Main entry point: takes a PresentationPlan + theme → produces PPTX bytes.
 Integrates: Layout Engine, QA Engine, Design Tokens.
 """
-from app.core.logging import logger
 import io
 from typing import List, Optional
 from pptx import Presentation
@@ -95,12 +94,12 @@ def build_presentation(
 
     # 5. Evaluate deck quality (density + contrast)
     qa = evaluate_deck_quality(slides, theme=theme)
-    logger.info(f"[QA] Deck QA: {qa['passed']}/{qa['total_slides']} slides passed | "
+    print(f"[QA] Deck QA: {qa['passed']}/{qa['total_slides']} slides passed | "
           f"Layout variety: {qa['variety_score']}% | "
           f"Critical: {qa['critical']}")
     if qa.get("contrast_issues"):
         for ci in qa["contrast_issues"]:
-            logger.info(f"[QA][CONTRAST] {ci}")
+            print(f"[QA][CONTRAST] {ci}")
 
     # 6. Export
     buffer = io.BytesIO()

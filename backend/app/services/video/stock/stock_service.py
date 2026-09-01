@@ -4,7 +4,6 @@ Stock Media Retrieval Engine
 Searches licensed stock footage (Pexels, Pixabay) with deterministic keyword scoring,
 local caching, and strict attribution / license metadata retention.
 """
-from app.core.logging import logger
 import hashlib
 import os
 from typing import List, Dict, Any, Optional
@@ -99,7 +98,7 @@ async def search_stock_media(
                             STOCK_ASSET_CACHE[query_hash] = result
                             return result
         except Exception as e:
-            logger.info(f"[StockService] Pexels search notice: {e}")
+            print(f"[StockService] Pexels search notice: {e}")
 
     # 3. Fallback placeholder metadata if no external API key is configured
     fallback_res = StockMediaResult(

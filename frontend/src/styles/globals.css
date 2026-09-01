@@ -13,13 +13,10 @@
     /* Text */
     --text-primary: #0F172A;      /* Deep slate — headings */
     --text-secondary: #475569;    /* Medium slate — body text */
-    --text-muted: #5F6875;        /* Muted slate, 4.96:1 on secondary surface (WCAG AA) */
+    --text-muted: #94A3B8;        /* Light slate — placeholders */
 
     /* Accent Colors */
-    --accent-green: #15803D;      /* Primary surface. White label on it = 5.02:1 (AA) */
-    --accent-green-hover: #166534; /* Primary hover. White label = 7.13:1 */
-    --accent-green-text: #166534; /* Green AS TEXT. 6.27:1 worst case on our surfaces */
-    --accent-green-deep: #14532D; /* Full-bleed brand band. White on it = 9.11:1 */
+    --accent-green: #16A34A;      /* Primary — trust, learning, success */
     --accent-green-light: #DCFCE7; /* Green bg for badges */
     --accent-amber: #F59E0B;      /* Streaks, achievements, warnings */
     --accent-amber-light: #FEF3C7;
@@ -41,10 +38,6 @@
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 24px;
-
-    /* Typography */
-    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
   }
 
   * {
@@ -55,46 +48,25 @@
     margin: 0;
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-sans);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
   }
 
   #root {
     width: 100%;
     max-width: 100%;
-    min-height: 100dvh;
-  }
-
-  /* Keyboard focus is never removed, only made visible on keyboard use. */
-  :focus-visible {
-    outline: 2px solid var(--accent-green-text);
-    outline-offset: 2px;
+    min-height: 100vh;
   }
 }
 
 @layer utilities {
-  /* Skip link: visually hidden until focused, then pinned top-left. */
-  .skip-link {
-    position: absolute;
-    left: 8px;
-    top: -100px;
-    z-index: 100;
-    padding: 10px 16px;
-    border-radius: var(--radius-sm);
-    background: var(--accent-green);
-    color: #FFFFFF;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: top 150ms ease;
-  }
-  .skip-link:focus {
-    top: 8px;
+  /* Gradient text */
+  .text-gradient-green {
+    background: linear-gradient(135deg, #16A34A 0%, #6366F1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* Glassmorphism card */
@@ -162,26 +134,12 @@
   border-radius: 0;
 }
 
-/* Typing indicator dot.
-   This used to be declared as `@keyframes bounce`, which silently replaced
-   Tailwind's own `bounce` keyframe for the whole app, so `animate-bounce`
-   anywhere would have rendered this 6px hop instead of Tailwind's spring.
-   Renamed so the two no longer collide. */
-@keyframes typingDot {
+/* Bounce animation for typing indicator */
+@keyframes bounce {
   0%, 80%, 100% {
     transform: translateY(0);
   }
   40% {
     transform: translateY(-6px);
-  }
-}
-
-.typing-dot {
-  animation: typingDot 1s infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .typing-dot {
-    animation: none;
   }
 }

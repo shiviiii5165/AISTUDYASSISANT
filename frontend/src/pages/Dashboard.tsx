@@ -2,19 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
-import {
-  Search, BookOpen, ArrowRight, FileText, MessageSquare, Layers, CheckCircle2,
-} from 'lucide-react';
+import { Search, BookOpen, Loader2, ArrowRight, FileText, MessageSquare, Sparkles, TrendingUp } from 'lucide-react';
 import { fetchPdfs } from '../lib/api';
 import type { PDFDocument } from '../lib/api';
-import { subjectStyle } from '../lib/subjects';
+import { useAuthStore } from '../store/useAuthStore';
 import GreetingHeader from '../components/GreetingHeader';
 
+const SUBJECT_COLORS: Record<string, { bg: string; text: string }> = {
+  Physics: { bg: 'bg-blue-50', text: 'text-blue-600' },
+  Chemistry: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
+  Biology: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+  Maths: { bg: 'bg-purple-50', text: 'text-purple-600' },
+  English: { bg: 'bg-amber-50', text: 'text-amber-600' },
+  History: { bg: 'bg-rose-50', text: 'text-rose-600' },
+  'Computer Science': { bg: 'bg-cyan-50', text: 'text-cyan-600' },
+  Economics: { bg: 'bg-orange-50', text: 'text-orange-600' },
+  General: { bg: 'bg-gray-50', text: 'text-gray-600' },
+};
+
 const Dashboard: React.FC = () => {
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
   const [loadingPdfs, setLoadingPdfs] = useState(true);
   const [quickAsk, setQuickAsk] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const placeholders = [
+    "Ask a doubt from any PDF...",
+    "What is Newton's third law?",
+    "Explain mitochondria simply...",
+    "Generate 5 MCQs on this chapter..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [placeholders.length]);
 
   useEffect(() => {
     (async () => {
@@ -29,10 +55,10 @@ const Dashboard: React.FC = () => {
     })();
   }, []);
 
+  const firstName = user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
   const readyPdfs = pdfs.filter(p => p.status === 'ready');
   const recentPdfs = pdfs.slice(0, 4);
   const totalPages = pdfs.reduce((sum, p) => sum + (p.page_count || 0), 0);
-  const subjectCount = new Set(pdfs.map(p => p.subject).filter(Boolean)).size;
 
   const handleQuickAsk = () => {
     if (quickAsk.trim() && readyPdfs.length > 0) {
@@ -42,185 +68,164 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  /* Every value here is derived from the /pdfs/list response already fetched
-     above. The previous "Study Streak" tile was hardcoded to "1 day" with no
-     backend behind it and has been replaced with a real count. */
   const STATS = [
-    { label: 'Documents', value: pdfs.length, icon: FileText },
-    { label: 'Total pages', value: totalPages, icon: BookOpen },
-    { label: 'Ready to chat', value: readyPdfs.length, icon: CheckCircle2 },
-    { label: 'Subjects', value: subjectCount, icon: Layers },
+    {
+      label: 'PDFs Uploaded',
+      value: pdfs.length,
+      icon: <FileText className="w-4 h-4 text-[var(--accent-indigo)]" />,
+      iconBg: 'bg-indigo-50',
+    },
+    {
+      label: 'Total Pages',
+      value: totalPages,
+      icon: <BookOpen className="w-4 h-4 text-[var(--accent-green)]" />,
+      iconBg: 'bg-green-50',
+    },
+    {
+      label: 'Ready to Chat',
+      value: readyPdfs.length,
+      icon: <TrendingUp className="w-4 h-4 text-purple-600" />,
+      iconBg: 'bg-purple-50',
+    },
+    {
+      label: 'Study Streak',
+      value: '1 day',
+      icon: <span className="text-sm">🔥</span>,
+      iconBg: 'bg-amber-50',
+      isStreak: true,
+    },
   ];
 
   return (
-    <AppLayout title="Dashboard">
-      <SEO
-        title="Dashboard"
-        description="View your learning progress, recent uploads, and AI study sessions on TeachGenie."
+    <AppLayout title={<span className="font-semibold">Dashboard</span>}>
+      <SEO 
+        title="Dashboard" 
+        description="View your learning progress, recent uploads, and AI study sessions on TeachGenie." 
       />
-      <div className="mx-auto max-w-5xl space-y-8 p-4 md:p-6 lg:p-8">
+      <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-10">
+        
+        {/* Hero Section */}
+        <GreetingHeader avatarImageSrc="/scholar-genie-chibi.png" />
 
-        <GreetingHeader
-          avatarImageSrc="/images/tutor_avatar.jpg"
-          subtitle="Pick up where you left off, or ask a question about any document."
-        />
-
-        {/* Quick ask */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-2 shadow-[var(--shadow-sm)] focus-within:border-[var(--accent-green)]">
-          <div className="flex items-center gap-2">
-            <Search className="ml-3 h-5 w-5 shrink-0 text-[var(--text-muted)]" aria-hidden="true" />
-            <label htmlFor="quick-ask" className="sr-only">
-              Ask a question about your documents
-            </label>
+        {/* Quick Ask */}
+        <div className="relative group animate-slideUp" style={{ animationDelay: '0.3s' }}>
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-indigo)] rounded-2xl opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 group-focus-within:animate-[borderGlow_3s_infinite] transition-all blur-sm" />
+          <div className="relative card-storybook p-2 flex items-center gap-2 rounded-xl">
+            <div className="pl-4">
+              <Search className="w-5 h-5 text-[var(--accent-amber)]" />
+            </div>
             <input
-              id="quick-ask"
               type="text"
               value={quickAsk}
               onChange={(e) => setQuickAsk(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleQuickAsk()}
-              placeholder={
-                readyPdfs.length > 0
-                  ? 'Ask a question about your documents'
-                  : 'Upload a document first to start asking'
-              }
-              className="min-w-0 flex-1 border-none bg-transparent px-1 py-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
+              placeholder={readyPdfs.length > 0 ? placeholders[placeholderIndex] : "Upload a PDF first to start asking..."}
+              className="flex-1 bg-transparent border-none focus:outline-none text-[var(--text-primary)] py-3 px-2 placeholder:text-[var(--text-muted)] text-base min-w-0 transition-all"
+              style={{ animation: readyPdfs.length > 0 && !quickAsk ? 'placeholderFade 4s infinite' : 'none' }}
               disabled={readyPdfs.length === 0}
             />
             <button
-              type="button"
               onClick={handleQuickAsk}
-              className="shrink-0 rounded-lg bg-[var(--accent-green)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px"
+              className="btn-gold px-6 py-3 rounded-lg flex items-center gap-2 text-sm shadow-sm shrink-0"
             >
-              Ask
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">Ask Genie</span>
             </button>
           </div>
         </div>
 
-        {/* Stats. Hairline-separated row rather than four bordered cards. */}
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--border)] lg:grid-cols-4">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="bg-[var(--bg-card)] p-4">
-              <dt className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
-                <stat.icon className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
-                {stat.label}
-              </dt>
-              <dd className="mt-2 font-display text-3xl font-bold tabular-nums tracking-tight text-[var(--text-primary)]">
-                {loadingPdfs ? (
-                  <span
-                    className="block h-8 w-12 animate-pulse rounded bg-[var(--bg-secondary)]"
-                    aria-label="Loading"
-                  />
-                ) : (
-                  stat.value
-                )}
-              </dd>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slideUp" style={{ animationDelay: '0.4s' }}>
+          {STATS.map((stat, i) => (
+            <div key={stat.label} className="card-storybook p-5 flex flex-col justify-between" style={{ animationDelay: `${0.4 + i*0.1}s` }}>
+              <div className={`w-8 h-8 ${stat.iconBg} rounded-lg flex items-center justify-center mb-3`}>
+                {stat.icon}
+              </div>
+              <p className="text-[var(--text-muted)] text-[11px] font-bold uppercase tracking-widest mb-1">{stat.label}</p>
+              {loadingPdfs && !stat.isStreak ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
+              ) : (
+                <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">{stat.value}</p>
+              )}
             </div>
           ))}
-        </dl>
-
-        {/* Recent documents */}
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
-              Recent documents
-            </h2>
+        </div>
+        
+        {/* Recent PDFs */}
+        <div className="animate-slideUp" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-bold text-[var(--text-primary)]">Recent PDFs</h3>
             <button
-              type="button"
               onClick={() => navigate('/library')}
-              className="flex items-center gap-1 rounded text-xs font-semibold text-[var(--accent-green-text)] hover:underline"
+              className="text-[var(--accent-indigo)] text-xs font-semibold hover:underline flex items-center gap-1"
             >
-              View all
-              <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              View all <ArrowRight className="w-3 h-3" />
             </button>
           </div>
 
           {loadingPdfs ? (
-            /* Skeletons matching the card shape, not a spinner. */
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
-                  aria-hidden="true"
-                >
-                  <div className="mb-4 h-24 animate-pulse rounded-lg bg-[var(--bg-secondary)]" />
-                  <div className="mb-2 h-3 w-16 animate-pulse rounded bg-[var(--bg-secondary)]" />
-                  <div className="h-4 w-full animate-pulse rounded bg-[var(--bg-secondary)]" />
-                </div>
-              ))}
-              <span className="sr-only">Loading documents</span>
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="w-5 h-5 animate-spin text-[var(--accent-green)]" />
             </div>
           ) : recentPdfs.length === 0 ? (
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-6 py-12 text-center">
-              <img src="/images/empty_pdf_state.jpg" alt="Empty Library" className="mx-auto mb-4 h-32 w-32 rounded-xl object-cover shadow-sm" />
-              <p className="font-display text-base font-semibold text-[var(--text-primary)]">
-                Your library is empty
-              </p>
-              <p className="mx-auto mt-1 max-w-[40ch] text-sm text-[var(--text-secondary)]">
-                Upload a PDF or a photo of your handwritten notes to start asking questions about it.
-              </p>
+            <div className="text-center py-12 card-storybook">
+              <div className="w-14 h-14 bg-[var(--bg-secondary)] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[var(--border)] shadow-inner">
+                <BookOpen className="w-6 h-6 text-[var(--accent-amber)]" />
+              </div>
+              <p className="text-[var(--text-primary)] font-bold text-lg mb-1">Your library is empty</p>
+              <p className="text-[var(--text-secondary)] text-sm mb-6">Upload your first study material to get started</p>
               <button
-                type="button"
                 onClick={() => navigate('/library')}
-                className="mt-5 rounded-lg bg-[var(--accent-green)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px"
+                className="btn-gold px-6 py-2.5 rounded-lg text-sm transition-all"
               >
-                Upload a document
+                Upload PDF
               </button>
             </div>
           ) : (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {recentPdfs.map((pdf) => {
-                const colors = subjectStyle(pdf.subject);
-                const isReady = pdf.status === 'ready';
+                const colors = SUBJECT_COLORS[pdf.subject] || SUBJECT_COLORS['General'];
                 return (
-                  <li key={pdf.id}>
-                    {/* A real button, so the card is reachable by keyboard.
-                        Previously a bare div with onClick. */}
-                    <button
-                      type="button"
-                      disabled={!isReady}
-                      onClick={() => navigate(`/chat?pdf=${pdf.id}`)}
-                      className="group h-full w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left transition-colors enabled:hover:border-[var(--accent-green)] disabled:cursor-default disabled:opacity-70"
-                    >
-                      <div className="mb-3 flex h-24 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] transition-colors group-enabled:group-hover:bg-[var(--accent-green-light)]">
-                        {pdf.status === 'processing' ? (
-                          <span className="text-xs font-medium text-[var(--text-secondary)]">
-                            Processing
-                          </span>
-                        ) : isReady ? (
-                          <MessageSquare
-                            className="h-6 w-6 text-[var(--text-muted)] transition-colors group-hover:text-[var(--accent-green-text)]"
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <span className="text-xs font-medium text-red-700">Failed</span>
-                        )}
-                      </div>
-                      <div className="mb-1.5 flex items-center justify-between gap-2">
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${colors.bg} ${colors.text}`}
-                        >
-                          {pdf.subject}
-                        </span>
-                        {pdf.page_count ? (
-                          <span className="text-[10px] tabular-nums text-[var(--text-muted)]">
-                            {pdf.page_count}p
-                          </span>
-                        ) : null}
-                      </div>
-                      <p
-                        className="truncate text-sm font-semibold text-[var(--text-primary)]"
-                        title={pdf.name}
-                      >
-                        {pdf.name}
-                      </p>
-                    </button>
-                  </li>
+                  <div
+                    key={pdf.id}
+                    onClick={() => {
+                      if (pdf.status === 'ready') navigate(`/chat?pdf=${pdf.id}`);
+                    }}
+                    className={`card-storybook p-4 transition-all group ${
+                      pdf.status === 'ready' ? 'cursor-pointer' : 'opacity-70'
+                    }`}
+                  >
+                    <div className="h-28 bg-[var(--bg-secondary)] rounded-lg mb-4 flex items-center justify-center group-hover:bg-[var(--accent-green-light)] transition-colors relative overflow-hidden border border-[var(--border)]">
+                      {pdf.status === 'processing' ? (
+                        <Loader2 className="w-6 h-6 text-[var(--accent-amber)] animate-spin" />
+                      ) : pdf.status === 'ready' ? (
+                        <>
+                          <BookOpen className="w-8 h-8 text-[var(--accent-amber)] opacity-40 group-hover:opacity-0 transition-all duration-300 transform group-hover:scale-110" />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
+                            <MessageSquare className="w-6 h-6 text-[var(--accent-green)] drop-shadow-md" />
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-red-400 text-xs font-medium">Error</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${colors.bg} ${colors.text}`}>
+                        {pdf.subject}
+                      </span>
+                      {pdf.page_count ? (
+                        <span className="text-[10px] text-[var(--text-muted)]">{pdf.page_count}p</span>
+                      ) : null}
+                    </div>
+                    <h4 className="font-semibold text-[var(--text-primary)] text-sm truncate" title={pdf.name}>
+                      {pdf.name}
+                    </h4>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
-        </section>
+        </div>
       </div>
     </AppLayout>
   );

@@ -90,7 +90,7 @@ const ContentPollCard: React.FC<ContentPollCardProps> = ({ initialData }) => {
             href={data.output_url_or_path || '#'}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 justify-center w-full px-4 py-2 bg-[var(--accent-green)] text-white rounded-lg hover:bg-[var(--accent-green-hover)] transition-colors text-sm font-medium"
+            className="flex items-center gap-2 justify-center w-full px-4 py-2 bg-[var(--accent-indigo)] text-white rounded-lg hover:bg-[#2A4A6E] transition-colors text-sm font-medium"
           >
             {data.content_type === 'ppt' ? <FileText className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             View Generated {data.content_type.toUpperCase()}
@@ -101,11 +101,11 @@ const ContentPollCard: React.FC<ContentPollCardProps> = ({ initialData }) => {
 
       {data.status === 'complete' && data.content_type === 'flashcards' && data.flashcards_data && (
         <div className="mt-4 space-y-3">
-          <h5 className="font-medium text-sm text-[var(--text-primary)]">Flashcards ready:</h5>
+          <h5 className="font-medium text-sm text-[var(--text-primary)]">Flashcards Ready:</h5>
           <ul className="list-disc pl-4 text-sm text-[var(--text-secondary)] space-y-2">
             {(data.flashcards_data.cards || data.flashcards_data.flashcards || []).map((card: any, idx: number) => (
               <li key={idx}>
-                <strong className="text-[var(--accent-green-text)]">Q:</strong> {card.front || card.question}
+                <strong className="text-[var(--accent-indigo)]">Q:</strong> {card.front || card.question}
                 <br />
                 <em>A:</em> {card.back || card.answer}
               </li>

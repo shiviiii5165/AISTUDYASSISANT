@@ -43,7 +43,7 @@ def render_closing(slide: Slide, content: SlideContent, theme: ThemeColors, **kw
     # Key takeaways as compact list
     takeaways = kw.get("key_takeaways", [])
     if takeaways:
-        items_text = "  ".join([f"- {t}" for t in takeaways[:5]])
+        items_text = "  ".join([f"✦ {t}" for t in takeaways[:5]])
         add_text_box(
             slide, items_text,
             Inches(1.5), Inches(4.8), Inches(10.3), Inches(1.0),

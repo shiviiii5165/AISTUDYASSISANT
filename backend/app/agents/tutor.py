@@ -15,7 +15,6 @@ Consumes LibrarianOutput from the Librarian agent.
 Uses call_gemini (with cascade fallback) from llm_service.py.
 """
 
-from app.core.logging import logger
 import json
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
@@ -241,7 +240,7 @@ The student has now correctly answered: (1) what a variable is, (2) that you can
 Tutor responds:
 
 {
-  "message": "You've got it — really well done!\\n\\nHere's a quick recap of what you've learned:\\n1. A variable is a named container that stores a value — like a labelled box.\\n2. You can change what's inside the box at any time — that's why it's called 'variable' (it varies!).\\n3. Variables can hold different types of things — numbers, text, true/false values.\\n\\nYou understood all three ideas clearly. That's a solid foundation — you're ready to use variables in real code now. Great job!",
+  "message": "You've got it — really well done!\\n\\nHere's a quick recap of what you've learned:\\n1. A variable is a named container that stores a value — like a labelled box.\\n2. You can change what's inside the box at any time — that's why it's called 'variable' (it varies!).\\n3. Variables can hold different types of things — numbers, text, true/false values.\\n\\nYou understood all three ideas clearly. That's a solid foundation — you're ready to use variables in real code now. Great job! 🎉",
   "understanding_level": "solid",
   "concepts_covered": ["variable definition", "variable reassignment", "variable types"],
   "concepts_struggled": [],
@@ -404,14 +403,14 @@ async def tutor_turn(
             max_tokens=2048,
         )
     except Exception as e:
-        logger.error(f"[Tutor] LLM call failed: {e}")
+        print(f"[Tutor] LLM call failed: {e}")
         return _safe_fallback(prior_covered, prior_struggled)
 
     # ── Parse JSON response ──────────────────────────────────────────────────
     try:
         data = safe_json_loads(raw_response)
     except Exception as e:
-        logger.error(f"[Tutor] JSON parsing failed: {e}")
+        print(f"[Tutor] JSON parsing failed: {e}")
         # If the LLM returned plain text instead of JSON, wrap it
         if raw_response and len(raw_response.strip()) > 10:
             return TutorTurn(

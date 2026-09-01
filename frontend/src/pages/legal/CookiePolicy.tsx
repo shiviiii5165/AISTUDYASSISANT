@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 
 const CookiePolicy: React.FC = () => {
   return (
-    <div className="min-h-[100dvh] bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <Link to="/" className="text-[var(--accent-green-text)] hover:underline mb-6 inline-block font-medium">
+        <Link to="/" className="text-[var(--accent-indigo)] hover:underline mb-6 inline-block font-medium">
           &larr; Back to Home
         </Link>
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Cookie Policy</h1>

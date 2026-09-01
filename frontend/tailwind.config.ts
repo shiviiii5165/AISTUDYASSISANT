@@ -8,8 +8,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'sans-serif'],
       },
       colors: {
         cream: {
@@ -55,5 +54,5 @@ export default {
       }
     }
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [],
 } satisfies Config

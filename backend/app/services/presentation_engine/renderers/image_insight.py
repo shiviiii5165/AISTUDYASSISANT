@@ -81,7 +81,7 @@ def render_image_insight(slide: Slide, content: SlideContent, theme: ThemeColors
                 fill_color=theme.primary_light, border_color=theme.border_light,
             )
             add_text_box(
-                slide, f"Key Insight:  {content.key_insight}",
+                slide, f"🔑  {content.key_insight}",
                 MARGIN_LEFT + Inches(0.3), ZONE_CONTENT_TOP + Inches(0.2),
                 CONTENT_WIDTH - Inches(0.6), Inches(1.0),
                 token=Typography.BODY, color=theme.primary,

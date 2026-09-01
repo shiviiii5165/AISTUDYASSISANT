@@ -4,8 +4,7 @@ Teach Me API Endpoints (Hardened & Secure)
 FastAPI endpoints for Adaptive Interactive Teacher sessions, commands,
 checkpoint answer evaluations, YouTube ingestion, telemetry metrics, and PPT exports.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from app.core.security import limiter
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Dict, Any, Optional
 from app.core.dependencies import get_current_user
 from app.core.plan_guards import check_daily_question_limit
@@ -175,25 +174,23 @@ async def ingest_youtube(
 
 
 @router.post("/export/ppt")
-@limiter.limit("5/minute")
 async def export_to_ppt(
-    request: Request,
-    payload: ExportPPTRequest,
+    request: ExportPPTRequest,
     current_user=Depends(get_current_user),
 ):
     """
     One-click export from active lesson roadmap to PowerPoint presentation (.pptx).
     """
-    if not verify_session_ownership(payload.session_id, current_user.id):
+    if not verify_session_ownership(request.session_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this teaching session.")
 
     try:
         ppt_res = await export_lesson_to_pptx(
-            session_id=payload.session_id,
+            session_id=request.session_id,
             user_id=current_user.id,
-            slide_count=payload.slide_count,
-            design=payload.design,
-            theme=payload.theme,
+            slide_count=request.slide_count,
+            design=request.design,
+            theme=request.theme,
         )
         return ppt_res
     except Exception as e:
@@ -206,26 +203,24 @@ async def export_to_ppt(
 
 
 @router.post("/export/video")
-@limiter.limit("5/minute")
 async def export_to_video_endpoint(
-    request: Request,
-    payload: ExportVideoRequest,
+    request: ExportVideoRequest,
     current_user=Depends(get_current_user),
 ):
     """
     One-click export from active lesson roadmap into a full educational video.
     """
-    if not verify_session_ownership(payload.session_id, current_user.id):
+    if not verify_session_ownership(request.session_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this teaching session.")
 
     try:
         from app.services.teach.exports import export_lesson_to_video
         vid_res = await export_lesson_to_video(
-            session_id=payload.session_id,
+            session_id=request.session_id,
             user_id=current_user.id,
-            duration=payload.duration,
-            quality=payload.quality,
-            style=payload.style,
+            duration=request.duration,
+            quality=request.quality,
+            style=request.style,
         )
         return vid_res
     except Exception as e:
