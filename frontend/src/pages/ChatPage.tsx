@@ -77,8 +77,19 @@ const ChatPage: React.FC = () => {
     (async () => {
       try {
         const data = await fetchPdfs();
-        setPdfs(data.filter(p => p.status === 'ready'));
+        const readyPdfs = data.filter(p => p.status === 'ready');
+        setPdfs(readyPdfs);
         setPdfsError(null);
+
+        // Auto-correct invalid or missing PDF selection
+        if (!initialPdfId || initialPdfId === 'undefined' || !readyPdfs.find(p => p.id === initialPdfId)) {
+          if (readyPdfs.length > 0) {
+            setSelectedPdfId(readyPdfs[0].id);
+            setSearchParams(prev => { prev.set('pdf', readyPdfs[0].id); return prev; });
+          } else {
+            setSelectedPdfId('');
+          }
+        }
       } catch (err: any) {
         console.error('Error loading PDFs:', err);
         // Surface a clear error instead of silently leaving the composer usable
@@ -112,7 +123,7 @@ const ChatPage: React.FC = () => {
   const handleSend = async (overrideQuestion?: string) => {
     // If overrideQuestion is a string, use it. Otherwise use inputValue.
     const question = typeof overrideQuestion === 'string' ? overrideQuestion.trim() : inputValue.trim();
-    if (!question || !selectedPdfId || loading) return;
+    if (!question || !selectedPdfId || selectedPdfId === 'undefined' || loading) return;
 
     const userMessage: DisplayMessage = { role: 'user', content: question };
     setMessages(prev => [...prev, userMessage]);
@@ -128,7 +139,7 @@ const ChatPage: React.FC = () => {
       }));
 
       if (useV2) {
-        const response = await sendMessageV2(question, history);
+        const response = await sendMessageV2(question, selectedPdfId, history);
         const assistantMessage: DisplayMessage = {
           role: 'assistant',
           content: response.message || '',
