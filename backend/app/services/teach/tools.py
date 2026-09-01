@@ -4,6 +4,7 @@ Teach Me Engine — Deterministic Tools Registry (Hardened & Secure)
 Strict function calling registry for multi-source knowledge search,
 state persistence, mastery profile updates, misconception tracking, and session ownership security.
 """
+from app.core.logging import logger
 import uuid
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -86,7 +87,7 @@ def get_learning_state(session_id: str) -> Optional[LearningState]:
                 SESSION_STORE[session_id] = state_data
                 return LearningState(**state_data)
         except Exception as e:
-            print(f'Error fetching state: {e}')
+            logger.error(f'Error fetching state: {e}')
     return None
 
 
@@ -109,7 +110,7 @@ def save_learning_state(session_id: str, state: LearningState) -> None:
             }
             supabase.table('teach_sessions').upsert(payload, on_conflict='id').execute()
         except Exception as e:
-            print(f'Error saving state: {e}')
+            logger.error(f'Error saving state: {e}')
 
 
 def get_lesson_plan(session_id: str) -> Optional[LessonPlan]:
@@ -125,7 +126,7 @@ def get_lesson_plan(session_id: str) -> Optional[LessonPlan]:
                 PLAN_STORE[session_id] = plan_data
                 return LessonPlan(**plan_data)
         except Exception as e:
-            print(f'Error fetching plan: {e}')
+            logger.error(f'Error fetching plan: {e}')
     return None
 
 
@@ -147,7 +148,7 @@ def save_lesson_plan(session_id: str, plan: LessonPlan) -> None:
             }
             supabase.table('teach_sessions').upsert(payload, on_conflict='id').execute()
         except Exception as e:
-            print(f'Error saving plan: {e}')
+            logger.error(f'Error saving plan: {e}')
 
 
 def update_mastery_profile(
