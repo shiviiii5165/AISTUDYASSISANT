@@ -23,6 +23,13 @@ async def ask_question(request: ChatRequest, current_user=Depends(check_daily_qu
         return ChatResponse(**result)
     except HTTPException:
         raise
+    except PermissionError:
+        # PDF not found or not owned by this user (e.g. a stale pdf_id from a chat
+        # sent after the document list failed to load). Return a clear 404, not a 500.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="That document is unavailable. Please reselect a document and try again."
+        )
     except Exception as e:
         import traceback
         print(f"FULL ERROR: {traceback.format_exc()}")  # log server-side only

@@ -65,6 +65,7 @@ const ChatPage: React.FC = () => {
   const [selectedMode, setSelectedMode] = useState('Quick Answer');
   const [loading, setLoading] = useState(false);
   const [loadingPdfs, setLoadingPdfs] = useState(true);
+  const [pdfsError, setPdfsError] = useState<string | null>(null);
   const [showPdfDropdown, setShowPdfDropdown] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState('');
@@ -77,8 +78,17 @@ const ChatPage: React.FC = () => {
       try {
         const data = await fetchPdfs();
         setPdfs(data.filter(p => p.status === 'ready'));
-      } catch (err) {
+        setPdfsError(null);
+      } catch (err: any) {
         console.error('Error loading PDFs:', err);
+        // Surface a clear error instead of silently leaving the composer usable
+        // with a stale document selection (which would then fail on send).
+        setSelectedPdfId('');
+        setPdfsError(
+          err?.response?.status === 401
+            ? 'Your session has expired. Please sign in again to load your documents.'
+            : 'Could not load your documents. Please refresh and try again.'
+        );
       } finally {
         setLoadingPdfs(false);
       }
@@ -411,7 +421,15 @@ const ChatPage: React.FC = () => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
-          {!selectedPdfId ? (
+          {pdfsError ? (
+            <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
+              <GenieAvatar size="md" />
+              <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
+                We couldn't load your documents
+              </h2>
+              <p className="max-w-md text-sm text-[var(--text-secondary)]">{pdfsError}</p>
+            </div>
+          ) : !selectedPdfId ? (
             <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
               <GenieAvatar size="md" />
               <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
