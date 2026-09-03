@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import remarkGfm from 'remark-gfm';
 import { Send, FileText, Loader2, ChevronDown, Sparkles } from 'lucide-react';
 import { fetchPdfs, askQuestion, sendMessageV2 } from '../lib/api';
@@ -589,47 +589,131 @@ const ChatPage: React.FC = () => {
 
             {/* Empty States / Centered Content */}
             {messages.length === 0 && !loading && (
-              <div className="flex-1 flex flex-col items-center justify-end pb-6 px-4">
-                {pdfsError ? (
-                  <>
-                    <GenieAvatar size="md" />
-                    <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
-                      We couldn't load your documents
-                    </h2>
-                    <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">{pdfsError}</p>
-                  </>
-                ) : !selectedPdfId ? (
-                  <>
-                    <GenieAvatar size="md" />
-                    <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
-                      Select a document to start
-                    </h2>
-                    <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">
-                      Choose one of your uploaded documents from the menu above, then ask any question
-                      about its content.
-                    </p>
-                  </>
-                ) : (
-                  <motion.h2 
-                    layoutId="greeting-title"
-                    className="font-display max-w-lg text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-6 text-center tracking-tight"
-                  >
-                    What can I help you ship?
-                  </motion.h2>
-                )}
-              </div>
+              <AnimatePresence>
+                <div className="flex-1 h-full w-full flex flex-col items-center justify-center px-4" key="empty-state">
+                  {pdfsError ? (
+                    <>
+                      <GenieAvatar size="md" />
+                      <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
+                        We couldn't load your documents
+                      </h2>
+                      <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">{pdfsError}</p>
+                    </>
+                  ) : !selectedPdfId ? (
+                    <>
+                      <GenieAvatar size="md" />
+                      <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
+                        Select a document to start
+                      </h2>
+                      <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">
+                        Choose one of your uploaded documents from the menu above, then ask any question
+                        about its content.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+                      {/* Heading with animation */}
+                      <motion.h2
+                        layoutId="greeting-title"
+                        className="font-display max-w-lg text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-6 text-center tracking-tight"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20, duration: 0.2, ease: "easeIn" }}
+                      >
+                        What do you want to learn today?
+                      </motion.h2>
+
+                      {/* Quick-action pills */}
+                      <div className="flex flex-wrap gap-2">
+                        {ANSWER_MODES.map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setSelectedMode(mode)}
+                            aria-pressed={selectedMode === mode}
+                            className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold shadow-sm transition-all ${
+                              selectedMode === mode
+                                ? 'border-[var(--accent-blue)] bg-[var(--accent-blue)] text-white'
+                                : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--accent-blue)] hover:text-[var(--accent-blue)]'
+                            }`}
+                          >
+                            {mode}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Input bar */}
+                      <div className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-[var(--shadow-lg)] p-3">
+                        <div className="mx-auto flex max-w-3xl items-end gap-2">
+                          <div className="relative flex-1">
+                            <label htmlFor="chat-input" className="sr-only">
+                              Ask a question about your document
+                            </label>
+                            <textarea
+                              id="chat-input"
+                              ref={inputRef}
+                              value={inputValue}
+                              onChange={(e) => setInputValue(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              placeholder={
+                                isVoiceActive ? 'Listening, speak your question' : 'Ask a question about your document...'
+                              }
+                              rows={1}
+                              disabled={loading}
+                              className="max-h-32 w-full resize-none overflow-y-auto rounded-xl border-none bg-transparent px-2 py-3 text-sm leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0 disabled:opacity-50"
+                              style={{ minHeight: '44px', color: isVoiceActive ? 'var(--accent-blue)' : 'inherit' }}
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+                              }}
+                            />
+                          </div>
+
+                          <VoiceInputButton
+                            onResult={(text) => {
+                              setInputValue(text);
+                              setIsVoiceActive(false);
+                            }}
+                            onInterim={(text) => {
+                              setInputValue(text);
+                              setIsVoiceActive(true);
+                            }}
+                            disabled={loading}
+                            className="mb-1"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => handleSend()}
+                            disabled={!inputValue.trim() || loading}
+                            aria-label="Send question"
+                            className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-xl bg-[var(--text-primary)] text-white transition-colors hover:bg-black active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 mb-1 mr-1"
+                          >
+                            {loading ? (
+                              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <Send className="h-4 w-4" aria-hidden="true" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AnimatePresence>
             )}
 
             {/* Composer */}
-            {selectedPdfId && (
+            {selectedPdfId && messages.length > 0 && (
               <motion.div
-                layout
+                layout="position"
                 initial={false}
                 transition={{ type: "spring", stiffness: 200, damping: 20, mass: 0.8 }}
                 className={`shrink-0 z-10 flex flex-col w-full ${
                   messages.length === 0 && !loading
-                    ? 'max-w-3xl mx-auto mb-auto px-4 md:px-0'
-                    : 'border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 md:px-6'
+                    ? 'max-w-3xl mx-auto my-auto px-4 md:px-0'
+                    : 'sticky bottom-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 md:px-6'
                 }`}
               >
                 <div className="mx-auto mb-2 flex max-w-3xl gap-2 overflow-x-auto pb-1 px-4 md:px-0">
