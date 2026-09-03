@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import { motion } from 'framer-motion';
 import remarkGfm from 'remark-gfm';
 import { Send, FileText, Loader2, ChevronDown, Sparkles } from 'lucide-react';
 import { fetchPdfs, askQuestion, sendMessageV2 } from '../lib/api';
@@ -15,6 +16,7 @@ import UpgradeModal from '../components/billing/UpgradeModal';
 import GenieAvatar from '../components/GenieAvatar';
 import ContentPollCard from '../components/chat/ContentPollCard';
 import HistorySidebar from '../components/HistorySidebar';
+import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 
 interface DisplayMessage {
   role: 'user' | 'assistant';
@@ -34,23 +36,12 @@ const PROSE =
 const ANSWER_MODES = [
   'Quick Answer',
   'Full Chapter Crux',
-  'No Fact Miss',
   'Formula Coverage',
   'Exam Shield Notes',
-  'Generate MCQs',
-  'Predicted Exam Questions',
-  'Kid Mode',
-  'Professor Mode',
-];
-
-const SUGGESTIONS = [
-  'Summarize the key concepts',
-  'Explain the first chapter',
-  'What are the important formulas?',
-  'List all definitions',
 ];
 
 const ChatPage: React.FC = () => {
+  const { collapsed: historySidebarCollapsed, toggle: toggleHistorySidebar } = useSidebarCollapse('chat-history');
   const [searchParams, setSearchParams] = useSearchParams();
   const initialPdfId = searchParams.get('pdf') || '';
   const initialV2 = searchParams.get('v2') === 'true';
@@ -380,6 +371,8 @@ const ChatPage: React.FC = () => {
           selectedId={sessionId}
           onSelect={loadChat}
           onNew={() => { setSessionId(null); setMessages([]); }}
+          collapsed={historySidebarCollapsed}
+          onToggle={toggleHistorySidebar}
         />
 
         <div className="flex flex-1 flex-col overflow-hidden bg-[var(--bg-primary)]">
@@ -421,7 +414,7 @@ const ChatPage: React.FC = () => {
                     <ul
                       role="listbox"
                       aria-label="Your documents"
-                      className="absolute left-0 top-full z-30 mt-1 max-h-64 min-w-[280px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--card)] py-1 shadow-[var(--shadow-lg)]"
+                      className="absolute left-0 top-full z-30 mt-1 max-h-64 min-w-[280px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-1 shadow-[var(--shadow-lg)]"
                     >
                       {pdfs.length === 0 ? (
                         <li className="px-4 py-3 text-sm text-[var(--text-secondary)]">
@@ -508,231 +501,222 @@ const ChatPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
-            {pdfsError ? (
-              <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
-                <GenieAvatar size="md" />
-                <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
-                  We couldn't load your documents
-                </h2>
-                <p className="max-w-md text-sm text-[var(--text-secondary)]">{pdfsError}</p>
-              </div>
-            ) : !selectedPdfId ? (
-              <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
-                <GenieAvatar size="md" />
-                <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
-                  Select a document to start
-                </h2>
-                <p className="max-w-md text-sm text-[var(--text-secondary)]">
-                  Choose one of your uploaded documents from the menu above, then ask any question
-                  about its content.
-                </p>
-              </div>
-            ) : messages.length === 0 && !loading ? (
-              <div className="flex h-full flex-col items-center justify-center space-y-3 text-center">
-                <GenieAvatar size="md" />
-                <h2 className="font-display max-w-lg text-xl font-semibold text-[var(--text-primary)]">
-                  Ask anything about {selectedPdf?.name}
-                </h2>
-                <p className="mb-4 max-w-md text-sm text-[var(--text-secondary)]">
-                  Answers come from the content of your document, with page citations. English, Hindi
-                  and Hinglish all work.
-                </p>
-                <div className="flex max-w-lg flex-wrap justify-center gap-2">
-                  {SUGGESTIONS.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => {
-                        setInputValue(suggestion);
-                        inputRef.current?.focus();
-                      }}
-                      className="rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--accent-green)] hover:text-[var(--text-primary)]"
+          {/* Main Layout Area */}
+          <div className="relative flex flex-1 flex-col overflow-hidden">
+            {/* If there are messages, render the scrollable message list */}
+            {messages.length > 0 && (
+              <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+                <div
+                  className="mx-auto max-w-3xl space-y-6"
+                  aria-live="polite"
+                  aria-busy={loading}
+                >
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      {suggestion}
+                      {message.role === 'assistant' && (
+                        <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-baby)] border border-[var(--accent-periwinkle)]/30">
+                          <Sparkles
+                            className="h-4 w-4 text-[var(--accent-royal)]"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">TeachGenie</span>
+                        </span>
+                      )}
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 md:max-w-[75%] md:px-4 md:py-3 ${
+                          message.role === 'user'
+                            ? 'rounded-br-md bg-[var(--accent-royal)] text-white shadow-md shadow-[var(--accent-royal)]/20'
+                            : 'rounded-bl-md border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                        }`}
+                      >
+                        {message.role === 'assistant' ? (
+                          renderMessage(message)
+                        ) : (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                        )}
+
+                        {/* Source citations */}
+                        {message.sources && message.sources.length > 0 && (
+                          <div className="mt-3 border-t border-[var(--border)] pt-3">
+                            <h3 className="mb-2 text-xs font-semibold text-[var(--text-secondary)]">
+                              Sources
+                            </h3>
+                            <ul className="space-y-1.5">
+                              {message.sources.map((source, i) => (
+                                <li
+                                  key={i}
+                                  className="rounded-lg bg-[var(--bg-secondary)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]"
+                                >
+                                  <span className="font-semibold text-[var(--accent-green-text)]">
+                                    {source.page === 'Note' ? 'Note' : `Page ${source.page}`}
+                                  </span>
+                                  <span className="mx-1.5 text-[var(--border-strong)]" aria-hidden="true">
+                                    |
+                                  </span>
+                                  <span>{source.text}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Typing indicator inline */}
+                  {loading && (
+                    <div className="flex justify-start gap-3">
+                      <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-baby)] border border-[var(--accent-periwinkle)]/30">
+                        <Sparkles className="h-4 w-4 text-[var(--accent-royal)]" aria-hidden="true" />
+                      </span>
+                      <div className="rounded-2xl rounded-bl-md border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 shadow-sm">
+                        <span className="sr-only">Thinking</span>
+                        <span className="flex items-center gap-1.5" aria-hidden="true">
+                          <span className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-royal)]" style={{ animationDelay: '0ms' }} />
+                          <span className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-periwinkle)]" style={{ animationDelay: '150ms' }} />
+                          <span className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-baby)]" style={{ animationDelay: '300ms' }} />
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+            )}
+
+            {/* Empty States / Centered Content */}
+            {messages.length === 0 && !loading && (
+              <div className="flex-1 flex flex-col items-center justify-end pb-6 px-4">
+                {pdfsError ? (
+                  <>
+                    <GenieAvatar size="md" />
+                    <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
+                      We couldn't load your documents
+                    </h2>
+                    <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">{pdfsError}</p>
+                  </>
+                ) : !selectedPdfId ? (
+                  <>
+                    <GenieAvatar size="md" />
+                    <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
+                      Select a document to start
+                    </h2>
+                    <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">
+                      Choose one of your uploaded documents from the menu above, then ask any question
+                      about its content.
+                    </p>
+                  </>
+                ) : (
+                  <motion.h2 
+                    layoutId="greeting-title"
+                    className="font-display max-w-lg text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-6 text-center tracking-tight"
+                  >
+                    What can I help you ship?
+                  </motion.h2>
+                )}
+              </div>
+            )}
+
+            {/* Composer */}
+            {selectedPdfId && (
+              <motion.div
+                layout
+                initial={false}
+                transition={{ type: "spring", stiffness: 200, damping: 20, mass: 0.8 }}
+                className={`shrink-0 z-10 flex flex-col w-full ${
+                  messages.length === 0 && !loading
+                    ? 'max-w-3xl mx-auto mb-auto px-4 md:px-0'
+                    : 'border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 md:px-6'
+                }`}
+              >
+                <div className="mx-auto mb-2 flex max-w-3xl gap-2 overflow-x-auto pb-1 px-4 md:px-0">
+                  {ANSWER_MODES.map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setSelectedMode(mode)}
+                      aria-pressed={selectedMode === mode}
+                      className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold shadow-sm transition-all ${
+                        selectedMode === mode
+                          ? 'border-[var(--accent-blue)] bg-[var(--accent-blue)] text-white'
+                          : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--accent-blue)] hover:text-[var(--accent-blue)]'
+                      }`}
+                    >
+                      {mode}
                     </button>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <div
-                className="mx-auto max-w-3xl space-y-6"
-                aria-live="polite"
-                aria-busy={loading}
-              >
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {message.role === 'assistant' && (
-                      <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--accent-green-light)]">
-                        <Sparkles
-                          className="h-4 w-4 text-[var(--accent-green-text)]"
-                          aria-hidden="true"
-                        />
-                        <span className="sr-only">TeachGenie</span>
-                      </span>
-                    )}
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 md:max-w-[75%] md:px-4 md:py-3 ${
-                        message.role === 'user'
-                          ? 'rounded-br-md bg-[var(--text-primary)] text-white'
-                          : 'rounded-bl-md border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {message.role === 'assistant' ? (
-                        renderMessage(message)
-                      ) : (
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
-                      )}
 
-                      {/* Source citations */}
-                      {message.sources && message.sources.length > 0 && (
-                        <div className="mt-3 border-t border-[var(--border)] pt-3">
-                          <h3 className="mb-2 text-xs font-semibold text-[var(--text-secondary)]">
-                            Sources
-                          </h3>
-                          <ul className="space-y-1.5">
-                            {message.sources.map((source, i) => (
-                              <li
-                                key={i}
-                                className="rounded-lg bg-[var(--bg-secondary)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]"
-                              >
-                                <span className="font-semibold text-[var(--accent-green-text)]">
-                                  {source.page === 'Note' ? 'Note' : `Page ${source.page}`}
-                                </span>
-                                <span className="mx-1.5 text-[var(--border-strong)]" aria-hidden="true">
-                                  |
-                                </span>
-                                <span>{source.text}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                <div className={`w-full ${messages.length === 0 && !loading ? 'bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-[var(--shadow-lg)] p-3' : ''}`}>
 
-                {/* Typing indicator */}
-                {loading && (
-                  <div className="flex justify-start gap-3">
-                    <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--accent-green-light)]">
-                      <Sparkles
-                        className="h-4 w-4 text-[var(--accent-green-text)]"
-                        aria-hidden="true"
+                  <div className="mx-auto flex max-w-3xl items-end gap-2">
+                    <div className="relative flex-1">
+                      <label htmlFor="chat-input" className="sr-only">
+                        Ask a question about your document
+                      </label>
+                      <textarea
+                        id="chat-input"
+                        ref={inputRef}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={
+                          isVoiceActive ? 'Listening, speak your question' : 'Ask a question about your document...'
+                        }
+                        rows={1}
+                        disabled={loading}
+                        className="max-h-32 w-full resize-none overflow-y-auto rounded-xl border-none bg-transparent px-2 py-3 text-sm leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0 disabled:opacity-50"
+                        style={{ minHeight: '44px', color: isVoiceActive ? 'var(--accent-blue)' : 'inherit' }}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+                        }}
                       />
-                    </span>
-                    <div className="rounded-2xl rounded-bl-md border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-                      <span className="sr-only">Thinking</span>
-                      <span className="flex items-center gap-1.5" aria-hidden="true">
-                        <span
-                          className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-green)]"
-                          style={{ animationDelay: '0ms' }}
-                        />
-                        <span
-                          className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-green)]"
-                          style={{ animationDelay: '150ms' }}
-                        />
-                        <span
-                          className="typing-dot h-2 w-2 rounded-full bg-[var(--accent-green)]"
-                          style={{ animationDelay: '300ms' }}
-                        />
-                      </span>
                     </div>
+
+                    <VoiceInputButton
+                      onResult={(text) => {
+                        setInputValue(text);
+                        setIsVoiceActive(false);
+                      }}
+                      onInterim={(text) => {
+                        setInputValue(text);
+                        setIsVoiceActive(true);
+                      }}
+                      disabled={loading}
+                      className="mb-1"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleSend()}
+                      disabled={!inputValue.trim() || loading}
+                      aria-label="Send question"
+                      className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-xl bg-[var(--text-primary)] text-white transition-colors hover:bg-black active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 mb-1 mr-1"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Send className="h-4 w-4" aria-hidden="true" />
+                      )}
+                    </button>
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
-
-          {/* Composer */}
-          {selectedPdfId && (
-            <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 md:px-6">
-              <div
-                className="scrollbar-thin mx-auto mb-2 flex max-w-3xl gap-1.5 overflow-x-auto pb-1.5"
-                role="group"
-                aria-label="Answer mode"
-              >
-                {ANSWER_MODES.map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setSelectedMode(mode)}
-                    aria-pressed={selectedMode === mode}
-                    className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      selectedMode === mode
-                        ? 'border-transparent bg-[var(--accent-green)] text-white'
-                        : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mx-auto flex max-w-3xl items-end gap-2">
-                <div className="relative flex-1">
-                  <label htmlFor="chat-input" className="sr-only">
-                    Ask a question about your document
-                  </label>
-                  <textarea
-                    id="chat-input"
-                    ref={inputRef}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={
-                      isVoiceActive ? 'Listening, speak your question' : 'Ask a question about your document'
-                    }
-                    rows={1}
-                    disabled={loading}
-                    className="max-h-32 w-full resize-none overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-green)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-green)] disabled:opacity-50"
-                    style={{ minHeight: '44px', color: isVoiceActive ? 'var(--accent-green-text)' : 'inherit' }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = 'auto';
-                      target.style.height = Math.min(target.scrollHeight, 128) + 'px';
-                    }}
-                  />
                 </div>
 
-                <VoiceInputButton
-                  onResult={(text) => {
-                    setInputValue(text);
-                    setIsVoiceActive(false);
-                  }}
-                  onInterim={(text) => {
-                    setInputValue(text);
-                    setIsVoiceActive(true);
-                  }}
-                  disabled={loading}
-                  className="mb-1"
-                />
+                
 
-                <button
-                  type="button"
-                  onClick={() => handleSend()}
-                  disabled={!inputValue.trim() || loading}
-                  aria-label="Send question"
-                  className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl bg-[var(--accent-green)] text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Send className="h-5 w-5" aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-
-              <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-[var(--text-muted)]">
-                Answers come from your document content only. English, Hindi and Hinglish all work.
-              </p>
-            </div>
-          )}
+                {messages.length > 0 && (
+                  <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-[var(--text-muted)]">
+                    Answers come from your document content only. English, Hindi and Hinglish all work.
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
       <UpgradeModal
