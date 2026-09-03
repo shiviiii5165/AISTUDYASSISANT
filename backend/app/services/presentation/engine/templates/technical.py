@@ -12,7 +12,8 @@ from pptx.util import Inches, Pt, Emu
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from app.services.presentation_engine.tokens import ThemeColors, Typography, CONTENT_WIDTH, MARGIN_LEFT
 from app.services.presentation_engine.renderers.base import (
-    add_filled_rect, add_text_box, add_bullet_list, add_card, add_image, add_footer, add_speaker_notes
+    add_filled_rect, add_text_box, add_bullet_list, add_card, add_image,
+    add_footer, add_speaker_notes, add_kpi_metrics
 )
 from ..diagrams import render_flow_diagram, render_architecture_diagram, render_timeline_diagram, render_comparison_diagram
 
@@ -70,7 +71,9 @@ def render_technical_slide(
     diagram_spec = visual.get("diagram_spec")
     img_bytes = visual.get("image_bytes")
 
-    if layers or (diagram_spec and diagram_spec.get("diagram_type") == "architecture"):
+    if stype == "kpi_metrics" and metrics:
+        add_kpi_metrics(slide, metrics, MARGIN_LEFT, content_top, CONTENT_WIDTH, content_h, theme)
+    elif layers or (diagram_spec and diagram_spec.get("diagram_type") == "architecture"):
         render_architecture_diagram(slide, layers or diagram_spec.get("layers", []), MARGIN_LEFT, content_top, CONTENT_WIDTH, content_h, theme)
     elif steps or (diagram_spec and diagram_spec.get("diagram_type") == "flow"):
         render_flow_diagram(slide, steps or diagram_spec.get("steps", []), MARGIN_LEFT, content_top, CONTENT_WIDTH, content_h, theme)
