@@ -35,13 +35,13 @@ export const GENIE = {
   /** Default standing pose — calm, ready */
   default: '/assets/genie-default.png',
   /** Reading/studying — finger on chin, book open */
-  thinking: '/assets/genie/genie-thinking.png',
+  thinking: '/assets/genie-thinking.png',
   /** Arms raised, gold sparkles, big smile — quiz correct / generation done */
-  celebrating: '/assets/genie/genie-celebrating.png',
-  /** Pointing at an invisible board/screen — TeachMe & lesson context */
-  teaching: '/assets/genie/genie-teaching.png',
-  /** Welcoming wave — auth, onboarding, first visit */
-  welcome: '/assets/genie/genie-welcome.png',
+  celebrating: '/assets/genie-celebrating.png',
+  /** Pointing at an invisible board/screen — PPT Generator */
+  teaching: '/assets/genie-teaching.png',
+  /** Welcoming wave — Dashboard greeting */
+  welcome: '/assets/genie-welcome.png',
 } as const;
 
 export const GENIE_PROMPTS: Record<keyof typeof GENIE, string> = {
@@ -71,6 +71,7 @@ export const GENIE_PROMPTS: Record<keyof typeof GENIE, string> = {
     'Authoritative but warm posture. Academic setting feel. Same character design ' +
     '— deep blue robes, gold trim. Flat illustration, transparent PNG.',
 
+
   welcome:
     'Scholar genie mascot in a warm welcoming pose: one hand raised in a friendly ' +
     'wave, slight forward lean, bright inviting smile. The lamp trails a subtle ' +
@@ -85,21 +86,21 @@ export const GENIE_PROMPTS: Record<keyof typeof GENIE, string> = {
 
 export const ILLUSTRATIONS = {
   /** Empty library — shown when user has no PDFs uploaded */
-  emptyLibrary: '/assets/empty-library.png',
+  emptyLibrary: '/assets/empty-library.webp',
   /** Empty chat — shown before user starts a conversation */
-  emptyChat: '/assets/illustrations/empty-chat.png',
+  emptyChat: '/assets/empty-chat.webp',
   /** Quiz complete celebration screen */
-  quizComplete: '/assets/illustrations/quiz-complete.png',
+  quizComplete: '/assets/quiz-complete.webp',
   /** PPT/deck being generated — in-progress state */
-  pptGenerating: '/assets/illustrations/ppt-generating.png',
+  pptGenerating: '/assets/ppt-generating.webp',
   /** TeachMe page intro / hero area */
-  teachMe: '/assets/illustrations/teach-me.png',
+  teachMe: '/assets/teach-me.webp',
   /** Auth page side panel — decorative */
-  authSide: '/assets/illustrations/auth-side.png',
+  authSide: '/assets/auth-side.webp',
   /** Support page hero */
-  support: '/assets/illustrations/support-hero.png',
+  support: '/assets/support-hero.webp',
   /** Lesson planner feature */
-  lessonPlan: '/assets/illustrations/lesson-plan.png',
+  lessonPlan: '/assets/lesson-plan.webp',
 } as const;
 
 export const ILLUSTRATION_PROMPTS: Record<keyof typeof ILLUSTRATIONS, string> = {
@@ -159,13 +160,13 @@ export const ILLUSTRATION_PROMPTS: Record<keyof typeof ILLUSTRATIONS, string> = 
 
 export const LANDING = {
   /** Full-width hero section visual */
-  hero: '/assets/hero.png',
+  hero: '/assets/hero.webp',
   /** Bento card — AI chat/tutoring feature */
-  bentoChat: '/assets/bento-chat.png',
+  bentoChat: '/assets/bento-chat.webp',
   /** Bento card — Quiz engine feature */
-  bentoQuiz: '/assets/bento-quiz.png',
+  bentoQuiz: '/assets/bento-quiz.webp',
   /** Bento card — Presentation deck feature */
-  bentoPpt: '/assets/bento-ppt.png',
+  bentoPpt: '/assets/bento-ppt.webp',
 } as const;
 
 export const LANDING_PROMPTS: Record<keyof typeof LANDING, string> = {
