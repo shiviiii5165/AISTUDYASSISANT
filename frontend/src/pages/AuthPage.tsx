@@ -112,7 +112,7 @@ const AuthPage: React.FC = () => {
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-7">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1B2CC1]">
-            <img src="/logo.png" alt="" className="h-5 w-5 object-contain brightness-0 invert" />
+            <img src="/assets/genie-default.png" alt="" className="h-5 w-5 object-contain brightness-0 invert" />
           </div>
           <span className="font-display text-lg font-bold text-[#091540]">TeachGenie</span>
         </div>
