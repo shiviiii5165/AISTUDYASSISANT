@@ -11,6 +11,7 @@ import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
 import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import SEO from '../components/SEO';
+import { ILLUSTRATIONS } from '../lib/assets';
 import { useAuthStore } from '../store/useAuthStore';
 
 // Types mapping to Backend schemas
@@ -821,6 +822,13 @@ const LessonPlannerPage: React.FC = () => {
             {/* Sidebar */}
             <div className="lg:col-span-4">
               <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
+                <img
+                  src={ILLUSTRATIONS.lessonPlan}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-28 w-full rounded-lg object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
                 <h3 className="flex items-center gap-2 font-display text-base font-semibold text-[var(--text-primary)]">
                   <Compass className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
                   How it works
