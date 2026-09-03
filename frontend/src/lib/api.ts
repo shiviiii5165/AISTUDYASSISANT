@@ -68,7 +68,12 @@ export interface ChatResponse {
 
 export async function fetchPdfs(): Promise<PDFDocument[]> {
   const response = await api.get('/pdfs/list');
-  return response.data.pdfs;
+  // Contract: always resolve to an array. If the backend response shape ever
+  // drifts (missing `pdfs`, an error object, or an HTML SPA-fallback body),
+  // returning a non-array here would crash every page that maps/filters over
+  // pdfs — and with no error boundary that whites out the entire app.
+  const pdfs = response.data?.pdfs;
+  return Array.isArray(pdfs) ? pdfs : [];
 }
 
 export async function uploadPdf(file: File, subject: string = 'General'): Promise<{ pdf_id: string; status: string }> {
