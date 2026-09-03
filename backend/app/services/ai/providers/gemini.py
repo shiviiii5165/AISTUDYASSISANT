@@ -61,8 +61,8 @@ def safe_parse_json(text: str) -> Dict[str, Any]:
 
 
 class GeminiProvider(AIProvider):
-    DEFAULT_MODEL = "gemini-3.6-flash"
-    FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite"]
+    DEFAULT_MODEL = "gemini-2.5-flash"
+    FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"]
     EMBEDDING_MODEL = "gemini-embedding-001"
 
     def __init__(self, api_key: Optional[str] = None, image_api_key: Optional[str] = None):
