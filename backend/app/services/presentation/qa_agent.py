@@ -23,12 +23,12 @@ def inspect_slide_structure(slide: Dict[str, Any]) -> List[str]:
     elif len(title) > 90:
         issues.append(f"Title is too long ({len(title)} chars). Max 80 chars.")
 
-    if len(bullets) > 6:
-        issues.append(f"Too many bullets ({len(bullets)}). Recommended max 5.")
+    if len(bullets) > 7:
+        issues.append(f"Too many bullets ({len(bullets)}). Recommended max 6.")
 
     for i, b in enumerate(bullets):
-        if len(str(b)) > 110:
-            issues.append(f"Bullet {i+1} is too long ({len(str(b))} chars). Max 80-90 chars.")
+        if len(str(b)) > 115:
+            issues.append(f"Bullet {i+1} is too long ({len(str(b))} chars). Max 95 chars.")
 
     # Total word count across slide
     all_words = " ".join([
@@ -38,7 +38,7 @@ def inspect_slide_structure(slide: Dict[str, Any]) -> List[str]:
         slide.get("key_message", ""),
     ]).split()
 
-    if len(all_words) > 180:
+    if len(all_words) > 220:
         issues.append(f"Slide word count is high ({len(all_words)} words). Move details to speaker_notes.")
 
     return issues
@@ -48,9 +48,9 @@ def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
     """Deterministic Python cleanup without invoking LLM (0 tokens)."""
     # 1. Truncate excess bullets to max 5 and move overflow to speaker notes
     bullets = slide.get("body_bullets", [])
-    if len(bullets) > 5:
-        excess = bullets[5:]
-        slide["body_bullets"] = bullets[:5]
+    if len(bullets) > 6:
+        excess = bullets[6:]
+        slide["body_bullets"] = bullets[:6]
         extra_note = "\n\nAdditional points:\n" + "\n".join(f"• {b}" for b in excess)
         slide["speaker_notes"] = (slide.get("speaker_notes", "") + extra_note).strip()
 
@@ -58,10 +58,10 @@ def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
     trimmed_bullets = []
     for b in slide.get("body_bullets", []):
         b_str = str(b).strip()
-        if len(b_str) > 90:
-            cut = b_str[:85]
+        if len(b_str) > 100:
+            cut = b_str[:95]
             last_sp = cut.rfind(" ")
-            if last_sp > 50:
+            if last_sp > 55:
                 cut = cut[:last_sp]
             trimmed_bullets.append(cut + "...")
         else:
