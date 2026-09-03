@@ -618,7 +618,7 @@ const ChatPage: React.FC = () => {
                         className="font-display max-w-lg text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-6 text-center tracking-tight"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20, duration: 0.2, ease: "easeIn" }}
+                        exit={{ opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeIn" } }}
                       >
                         What do you want to learn today?
                       </motion.h2>
