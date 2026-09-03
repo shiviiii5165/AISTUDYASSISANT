@@ -4,6 +4,7 @@ import PublicHeader from '../components/PublicHeader';
 import SEO from '../components/SEO';
 import { Mail, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { ILLUSTRATIONS } from '../lib/assets';
 
 const SupportPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -37,6 +38,13 @@ const SupportPage: React.FC = () => {
       <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-16">
         {/* Header */}
         <div className="mb-10 text-center">
+          <img
+            src={ILLUSTRATIONS.support}
+            alt=""
+            aria-hidden="true"
+            className="mx-auto mb-6 h-24 w-auto object-contain"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+          />
           <span className="mb-3 inline-block rounded-full bg-[var(--accent-baby)]/40 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[var(--accent-royal)]">
             Support
           </span>
