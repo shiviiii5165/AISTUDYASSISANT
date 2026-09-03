@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
+import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
@@ -44,6 +45,7 @@ const staggerItem = {
 };
 
 const QuizGeneratorPage: React.FC = () => {
+  const { collapsed: historySidebarCollapsed, toggle: toggleHistorySidebar } = useSidebarCollapse('quiz-history');
   const location = useLocation();
   const navigate = useNavigate();
   const presetPdfId = location.state?.presetPdfId;
@@ -165,6 +167,8 @@ const QuizGeneratorPage: React.FC = () => {
           selectedId={null}
           onSelect={(id) => navigate(`/quiz/${id}`)}
           onNew={() => setTopic('')}
+          collapsed={historySidebarCollapsed}
+          onToggle={toggleHistorySidebar}
         />
         
         <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -173,7 +177,7 @@ const QuizGeneratorPage: React.FC = () => {
           <motion.div variants={staggerItem} className="mb-8">
             <GreetingHeader
               subtitle="Configure your topic, difficulty, and format to generate a comprehensive quiz."
-              avatarImageSrc="/images/tutor_avatar.jpg"
+              avatarImageSrc="/assets/genie-default.png"
             />
           </motion.div>
 
@@ -394,7 +398,7 @@ const QuizGeneratorPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={generating || (!topic.trim() && sourceType === 'topic')}
-                className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--accent-green)] px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2.5 rounded-full bg-[var(--accent-royal)] px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-[var(--accent-royal)]/25 transition-all hover:bg-[var(--accent-green-deep)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {generating ? (
                   <>

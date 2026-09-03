@@ -10,7 +10,7 @@
   },
   "rewrites": [
     {
-      "source": "/auth/:path*",
+      "source": "/auth/:path+",
       "destination": "/api/index.py"
     },
     {
@@ -18,7 +18,7 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/chat/:path*",
+      "source": "/chat/:path+",
       "destination": "/api/index.py"
     },
     {

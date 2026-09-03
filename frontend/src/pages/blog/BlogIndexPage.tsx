@@ -37,11 +37,11 @@ const BlogIndexPage: React.FC = () => {
           {blogPosts.map((post) => (
             <Link key={post.slug} to={`/blog/${post.slug}`} className="block group">
               <div className="p-8 rounded-3xl bg-[var(--bg-secondary)] border border-[var(--border)] hover:border-[var(--accent-green)] transition-all">
-                <p className="text-sm text-[var(--text-muted)] mb-3">{post.date}</p>
+                <p className="text-sm text-[var(--text-secondary)] mb-3">{post.date}</p>
                 <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3 group-hover:text-[var(--accent-green)] transition-colors">
                   {post.title}
                 </h2>
-                <p className="text-[var(--text-secondary)]">
+                <p className="text-[var(--text-primary)]">
                   {post.description}
                 </p>
               </div>

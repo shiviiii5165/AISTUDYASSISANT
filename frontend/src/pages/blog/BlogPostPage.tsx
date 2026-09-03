@@ -55,11 +55,11 @@ const BlogPostPage: React.FC = () => {
       </nav>
 
       <main className="max-w-3xl mx-auto px-6 py-12">
-        <button onClick={() => navigate('/blog')} className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors mb-8">
+        <button onClick={() => navigate('/blog')} className="inline-flex items-center gap-2 text-[var(--text-primary)] hover:text-[var(--accent-green)] transition-colors mb-8">
           <ArrowLeft className="w-4 h-4" /> Back to Blog
         </button>
         
-        <article className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-a:text-[var(--accent-green)]">
+        <article className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-a:text-[var(--accent-green)]">
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </article>
       </main>

@@ -98,15 +98,15 @@ async def expand_presentation_content(
                 "speaker_notes": orig_slide.get("key_message", ""),
             }
 
-        # Enforce bullet constraints (<80 chars, max 5)
+        # Enforce bullet constraints (<95 chars, max 6)
         cleaned_bullets = []
         for b in found.get("body_bullets", []):
             b_str = str(b).strip()
-            if len(b_str) > 95:
-                b_str = b_str[:90] + "..."
+            if len(b_str) > 100:
+                b_str = b_str[:95] + "..."
             if b_str:
                 cleaned_bullets.append(b_str)
-        found["body_bullets"] = cleaned_bullets[:5]
+        found["body_bullets"] = cleaned_bullets[:6]
 
         # Attach source refs
         if s_no in batch_source_refs_map:

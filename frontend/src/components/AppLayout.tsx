@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import {
   BookOpen, MessageSquare, Target, Menu, X, LogOut, LifeBuoy,
-  Presentation, PlayCircle, GraduationCap, Map, HelpCircle
+  Presentation, PlayCircle, GraduationCap, Map, HelpCircle,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
+import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
+import { pageTransition } from '../lib/motion';
+import ProfileDropdown from './ProfileDropdown';
 
 /**
  * Shared app shell.
@@ -36,12 +41,18 @@ const NAV_GROUPS: { heading: string; items: { path: string; label: string; icon:
 
 const SUPPORT_ITEM = { path: '/support', label: 'Support', icon: LifeBuoy };
 
+// Routes where content manages its own internal scroll — the main area must be
+// fixed-height so flex-1 children (chat list, teach panel, history sidebars) fill the viewport correctly.
+const FIXED_HEIGHT_ROUTES = new Set(['/chat', '/teach', '/decks', '/quizzes', '/lesson-planner']);
+
 const AppLayout = ({ children, title }: { children: React.ReactNode; title: React.ReactNode }) => {
   const location = useLocation();
+  const isFixedHeight = FIXED_HEIGHT_ROUTES.has(location.pathname);
 
   const { user, signOut } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { collapsed, toggle } = useSidebarCollapse('app-nav');
+  const prefersReducedMotion = useReducedMotion();
 
   const getInitials = (name?: string) => {
     return name ? name.charAt(0).toUpperCase() : 'U';
@@ -49,19 +60,19 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
 
   const avatarUrl = user?.avatar_url;
 
-  /** Active state: green text on the pale green surface is 6.49:1 (AA). */
-  const navLinkClass = (isActive: boolean, dense: boolean) =>
+  /** Active state: blue text on the pale blue surface is 6.49:1 (AA). */
+  const navLinkClass = (isActive: boolean, dense: boolean, iconOnly: boolean) =>
     [
-      'flex items-center gap-3 rounded-lg text-sm font-medium transition-colors',
-      dense ? 'px-3 py-2' : 'px-3 py-2.5',
+      'flex items-center rounded-lg text-sm font-medium transition-colors',
+      iconOnly ? 'justify-center p-2.5' : (dense ? 'gap-3 px-3 py-2' : 'gap-3 px-3 py-2.5'),
       isActive
-        ? 'bg-[var(--accent-green-light)] text-[var(--accent-green-text)]'
+        ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue-text)]'
         : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
     ].join(' ');
 
   const renderNavItem = (
     { path, label, icon: Icon }: { path: string; label: string; icon: React.ElementType },
-    opts: { dense: boolean; onNavigate?: () => void },
+    opts: { dense: boolean; onNavigate?: () => void; iconOnly?: boolean },
   ) => {
     const isActive = location.pathname === path;
     return (
@@ -69,50 +80,86 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
         key={path}
         to={path}
         aria-current={isActive ? 'page' : undefined}
+        aria-label={opts.iconOnly ? label : undefined}
+        title={opts.iconOnly ? label : undefined}
         onClick={opts.onNavigate}
-        className={navLinkClass(isActive, opts.dense)}
+        className={navLinkClass(isActive, opts.dense, !!opts.iconOnly)}
       >
-        <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-        {label}
+        <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden={!opts.iconOnly} />
+        {!opts.iconOnly && label}
       </Link>
     );
   };
 
   return (
-    <div className="flex min-h-[100dvh] bg-[var(--bg-primary)]">
+    <div className="flex h-screen bg-[var(--bg-primary)]">
       {/* ── Desktop Sidebar ── */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-card)] md:flex">
-        <div className="px-5 py-4">
+      <aside
+        className={`hidden lg:flex shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-card)] h-full overflow-hidden transition-[width] duration-200 ${collapsed ? 'w-16' : 'w-60'}`}
+      >
+        {/* Brand */}
+        <div className={`flex items-center border-b border-[var(--border)] ${collapsed ? 'justify-center px-3 py-4' : 'px-5 py-4'}`}>
           <Link
             to="/dashboard"
+            aria-label="TeachGenie home"
             className="flex items-center gap-2.5 rounded-lg font-display text-lg font-bold text-[var(--text-primary)]"
           >
-            <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-            TeachGenie
+            <img src="/assets/genie-default.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
+            {!collapsed && <span>TeachGenie</span>}
           </Link>
         </div>
 
-        <nav aria-label="Main" className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.heading}>
-              <h2 className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                {group.heading}
-              </h2>
-              <div className="space-y-0.5">
-                {group.items.map((item) => renderNavItem(item, { dense: true }))}
+        <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3">
+          {collapsed ? (
+            /* Icon-only rail */
+            <div className="space-y-1">
+              {[...NAV_GROUPS.flatMap(g => g.items), SUPPORT_ITEM].map((item) =>
+                renderNavItem(item, { dense: true, iconOnly: true })
+              )}
+            </div>
+          ) : (
+            /* Full labels */
+            <div className="space-y-5">
+              {NAV_GROUPS.map((group) => (
+                <div key={group.heading}>
+                  <h2 className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    {group.heading}
+                  </h2>
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => renderNavItem(item, { dense: true }))}
+                  </div>
+                </div>
+              ))}
+              <div className="border-t border-[var(--border)] pt-4">
+                {renderNavItem(SUPPORT_ITEM, { dense: true })}
               </div>
             </div>
-          ))}
-
-          <div className="border-t border-[var(--border)] pt-4">
-            {renderNavItem(SUPPORT_ITEM, { dense: true })}
-          </div>
+          )}
         </nav>
+
+        {/* Collapse toggle */}
+        <div className="border-t border-[var(--border)] p-2">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={`flex w-full items-center rounded-lg px-2.5 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] ${collapsed ? 'justify-center' : 'gap-2'}`}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
       </aside>
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-40 lg:hidden">
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
@@ -176,16 +223,16 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
       )}
 
       {/* ── Main Content ── */}
-      <div className="flex h-[100dvh] min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
-        <header className="relative z-10 flex h-14 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--bg-card)] px-4 md:px-6">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--bg-card)] px-4 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={mobileMenuOpen}
-              className="rounded-lg p-2 transition-colors hover:bg-[var(--bg-hover)] md:hidden"
+              className="rounded-lg p-2 transition-colors hover:bg-[var(--bg-hover)] lg:hidden"
             >
               <Menu className="h-5 w-5 text-[var(--text-secondary)]" aria-hidden="true" />
             </button>
@@ -195,65 +242,52 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="hidden text-xs font-medium text-[var(--text-muted)] sm:block">
+            <span className="hidden text-xs font-medium text-[var(--text-muted)] sm:block mr-2">
               {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowProfileMenu(!showProfileMenu);
-                }}
-                aria-label="Account menu"
-                aria-expanded={showProfileMenu}
-                aria-haspopup="true"
-                className="flex items-center rounded-full"
-              >
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    className="h-8 w-8 rounded-full border border-[var(--border)] object-cover transition-colors hover:border-[var(--accent-green)]"
-                  />
-                ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-green)] text-xs font-bold text-white transition-opacity hover:opacity-90">
-                    {getInitials(user?.full_name || user?.email)}
-                  </span>
-                )}
-              </button>
-              {showProfileMenu && (
-                <>
-                  <div className="fixed inset-0 z-20" onClick={() => setShowProfileMenu(false)} />
-                  <div className="absolute right-0 top-full z-30 mt-2 w-52 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] py-1 shadow-[var(--shadow-lg)]">
-                    <div className="mb-1 border-b border-[var(--border)] px-4 py-2.5">
-                      <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
-                        {user?.full_name || 'Student'}
-                      </p>
-                      <p className="truncate text-xs text-[var(--text-secondary)]">{user?.email}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        signOut();
-                      }}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-700 transition-colors hover:bg-red-50"
-                    >
-                      <LogOut className="h-4 w-4" aria-hidden="true" />
-                      Log out
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <ProfileDropdown />
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        {isFixedHeight ? (
+          /* Fixed-height shell for windowed pages (Chat, Teach Me).
+             flex-1 children fill the remaining viewport height correctly here. */
+          <main
+            className="flex flex-1 w-full overflow-hidden"
+            aria-label="Main"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                variants={prefersReducedMotion ? undefined : pageTransition}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                className="flex flex-1 overflow-hidden"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        ) : (
+          /* Scrollable pages: native scroll, no wrapper positioning */
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <main className="w-full pb-8">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={location.pathname}
+                  variants={prefersReducedMotion ? undefined : pageTransition}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                >
+                  {children}
+                </motion.div>
+              </AnimatePresence>
+            </main>
+          </div>
+        )}
       </div>
     </div>
   );

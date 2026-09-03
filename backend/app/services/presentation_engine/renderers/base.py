@@ -96,8 +96,13 @@ def add_bullet_list(
         return
         
     # Combine bullets into a single string to estimate height
+    # Pass per-paragraph spacing so the fitter accounts for space_before/space_after
     combined_text = "\n".join(display_bullets)
-    actual_token, actual_text = fit_text_to_box(combined_text, token, width, height)
+    actual_token, actual_text = fit_text_to_box(
+        combined_text, token, width, height,
+        para_space_after_pt=6.0,
+        para_space_before_pt=2.0,
+    )
     
     # Re-split actual_text (which might be truncated)
     final_bullets = actual_text.split("\n")
@@ -296,6 +301,59 @@ def add_footer(
         color=theme.border,
         alignment=PP_ALIGN.CENTER,
     )
+
+
+def add_kpi_metrics(
+    slide: Slide,
+    metrics: list,
+    left: "Emu", top: "Emu", width: "Emu", height: "Emu",
+    theme: ThemeColors,
+) -> None:
+    """
+    Render KPI metric cards: large value + label + context sentence.
+    Each metric dict: {"value": str, "label": str, "context": str}
+    """
+    n = max(1, len(metrics))
+    gap = Inches(0.2)
+    card_w = (width - gap * (n - 1)) / n
+    card_h = height
+
+    value_zone_h = Inches(1.2)
+    label_zone_h = Inches(0.42)
+
+    for i, metric in enumerate(metrics):
+        cx = left + i * (card_w + gap)
+        add_filled_rect(slide, cx, top, card_w, card_h,
+                        fill_color=theme.surface_alt, border_color=theme.border)
+
+        value = str(metric.get("value", "—"))
+        label = str(metric.get("label", ""))
+        context = str(metric.get("context", ""))
+
+        add_text_box(
+            slide, value,
+            cx + Inches(0.1), top + Inches(0.15),
+            card_w - Inches(0.2), value_zone_h,
+            token=Typography.KPI_NUMBER, color=theme.primary,
+            alignment=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE,
+        )
+        add_text_box(
+            slide, label.upper(),
+            cx + Inches(0.1), top + value_zone_h,
+            card_w - Inches(0.2), label_zone_h,
+            token=Typography.BADGE, color=theme.text_muted,
+            alignment=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.TOP,
+        )
+        ctx_top = top + value_zone_h + label_zone_h + Inches(0.1)
+        ctx_h = card_h - value_zone_h - label_zone_h - Inches(0.2)
+        if context and ctx_h > Inches(0.2):
+            add_text_box(
+                slide, context,
+                cx + Inches(0.15), ctx_top,
+                card_w - Inches(0.3), ctx_h,
+                token=Typography.CAPTION, color=theme.text_muted,
+                alignment=PP_ALIGN.CENTER, word_wrap=True,
+            )
 
 
 def add_speaker_notes(slide: Slide, notes_text: str) -> None:

@@ -3,51 +3,54 @@
 /* ─── Design Tokens: Living Storybook Magic ─── */
 :root {
   /* Text */
-  --text-primary: #2B1B12;
-  --text-secondary: #6B5744;
-  --text-muted: #A0917E;
+  --text-primary: #091540;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --text-inverse: #FFFFFF;
 
   /* Backgrounds */
-  --bg-primary: #FBF5E9;
-  --bg-secondary: #F5ECD7;
-  --bg-card: #FFFDF7;
-  --bg-hover: #F5ECD7;
+  --bg-primary: #FAFAF8;
+  --bg-secondary: #F3F4F6;
+  --bg-card: #FFFFFF;
+  --bg-hover: #F3F4F6;
+  --bg-navy: #091540;
 
   /* Borders */
-  --border: #E0D5C0;
-  --border-strong: #C9B896;
+  --border: rgba(9, 21, 64, 0.1);
+  --border-strong: rgba(9, 21, 64, 0.2);
 
-  /* Accents — Saffron Gold replaces green as primary CTA */
-  --accent-green: #E8A33D;
-  --accent-green-light: #FFF4E0;
-  --accent-indigo: #3B5E8C;
-  --accent-indigo-light: #E8EFF8;
-  --accent-amber: #C98A3B;
-  --accent-amber-light: #FFF4E0;
-  --accent-red: #D64545;
+  /* Accents */
+  --accent-royal: #1B2CC1;
+  --accent-periwinkle: #7692FF;
+  --accent-baby: #ABD2FA;
+  --accent-green: #1B2CC1;
+  --accent-green-deep: #091540;
+  --accent-green-light: #ABD2FA;
+  --accent-green-text: #1B2CC1;
+  --accent-green-hover: #091540;
+  
+  --accent-indigo: #091540;
+  --accent-red: #DC2626;
 
-  /* New Storybook tokens */
-  --amethyst-spark: #7A4FA0;
-  --night-indigo: #161A33;
-  --gold-gradient: linear-gradient(135deg, #E8A33D, #C98A3B);
-  --sapphire-gradient: linear-gradient(135deg, #3B5E8C, #2A4A6E);
+  /* Gradients */
+  --royal-gradient: linear-gradient(135deg, #1B2CC1, #091540);
 
   /* Typography */
   --font-display: 'Lora', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-hindi: 'Noto Sans Devanagari', 'Inter', sans-serif;
 
-  /* Shadows — warm gold-tinted */
-  --shadow-sm: 0 1px 3px 0 rgba(43, 27, 18, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(201, 138, 59, 0.1), 0 2px 4px -2px rgba(43, 27, 18, 0.04);
-  --shadow-lg: 0 10px 25px -4px rgba(201, 138, 59, 0.12), 0 4px 8px -4px rgba(43, 27, 18, 0.04);
-  --shadow-gold: 0 4px 16px -2px rgba(201, 138, 59, 0.2);
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(9, 21, 64, 0.04);
+  --shadow-lg: 0 10px 40px -4px rgba(9, 21, 64, 0.12), 0 4px 16px -4px rgba(9, 21, 64, 0.08);
+  --shadow-bento: 0 4px 20px -2px rgba(9, 21, 64, 0.05), 0 2px 8px -2px rgba(9, 21, 64, 0.03);
+  --shadow-bento-hover: 0 12px 30px -4px rgba(27, 44, 193, 0.12), 0 4px 12px -4px rgba(27, 44, 193, 0.08);
 
   /* Radius */
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
 }
 
 /* ─── Global Reset & Base ─── */
@@ -294,60 +297,53 @@ select:focus-visible {
   66%, 96% { opacity: 0; }
 }
 
-/* ─── Gold-leaf card border texture ─── */
+/* ─── Teak Bento Card ─── */
 .card-storybook {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.card-storybook::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: 
-    radial-gradient(circle at 15% 15%, rgba(201, 138, 59, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 85% 85%, rgba(201, 138, 59, 0.03) 0%, transparent 50%);
-  pointer-events: none;
+  box-shadow: var(--shadow-bento);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-storybook:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--shadow-bento-hover);
+  transform: translateY(-2px);
 }
 
-/* ─── Gold gradient button ─── */
+/* ─── Weav Primary CTA ─── */
 .btn-gold {
-  background: var(--gold-gradient);
+  background: var(--royal-gradient);
   color: white;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px -2px rgba(27, 44, 193, 0.4);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-gold:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(27, 44, 193, 0.6);
 }
 
 .btn-gold:active {
   transform: translateY(0);
 }
 
-/* ─── Gold shimmer text ─── */
+/* ─── Royal Shimmer Text ─── */
 .text-gold-shimmer {
   background: linear-gradient(
     90deg, 
-    #E8A33D 0%, 
-    #F5CC6A 25%, 
-    #E8A33D 50%, 
-    #C98A3B 75%, 
-    #E8A33D 100%
+    #1B2CC1 0%, 
+    #7692FF 25%, 
+    #1B2CC1 50%, 
+    #091540 75%, 
+    #1B2CC1 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;

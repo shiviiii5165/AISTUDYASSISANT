@@ -8,11 +8,14 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
+import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import GreetingHeader from '../components/GreetingHeader';
+import { HoverCard, ScrollReveal, WavyText } from '../components/MotionUtils';
+import Loader from '../components/Loader';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION OPTIONS
@@ -74,6 +77,7 @@ const staggerItem = {
 };
 
 const TopicDeckPage: React.FC = () => {
+  const { collapsed: historySidebarCollapsed, toggle: toggleHistorySidebar } = useSidebarCollapse('deck-history');
   const location = useLocation();
   const presetConfig = location.state?.presetConfig;
 
@@ -143,10 +147,13 @@ const TopicDeckPage: React.FC = () => {
         });
         if (res.ok) {
           const data = await res.json();
-          setDeckHistory(data || []);
+          setDeckHistory(Array.isArray(data) ? data : []);
+        } else {
+          setDeckHistory([]);
         }
       } catch (e) {
         console.error('Failed to fetch deck history', e);
+        setDeckHistory([]);
       }
     };
 
@@ -293,7 +300,7 @@ const TopicDeckPage: React.FC = () => {
 
   const selectedClass = (isSelected: boolean) =>
     isSelected
-      ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]'
+      ? 'border-[var(--accent-royal)] bg-[var(--accent-baby)]/10 ring-1 ring-[var(--accent-royal)]'
       : 'border-[var(--border)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]';
 
   return (
@@ -305,10 +312,10 @@ const TopicDeckPage: React.FC = () => {
       <div className="flex h-full w-full">
         <HistorySidebar
           title="Presentations"
-          items={deckHistory.map(d => ({ id: d.id, title: d.topic, date: d.created_at }))}
+          items={(Array.isArray(deckHistory) ? deckHistory : []).map(d => ({ id: d.id, title: d.topic, date: d.created_at }))}
           selectedId={null} // Decks don't have a "selected" viewer state yet, they just download
           onSelect={(id) => {
-            const deck = deckHistory.find(d => d.id === id);
+            const deck = (Array.isArray(deckHistory) ? deckHistory : []).find(d => d.id === id);
             if (deck?.download_url) {
               window.open(deck.download_url, '_blank');
             } else if (deck) {
@@ -316,27 +323,29 @@ const TopicDeckPage: React.FC = () => {
             }
           }}
           onNew={() => { setStatus(null); setTopic(''); }}
+          collapsed={historySidebarCollapsed}
+          onToggle={toggleHistorySidebar}
         />
         
         <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl">
             <motion.div variants={staggerContainer} initial="hidden" animate="show">
 
-              <motion.div variants={staggerItem} className="mb-8">
+              <motion.div variants={staggerItem} className="mb-10">
                 <GreetingHeader
                   subtitle="Describe a topic and get an editable deck with speaker notes."
-                  avatarImageSrc="/images/tutor_avatar.jpg"
+                  avatarImageSrc="/assets/genie-default.png"
                 />
               </motion.div>
 
-              <form onSubmit={handleGenerate} className="space-y-8">
+              <form onSubmit={handleGenerate} className="space-y-10">
 
                 {/* Topic */}
                 <motion.div variants={staggerItem}>
-                  <label htmlFor="deck-topic" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+                  <label htmlFor="deck-topic" className="mb-3 block text-sm font-semibold text-[var(--text-primary)]">
                     Presentation topic
                   </label>
-                  <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-2 focus-within:border-[var(--accent-green)]">
+                  <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-2 focus-within:border-[var(--accent-royal)] focus-within:ring-1 focus-within:ring-[var(--accent-royal)] transition-all">
                     <input
                       id="deck-topic"
                       type="text"
@@ -344,14 +353,14 @@ const TopicDeckPage: React.FC = () => {
                       onChange={(e) => setTopic(e.target.value)}
                       placeholder="Kubernetes architecture and orchestration"
                       disabled={generating}
-                      className="min-w-0 flex-1 border-none bg-transparent px-3 py-2.5 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
+                      className="min-w-0 flex-1 border-none bg-transparent px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"
                     />
                     {topic && !generating && (
                       <button
                         type="button"
                         onClick={() => setTopic('')}
                         aria-label="Clear topic"
-                        className="rounded-lg p-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                        className="rounded-xl p-2.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -360,7 +369,7 @@ const TopicDeckPage: React.FC = () => {
                       type="submit"
                       disabled={generating || !topic.trim()}
                       aria-label="Generate presentation"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-green)] text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-royal)] text-white transition-colors hover:bg-[var(--accent-royal)]/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {generating ? (
                         <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -370,13 +379,13 @@ const TopicDeckPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2.5">
                     {SUGGESTED_TOPICS.map((t) => (
                       <button
                         key={t}
                         type="button"
                         onClick={() => setTopic(t)}
-                        className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-[var(--accent-green)] hover:text-[var(--text-primary)]"
+                        className="rounded-full border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--accent-royal)] hover:text-[var(--accent-royal)] hover:shadow-sm"
                       >
                         {t}
                       </button>
@@ -386,10 +395,10 @@ const TopicDeckPage: React.FC = () => {
 
                 {/* Knowledge source */}
                 <motion.fieldset variants={staggerItem}>
-                  <legend className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
+                  <legend className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
                     Knowledge source
                   </legend>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {[
                       { type: 'general' as const, label: 'General knowledge', icon: Globe, desc: 'Model subject knowledge' },
                       { type: 'uploaded_material' as const, label: 'My uploaded notes', icon: FileText, desc: 'Grounded in your documents' },
@@ -397,29 +406,33 @@ const TopicDeckPage: React.FC = () => {
                     ].map((src) => {
                       const isSelected = sourceType === src.type;
                       return (
-                        <button
-                          key={src.type}
-                          type="button"
-                          onClick={() => setSourceType(src.type)}
-                          aria-pressed={isSelected}
-                          className={`flex flex-col rounded-xl border p-4 text-left transition-colors ${selectedClass(isSelected)}`}
-                        >
-                          <span className="mb-2 flex items-center gap-2.5">
-                            <src.icon
-                              className={`h-5 w-5 shrink-0 ${isSelected ? 'text-[var(--accent-green-text)]' : 'text-[var(--text-secondary)]'}`}
-                              aria-hidden="true"
-                            />
-                            <span className="text-sm font-semibold text-[var(--text-primary)]">{src.label}</span>
-                          </span>
-                          <span className="text-xs text-[var(--text-secondary)]">{src.desc}</span>
-                        </button>
+                        <HoverCard key={src.type}>
+                          <button
+                            type="button"
+                            onClick={() => setSourceType(src.type)}
+                            aria-pressed={isSelected}
+                            className={`flex h-full w-full flex-col rounded-2xl border p-5 text-left transition-all duration-300 ${selectedClass(isSelected)}`}
+                          >
+                            <span className="mb-3 flex items-center gap-3">
+                              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${isSelected ? 'bg-[var(--accent-royal)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>
+                                <src.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                              </span>
+                              <span className={`text-sm font-bold ${isSelected ? 'text-[var(--accent-royal)]' : 'text-[var(--text-primary)]'}`}>{src.label}</span>
+                            </span>
+                            <span className="text-xs text-[var(--text-secondary)] leading-relaxed">{src.desc}</span>
+                          </button>
+                        </HoverCard>
                       );
                     })}
                   </div>
 
                   {sourceType !== 'general' && (
-                    <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-                      <label htmlFor="deck-source" className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5"
+                    >
+                      <label htmlFor="deck-source" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
                         Source document
                       </label>
                       {userPdfs.length > 0 ? (
@@ -427,7 +440,7 @@ const TopicDeckPage: React.FC = () => {
                           id="deck-source"
                           value={selectedPdfId}
                           onChange={(e) => setSelectedPdfId(e.target.value)}
-                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none"
+                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-royal)] focus:ring-1 focus:ring-[var(--accent-royal)] focus:outline-none transition-all"
                         >
                           {userPdfs.map((pdf) => (
                             <option key={pdf.id} value={pdf.id}>
@@ -441,16 +454,16 @@ const TopicDeckPage: React.FC = () => {
                           general knowledge.
                         </p>
                       )}
-                    </div>
+                    </motion.div>
                   )}
                 </motion.fieldset>
 
                 {/* Slide count */}
                 <motion.fieldset variants={staggerItem}>
-                  <legend className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
+                  <legend className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
                     Slide count
                   </legend>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3">
                     {SLIDE_COUNT_OPTIONS.map((num) => {
                       const isSelected = slideCount === num;
                       return (
@@ -459,10 +472,10 @@ const TopicDeckPage: React.FC = () => {
                           type="button"
                           onClick={() => setSlideCount(num)}
                           aria-pressed={isSelected}
-                          className={`rounded-lg border px-4 py-2 text-sm font-semibold tabular-nums transition-colors ${
+                          className={`rounded-full border px-6 py-2.5 text-sm font-bold tabular-nums transition-all ${
                             isSelected
-                              ? 'border-[var(--accent-green)] bg-[var(--accent-green)] text-white'
-                              : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+                              ? 'border-[var(--accent-royal)] bg-[var(--accent-royal)] text-white shadow-md'
+                              : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)] hover:border-[var(--accent-royal)] hover:text-[var(--accent-royal)]'
                           }`}
                         >
                           {num}
@@ -475,11 +488,11 @@ const TopicDeckPage: React.FC = () => {
                 {/* Design + theme + audience */}
                 <motion.div variants={staggerItem} className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <fieldset>
-                    <legend className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-                      <Settings2 className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                    <legend className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--text-primary)]">
+                      <Settings2 className="h-5 w-5 text-[var(--accent-royal)]" aria-hidden="true" />
                       Design template
                     </legend>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {DESIGN_OPTIONS.map((d) => {
                         const isSelected = design === d.value;
                         return (
@@ -488,21 +501,20 @@ const TopicDeckPage: React.FC = () => {
                             type="button"
                             onClick={() => setDesign(d.value)}
                             aria-pressed={isSelected}
-                            className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-colors ${selectedClass(isSelected)}`}
+                            className={`flex w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-all duration-300 ${selectedClass(isSelected)}`}
                           >
-                            <span className="flex items-center gap-3">
-                              <d.icon
-                                className={`h-5 w-5 shrink-0 ${isSelected ? 'text-[var(--accent-green-text)]' : 'text-[var(--text-secondary)]'}`}
-                                aria-hidden="true"
-                              />
+                            <span className="flex items-center gap-4">
+                              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isSelected ? 'bg-[var(--accent-royal)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>
+                                <d.icon className="h-5 w-5" aria-hidden="true" />
+                              </span>
                               <span>
-                                <span className="block text-sm font-semibold text-[var(--text-primary)]">{d.label}</span>
-                                <span className="mt-0.5 block text-xs text-[var(--text-secondary)]">{d.desc}</span>
+                                <span className={`block text-sm font-bold ${isSelected ? 'text-[var(--accent-royal)]' : 'text-[var(--text-primary)]'}`}>{d.label}</span>
+                                <span className="mt-1 block text-xs text-[var(--text-secondary)] leading-relaxed">{d.desc}</span>
                               </span>
                             </span>
                             {isSelected && (
                               <CheckCircle2
-                                className="h-5 w-5 shrink-0 text-[var(--accent-green-text)]"
+                                className="h-6 w-6 shrink-0 text-[var(--accent-royal)]"
                                 aria-hidden="true"
                               />
                             )}
@@ -513,12 +525,12 @@ const TopicDeckPage: React.FC = () => {
                   </fieldset>
 
                   <div>
-                    <fieldset className="mb-6">
-                      <legend className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-                        <Palette className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                    <fieldset className="mb-8">
+                      <legend className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--text-primary)]">
+                        <Palette className="h-5 w-5 text-[var(--accent-royal)]" aria-hidden="true" />
                         Slide colour theme
                       </legend>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         {THEME_OPTIONS.map((t) => {
                           const isSelected = themeId === t.value;
                           return (
@@ -527,35 +539,35 @@ const TopicDeckPage: React.FC = () => {
                               type="button"
                               onClick={() => setThemeId(t.value)}
                               aria-pressed={isSelected}
-                              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${selectedClass(isSelected)}`}
+                              className={`flex items-center gap-2.5 rounded-full border px-4 py-2 transition-all ${selectedClass(isSelected)} ${isSelected ? 'shadow-sm' : 'hover:border-[var(--accent-royal)]'}`}
                             >
                               {/* Swatches preview the generated deck, not this UI. */}
                               <span className="flex -space-x-1.5" aria-hidden="true">
                                 {t.colors.slice(0, 2).map((c, ci) => (
                                   <span
                                     key={ci}
-                                    className="h-4 w-4 rounded-full border border-white"
+                                    className="h-5 w-5 rounded-full border-2 border-white shadow-sm"
                                     style={{ backgroundColor: c }}
                                   />
                                 ))}
                               </span>
-                              <span className="text-sm font-medium text-[var(--text-primary)]">{t.label}</span>
+                              <span className={`text-sm font-bold ${isSelected ? 'text-[var(--accent-royal)]' : 'text-[var(--text-primary)]'}`}>{t.label}</span>
                             </button>
                           );
                         })}
                       </div>
                     </fieldset>
 
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div>
-                        <label htmlFor="deck-audience" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                        <label htmlFor="deck-audience" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
                           Audience
                         </label>
                         <select
                           id="deck-audience"
                           value={audience}
                           onChange={(e) => setAudience(e.target.value)}
-                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none"
+                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-royal)] focus:ring-1 focus:ring-[var(--accent-royal)] focus:outline-none transition-colors"
                         >
                           {AUDIENCE_OPTIONS.map((a) => (
                             <option key={a.value} value={a.value}>{a.label}</option>
@@ -563,14 +575,14 @@ const TopicDeckPage: React.FC = () => {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="deck-language" className="mb-1.5 block text-sm font-semibold text-[var(--text-primary)]">
+                        <label htmlFor="deck-language" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
                           Language
                         </label>
                         <select
                           id="deck-language"
                           value={language}
                           onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none"
+                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-royal)] focus:ring-1 focus:ring-[var(--accent-royal)] focus:outline-none transition-colors"
                         >
                           {LANGUAGE_OPTIONS.map((l) => (
                             <option key={l.value} value={l.value}>{l.label}</option>
@@ -582,9 +594,9 @@ const TopicDeckPage: React.FC = () => {
                 </motion.div>
 
                 {/* Feature toggles */}
-                <motion.fieldset variants={staggerItem} className="border-t border-[var(--border)] pt-6">
+                <motion.fieldset variants={staggerItem} className="border-t border-[var(--border)] pt-8">
                   <legend className="sr-only">Presentation features</legend>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3">
                     {[
                       { label: 'System and flow diagrams', state: enableDiagrams, set: setEnableDiagrams },
                       { label: 'AI illustrations', state: enableImages, set: setEnableImages },
@@ -598,17 +610,17 @@ const TopicDeckPage: React.FC = () => {
                         type="button"
                         onClick={() => opt.set(!opt.state)}
                         aria-pressed={opt.state}
-                        className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        className={`flex items-center gap-3 rounded-full border px-5 py-2.5 text-sm font-bold transition-all ${
                           opt.state
-                            ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)] text-[var(--accent-green-text)]'
-                            : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                            ? 'border-[var(--accent-royal)] bg-[var(--accent-baby)]/20 text-[var(--accent-royal)] shadow-sm ring-1 ring-[var(--accent-royal)]'
+                            : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--accent-royal)]/50 hover:bg-[var(--bg-hover)]'
                         }`}
                       >
                         <span>{opt.label}</span>
                         {/* State is a word, never colour alone. */}
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
                           opt.state
-                            ? 'bg-[var(--accent-green)] text-white'
+                            ? 'bg-[var(--accent-royal)] text-white'
                             : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
                         }`}>
                           {opt.state ? 'On' : 'Off'}
@@ -619,23 +631,25 @@ const TopicDeckPage: React.FC = () => {
                 </motion.fieldset>
 
                 <motion.div variants={staggerItem}>
-                  <button
-                    type="submit"
-                    disabled={generating || !topic.trim()}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--accent-green)] px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                        <span>{stageMessage || 'Generating presentation'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Presentation className="h-5 w-5" aria-hidden="true" />
-                        <span>Generate {slideCount} slide presentation</span>
-                      </>
-                    )}
-                  </button>
+                  <HoverCard>
+                    <button
+                      type="submit"
+                      disabled={generating || !topic.trim()}
+                      className="btn-gold flex w-full items-center justify-center gap-3 px-8 py-4 text-base"
+                    >
+                      {generating ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                          <span>{stageMessage || 'Generating presentation'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Presentation className="h-5 w-5" aria-hidden="true" />
+                          <span>Generate {slideCount} slide presentation</span>
+                        </>
+                      )}
+                    </button>
+                  </HoverCard>
                 </motion.div>
               </form>
 
@@ -646,24 +660,14 @@ const TopicDeckPage: React.FC = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6"
+                    className="mt-8 overflow-hidden rounded-xl border border-[var(--border)] bg-white p-6 shadow-sm dark:bg-zinc-900"
                     aria-live="polite"
                   >
-                    {/* Indeterminate: the backend reports no progress, so no
-                        percentage is claimed. */}
-                    <div
-                      className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-secondary)]"
-                      role="progressbar"
-                      aria-label="Generating presentation"
-                    >
-                      <div className="h-full w-1/3 animate-pulse rounded-full bg-[var(--accent-green)]" />
-                    </div>
-                    <p className="font-display text-base font-semibold text-[var(--text-primary)]">
-                      {stageMessage}
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                      This usually takes under a minute. The deck renders as 16:9 widescreen PPTX.
-                    </p>
+                    <Loader
+                      title="Generating your presentation..."
+                      subtitle={stageMessage || "This usually takes under a minute. The deck renders as 16:9 widescreen PPTX."}
+                      size="md"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -704,27 +708,27 @@ const TopicDeckPage: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-8 rounded-xl border border-[var(--accent-green)] bg-[var(--bg-card)] p-6"
+                    className="mt-10 rounded-2xl border border-[var(--accent-royal)] bg-[var(--bg-card)] p-8 shadow-bento"
                   >
-                    <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-6 border-b border-[var(--border)] pb-8 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
-                        <p className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent-green-light)] px-2.5 py-1 text-xs font-semibold text-[var(--accent-green-text)]">
-                          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[var(--accent-baby)]/30 px-3 py-1.5 text-xs font-bold text-[var(--accent-royal)]">
+                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                           Presentation ready
                         </p>
-                        <h2 className="font-display text-2xl font-bold text-[var(--text-primary)]">
-                          {resultTitle}
+                        <h2 className="font-display text-3xl font-bold text-[var(--text-primary)]">
+                          <WavyText text={resultTitle} />
                         </h2>
-                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                          <span className="tabular-nums">{finalSlideCount}</span> slides, {design} template, 16:9 widescreen PPTX
+                        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                          <span className="tabular-nums font-bold">{finalSlideCount}</span> slides, <span className="font-bold">{design}</span> template, 16:9 widescreen PPTX
                         </p>
                       </div>
                       <a
                         href={downloadUrl}
                         download={`${resultTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`}
-                        className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--accent-green)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
+                        className="btn-gold flex shrink-0 items-center justify-center gap-2 px-8 py-4 text-sm"
                       >
-                        <Download className="h-4 w-4" aria-hidden="true" />
+                        <Download className="h-5 w-5" aria-hidden="true" />
                         Download PPTX
                       </a>
                     </div>
@@ -765,11 +769,11 @@ const TopicDeckPage: React.FC = () => {
                     </span>
                   </h2>
                   <ul className="flex flex-col gap-2">
-                    {deckHistory.map((deck) => (
-                      <li
-                        key={deck.id}
-                        className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
-                      >
+                    {(Array.isArray(deckHistory) ? deckHistory : []).map((deck) => (
+                      <ScrollReveal key={deck.id}>
+                        <li
+                          className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
+                        >
                         <div className="flex min-w-0 items-start gap-3">
                           <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-green-light)]">
                             <Presentation
@@ -808,7 +812,8 @@ const TopicDeckPage: React.FC = () => {
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </button>
                         </div>
-                      </li>
+                        </li>
+                      </ScrollReveal>
                     ))}
                   </ul>
                 </section>

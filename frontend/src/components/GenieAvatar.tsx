@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
+import { GENIE } from '../lib/assets';
 
 interface GenieAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -28,7 +29,7 @@ const PERSONALITY_BEATS = [
   { name: 'driftRight', duration: 0.8 },
   { name: 'driftLeft', duration: 0.8 },
   { name: 'headTilt', duration: 1.0 },
-  { name: 'scaleBounce', duration: 0.6 },
+  { name: 'scalePulse', duration: 0.6 },
   { name: 'sparkle', duration: 1.2 },
 ];
 
@@ -38,7 +39,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
   isGenerating = false,
   isSuccess = false,
   isError = false,
-  imageSrc = '/logo.png',
+  imageSrc = GENIE.default,
   glowVariant = 'default',
   className = '',
 }) => {
@@ -166,8 +167,8 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
         return { animation: 'driftLeft 0.8s ease-in-out' };
       case 'headTilt':
         return { animation: 'headTilt 1s ease-in-out' };
-      case 'scaleBounce':
-        return { animation: 'scaleBounce 0.6s ease-in-out' };
+      case 'scalePulse':
+        return { animation: 'scalePulse 0.6s cubic-bezier(0.16, 1, 0.3, 1)' };
       default:
         return {};
     }

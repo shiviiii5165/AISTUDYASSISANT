@@ -1,0 +1,13 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "typingdot",
+        "createdAt": "2026-09-02T13:17:13.146Z"
+      }
+    ]
+  }
+}

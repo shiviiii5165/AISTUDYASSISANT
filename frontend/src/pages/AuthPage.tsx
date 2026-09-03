@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User as UserIcon, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Loader2, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import SEO from '../components/SEO';
@@ -96,48 +96,53 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--bg-secondary)] p-4 relative overflow-hidden">
-      <SEO 
-        title={isLogin ? 'Log In' : 'Sign Up'} 
-        description="Log in or sign up to TeachGenie to access your AI study assistant and chat with your notes." 
+    <div className="min-h-[100dvh] flex items-center justify-center bg-[#FAFAF8] p-4 relative overflow-hidden">
+      <SEO
+        title={isLogin ? 'Log In' : 'Sign Up'}
+        description="Log in or sign up to TeachGenie to access your AI study assistant and chat with your notes."
       />
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[var(--accent-green)] opacity-[0.04] rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[var(--accent-green)] opacity-[0.04] rounded-full blur-3xl" />
+      {/* Background blobs — brand palette */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#7692FF] opacity-[0.08] rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#ABD2FA] opacity-[0.15] rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1B2CC1] opacity-[0.02] rounded-full blur-3xl" />
       </div>
 
-      <div className="bg-white p-6 md:p-8 rounded-xl shadow-[var(--shadow-lg)] w-full max-w-sm border border-[var(--border)] relative z-10">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <img src="/logo.png" alt="TeachGenie Logo" className="w-8 h-8 object-contain" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+      <div className="bg-white p-7 md:p-9 rounded-2xl shadow-[var(--shadow-lg)] w-full max-w-sm border border-[rgba(9,21,64,0.08)] relative z-10">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2.5 mb-7">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1B2CC1]">
+            <img src="/assets/genie-default.png" alt="" className="h-5 w-5 object-contain brightness-0 invert" />
+          </div>
+          <span className="font-display text-lg font-bold text-[#091540]">TeachGenie</span>
         </div>
 
-        <h2 className="text-xl font-bold text-[var(--text-primary)] mb-0.5 text-center">
-          {isLogin ? 'Welcome back' : 'Create an account'}
+        <h2 className="font-display text-xl font-bold text-[#091540] mb-1 text-center">
+          {isLogin ? 'Welcome back' : 'Create your account'}
         </h2>
-        <p className="text-[var(--text-secondary)] text-center mb-6 text-xs">
-          {isLogin ? 'Log in to continue learning' : 'Join TeachGenie and learn from your notes'}
+        <p className="text-[var(--text-secondary)] text-center mb-6 text-sm">
+          {isLogin ? 'Log in to continue learning' : 'Join TeachGenie and study smarter'}
         </p>
 
-        {/* Error / Success messages */}
+        {/* Alerts — icon-only, no emoji */}
         {error && (
-          <div className="mb-3 p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
-            <span className="shrink-0 mt-0.5">⚠️</span>
+          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
         {successMsg && (
-          <div className="mb-3 p-2.5 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs font-medium flex items-start gap-2">
-            <span className="shrink-0 mt-0.5">✅</span>
+          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-[var(--accent-baby)] bg-[var(--accent-baby)]/20 p-3 text-xs font-medium text-[var(--accent-royal)]">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{successMsg}</span>
           </div>
         )}
 
+        {/* Google sign-in */}
         <button
           onClick={handleGoogleSignIn}
           disabled={loading || googleLoading}
-          className="w-full bg-white border border-[var(--border)] text-[var(--text-primary)] font-medium py-2.5 rounded-lg shadow-[var(--shadow-sm)] hover:bg-gray-50 transition-all mb-5 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+          className="w-full border border-[var(--border)] bg-white text-[var(--text-primary)] font-medium py-2.5 rounded-xl shadow-sm hover:bg-[var(--bg-hover)] transition-all mb-5 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
         >
           {googleLoading ? (
             <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
@@ -160,18 +165,20 @@ const AuthPage: React.FC = () => {
           <div className="flex-grow border-t border-[var(--border)]"></div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Full Name</label>
+              <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+                Full Name
+              </label>
               <div className="relative">
-                <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] w-4.5 h-4.5" />
+                <UserIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input
                   type="text"
                   placeholder="Rahul Kumar"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] py-2.5 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-all focus:border-[var(--accent-royal)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-royal)]/20"
                   required
                   disabled={loading}
                 />
@@ -180,15 +187,17 @@ const AuthPage: React.FC = () => {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Email Address</label>
+            <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+              Email address
+            </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] w-4.5 h-4.5" />
+              <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 type="email"
                 placeholder="student@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] py-2.5 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-all focus:border-[var(--accent-royal)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-royal)]/20"
                 required
                 disabled={loading}
               />
@@ -196,15 +205,17 @@ const AuthPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Password</label>
+            <label className="mb-1.5 block text-xs font-semibold text-[var(--text-primary)]">
+              Password
+            </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] w-4.5 h-4.5" />
+              <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent transition-all bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-sm"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] py-2.5 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-all focus:border-[var(--accent-royal)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-royal)]/20"
                 required
                 minLength={6}
                 disabled={loading}
@@ -215,14 +226,14 @@ const AuthPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[var(--accent-green)] text-white font-semibold py-2.5 rounded-lg shadow-sm hover:bg-[var(--accent-green-hover)] transition-all mt-4 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1B2CC1] py-2.5 text-sm font-semibold text-white shadow-md shadow-[#1B2CC1]/25 transition-all hover:bg-[#091540] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <>
-                {isLogin ? 'Log in' : 'Sign up'}
-                <ArrowRight className="w-4 h-4" />
+                {isLogin ? 'Log in' : 'Create account'}
+                <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
@@ -230,12 +241,8 @@ const AuthPage: React.FC = () => {
 
         <div className="mt-5 text-center">
           <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-              setSuccessMsg('');
-            }}
-            className="text-[var(--accent-green-text)] font-medium hover:underline text-sm"
+            onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMsg(''); }}
+            className="text-sm font-medium text-[var(--accent-royal)] hover:underline disabled:opacity-50"
             disabled={loading}
           >
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Log in'}

@@ -9,11 +9,14 @@ import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import HandwrittenUpload from '../components/library/HandwrittenUpload';
 import UpgradeModal from '../components/billing/UpgradeModal';
+import { HoverCard } from '../components/MotionUtils';
+import { ILLUSTRATIONS } from '../lib/assets';
+import { motion } from 'framer-motion';
 
 const STATUS_STYLES: Record<string, string> = {
-  ready: 'bg-green-100 text-green-800',
-  processing: 'bg-amber-100 text-amber-800',
-  error: 'bg-red-100 text-red-800',
+  ready: 'bg-[var(--accent-baby)] text-[var(--accent-royal)]',
+  processing: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]',
+  error: 'bg-red-100 text-red-700',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -257,25 +260,25 @@ const LibraryPage: React.FC = () => {
 
           <div
             {...getRootProps()}
-            className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors md:p-8 ${
+            className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all duration-300 md:p-10 ${
               isDragActive
-                ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]'
-                : 'border-[var(--border-strong)] hover:border-[var(--accent-green)] hover:bg-[var(--bg-hover)]'
+                ? 'border-[var(--accent-royal)] bg-[var(--accent-baby)]/20'
+                : 'border-[var(--border-strong)] hover:border-[var(--accent-royal)] hover:bg-[var(--bg-hover)] hover:shadow-bento-hover'
             } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
           >
             <input {...getInputProps()} />
-            <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-green-light)]">
+            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--accent-baby)]/30 text-[var(--accent-royal)]">
               {uploading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-[var(--accent-green-text)]" aria-hidden="true" />
+                <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
               ) : (
-                <Upload className="h-6 w-6 text-[var(--accent-green-text)]" aria-hidden="true" />
+                <Upload className="h-7 w-7" aria-hidden="true" />
               )}
             </span>
-            <p className="font-display text-sm font-semibold text-[var(--text-primary)]">
+            <p className="font-display text-lg font-bold text-[var(--text-primary)]">
               {isDragActive ? 'Drop your PDF here' : 'Drag and drop your PDF here'}
             </p>
-            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-              {uploading ? 'Uploading and processing' : 'or click to browse. PDF files only.'}
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              {uploading ? 'Uploading and processing...' : 'or click to browse. PDF files only.'}
             </p>
           </div>
 
@@ -324,12 +327,20 @@ const LibraryPage: React.FC = () => {
               <span className="sr-only">Loading documents</span>
             </div>
           ) : filteredPdfs.length === 0 ? (
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-6 py-12 text-center">
-              <FileText className="mx-auto mb-3 h-8 w-8 text-[var(--text-muted)]" aria-hidden="true" />
-              <p className="font-display text-base font-semibold text-[var(--text-primary)]">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] px-6 py-16 text-center shadow-sm">
+              <motion.img
+                src={ILLUSTRATIONS.emptyLibrary}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                alt=""
+                aria-hidden="true"
+                className="mx-auto mb-6 h-32 w-32 rounded-xl object-cover shadow-sm"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <p className="font-display text-lg font-bold text-[var(--text-primary)]">
                 {searchQuery ? 'No documents match your search' : 'No documents yet'}
               </p>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                 {searchQuery
                   ? 'Try a different search term.'
                   : 'Upload your first PDF above to get started.'}
@@ -342,116 +353,115 @@ const LibraryPage: React.FC = () => {
                 const isReady = pdf.status === 'ready';
                 return (
                   <li key={pdf.id}>
-                    <div
-                      onClick={() => handleChatClick(pdf)}
-                      className={`group relative h-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-colors ${
-                        isReady ? 'cursor-pointer hover:border-[var(--accent-green)]' : 'opacity-75'
-                      }`}
-                    >
-                      {/* Actions. Visible on hover for pointer users, and always
-                          present in the tab order for keyboard users. */}
-                      <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-                        {isReady && (
-                          <>
+                    <HoverCard className="h-full">
+                      <div
+                        onClick={() => handleChatClick(pdf)}
+                        className={`card-storybook group relative h-full p-5 flex flex-col ${
+                          isReady ? 'cursor-pointer hover:border-[var(--accent-royal)]' : 'opacity-75'
+                        }`}
+                      >
+                        {/* Actions. Visible on hover for pointer users, and always
+                            present in the tab order for keyboard users. */}
+                        <div className="absolute right-4 top-4 flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 z-10">
+                          {isReady && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/chat?pdf=${pdf.id}`);
+                                }}
+                                aria-label={`Chat with ${pdf.name}`}
+                                className="rounded-lg p-2 transition-colors bg-white shadow-sm hover:bg-[var(--accent-baby)]/30 border border-[var(--border)]"
+                              >
+                                <MessageSquare
+                                  className="h-4 w-4 text-[var(--accent-royal)]"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/quizzes', { state: { presetPdfId: pdf.id } });
+                                }}
+                                aria-label={`Generate Quiz from ${pdf.name}`}
+                                className="rounded-lg p-2 transition-colors bg-white shadow-sm hover:bg-[var(--accent-baby)]/30 border border-[var(--border)]"
+                              >
+                                <HelpCircle
+                                  className="h-4 w-4 text-[var(--accent-royal)]"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDelete(pdf.id, e)}
+                            disabled={deletingId === pdf.id}
+                            aria-label={`Delete ${pdf.name}`}
+                            className="rounded-lg p-2 transition-colors bg-white shadow-sm hover:bg-red-50 border border-[var(--border)]"
+                          >
+                            {deletingId === pdf.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-red-700" aria-hidden="true" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-red-700" aria-hidden="true" />
+                            )}
+                          </button>
+                        </div>
+
+                        <span className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--bg-secondary)] transition-colors group-hover:bg-[var(--accent-baby)]/20">
+                          {pdf.status === 'processing' ? (
+                            <Loader2
+                              className="h-7 w-7 animate-spin text-[var(--text-secondary)]"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <FileText className="h-7 w-7 text-[var(--accent-royal)]" aria-hidden="true" />
+                          )}
+                        </span>
+
+                        <h3 className="mb-4 truncate pr-16 text-base font-bold text-[var(--text-primary)]">
+                          {isReady ? (
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/chat?pdf=${pdf.id}`);
                               }}
-                              aria-label={`Chat with ${pdf.name}`}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-[var(--accent-green-light)]"
+                              title={pdf.name}
+                              className="block max-w-full truncate text-left hover:underline"
                             >
-                              <MessageSquare
-                                className="h-4 w-4 text-[var(--accent-green-text)]"
-                                aria-hidden="true"
-                              />
+                              {pdf.name}
                             </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate('/quizzes', { state: { presetPdfId: pdf.id } });
-                              }}
-                              aria-label={`Generate Quiz from ${pdf.name}`}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-[var(--accent-green-light)]"
-                            >
-                              <HelpCircle
-                                className="h-4 w-4 text-[var(--accent-green-text)]"
-                                aria-hidden="true"
-                              />
-                            </button>
-                          </>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => handleDelete(pdf.id, e)}
-                          disabled={deletingId === pdf.id}
-                          aria-label={`Delete ${pdf.name}`}
-                          className="rounded-lg p-1.5 transition-colors hover:bg-red-50"
-                        >
-                          {deletingId === pdf.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-red-700" aria-hidden="true" />
                           ) : (
-                            <Trash2 className="h-4 w-4 text-red-700" aria-hidden="true" />
+                            <span title={pdf.name}>{pdf.name}</span>
                           )}
-                        </button>
-                      </div>
+                        </h3>
 
-                      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--bg-secondary)]">
-                        {pdf.status === 'processing' ? (
-                          <Loader2
-                            className="h-5 w-5 animate-spin text-[var(--text-secondary)]"
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <FileText className="h-5 w-5 text-[var(--text-secondary)]" aria-hidden="true" />
-                        )}
-                      </span>
-
-                      <h3 className="mb-3 truncate pr-16 text-sm font-semibold text-[var(--text-primary)]">
-                        {/* The title is the keyboard-reachable control for the
-                            card. The wrapper stays clickable for pointer users,
-                            so behaviour is unchanged. */}
-                        {isReady ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/chat?pdf=${pdf.id}`);
-                            }}
-                            title={pdf.name}
-                            className="block max-w-full truncate text-left hover:underline"
-                          >
-                            {pdf.name}
-                          </button>
-                        ) : (
-                          <span title={pdf.name}>{pdf.name}</span>
-                        )}
-                      </h3>
-
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <span
-                          className={`rounded px-2 py-0.5 font-semibold ${colors.bg} ${colors.text}`}
-                        >
-                          {pdf.subject}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {pdf.page_count ? (
-                            <span className="tabular-nums text-[var(--text-muted)]">
-                              {pdf.page_count} pages
-                            </span>
-                          ) : null}
+                        <div className="mt-auto flex items-center justify-between gap-2 text-xs">
                           <span
-                            className={`rounded-full px-2 py-0.5 font-semibold ${
-                              STATUS_STYLES[pdf.status] || STATUS_STYLES.error
-                            }`}
+                            className={`rounded px-2.5 py-1 font-semibold ${colors.bg} ${colors.text}`}
                           >
-                            {STATUS_LABELS[pdf.status] || 'Failed'}
+                            {pdf.subject}
                           </span>
+                          <div className="flex items-center gap-2">
+                            {pdf.page_count ? (
+                              <span className="tabular-nums text-[var(--text-muted)] font-medium">
+                                {pdf.page_count} pages
+                              </span>
+                            ) : null}
+                            <span
+                              className={`rounded-full px-2.5 py-1 font-semibold ${
+                                STATUS_STYLES[pdf.status] || STATUS_STYLES.error
+                              }`}
+                            >
+                              {STATUS_LABELS[pdf.status] || 'Failed'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </HoverCard>
                   </li>
                 );
               })}
