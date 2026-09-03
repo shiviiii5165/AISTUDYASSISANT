@@ -177,7 +177,7 @@ const QuizGeneratorPage: React.FC = () => {
           <motion.div variants={staggerItem} className="mb-8">
             <GreetingHeader
               subtitle="Configure your topic, difficulty, and format to generate a comprehensive quiz."
-              avatarImageSrc="/images/tutor_avatar.jpg"
+              avatarImageSrc="/assets/genie-default.png"
             />
           </motion.div>
 
