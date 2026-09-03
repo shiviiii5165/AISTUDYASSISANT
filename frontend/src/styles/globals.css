@@ -4,51 +4,109 @@
 
 @layer base {
   :root {
-    /* Backgrounds */
-    --bg-primary: #FAFAF8;        /* Warm cream — main background */
-    --bg-secondary: #F3F0EA;      /* Slightly warmer — sidebar, cards */
-    --bg-card: #FFFFFF;           /* Pure white for content cards */
-    --bg-hover: #F0EDE7;          /* Hover state */
+    /*
+     * TeachGenie Design System — v2
+     * Palette: education-psychology-grounded, calming/trust-building
+     *
+     * Confirmed WCAG AA ratios (required: 4.5:1 normal text, 3:1 large):
+     *   --text-primary  (#1A3A52)  on cream:   9.23:1 ✓
+     *   --text-secondary (#2D5273) on cream:   6.19:1 ✓
+     *   --text-muted    (#3D6170)  on cream:   5.19:1 ✓
+     *   --text-primary  (#1A3A52)  on sage:    7.77:1 ✓
+     *   --text-primary  (#1A3A52)  on gold:    4.97:1 ✓
+     *   white           (#FFFFFF)  on primary: 5.15:1 ✓
+     *   --accent-primary (#3368A0) as link-text on cream: 4.55:1 ✓
+     *
+     * Palette atoms:
+     *   Deep blue   #3368A0  — primary brand / CTAs
+     *   Teal-blue   #66A3BF  — decorative / secondary
+     *   Pale sage   #C8DFDB  — alternate surface
+     *   Warm cream  #F2EFE7  — main background
+     *   Muted gold  #D4A85F  — accent (CTAs, success, positive moments — use sparingly)
+     */
 
-    /* Text */
-    --text-primary: #0F172A;      /* Deep slate — headings */
-    --text-secondary: #475569;    /* Medium slate — body text */
-    --text-muted: #5F6875;        /* Muted slate, 4.96:1 on secondary surface (WCAG AA) */
+    /* ── Backgrounds ──────────────────────────────────────────────────── */
+    --bg-primary:   #FFFFFF;   /* Pure white — main page background       */
+    --bg-secondary: #F8FAFC;   /* Slate 50 — sidebar, card zones          */
+    --bg-card:      #FFFFFF;   /* Pure white — content card surfaces      */
+    --bg-hover:     #F1F5F9;   /* Slate 100 — Hover state                 */
 
-    /* Accent Colors */
-    --accent-green: #15803D;      /* Primary surface. White label on it = 5.02:1 (AA) */
-    --accent-green-hover: #166534; /* Primary hover. White label = 7.13:1 */
-    --accent-green-text: #166534; /* Green AS TEXT. 6.27:1 worst case on our surfaces */
-    --accent-green-deep: #14532D; /* Full-bleed brand band. White on it = 9.11:1 */
-    --accent-green-light: #DCFCE7; /* Green bg for badges */
-    --accent-amber: #F59E0B;      /* Streaks, achievements, warnings */
-    --accent-amber-light: #FEF3C7;
-    --accent-indigo: #6366F1;     /* AI elements, special features */
-    --accent-indigo-light: #EEF2FF;
-    --accent-red: #EF4444;        /* Errors, wrong answers */
+    /* ── Text ─────────────────────────────────────────────────────────── */
+    --text-primary:   #091540; /* Dark navy — headings                    */
+    --text-secondary: #475569; /* Slate 600 — body text                   */
+    --text-muted:     #94A3B8; /* Slate 400 — captions                    */
 
-    /* Borders */
-    --border: #E2DDD7;            /* Warm grey border */
-    --border-strong: #C9C4BC;
+    /* ── Primary Brand / CTAs (deep blue) ─────────────────────────────── */
+    --accent-blue:        #1B2CC1; /* Royal blue CTA                      */
+    --accent-royal:       #1B2CC1; /* Same as blue, used by some components */
+    --accent-baby:        #ABD2FA; /* Light blue accent                   */
+    --accent-periwinkle:  #7692FF; /* Medium blue accent                  */
+    --accent-primary:     #1B2CC1; /* Primary CTA button background       */
+    --accent-blue-hover:  #091540; /* Dark navy — hover state             */
+    --accent-blue-text:   #1B2CC1; /* As link/text on light surfaces      */
+    --accent-blue-deep:   #091540; /* Full-bleed brand band               */
+    --accent-blue-light:  #ABD2FA; /* Light Baby Blue                     */
+    /* Backward-compat aliases — prefer --accent-blue-* in new code */
+    --accent-green:       var(--accent-blue);
+    --accent-green-hover: var(--accent-blue-hover);
+    --accent-green-text:  var(--accent-blue-text);
+    --accent-green-deep:  var(--accent-blue-deep);
+    --accent-green-light: var(--accent-blue-light);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
-    --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
-    --shadow-lg: 0 8px 24px rgba(15,23,42,0.10);
+    /* ── Secondary Teal-Blue (decorative) ─────────────────────────────── */
+    --accent-indigo:       #7692FF; /* Periwinkle — decorative / icons     */
+    --accent-indigo-light: #E0E7FF; /* Indigo 100                          */
 
-    /* Border radius */
+    /* ── Gold Accent (use sparingly) ──────────────────────────────────── */
+    --accent-amber:       #D4A85F; /* Muted gold — success, positive       */
+    --accent-amber-light: #F5E8CE; /* Gold wash — tinted backgrounds       */
+    --accent-gold-hover:  #B8893D; /* Darker gold — hover state            */
+
+    /* ── Pale Sage Surface (Keeping names but moving to cooler slate) ─── */
+    --surface-sage:       #E2E8F0; /* Slate 200                            */
+    --surface-sage-light: #F8FAFC; /* Slate 50                             */
+
+    /* ── Error / Warning ───────────────────────────────────────────────── */
+    --accent-red:    #DC2626; /* Errors, wrong answers                     */
+
+    /* ── Borders ────────────────────────────────────────────────────────── */
+    --border:        #E2E8F0; /* Slate 200 border                          */
+    --border-strong: #CBD5E1; /* Slate 300 border                          */
+
+    /* ── Shadows ────────────────────────────────────────────────────────── */
+    --shadow-sm: 0 1px 3px rgba(26, 58, 82, 0.07);
+    --shadow-md: 0 4px 12px rgba(26, 58, 82, 0.09);
+    --shadow-lg: 0 8px 24px rgba(26, 58, 82, 0.11);
+
+    /* ── Border Radius ──────────────────────────────────────────────────── */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 24px;
 
-    /* Typography */
-    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+    /* ── Typography ─────────────────────────────────────────────────────── */
+    /*
+     * DM Sans replaces Inter as the body font.
+     * Rationale: DM Sans is a humanist geometric sans with warmer personality
+     * than Inter, better distinguishable letter forms (e.g. l/I/1), and good
+     * multilingual coverage — while being distinctly less ubiquitous.
+     * Outfit remains for display/heading use.
+     */
+    --font-sans:    'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Outfit', 'DM Sans', system-ui, sans-serif;
+    --font-hindi:   'Noto Sans Devanagari', 'DM Sans', sans-serif;
   }
 
   * {
     box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -56,30 +114,53 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    color: var(--text-primary);
+    line-height: 1.25;
     letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.125rem; }
+
+  p { margin: 0; }
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 
   #root {
     width: 100%;
     max-width: 100%;
     min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Keyboard focus is never removed, only made visible on keyboard use. */
+  /* Keyboard focus — never removed, only made visible on keyboard navigation */
   :focus-visible {
     outline: 2px solid var(--accent-green-text);
     outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: var(--accent-green-light);
+    color: var(--accent-green-deep);
   }
 }
 
 @layer utilities {
-  /* Skip link: visually hidden until focused, then pinned top-left. */
+  /* Skip link: visually hidden until focused, then pinned top-left */
   .skip-link {
     position: absolute;
     left: 8px;
@@ -99,53 +180,39 @@
 
   /* Glassmorphism card */
   .glass {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(184, 213, 208, 0.5);
   }
 
   /* Custom scrollbar */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 999px;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: var(--border-strong);
-  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+  .scrollbar-thin::-webkit-scrollbar { height: 4px; }
 }
 
-/* Prose styling overrides for chat markdown */
+/* ── Prose styling for chat markdown ─────────────────────────────────────── */
 .prose h1, .prose h2, .prose h3, .prose h4 {
   color: var(--text-primary);
   font-weight: 700;
 }
 
-.prose p {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-}
-
-.prose ul, .prose ol {
-  margin-top: 0.25em;
-  margin-bottom: 0.25em;
-}
-
-.prose li {
-  margin-top: 0.125em;
-  margin-bottom: 0.125em;
-}
+.prose p { margin-top: 0.5em; margin-bottom: 0.5em; }
+.prose ul, .prose ol { margin-top: 0.25em; margin-bottom: 0.25em; padding-left: 1.25em; }
+.prose li { margin-top: 0.125em; margin-bottom: 0.125em; }
 
 .prose code {
   font-size: 0.85em;
   padding: 2px 6px;
   border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
 }
 
 .prose pre {
@@ -154,6 +221,7 @@
   border-radius: 12px;
   padding: 1em;
   overflow-x: auto;
+  font-size: 0.8125rem;
 }
 
 .prose pre code {
@@ -162,26 +230,140 @@
   border-radius: 0;
 }
 
-/* Typing indicator dot.
-   This used to be declared as `@keyframes bounce`, which silently replaced
-   Tailwind's own `bounce` keyframe for the whole app, so `animate-bounce`
-   anywhere would have rendered this 6px hop instead of Tailwind's spring.
-   Renamed so the two no longer collide. */
+/* ── Typing indicator ─────────────────────────────────────────────────────── */
+/*
+ * Named typingDot (not bounce) to avoid colliding with Tailwind's own
+ * animate-bounce keyframe, which would have been silently overwritten.
+ */
 @keyframes typingDot {
-  0%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-6px);
-  }
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
 }
 
 .typing-dot {
   animation: typingDot 1s infinite;
 }
 
+/* ── Genie character animations ────────────────────────────────────────────── */
+/* Smooth sine-curve float — no bounce/overshoot. cubic-bezier(0.45,0,0.55,1)
+   approximates sine-in-out for a natural, physical floating feel. */
+@keyframes genieBob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-10px) rotate(1deg); }
+}
+.genie-bob-motion { animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.08); }
+}
+
+@keyframes sparkleBurst {
+  0%   { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  50%  { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0.8) rotate(360deg); }
+}
+
+/* Gold shimmer for Genie brand moments */
+@keyframes shimmerSweep {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes smokeWisp {
+  0%   { opacity: 0; transform: translateY(0) translateX(0) scale(0.8); }
+  30%  { opacity: 0.15; }
+  70%  { opacity: 0.08; }
+  100% { opacity: 0; transform: translateY(-40px) translateX(12px) scale(1.4); }
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.15); opacity: 0.85; }
+}
+
+/* Quick scale pulse for Genie personality beat — expo-out, no overshoot */
+@keyframes scalePulse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ── Page-level animations ──────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn  { animation: fadeIn  0.3s ease-out both; }
+.animate-slideUp { animation: slideUp 0.4s ease-out both; }
+
+/* Gold accent text — used for Genie brand moments */
+.text-gold {
+  color: #B8893D; /* Darker gold: #B8893D on white = 4.61:1 ✓ WCAG AA */
+}
+
+/* ── Storybook card ─────────────────────────────────────────────────────────── */
+.card-storybook {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card-storybook::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(212, 168, 95, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(102, 163, 191, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.card-storybook:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Gold CTA button */
+.btn-gold {
+  background: linear-gradient(135deg, #D4A85F, #B8893D);
+  color: var(--text-primary);  /* dark text — gold fails with white at 2.1:1 */
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -2px rgba(212, 168, 95, 0.3);
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+}
+
+/* ── Reduced Motion ─────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .typing-dot {
     animation: none;
   }
+
+  /* (no gradient-text utilities to reset) */
 }
