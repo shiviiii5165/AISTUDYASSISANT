@@ -13,6 +13,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import GreetingHeader from '../components/GreetingHeader';
+import { GENIE } from '../lib/assets';
 import { generateQuiz, type GenerateQuizRequest } from '../lib/quizApi';
 
 const QUESTION_COUNT_OPTIONS = [5, 10, 15, 20, 25];
@@ -177,7 +178,7 @@ const QuizGeneratorPage: React.FC = () => {
           <motion.div variants={staggerItem} className="mb-8">
             <GreetingHeader
               subtitle="Configure your topic, difficulty, and format to generate a comprehensive quiz."
-              avatarImageSrc="/assets/genie-default.png"
+              avatarImageSrc={GENIE.thinking}
             />
           </motion.div>
 
