@@ -238,7 +238,6 @@ const AuthPage: React.FC = () => {
             )}
           </button>
         </form>
-
         <div className="mt-5 text-center">
           <button
             onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMsg(''); }}
