@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-09-02T18:30:15.703Z",
+        "reason": "Inter is the established body font for this project; Lora (display) carries the personality — project-sanctioned pair"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "animate-bounce",
+        "createdAt": "2026-09-03T06:03:20.301Z",
+        "reason": "false positive: value appears only in a comment documenting why the keyframe avoids this name; actual animation (typingDot) uses implicit linear easing with no bounce curve"
+      }
+    ]
+  }
+}
