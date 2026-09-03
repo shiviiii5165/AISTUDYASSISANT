@@ -7,7 +7,7 @@ export default function PublicHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--bg-card)]/80 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2.5 font-display text-lg font-bold text-[var(--text-primary)]">
-          <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
+          <img src="/assets/genie-default.png" alt="" className="h-8 w-8 object-contain" />
           TeachGenie
         </Link>
         <div className="flex items-center gap-2">
