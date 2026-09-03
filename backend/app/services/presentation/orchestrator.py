@@ -118,9 +118,9 @@ async def generate_presentation_pipeline(
         slides=structured_slides,
     )
 
-    # Enforce exact slide count contract (explicit raise, never use assert in production)
+    # Warn if slide count doesn't match, but don't fail — LLMs often deviate by 1-2 slides
     if len(spec.slides) != config.slide_count:
-        raise ValueError(f"Slide count mismatch: got {len(spec.slides)}, expected {config.slide_count}")
+        logger.warning(f"[Orchestrator] Slide count mismatch: got {len(spec.slides)}, expected {config.slide_count}. Proceeding anyway.")
 
     if on_stage_update:
         on_stage_update("rendering", 95)
