@@ -104,7 +104,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
             aria-label="TeachGenie home"
             className="flex items-center gap-2.5 rounded-lg font-display text-lg font-bold text-[var(--text-primary)]"
           >
-            <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
+            <img src="/assets/genie-default.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
             {!collapsed && <span>TeachGenie</span>}
           </Link>
         </div>
