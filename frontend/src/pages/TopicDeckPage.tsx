@@ -14,6 +14,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
 import GreetingHeader from '../components/GreetingHeader';
+import { GENIE, ILLUSTRATIONS } from '../lib/assets';
 import { HoverCard, ScrollReveal, WavyText } from '../components/MotionUtils';
 import Loader from '../components/Loader';
 
@@ -334,9 +335,15 @@ const TopicDeckPage: React.FC = () => {
               <motion.div variants={staggerItem} className="mb-10">
                 <GreetingHeader
                   subtitle="Describe a topic and get an editable deck with speaker notes."
-                  avatarImageSrc="/assets/genie-default.png"
+                  avatarImageSrc={GENIE.teaching}
                 />
               </motion.div>
+
+              {generating && (
+                <motion.div variants={staggerItem} className="mb-6">
+                  <img src={ILLUSTRATIONS.pptGenerating} alt="" aria-hidden="true" className="mx-auto h-48 w-48 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                </motion.div>
+              )}
 
               <form onSubmit={handleGenerate} className="space-y-10">
 

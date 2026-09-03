@@ -10,7 +10,7 @@ import { fetchPdfs } from '../lib/api';
 import type { PDFDocument } from '../lib/api';
 import { subjectStyle } from '../lib/subjects';
 import GreetingHeader from '../components/GreetingHeader';
-import { ILLUSTRATIONS } from '../lib/assets';
+import { ILLUSTRATIONS, GENIE } from '../lib/assets';
 import { fadeUp, staggerContainer, cardHover, viewport } from '../lib/motion';
 import DynamicText from '../components/DynamicText';
 import { HoverCard } from '../components/MotionUtils';
@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
 
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <GreetingHeader
-            avatarImageSrc="/assets/genie-default.png"
+            avatarImageSrc={GENIE.welcome}
             subtitle="Pick up where you left off, or ask a question about any document."
           />
           <DynamicText />

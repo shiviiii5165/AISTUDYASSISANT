@@ -10,6 +10,7 @@ import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import GreetingHeader from '../components/GreetingHeader';
+import { GENIE } from '../lib/assets';
 import Loader from '../components/Loader';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -362,7 +363,7 @@ const VideoGeneratorPage: React.FC = () => {
         <div className="mb-8">
           <GreetingHeader
             subtitle="Turn a topic, your notes, or a video link into a narrated lesson."
-            avatarImageSrc="/assets/genie-default.png"
+            avatarImageSrc={GENIE.celebrating}
             avatarGlowVariant="spotlight"
           />
         </div>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
+import { ILLUSTRATIONS } from '../lib/assets';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import UpgradeModal from '../components/billing/UpgradeModal';
@@ -893,9 +894,13 @@ const TeachMePage: React.FC = () => {
                 {/* No messages yet */}
                 {messages.length === 0 && !loading && (
                   <div className="mx-auto max-w-xl pt-16 text-center">
-                    <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-green-light)]">
-                      <BrainCircuit className="h-8 w-8 text-[var(--accent-green-text)]" aria-hidden="true" />
-                    </span>
+                    <img
+                      src={ILLUSTRATIONS.teachMe}
+                      alt=""
+                      aria-hidden="true"
+                      className="mx-auto mb-5 h-32 w-auto object-contain"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
                     <h2 className="mb-2 font-display text-2xl font-bold text-[var(--text-primary)]">
                       Welcome to Teach Me
                     </h2>
