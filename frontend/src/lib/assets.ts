@@ -33,7 +33,7 @@
 
 export const GENIE = {
   /** Default standing pose — calm, ready */
-  default: '/logo.png', // existing asset; replace with /assets/genie/genie-default.png when ready
+  default: '/assets/genie-default.png',
   /** Reading/studying — finger on chin, book open */
   thinking: '/assets/genie/genie-thinking.png',
   /** Arms raised, gold sparkles, big smile — quiz correct / generation done */
@@ -85,7 +85,7 @@ export const GENIE_PROMPTS: Record<keyof typeof GENIE, string> = {
 
 export const ILLUSTRATIONS = {
   /** Empty library — shown when user has no PDFs uploaded */
-  emptyLibrary: '/images/empty_pdf_state.jpg', // existing; upgrade to /assets/illustrations/empty-library.png
+  emptyLibrary: '/assets/empty-library.png',
   /** Empty chat — shown before user starts a conversation */
   emptyChat: '/assets/illustrations/empty-chat.png',
   /** Quiz complete celebration screen */
@@ -159,13 +159,13 @@ export const ILLUSTRATION_PROMPTS: Record<keyof typeof ILLUSTRATIONS, string> = 
 
 export const LANDING = {
   /** Full-width hero section visual */
-  hero: '/images/hero_01_illustration.jpg', // existing; upgrade to /assets/landing/hero.png
+  hero: '/assets/hero.png',
   /** Bento card — AI chat/tutoring feature */
-  bentoChat: '/images/bento_02_ai_tutor.jpg', // existing
+  bentoChat: '/assets/bento-chat.png',
   /** Bento card — Quiz engine feature */
-  bentoQuiz: '/images/bento_01_quiz_engine.jpg', // existing
+  bentoQuiz: '/assets/bento-quiz.png',
   /** Bento card — Presentation deck feature */
-  bentoPpt: '/images/bento_03_presentation.jpg', // existing
+  bentoPpt: '/assets/bento-ppt.png',
 } as const;
 
 export const LANDING_PROMPTS: Record<keyof typeof LANDING, string> = {
