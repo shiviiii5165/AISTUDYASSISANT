@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
 
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <GreetingHeader
-            avatarImageSrc="/images/tutor_avatar.jpg"
+            avatarImageSrc="/assets/genie-default.png"
             subtitle="Pick up where you left off, or ask a question about any document."
           />
           <DynamicText />
