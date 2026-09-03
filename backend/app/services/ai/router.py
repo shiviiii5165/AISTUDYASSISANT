@@ -25,27 +25,27 @@ class ModelRouter:
         # Task -> Preferred Provider & Model Mapping
         self.task_policies = {
             "planning": [
-                ("gemini", "gemini-3.6-flash"),
+                ("gemini", "gemini-2.5-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "content_generation": [
-                ("gemini", "gemini-3.6-flash"),
+                ("gemini", "gemini-2.5-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "technical_content": [
-                ("gemini", "gemini-3.6-flash"),
+                ("gemini", "gemini-2.5-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "repair": [
-                ("gemini", "gemini-3.5-flash-lite"),
+                ("gemini", "gemini-2.0-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "qa": [
-                ("gemini", "gemini-3.5-flash-lite"),
+                ("gemini", "gemini-2.0-flash"),
                 ("groq", "llama-3.3-70b-versatile"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
@@ -53,7 +53,7 @@ class ModelRouter:
                 ("gemini", "gemini-embedding-001"),
             ],
             "image": [
-                ("gemini", "gemini-3.6-flash"),
+                ("gemini", "gemini-2.0-flash"),
             ]
         }
 
