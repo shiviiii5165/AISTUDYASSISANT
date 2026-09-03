@@ -166,7 +166,7 @@ const LandingPage: React.FC = () => {
             aria-label="TeachGenie home"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1B2CC1]">
-              <img src="/logo.png" alt="" width={20} height={20} className="h-5 w-5 object-contain brightness-0 invert" />
+              <img src="/assets/genie-default.png" alt="" width={20} height={20} className="h-5 w-5 object-contain brightness-0 invert" />
             </div>
             <span className="font-display text-base font-bold tracking-tight text-[#091540]">
               TeachGenie
