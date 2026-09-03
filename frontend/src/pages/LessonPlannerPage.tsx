@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
+import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -125,6 +126,7 @@ const RESOURCE_STATUS_LABELS: Partial<Record<ResourceStatus, string>> = {
 };
 
 const LessonPlannerPage: React.FC = () => {
+  const { collapsed: historySidebarCollapsed, toggle: toggleHistorySidebar } = useSidebarCollapse('lesson-history');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialRoadmapId = searchParams.get('id') || null;
@@ -533,7 +535,7 @@ const LessonPlannerPage: React.FC = () => {
   };
 
   const fieldClass =
-    'w-full rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--accent-green)] focus:outline-none';
+    'w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] focus:border-[var(--accent-royal)] focus:ring-1 focus:ring-[var(--accent-royal)] focus:outline-none transition-colors';
 
   return (
     <AppLayout title="Lesson Planner">
@@ -548,6 +550,8 @@ const LessonPlannerPage: React.FC = () => {
           selectedId={roadmap?.id || null}
           onSelect={loadRoadmap}
           onNew={() => { setRoadmap(null); setSearchParams(prev => { prev.delete('id'); return prev; }); }}
+          collapsed={historySidebarCollapsed}
+          onToggle={toggleHistorySidebar}
         />
         
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 md:py-8">
@@ -588,7 +592,7 @@ const LessonPlannerPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handlePublish}
-                className="flex items-center gap-2 rounded-xl bg-[var(--accent-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px"
+                className="flex items-center gap-2 rounded-full bg-[var(--accent-royal)] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[var(--accent-royal)]/25 transition-all hover:bg-[var(--accent-green-deep)] active:translate-y-px"
               >
                 {roadmap.status === 'published' ? (
                   <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
@@ -668,16 +672,16 @@ const LessonPlannerPage: React.FC = () => {
                   rows={4}
                   value={promptInput}
                   onChange={(e) => handlePromptChange(e.target.value)}
-                  placeholder="Mujhe DBMS normalization B.Tech students ko 60 minutes mein padhana hai. Armstrong axioms aur 1NF, 2NF, 3NF worked examples cover karne hain."
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-green)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-green)]"
+                  placeholder="I need to teach database normalization to B.Tech students in 60 minutes. I have to cover Armstrong's axioms and worked examples for 1NF, 2NF, and 3NF."
+                  className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-royal)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-royal)] transition-all"
                 />
               </div>
 
               <fieldset>
-                <legend className="mb-2.5 block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                <legend className="mb-3 block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                   Grounding sources
                 </legend>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {['Topic', 'Syllabus', 'My Material', 'Past Papers', 'YouTube'].map(src => {
                     const isSel = selectedSources.includes(src);
                     return (
@@ -686,16 +690,16 @@ const LessonPlannerPage: React.FC = () => {
                         type="button"
                         onClick={() => handleSourceToggle(src)}
                         aria-pressed={isSel}
-                        className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all ${
                           isSel
-                            ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)] text-[var(--accent-green-text)]'
-                            : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                            ? 'border-[var(--accent-royal)] bg-[var(--accent-baby)]/20 text-[var(--accent-royal)] shadow-sm ring-1 ring-[var(--accent-royal)]'
+                            : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--accent-royal)] hover:text-[var(--accent-royal)] hover:shadow-sm'
                         }`}
                       >
                         {isSel ? (
-                          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                         ) : (
-                          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                          <Plus className="h-4 w-4" aria-hidden="true" />
                         )}
                         {src}
                       </button>
@@ -708,7 +712,7 @@ const LessonPlannerPage: React.FC = () => {
               <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
-                    <Sparkles className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                    <Sparkles className="h-4 w-4 text-[var(--accent-royal)]" aria-hidden="true" />
                     Lesson configuration
                   </h4>
                   <span className="text-xs text-[var(--text-secondary)]">Review and adjust</span>
@@ -803,7 +807,7 @@ const LessonPlannerPage: React.FC = () => {
                 type="button"
                 onClick={generateRoadmap}
                 disabled={isGenerating || !parsedConfig.topic.trim()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-green)] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] active:translate-y-px disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-3 rounded-full bg-[var(--accent-royal)] px-6 py-4 text-base font-bold text-white shadow-md shadow-[var(--accent-royal)]/25 transition-all hover:bg-[var(--accent-green-deep)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isGenerating ? (
                   <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
