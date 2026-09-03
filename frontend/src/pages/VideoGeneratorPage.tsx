@@ -10,6 +10,7 @@ import SEO from '../components/SEO';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchPdfs, type PDFDocument } from '../lib/api';
 import GreetingHeader from '../components/GreetingHeader';
+import Loader from '../components/Loader';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES & CONFIG
@@ -598,30 +599,17 @@ const VideoGeneratorPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Progress */}
+        {/* Generation wait — full Loader component */}
         {generating && (
           <div
-            className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6"
+            className="mt-8 flex items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] py-12 shadow-bento"
             aria-live="polite"
           >
-            <div className="mb-3 flex items-center gap-2.5">
-              <Loader2 className="h-5 w-5 animate-spin text-[var(--accent-green-text)]" aria-hidden="true" />
-              <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
-                Compiling your video lesson
-              </h2>
-            </div>
-            <p className="mb-4 text-sm text-[var(--text-secondary)]">
-              Planning the storyboard, building visuals, recording narration and assembling the
-              final video. This can take several minutes.
-            </p>
-            {/* Indeterminate: the backend reports a status, not a percentage. */}
-            <div
-              className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-secondary)]"
-              role="progressbar"
-              aria-label="Compiling video"
-            >
-              <div className="h-full w-1/3 animate-pulse rounded-full bg-[var(--accent-green)]" />
-            </div>
+            <Loader
+              title="Compiling your video lesson"
+              subtitle="Planning the storyboard, building visuals and recording narration. This can take several minutes."
+              size="md"
+            />
           </div>
         )}
 
