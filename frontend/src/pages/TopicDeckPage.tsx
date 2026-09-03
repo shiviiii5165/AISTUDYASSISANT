@@ -334,7 +334,7 @@ const TopicDeckPage: React.FC = () => {
               <motion.div variants={staggerItem} className="mb-10">
                 <GreetingHeader
                   subtitle="Describe a topic and get an editable deck with speaker notes."
-                  avatarImageSrc="/images/tutor_avatar.jpg"
+                  avatarImageSrc="/assets/genie-default.png"
                 />
               </motion.div>
 
