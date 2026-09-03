@@ -7,7 +7,7 @@ from pptx.slide import Slide
 from pptx.util import Inches, Pt, Emu
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from app.services.presentation_engine.tokens import ThemeColors, Typography
-from app.services.presentation_engine.renderers.base import add_filled_rect, add_text_box
+from app.services.presentation_engine.renderers.base import add_filled_rect, add_text_box, add_bullet_list
 
 
 def render_comparison_diagram(
@@ -68,19 +68,14 @@ def render_comparison_diagram(
         # Content points
         body_top = top + header_h + Inches(0.2)
         body_h = height - header_h - Inches(0.3)
-        
-        point_lines = []
-        for p in points[:5]:
-            p_str = str(p).strip()
-            if p_str:
-                point_lines.append(f"• {p_str}")
 
-        if point_lines:
-            add_text_box(
+        clean_points = [str(p).strip() for p in points[:5] if str(p).strip()]
+        if clean_points:
+            add_bullet_list(
                 slide,
-                "\n\n".join(point_lines),
+                clean_points,
                 cur_left + Inches(0.2), body_top, col_width - Inches(0.4), body_h,
                 token=Typography.BULLET,
-                color=theme.text,
-                word_wrap=True,
+                text_color=theme.text,
+                accent_color=theme.primary,
             )
