@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
+import { ILLUSTRATIONS, GENIE } from '../lib/assets';
 import {
   getQuiz, updateQuizStatus, editQuestion, deleteQuestion, reorderQuestions,
   regenerateQuestion, startAttempt, submitAttempt, getAttempt
@@ -487,9 +488,28 @@ const QuizPage: React.FC = () => {
         <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
           
           <div className="mb-10 flex flex-col items-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8 text-center shadow-sm">
-            <div className={`mb-4 flex h-24 w-24 items-center justify-center rounded-full border-4 ${scorePct >= 80 ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]' : scorePct >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50'}`}>
-              <span className={`text-3xl font-bold ${scorePct >= 80 ? 'text-[var(--accent-green-text)]' : scorePct >= 50 ? 'text-amber-700' : 'text-red-700'}`}>{scorePct}%</span>
+            <div className="relative mb-6">
+              {scorePct >= 80 && (
+                <motion.img
+                  src={GENIE.celebrating}
+                  alt="Celebrating"
+                  className="h-24 w-24 object-contain"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+              <div className={`mb-4 flex h-24 w-24 items-center justify-center rounded-full border-4 ${scorePct >= 80 ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]' : scorePct >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50'}`}>
+                <span className={`text-3xl font-bold ${scorePct >= 80 ? 'text-[var(--accent-green-text)]' : scorePct >= 50 ? 'text-amber-700' : 'text-red-700'}`}>{scorePct}%</span>
+              </div>
             </div>
+            <img
+              src={ILLUSTRATIONS.quizComplete}
+              alt=""
+              aria-hidden="true"
+              className="mb-4 h-16 w-16 object-contain"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
             <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">
               {scorePct >= 80 ? 'Excellent work!' : scorePct >= 50 ? 'Good effort!' : 'Keep practicing!'}
             </h1>
