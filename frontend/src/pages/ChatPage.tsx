@@ -17,6 +17,7 @@ import GenieAvatar from '../components/GenieAvatar';
 import ContentPollCard from '../components/chat/ContentPollCard';
 import HistorySidebar from '../components/HistorySidebar';
 import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
+import { ILLUSTRATIONS } from '../lib/assets';
 
 interface DisplayMessage {
   role: 'user' | 'assistant';
@@ -601,13 +602,20 @@ const ChatPage: React.FC = () => {
                     </>
                   ) : !selectedPdfId ? (
                     <>
-                      <GenieAvatar size="md" />
+                      <motion.img
+                        src={ILLUSTRATIONS.emptyChat}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        alt=""
+                        aria-hidden="true"
+                        className="mx-auto mb-6 h-32 w-32 rounded-xl object-cover shadow-sm"
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      />
                       <h2 className="font-display text-xl font-semibold text-[var(--text-primary)] mt-3">
-                        Select a document to start
+                        Start a conversation
                       </h2>
                       <p className="max-w-md text-sm text-[var(--text-secondary)] mt-1 mb-8 text-center">
-                        Choose one of your uploaded documents from the menu above, then ask any question
-                        about its content.
+                        Upload a document and ask any question about its content.
                       </p>
                     </>
                   ) : (
