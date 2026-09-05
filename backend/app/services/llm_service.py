@@ -105,7 +105,9 @@ GEMINI_MODELS = [
 
 # Groq models (currently active, verified September 2026)
 GROQ_MODELS = [
-    "meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Scout MoE — fast, 131K context
+    "qwen/qwen3.8-27b",        # Qwen 3.8 27B — ultra-fast, superior JSON & pedagogical reasoning
+    "openai/gpt-oss-120b",     # 120B parameter state-of-the-art heavy model on Groq
+    "openai/gpt-oss-20b",      # Fast fallback
 ]
 
 
@@ -161,7 +163,7 @@ async def _call_gemini_raw(
 
 async def _call_groq_raw(
     messages: list,
-    model: str = "meta-llama/llama-4-scout-17b-16e-instruct",
+    model: str = "qwen/qwen3.8-27b",
     temperature: float = 0.3,
     max_tokens: int = 8192,
 ) -> str:
@@ -347,7 +349,7 @@ async def call_best_llm(
     groq_task = asyncio.create_task(
         _call_groq_raw(
             messages=messages,
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            model="qwen/qwen3.8-27b",
             temperature=temperature,
             max_tokens=max_tokens,
         )
@@ -407,7 +409,7 @@ async def call_parallel_merge(
             temperature=temperature, max_tokens=max_tokens,
         )),
         asyncio.create_task(_call_groq_raw(
-            messages=messages, model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=messages, model="qwen/qwen3.8-27b",
             temperature=temperature + 0.1,  # Slightly different temp for diversity
             max_tokens=max_tokens,
         )),

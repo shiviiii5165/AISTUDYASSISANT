@@ -48,9 +48,9 @@ def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
     """Deterministic Python cleanup without invoking LLM (0 tokens)."""
     # 1. Truncate excess bullets to max 5 and move overflow to speaker notes
     bullets = slide.get("body_bullets", [])
-    if len(bullets) > 6:
-        excess = bullets[6:]
-        slide["body_bullets"] = bullets[:6]
+    if len(bullets) > 5:
+        excess = bullets[5:]
+        slide["body_bullets"] = bullets[:5]
         extra_note = "\n\nAdditional points:\n" + "\n".join(f"• {b}" for b in excess)
         slide["speaker_notes"] = (slide.get("speaker_notes", "") + extra_note).strip()
 

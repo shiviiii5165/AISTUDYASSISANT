@@ -14,8 +14,8 @@ from app.core.config import settings
 
 
 class GroqProvider(AIProvider):
-    DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
-    FALLBACK_MODELS = ["meta-llama/llama-4-scout-17b-16e-instruct"]
+    DEFAULT_MODEL = "qwen/qwen3.8-27b"
+    FALLBACK_MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"]
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="groq")
