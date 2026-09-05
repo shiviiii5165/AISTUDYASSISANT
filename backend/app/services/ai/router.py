@@ -25,28 +25,28 @@ class ModelRouter:
         # Task -> Preferred Provider & Model Mapping
         self.task_policies = {
             "planning": [
-                ("gemini", "gemini-2.5-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "meta-llama/llama-4-scout-17b-16e-instruct"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "content_generation": [
-                ("gemini", "gemini-2.5-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "meta-llama/llama-4-scout-17b-16e-instruct"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "technical_content": [
-                ("gemini", "gemini-2.5-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "meta-llama/llama-4-scout-17b-16e-instruct"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "repair": [
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
+                ("gemini", "gemini-3.5-flash-lite"),
+                ("groq", "meta-llama/llama-4-scout-17b-16e-instruct"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "qa": [
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
+                ("gemini", "gemini-3.5-flash-lite"),
+                ("groq", "meta-llama/llama-4-scout-17b-16e-instruct"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "embedding": [
@@ -74,7 +74,7 @@ class ModelRouter:
         max_tokens: int = 4096,
         timeout: float = 60.0,
     ) -> LLMResponse:
-        policies = self.task_policies.get(task, [("gemini", "gemini-3.6-flash"), ("groq", "llama-3.3-70b-versatile")])
+        policies = self.task_policies.get(task, [("gemini", "gemini-3.6-flash"), ("groq", "meta-llama/llama-4-scout-17b-16e-instruct")])
         errors = []
 
         for provider_name, model_name in policies:
@@ -108,7 +108,7 @@ class ModelRouter:
         max_tokens: int = 4096,
         timeout: float = 60.0,
     ) -> Dict[str, Any]:
-        policies = self.task_policies.get(task, [("gemini", "gemini-3.6-flash"), ("groq", "llama-3.3-70b-versatile")])
+        policies = self.task_policies.get(task, [("gemini", "gemini-3.6-flash"), ("groq", "meta-llama/llama-4-scout-17b-16e-instruct")])
         errors = []
 
         for provider_name, model_name in policies:

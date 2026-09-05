@@ -206,7 +206,7 @@ def test_llm_exception_fallback_to_clarify(mock_llm):
     """If call_gemini raises an exception on BOTH the standard and strict
     attempts, the orchestrator must NOT crash — it should return a safe
     'clarify' fallback response."""
-    mock_llm.side_effect = Exception("All 5 API calls failed. Last errors: Gemini/gemini-3.6-flash[1]: 429 rate limited | Groq/llama-3.3-70b-versatile: 503 service unavailable")
+    mock_llm.side_effect = Exception("All 5 API calls failed. Last errors: Gemini/gemini-3.6-flash[1]: 429 rate limited | Groq/meta-llama/llama-4-scout-17b-16e-instruct: 503 service unavailable")
 
     result = run(classify_and_route("What is polymorphism in Java?"))
 

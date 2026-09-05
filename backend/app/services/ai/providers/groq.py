@@ -1,7 +1,7 @@
 """
 Groq Provider Implementation
 ============================
-Handles high-speed inference on Groq (Llama 3.3 70B Versatile & Llama 3.1 8B Instant).
+Handles high-speed inference on Groq (Llama 4 Scout 17B MoE).
 """
 import httpx
 import json
@@ -14,8 +14,8 @@ from app.core.config import settings
 
 
 class GroqProvider(AIProvider):
-    DEFAULT_MODEL = "llama-3.3-70b-versatile"
-    FALLBACK_MODELS = ["llama-3.3-70b-versatile"]
+    DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+    FALLBACK_MODELS = ["meta-llama/llama-4-scout-17b-16e-instruct"]
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="groq")

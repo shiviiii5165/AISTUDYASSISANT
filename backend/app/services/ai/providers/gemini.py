@@ -5,6 +5,7 @@ Handles Gemini 3.x Flash, Flash-Lite, multimodal vision OCR, embeddings, and ima
 """
 import httpx
 import json
+import logging
 import re
 import time
 from typing import List, Dict, Any, Optional
@@ -57,7 +58,10 @@ def safe_parse_json(text: str) -> Dict[str, Any]:
             except Exception:
                 pass
 
-    raise ValueError(f"Could not parse JSON response from Gemini. Snippet: {text[:200]}")
+    raise ValueError(f"Could not parse JSON response from LLM. Snippet: {text[:200]}")
+
+
+_logger = logging.getLogger("teachgenie.ai.gemini")
 
 
 class GeminiProvider(AIProvider):
@@ -120,6 +124,12 @@ class GeminiProvider(AIProvider):
 
                     if resp.status_code == 404 or resp.status_code == 429:
                         last_error = f"Status {resp.status_code}: {resp.text[:200]}"
+                        if resp.status_code == 404:
+                            _logger.warning(
+                                f"Gemini 404 for model '{target_model}'. If ALL models return 404, "
+                                "your API key may be a deprecated standard key. Google requires "
+                                "authorization keys as of September 2026 — regenerate at https://aistudio.google.com/"
+                            )
                         continue
                     resp.raise_for_status()
 

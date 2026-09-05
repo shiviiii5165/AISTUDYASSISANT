@@ -103,9 +103,9 @@ GEMINI_MODELS = [
     "gemini-3.5-flash-lite",  # Lightweight fallback (July 2026)
 ]
 
-# Groq models (currently active, verified August 2026)
+# Groq models (currently active, verified September 2026)
 GROQ_MODELS = [
-    "llama-3.3-70b-versatile",      # Fast fallback
+    "meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Scout MoE — fast, 131K context
 ]
 
 
@@ -161,7 +161,7 @@ async def _call_gemini_raw(
 
 async def _call_groq_raw(
     messages: list,
-    model: str = "llama-3.3-70b-versatile",
+    model: str = "meta-llama/llama-4-scout-17b-16e-instruct",
     temperature: float = 0.3,
     max_tokens: int = 8192,
 ) -> str:
@@ -209,8 +209,7 @@ async def call_gemini(
       1. Gemini 3.6 Flash (latest stable)
       2. Gemini 3.5 Flash (production stable)
       3. Gemini 3.5 Flash-Lite (lightweight)
-      4. Groq Llama 3.3 70B (best Groq model)
-      5. Groq Llama 3.1 8B (fast fallback)
+      4. Groq Llama 4 Scout (fast MoE fallback)
     
     If ANY provider succeeds, the user never sees an error.
     """
@@ -348,7 +347,7 @@ async def call_best_llm(
     groq_task = asyncio.create_task(
         _call_groq_raw(
             messages=messages,
-            model="llama-3.3-70b-versatile",
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
             temperature=temperature,
             max_tokens=max_tokens,
         )
@@ -408,7 +407,7 @@ async def call_parallel_merge(
             temperature=temperature, max_tokens=max_tokens,
         )),
         asyncio.create_task(_call_groq_raw(
-            messages=messages, model="llama-3.3-70b-versatile",
+            messages=messages, model="meta-llama/llama-4-scout-17b-16e-instruct",
             temperature=temperature + 0.1,  # Slightly different temp for diversity
             max_tokens=max_tokens,
         )),
