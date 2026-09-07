@@ -97,7 +97,29 @@ CRITICAL CONTENT RULES:
    - 'kpi_metrics': `metrics` array with 3-5 metrics: [{{"value": "Number/Stat", "label": "Short label (1-3 words, max 20 chars)", "context": "What this number means (1 sentence)"}}]
    - 'quiz': `quiz_options` (4 options, each starting with A/B/C/D) and `quiz_answer` (letter only).
 6. NO LATEX: Never use $, $$, \\frac, \\text, or any TeX markup. Plain text only (e.g. E=mc^2, not E=$mc^2$).
-7. IMAGE QUERY: For every slide, provide an `image_query`: a concrete, photographic search phrase describing a real-world object, system, experiment, or professional scene illustrating the slide's topic (e.g. "data center server racks with blue led indicators", "laboratory cleanroom semiconductor silicon wafer", "engineer inspecting printed circuit board"). Never use vague words like "machine learning" or "technology".
+7. IMAGE QUERY: For every slide, provide an `image_query`: a SPECIFIC, PHOTOGRAPHIC search phrase describing a REAL physical scene or object. Think: what Google Image Search query would return a beautiful, relevant stock photo?
+   GOOD image_query examples:
+   - "data center server racks with glowing blue LED indicators close-up"
+   - "scientist using pipette in modern laboratory with microscope"
+   - "software engineers pair programming at dual monitor workstation"
+   - "printed circuit board macro photography with solder joints"
+   - "university professor writing equations on whiteboard in lecture hall"
+   BAD image_query (too vague, will return poor results):
+   - "machine learning" / "technology" / "concept" / "algorithm"
+   - "important topic" / "business" / "data"
+   Each image_query MUST describe a tangible, physical scene (people, equipment, objects, environments). Never use abstract concepts.
+8. CONTENT_PATTERN: Explicitly assign each slide its pedagogical pattern. CRITICAL: You MUST vary patterns across the deck — no more than 2 consecutive slides should use the same pattern. Use at least 4 different patterns across a 12-slide deck:
+    - "definition_box": definition / formal concept with example
+    - "contrast_pair": The Trap (misconception) vs The Discipline (best practice)
+    - "comparison_table": structured comparison grid with criteria rows
+    - "numbered_process": sequential step-by-step workflow
+    - "case_study_block": problem -> context/response -> lesson learned
+    - "activity_banner": active learning exercise or discussion prompt
+    - "worked_example_table": step-by-step trace / calculation table
+    - "icon_badge_row": 3-5 core pillars / architectural facets
+    - "hub_and_spoke": central concept with 4 surrounding satellites
+    - "illustrated_icon_grid": structural CS data structures (stack, queue, tree, graph, database) ONLY
+    - "plain_concept": clean, high-density bullet points (use sparingly, max 30% of deck)
 
 Return strict JSON:
 {{
@@ -105,6 +127,7 @@ Return strict JSON:
     {{
       "slide_no": 1,
       "type": "concept",
+      "content_pattern": "definition_box",
       "title": "Insight-Driven Slide Title",
       "subtitle": "Optional clarifying subtitle",
       "key_message": "Complete, factually specific core takeaway for this slide",

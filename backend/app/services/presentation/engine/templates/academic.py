@@ -1,11 +1,13 @@
 """
-Design Template 1 — Academic Clean
-===================================
+Design Template 1 — Academic Clean (Premium Edition)
+=====================================================
 University lecture and classroom teaching style.
-- Light off-white background
+- Premium gradient hero with decorative accents
 - Strong serif heading with clean sans body
 - key_message rendered as an italicised thesis line beneath every slide title
 - kpi_metrics rendered as large number cards instead of bullets
+- 3-zone layout when both image + example are present
+- Section divider support
 - Generous whitespace and subtle page citations
 """
 from pptx.slide import Slide
@@ -17,7 +19,8 @@ from app.services.presentation_engine.tokens import (
 )
 from app.services.presentation_engine.renderers.base import (
     add_filled_rect, add_text_box, add_bullet_list, add_card, add_image,
-    add_footer, add_speaker_notes, add_category_pill, add_kpi_metrics
+    add_footer, add_speaker_notes, add_category_pill, add_kpi_metrics,
+    add_gradient_bar, add_accent_bar
 )
 from ..diagrams import (
     render_flow_diagram, render_architecture_diagram,
@@ -52,29 +55,53 @@ def render_academic_slide(
     slide.background.fill.solid()
     slide.background.fill.fore_color.rgb = bg_color
 
+    # ═══════════════════════════════════════════════════════════════════════
+    # HERO / COVER SLIDE — Premium gradient design
+    # ═══════════════════════════════════════════════════════════════════════
     if stype == "hero":
-        add_filled_rect(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.12), fill_color=theme.primary)
+        # Gradient accent strip at top
+        add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.18),
+                         theme.primary, theme.accent)
+
+        # Decorative side accent (vertical bar)
+        add_filled_rect(slide, Inches(0.6), Inches(1.8), Inches(0.08), Inches(3.5),
+                        fill_color=theme.primary_light)
+
+        # Category badge
+        add_category_pill(slide, "ACADEMIC LECTURE", Inches(1.2), Inches(2.0),
+                          bg_color=theme.primary, text_color=theme.text_on_dark,
+                          width=Inches(2.2), height=Inches(0.35))
+
+        # Title — large, bold, centered
         add_text_box(
-            slide, "ACADEMIC LECTURE", Inches(1.5), Inches(2.2), Inches(10.3), Inches(0.4),
-            token=Typography.BADGE, color=theme.accent, alignment=PP_ALIGN.CENTER
+            slide, title or deck_title, Inches(1.2), Inches(2.6), Inches(10.9), Inches(2.2),
+            token=Typography.HERO_TITLE, color=theme.text_on_dark, alignment=PP_ALIGN.LEFT, word_wrap=True
         )
-        add_text_box(
-            slide, title or deck_title, Inches(1.2), Inches(2.7), Inches(10.9), Inches(2.2),
-            token=Typography.HERO_TITLE, color=theme.text_on_dark, alignment=PP_ALIGN.CENTER, word_wrap=True
-        )
+
+        # Subtitle / key message
         if subtitle or key_msg:
             add_text_box(
-                slide, subtitle or key_msg, Inches(2.0), Inches(5.0), Inches(9.3), Inches(0.8),
-                token=Typography.HERO_SUBTITLE, color=theme.text_muted, alignment=PP_ALIGN.CENTER, word_wrap=True
+                slide, subtitle or key_msg, Inches(1.2), Inches(4.9), Inches(9.0), Inches(0.9),
+                token=Typography.HERO_SUBTITLE, color=theme.text_muted, alignment=PP_ALIGN.LEFT, word_wrap=True
             )
+
+        # Decorative bottom accent line
+        add_gradient_bar(slide, Inches(1.2), Inches(6.0), Inches(4.0), Inches(0.04),
+                         theme.accent, theme.primary_light)
+
+        add_footer(slide, 1, total_slides, theme)
         add_speaker_notes(slide, notes)
         return
 
+    # ═══════════════════════════════════════════════════════════════════════
+    # Q&A / CLOSING SLIDE
+    # ═══════════════════════════════════════════════════════════════════════
     if stype == "qa":
-        # Dark closing slide with centered discussion prompt
-        add_filled_rect(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.12), fill_color=theme.primary)
+        add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.18),
+                         theme.primary, theme.accent)
+
         add_text_box(
-            slide, "Q & A", Inches(1.5), Inches(2.2), Inches(10.3), Inches(0.4),
+            slide, "Questions & Discussion", Inches(1.5), Inches(2.0), Inches(10.3), Inches(0.5),
             token=Typography.BADGE, color=theme.accent, alignment=PP_ALIGN.CENTER
         )
         add_text_box(
@@ -90,15 +117,55 @@ def render_academic_slide(
         add_speaker_notes(slide, notes)
         return
 
-    # ─── Standard Header Zone ──────────────────────────────────────────────
-    add_filled_rect(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.06), fill_color=theme.primary)
+    # ═══════════════════════════════════════════════════════════════════════
+    # SECTION DIVIDER — branded transition slide
+    # ═══════════════════════════════════════════════════════════════════════
+    if stype == "section_divider":
+        # Dark-ish background for contrast
+        slide.background.fill.solid()
+        slide.background.fill.fore_color.rgb = theme.dark_bg
+
+        add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.12),
+                         theme.primary, theme.accent)
+
+        # Large section number or title
+        add_text_box(
+            slide, title, Inches(1.5), Inches(2.5), Inches(10.3), Inches(2.0),
+            token=Typography.HERO_TITLE, color=theme.text_on_dark,
+            alignment=PP_ALIGN.CENTER, word_wrap=True
+        )
+        if subtitle or key_msg:
+            add_text_box(
+                slide, subtitle or key_msg, Inches(2.5), Inches(4.6), Inches(8.3), Inches(0.8),
+                token=Typography.HERO_SUBTITLE, color=theme.text_muted,
+                alignment=PP_ALIGN.CENTER, word_wrap=True
+            )
+
+        # Decorative accent
+        add_filled_rect(slide, Inches(5.5), Inches(4.3), Inches(2.3), Inches(0.04),
+                        fill_color=theme.accent)
+
+        add_footer(slide, slide_number, total_slides, theme, section_name=deck_title)
+        add_speaker_notes(slide, notes)
+        return
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # STANDARD CONTENT SLIDE — Header Zone
+    # ═══════════════════════════════════════════════════════════════════════
+    # Thin gradient accent at top
+    add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.06),
+                     theme.primary, theme.accent)
+
+    # Vertical accent bar next to title
+    add_accent_bar(slide, MARGIN_LEFT - Inches(0.15), Inches(0.45),
+                   width=Inches(0.06), height=Inches(0.65), color=theme.primary)
 
     add_text_box(
         slide, title, MARGIN_LEFT, Inches(0.5), CONTENT_WIDTH, Inches(0.9),
         token=Typography.SLIDE_TITLE, color=theme.text, bold=True, word_wrap=True
     )
 
-    # Thin accent line under title
+    # Thin accent underline
     add_filled_rect(slide, MARGIN_LEFT, Inches(1.42), Inches(2.2), Inches(0.03), fill_color=theme.primary)
 
     # ─── Key Message as thesis subtitle ────────────────────────────────────
@@ -114,7 +181,13 @@ def render_academic_slide(
         content_top = Inches(1.65)
         content_h = Inches(5.00)
 
-    # ─── Content Zone ──────────────────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════════════
+    # CONTENT ZONE — Pedagogical dispatch first
+    # ═══════════════════════════════════════════════════════════════════════
+    from .dispatch import dispatch_pedagogical_component
+    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
+        return
+
     diagram_spec = visual.get("diagram_spec")
     img_bytes = visual.get("image_bytes")
 
@@ -139,14 +212,43 @@ def render_academic_slide(
             slide, slide_spec.get("columns", []), MARGIN_LEFT, content_top, CONTENT_WIDTH, content_h, theme)
 
     elif img_bytes:
-        # 2-column: bullets left, image right
-        text_w = Inches(6.8)
-        img_left = MARGIN_LEFT + text_w + Inches(0.4)
-        img_w = CONTENT_WIDTH - text_w - Inches(0.4)
-        add_bullet_list(
-            slide, bullets, MARGIN_LEFT, content_top, text_w, content_h,
-            token=Typography.BULLET, text_color=theme.text, accent_color=theme.primary)
-        add_image(slide, img_bytes, img_left, content_top, img_w, content_h - Inches(0.3))
+        # ── 3-Zone Layout when BOTH image + example exist ──
+        if example and len(example.strip()) > 5:
+            # Zone 1: Bullets top-left (60% width, 55% height)
+            text_w = Inches(6.8)
+            bullet_h = content_h * 0.55
+            add_bullet_list(
+                slide, bullets, MARGIN_LEFT, content_top, text_w, bullet_h,
+                token=Typography.BULLET, text_color=theme.text, accent_color=theme.primary)
+
+            # Zone 2: Image right (40% width, full height)
+            img_left = MARGIN_LEFT + text_w + Inches(0.4)
+            img_w = CONTENT_WIDTH - text_w - Inches(0.4)
+            add_image(slide, img_bytes, img_left, content_top, img_w, content_h - Inches(0.3),
+                      corner_radius=Inches(0.1))
+
+            # Zone 3: Example card bottom-left (60% width, 40% height)
+            ex_top = content_top + bullet_h + Inches(0.2)
+            ex_h = content_h - bullet_h - Inches(0.2)
+            add_card(slide, MARGIN_LEFT, ex_top, text_w, ex_h,
+                     fill_color=theme.surface_alt, border_color=theme.border)
+            add_text_box(slide, "EXAMPLE", MARGIN_LEFT + Inches(0.2), ex_top + Inches(0.12),
+                         text_w - Inches(0.4), Inches(0.28),
+                         token=Typography.BADGE, color=theme.primary)
+            add_text_box(slide, example,
+                         MARGIN_LEFT + Inches(0.2), ex_top + Inches(0.42),
+                         text_w - Inches(0.4), ex_h - Inches(0.55),
+                         token=Typography.BODY, color=theme.text, italic=True, word_wrap=True)
+        else:
+            # 2-column: bullets left, image right (with rounded corners)
+            text_w = Inches(6.8)
+            img_left = MARGIN_LEFT + text_w + Inches(0.4)
+            img_w = CONTENT_WIDTH - text_w - Inches(0.4)
+            add_bullet_list(
+                slide, bullets, MARGIN_LEFT, content_top, text_w, content_h,
+                token=Typography.BULLET, text_color=theme.text, accent_color=theme.primary)
+            add_image(slide, img_bytes, img_left, content_top, img_w, content_h - Inches(0.3),
+                      corner_radius=Inches(0.1))
 
     else:
         if example:

@@ -53,11 +53,50 @@ def run_deterministic_deck_checks(
             if meaningful and not any(w in deck_text_corpus for w in meaningful):
                 deck_issues.append(f"Subtopic '{st}' is missing from deck bullets and notes.")
 
-    # 2. Layout Variety Check (no 3 consecutive identical slide types)
+    # 2. Layout Variety & Circle-Pill (Parallel Comparison) Usage Cap
+    pill_count = 0
+    pattern_counts: Dict[str, int] = {}
+    total_content_slides = max(1, len(slides))
+
+    for s in slides:
+        cpat = str(s.get("content_pattern", "")).lower()
+        stype = str(s.get("type", "")).lower()
+        is_pill = (cpat == "parallel_comparison" or (stype == "comparison" and cpat != "comparison_table"))
+        if is_pill:
+            pill_count += 1
+        if cpat and cpat not in ["plain_concept", "hero", "qa"]:
+            pattern_counts[cpat] = pattern_counts.get(cpat, 0) + 1
+
+    pill_ratio = pill_count / total_content_slides
+    if pill_ratio > 0.25:
+        deck_issues.append(
+            f"Circle-pill comparison overuse: {pill_count}/{total_content_slides} ({pill_ratio:.1%}) "
+            f"exceeds the 25% maximum cap. Re-assign excess to 'comparison_table', 'contrast_pair', or 'plain_concept'."
+        )
+
+    # Monotony check: no single specialized component exceeds 25% of the deck
+    for pat, count in pattern_counts.items():
+        if pat != "parallel_comparison":  # already checked above
+            ratio = count / total_content_slides
+            if ratio > 0.35:
+                deck_issues.append(f"Component monotony: pattern '{pat}' occurs {count} times ({ratio:.1%}), exceeding threshold.")
+
+    # Consecutive repetition check (no 3 consecutive identical slide types or patterns)
     for i in range(len(slides) - 2):
         t1, t2, t3 = slides[i].get("type"), slides[i+1].get("type"), slides[i+2].get("type")
-        if t1 and t1 == t2 == t3 and t1 not in ["hero", "qa"]:
-            deck_issues.append(f"Layout repetition: 3 consecutive slides ({i+1}, {i+2}, {i+3}) use '{t1}'.")
+        p1 = str(slides[i].get("content_pattern", "")).lower()
+        p2 = str(slides[i+1].get("content_pattern", "")).lower()
+        p3 = str(slides[i+2].get("content_pattern", "")).lower()
+
+        if t1 and t1 == t2 == t3 and t1 not in ["hero", "qa", "concept"]:
+            deck_issues.append(f"Layout repetition: 3 consecutive slides ({i+1}, {i+2}, {i+3}) use type '{t1}'.")
+
+        if p1 and p1 == p2 == p3 and p1 not in ["", "plain_concept"]:
+            deck_issues.append(f"Component repetition: 3 consecutive slides ({i+1}, {i+2}, {i+3}) repeat pattern '{p1}'.")
+
+        # Flag 2 consecutive circle-pills
+        if (p1 == "parallel_comparison" and p2 == "parallel_comparison"):
+            deck_issues.append(f"Consecutive circle-pill comparison shapes on slides {i+1} and {i+2}.")
 
     # 3. Slide-Level Inspections
     for i, s in enumerate(slides):

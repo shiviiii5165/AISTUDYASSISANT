@@ -4,14 +4,13 @@ Visual Agent
 Determines visual strategies per slide.
 Prefers deterministic Python diagram rendering (flowcharts, architectures, timelines, comparisons).
 Selectively attaches high-relevance stock photography (capped at 2-4 per deck)
-via the ImageSourceRouter fallback chain (Pexels -> Pixabay -> Unsplash -> Wikimedia -> AI).
+via the new ImageService (Pexels → Pixabay → Unsplash → Wikimedia, health-based routing).
 Guarantees clean deterministic fallbacks when images cannot be resolved.
 """
 from app.core.logging import logger
 import asyncio
 from typing import List, Dict, Any, Optional
 from .schemas import PresentationConfig, VisualSpec, VisualKind, DiagramSpec
-from .image_source_router import resolve_stock_image
 
 
 async def resolve_slide_visuals(
@@ -21,10 +20,25 @@ async def resolve_slide_visuals(
 ) -> List[Dict[str, Any]]:
     """
     Analyzes and attaches visual specifications (diagrams or stock photos) to each slide.
-    Concurrently fetches images for eligible slides using the ImageSourceRouter.
+    Concurrently fetches images for eligible slides using the ImageService.
     """
     image_tasks = []
     image_slide_indices = []
+
+    # Lazy-load ImageService to avoid import-time initialization
+    image_service = None
+    if config.enable_images:
+        try:
+            from app.services.image_service.service import ImageService
+            image_service = ImageService.get_instance()
+        except Exception as e:
+            logger.warning(f"[VisualAgent] Could not initialize ImageService: {e}. Falling back to legacy router.")
+            # Fallback to legacy router if ImageService fails to initialize
+            try:
+                from .image_source_router import resolve_stock_image
+                image_service = None  # will use legacy path below
+            except Exception:
+                pass
 
     for i, slide in enumerate(slides):
         stype = slide.get("type", "concept")
@@ -71,7 +85,24 @@ async def resolve_slide_visuals(
             )
             if is_image_candidate and len(image_tasks) < max_images and stype not in ["hero", "qa", "summary"]:
                 visual_kind = VisualKind.IMAGE
-                image_tasks.append(resolve_stock_image(image_query))
+
+                if image_service:
+                    # Use new ImageService with slide-aware query generation
+                    image_tasks.append(
+                        image_service.get_best_image_for_slide(
+                            slide,
+                            topic=config.topic,
+                            aspect_ratio="landscape",
+                        )
+                    )
+                else:
+                    # Legacy fallback path
+                    try:
+                        from .image_source_router import resolve_stock_image
+                        image_tasks.append(resolve_stock_image(image_query))
+                    except Exception:
+                        image_tasks.append(asyncio.coroutine(lambda: None)())
+
                 image_slide_indices.append(i)
 
         # Attach initial visual spec
@@ -93,16 +124,41 @@ async def resolve_slide_visuals(
             )
             for idx, img_res in zip(image_slide_indices, image_results):
                 slide = slides[idx]
-                if not isinstance(img_res, Exception) and img_res:
-                    slide["visual_spec"]["image_bytes"] = img_res
-                    slide["image_bytes"] = img_res  # backward compatibility alias
-                    logger.info(f"[VisualAgent] Attached {len(img_res)} image bytes to slide {idx+1} ('{slide.get('title', '')[:30]}')")
-                else:
+                if isinstance(img_res, Exception) or img_res is None:
                     # Explicit fallback to clean text layout
                     err_note = str(img_res) if isinstance(img_res, Exception) else "no match"
                     logger.info(f"[VisualAgent] Slide {idx+1} stock image not available ({err_note}). Falling back to clean text layout.")
                     slide["visual_spec"]["kind"] = VisualKind.NONE.value
                     slide["visual_spec"]["asset_required"] = False
+                    continue
+
+                # Handle new ImageResult objects from ImageService
+                if hasattr(img_res, "image_bytes"):
+                    # New ImageService result (ImageResult dataclass)
+                    slide["visual_spec"]["image_bytes"] = img_res.image_bytes
+                    slide["image_bytes"] = img_res.image_bytes  # backward compatibility alias
+                    # Store attribution metadata for downstream rendering
+                    slide["image_attribution"] = {
+                        "photographer_name": img_res.attribution.photographer_name,
+                        "photographer_url": img_res.attribution.photographer_url,
+                        "source_url": img_res.attribution.source_url,
+                        "provider": img_res.provider,
+                        "license_type": img_res.attribution.license_type,
+                    }
+                    slide["image_query_used"] = img_res.query
+                    logger.info(
+                        f"[VisualAgent] Attached {len(img_res.image_bytes)} bytes from {img_res.provider} "
+                        f"to slide {idx+1} ('{slide.get('title', '')[:30]}')"
+                    )
+                elif isinstance(img_res, bytes):
+                    # Legacy resolve_stock_image returns raw bytes
+                    slide["visual_spec"]["image_bytes"] = img_res
+                    slide["image_bytes"] = img_res  # backward compatibility alias
+                    logger.info(f"[VisualAgent] Attached {len(img_res)} image bytes to slide {idx+1} ('{slide.get('title', '')[:30]}')")
+                else:
+                    slide["visual_spec"]["kind"] = VisualKind.NONE.value
+                    slide["visual_spec"]["asset_required"] = False
+
         except asyncio.TimeoutError:
             logger.warning(f"[VisualAgent] Image resolution timed out after 30s. Falling back to text layouts for all {len(image_tasks)} pending images.")
             for idx in image_slide_indices:

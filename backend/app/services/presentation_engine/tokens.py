@@ -98,6 +98,7 @@ class Typography:
     # Slide-level
     SLIDE_TITLE    = TypeToken("Georgia", Pt(32), bold=True, line_spacing=1.1)
     SLIDE_SUBTITLE = TypeToken("Calibri", Pt(13), bold=True, line_spacing=1.2)
+    CARD_TITLE     = TypeToken("Calibri", Pt(16), bold=True, line_spacing=1.2)
 
     # Body
     BODY           = TypeToken("Calibri", Pt(16), line_spacing=1.35)
@@ -318,13 +319,13 @@ def pick_theme_for_topic(topic: str) -> str:
 
 CARD_CORNER_RADIUS = Inches(0.15)
 CARD_PADDING = Inches(0.25)
-CARD_SHADOW = False          # restrained — no default shadows
+CARD_SHADOW = True           # subtle shadow for premium card depth
 CARD_BORDER_WIDTH = Pt(1)    # subtle 1pt borders only
 
 # ═══════════════════════════════════════════════════════════════════════════
 # BULLET GLYPHS
 # ═══════════════════════════════════════════════════════════════════════════
 
-BULLET_GLYPH = "▸"
-TAKEAWAY_GLYPH = "-"
+BULLET_GLYPH = "●"
+TAKEAWAY_GLYPH = "—"
 STEP_GLYPH = "●"  # for process flows

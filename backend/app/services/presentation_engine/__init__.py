@@ -106,6 +106,7 @@ class SlideContent(BaseModel):
     """Complete structured content for a single slide."""
     id: str = ""
     purpose: SlidePurpose = SlidePurpose.CONCEPT
+    content_pattern: Optional[str] = None
     title: str = ""
     subtitle: str = ""
 

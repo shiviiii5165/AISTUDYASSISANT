@@ -211,14 +211,62 @@ def add_card(
     left: Emu, top: Emu, width: Emu, height: Emu,
     fill_color: RGBColor,
     border_color: RGBColor = None,
+    shadow: bool = None,
 ) -> None:
-    """Add a card (rounded rectangle with border)."""
-    add_filled_rect(
-        slide, left, top, width, height,
-        fill_color=fill_color,
-        border_color=border_color,
-        corner_radius=CARD_CORNER_RADIUS,
+    """Add a card (rounded rectangle with border and optional shadow)."""
+    from ..tokens import CARD_SHADOW
+    shape = None
+    # Use ROUNDED_RECTANGLE for cards
+    shape = slide.shapes.add_shape(
+        MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height
     )
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = fill_color
+
+    if border_color:
+        shape.line.color.rgb = border_color
+        shape.line.width = CARD_BORDER_WIDTH
+    else:
+        shape.line.fill.background()
+
+    # Corner radius
+    try:
+        from lxml import etree
+        sp = shape._element
+        ns = {'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'}
+        prstGeom = sp.find('.//a:prstGeom', ns)
+        if prstGeom is not None:
+            avLst = prstGeom.find('a:avLst', ns)
+            if avLst is None:
+                avLst = etree.SubElement(prstGeom, '{http://schemas.openxmlformats.org/drawingml/2006/main}avLst')
+            gd = etree.SubElement(avLst, '{http://schemas.openxmlformats.org/drawingml/2006/main}gd')
+            gd.set('name', 'adj')
+            gd.set('fmla', f'val {int(CARD_CORNER_RADIUS)}')
+    except Exception:
+        pass
+
+    # Subtle shadow for premium depth
+    use_shadow = shadow if shadow is not None else CARD_SHADOW
+    if use_shadow:
+        try:
+            from lxml import etree
+            ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+            spPr = shape._element.find(f'.//{{{ns}}}spPr')
+            if spPr is not None:
+                effectLst = etree.SubElement(spPr, f'{{{ns}}}effectLst')
+                outerShdw = etree.SubElement(effectLst, f'{{{ns}}}outerShdw')
+                outerShdw.set('blurRad', '50800')   # 4pt blur
+                outerShdw.set('dist', '25400')       # 2pt offset
+                outerShdw.set('dir', '5400000')      # bottom direction
+                outerShdw.set('algn', 'tl')
+                srgbClr = etree.SubElement(outerShdw, f'{{{ns}}}srgbClr')
+                srgbClr.set('val', '000000')
+                alpha = etree.SubElement(srgbClr, f'{{{ns}}}alpha')
+                alpha.set('val', '15000')            # 15% opacity
+        except Exception:
+            pass
+    else:
+        shape.shadow.inherit = False
 
 
 def add_category_pill(
@@ -250,15 +298,126 @@ def add_image(
     slide: Slide,
     image_bytes: bytes,
     left: Emu, top: Emu, width: Emu, height: Emu,
+    preserve_aspect: bool = True,
+    corner_radius: Emu = None,
 ) -> None:
-    """Embed an image from bytes into the slide."""
+    """Embed an image from bytes into the slide, preserving aspect ratio.
+    
+    If preserve_aspect is True (default), the image is scaled to fit within
+    the bounding box while maintaining its original proportions, then centered.
+    """
+    from PIL import Image as PILImage
     image_stream = BytesIO(image_bytes)
-    slide.shapes.add_picture(image_stream, left, top, width, height)
+    
+    if preserve_aspect:
+        try:
+            # Read image dimensions
+            img = PILImage.open(BytesIO(image_bytes))
+            img_w, img_h = img.size
+            img.close()
+            
+            # Calculate aspect-ratio-preserving dimensions
+            box_w = _to_inches(width)
+            box_h = _to_inches(height)
+            img_aspect = img_w / max(img_h, 1)
+            box_aspect = box_w / max(box_h, 0.01)
+            
+            if img_aspect > box_aspect:
+                # Image is wider than box — fit to width
+                fit_w = box_w
+                fit_h = box_w / img_aspect
+            else:
+                # Image is taller than box — fit to height
+                fit_h = box_h
+                fit_w = box_h * img_aspect
+            
+            # Center within bounding box
+            offset_x = (box_w - fit_w) / 2
+            offset_y = (box_h - fit_h) / 2
+            
+            final_left = left + Inches(offset_x)
+            final_top = top + Inches(offset_y)
+            final_w = Inches(fit_w)
+            final_h = Inches(fit_h)
+        except Exception:
+            # Fallback to original behavior
+            final_left, final_top, final_w, final_h = left, top, width, height
+    else:
+        final_left, final_top, final_w, final_h = left, top, width, height
+    
+    image_stream = BytesIO(image_bytes)
+    pic = slide.shapes.add_picture(image_stream, final_left, final_top, final_w, final_h)
+    
+    # Apply rounded corners if requested
+    if corner_radius:
+        try:
+            from lxml import etree
+            spPr = pic._element.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}spPr')
+            if spPr is None:
+                spPr = etree.SubElement(pic._element, '{http://schemas.openxmlformats.org/drawingml/2006/main}spPr')
+            prstGeom = etree.SubElement(spPr, '{http://schemas.openxmlformats.org/drawingml/2006/main}prstGeom')
+            prstGeom.set('prst', 'roundRect')
+            avLst = etree.SubElement(prstGeom, '{http://schemas.openxmlformats.org/drawingml/2006/main}avLst')
+            gd = etree.SubElement(avLst, '{http://schemas.openxmlformats.org/drawingml/2006/main}gd')
+            gd.set('name', 'adj')
+            gd.set('fmla', f'val {int(corner_radius)}')
+        except Exception:
+            pass
+
+
+def _to_inches(val) -> float:
+    """Convert EMU or Inches value to float inches."""
+    if hasattr(val, 'inches'):
+        return val.inches
+    return val / 914400.0
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FOOTER / BRANDING
 # ═══════════════════════════════════════════════════════════════════════════
+
+def add_gradient_bar(
+    slide: Slide,
+    left: Emu, top: Emu, width: Emu, height: Emu,
+    color_start: RGBColor,
+    color_end: RGBColor,
+) -> None:
+    """Add a horizontal gradient bar (for premium hero accents)."""
+    try:
+        from lxml import etree
+        shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, left, top, width, height)
+        shape.line.fill.background()
+        shape.shadow.inherit = False
+        
+        spPr = shape._element.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}spPr')
+        # Remove solid fill
+        solidFill = spPr.find('{http://schemas.openxmlformats.org/drawingml/2006/main}solidFill')
+        if solidFill is not None:
+            spPr.remove(solidFill)
+        
+        ns = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        gradFill = etree.SubElement(spPr, f'{{{ns}}}gradFill')
+        gsLst = etree.SubElement(gradFill, f'{{{ns}}}gsLst')
+        
+        # Start color
+        gs1 = etree.SubElement(gsLst, f'{{{ns}}}gs')
+        gs1.set('pos', '0')
+        srgb1 = etree.SubElement(gs1, f'{{{ns}}}srgbClr')
+        srgb1.set('val', f'{color_start.red:02X}{color_start.green:02X}{color_start.blue:02X}')
+        
+        # End color
+        gs2 = etree.SubElement(gsLst, f'{{{ns}}}gs')
+        gs2.set('pos', '100000')
+        srgb2 = etree.SubElement(gs2, f'{{{ns}}}srgbClr')
+        srgb2.set('val', f'{color_end.red:02X}{color_end.green:02X}{color_end.blue:02X}')
+        
+        lin = etree.SubElement(gradFill, f'{{{ns}}}lin')
+        lin.set('ang', '0')  # horizontal
+        lin.set('scaled', '1')
+    except Exception:
+        # Fallback to solid fill with start color
+        add_filled_rect(slide, left, top, width, height, color_start)
+
 
 def add_footer(
     slide: Slide,
@@ -267,13 +426,28 @@ def add_footer(
     theme: ThemeColors,
     section_name: str = "",
 ) -> None:
-    """Add a subtle footer with slide number and optional section name."""
-    # Slide number (right)
+    """Add a polished footer with progress bar, slide number, and branding."""
+    # ── Progress bar (thin accent strip showing position in deck) ──
+    progress_ratio = min(slide_number / max(total_slides, 1), 1.0)
+    progress_width = Inches(SLIDE_WIDTH.inches * progress_ratio)
+    add_filled_rect(
+        slide, Inches(0), Inches(SLIDE_HEIGHT.inches - 0.06),
+        progress_width, Inches(0.06),
+        fill_color=theme.primary,
+    )
+    # Background track
+    add_filled_rect(
+        slide, progress_width, Inches(SLIDE_HEIGHT.inches - 0.06),
+        Inches(SLIDE_WIDTH.inches) - progress_width, Inches(0.06),
+        fill_color=theme.border_light,
+    )
+
+    # Slide number (right) — formatted as "03 / 12"
+    num_str = f"{slide_number:02d} / {total_slides:02d}"
     add_text_box(
-        slide,
-        f"{slide_number} / {total_slides}",
-        SLIDE_WIDTH - Inches(1.2), ZONE_FOOTER_TOP,
-        Inches(1.0), ZONE_FOOTER_HEIGHT,
+        slide, num_str,
+        SLIDE_WIDTH - Inches(1.4), ZONE_FOOTER_TOP,
+        Inches(1.2), ZONE_FOOTER_HEIGHT,
         token=Typography.CAPTION,
         color=theme.text_muted,
         alignment=PP_ALIGN.RIGHT,
@@ -282,8 +456,7 @@ def add_footer(
     # Section name (left) — if provided
     if section_name:
         add_text_box(
-            slide,
-            section_name,
+            slide, section_name,
             MARGIN_LEFT, ZONE_FOOTER_TOP,
             Inches(4.0), ZONE_FOOTER_HEIGHT,
             token=Typography.CAPTION,
@@ -291,10 +464,9 @@ def add_footer(
             alignment=PP_ALIGN.LEFT,
         )
 
-    # Brand mark (center-ish)
+    # Brand mark (center)
     add_text_box(
-        slide,
-        "TeachGenie AI",
+        slide, "TeachGenie AI",
         Inches(5.5), ZONE_FOOTER_TOP,
         Inches(2.5), ZONE_FOOTER_HEIGHT,
         token=Typography.FOOTNOTE,

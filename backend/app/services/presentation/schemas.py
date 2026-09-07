@@ -32,6 +32,20 @@ class SlideType(str, Enum):
     QUIZ            = "quiz"            # Knowledge check questions
     QA              = "qa"              # Closing & discussion
 
+class ContentPattern(str, Enum):
+    DEFINITION_BOX        = "definition_box"
+    CONTRAST_PAIR         = "contrast_pair"
+    COMPARISON_TABLE      = "comparison_table"
+    NUMBERED_PROCESS      = "numbered_process"
+    CASE_STUDY_BLOCK      = "case_study_block"
+    ACTIVITY_BANNER       = "activity_banner"
+    WORKED_EXAMPLE_TABLE  = "worked_example_table"
+    ICON_BADGE_ROW        = "icon_badge_row"
+    HUB_AND_SPOKE         = "hub_and_spoke"
+    ILLUSTRATED_ICON_GRID = "illustrated_icon_grid"
+    PARALLEL_COMPARISON   = "parallel_comparison"
+    PLAIN_CONCEPT         = "plain_concept"
+
 
 class DesignSystem(str, Enum):
     ACADEMIC_CLEAN  = "academic"        # University lecture & teaching
@@ -93,6 +107,7 @@ class SlideSpec(BaseModel):
     example: str = ""
     speaker_notes: str = ""
     image_query: str = ""
+    content_pattern: Optional[ContentPattern] = None
     visual: Optional[VisualSpec] = None
     source_refs: List[SlideSourceRef] = Field(default_factory=list)
 

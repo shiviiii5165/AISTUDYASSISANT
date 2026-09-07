@@ -25,10 +25,16 @@ class Settings(BaseSettings):
     CLOUDFLARE_ACCOUNT_ID: str = ""
     ANTHROPIC_API_KEY: str = ""
     
-    # Stock Photo API Keys
+    # Stock Photo API Keys (single-key legacy fields)
     PEXELS_API_KEY: str = ""
     PIXABAY_API_KEY: str = ""
     UNSPLASH_ACCESS_KEY: str = ""
+    UNSPLASH_SECRET_KEY: str = ""
+
+    # Stock Photo Multi-Key Pools (comma-separated, for health-based routing)
+    PEXELS_API_KEYS: str = ""
+    PIXABAY_API_KEYS: str = ""
+    UNSPLASH_ACCESS_KEYS: str = ""
     
     # Optional Multi-Key Pools (comma-separated or specific indexed keys)
     GEMINI_API_KEYS: str = ""

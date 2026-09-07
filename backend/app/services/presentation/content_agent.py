@@ -134,9 +134,61 @@ async def _expand_single_batch(
         found["image_query"] = img_q
         found["visual_prompt"] = found.get("visual_prompt") or orig_slide.get("visual_hint", "")
 
+        # Content Pattern Tagging & Deterministic Fallback
+        cpat = found.get("content_pattern") or orig_slide.get("content_pattern")
+        if not cpat:
+            cpat = detect_content_pattern_fallback_dict(found)
+        found["content_pattern"] = cpat
+
         expanded_batch.append(found)
 
     return expanded_batch
+
+
+def detect_content_pattern_fallback_dict(slide: Dict[str, Any]) -> str:
+    """
+    Intelligent deterministic fallback ladder matching slide content signals.
+    Default fallback is strictly 'plain_concept' (clean bullets), never a shape-based pattern.
+    """
+    title_l = (slide.get("title") or "").lower()
+    bullets_l = " ".join(slide.get("body_bullets") or []).lower()
+    comb = f"{title_l} {bullets_l}"
+
+    # 1. Definition signals
+    if any(w in title_l for w in ["definition", "what is", "glossary", "terminology", "concept:"]):
+        return "definition_box"
+
+    # 2. Contrast signals (The Trap vs The Discipline, Misconceptions, Anti-patterns)
+    if any(w in comb for w in ["trap", "misconception", "pitfall", "anti-pattern", "vs.", "versus", "do's and don'ts"]):
+        return "contrast_pair"
+
+    # 3. Process / sequential flow
+    if slide.get("steps") or any(w in title_l for w in ["step", "lifecycle", "workflow", "pipeline", "phase", "algorithm:"]):
+        return "numbered_process"
+
+    # 4. Case Study
+    if any(w in title_l for w in ["case study", "real-world", "incident", "failure analysis"]):
+        return "case_study_block"
+
+    # 5. Activity / Classroom exercise
+    if any(w in title_l for w in ["activity", "exercise", "try this", "discussion prompt", "lab task"]):
+        return "activity_banner"
+
+    # 6. Comparison Table (explicit matrix or structured table)
+    if slide.get("columns") and len(slide.get("columns")) >= 2:
+        return "comparison_table"
+
+    # 7. Structural CS data concepts (strictly gated to stack, queue, tree, graph, database)
+    cs_terms = ["stack", "lifo", "queue", "fifo", "binary tree", "graph topology", "database cylinder"]
+    if any(t in comb for t in cs_terms) and any(w in title_l for w in ["structure", "model", "collection", "topology"]):
+        return "illustrated_icon_grid"
+
+    # 8. Worked example
+    if any(w in title_l for w in ["worked example", "step-by-step trace", "walkthrough", "trace table"]):
+        return "worked_example_table"
+
+    # Default fallback: plain text bullets (never a shape or circle-pill)
+    return "plain_concept"
 
 
 async def expand_presentation_content(
