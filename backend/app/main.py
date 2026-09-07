@@ -97,4 +97,6 @@ from app.api import lesson_planner
 app.include_router(lesson_planner.router, prefix="/api/lesson-planner", tags=["lesson-planner"])
 from app.api import quiz as quiz_api
 app.include_router(quiz_api.router, prefix="/api/quiz", tags=["quiz"])
+from app.api import live_quiz as live_quiz_api
+app.include_router(live_quiz_api.router, prefix="/api/live-quizzes", tags=["live-quiz"])
 

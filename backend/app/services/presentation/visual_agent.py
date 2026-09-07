@@ -3,29 +3,32 @@ Visual Agent
 ============
 Determines visual strategies per slide.
 Prefers deterministic Python diagram rendering (flowcharts, architectures, timelines, comparisons).
-Only generates AI images when genuine explanatory value is added (capped at 2-4 per deck).
+Selectively attaches high-relevance stock photography (capped at 2-4 per deck)
+via the ImageSourceRouter fallback chain (Pexels -> Pixabay -> Unsplash -> Wikimedia -> AI).
+Guarantees clean deterministic fallbacks when images cannot be resolved.
 """
 from app.core.logging import logger
 import asyncio
 from typing import List, Dict, Any, Optional
-from app.services.ai import router
 from .schemas import PresentationConfig, VisualSpec, VisualKind, DiagramSpec
+from .image_source_router import resolve_stock_image
 
 
 async def resolve_slide_visuals(
     config: PresentationConfig,
     slides: List[Dict[str, Any]],
-    max_ai_images: int = 3,
+    max_images: int = 3,
 ) -> List[Dict[str, Any]]:
     """
-    Analyzes and attaches visual specifications (diagrams or AI images) to each slide.
+    Analyzes and attaches visual specifications (diagrams or stock photos) to each slide.
+    Concurrently fetches images for eligible slides using the ImageSourceRouter.
     """
     image_tasks = []
     image_slide_indices = []
 
     for i, slide in enumerate(slides):
         stype = slide.get("type", "concept")
-        visual_prompt = slide.get("visual_prompt", "")
+        image_query = (slide.get("image_query") or slide.get("visual_prompt") or "").strip()
         visual_kind = VisualKind.NONE
         diagram_spec = None
 
@@ -60,29 +63,53 @@ async def resolve_slide_visuals(
                     columns=slide.get("columns", []),
                 )
 
-        # 2. Check for AI Image opportunities (Selective, max 2-4 per deck)
-        if config.enable_images and visual_kind == VisualKind.NONE and visual_prompt:
-            if stype in ["hero", "image_insight", "case_study"] and len(image_tasks) < max_ai_images:
+        # 2. Check for Stock Photo opportunities (Selective, max 2-4 per deck)
+        # Avoid hero (template headers don't render hero images) and closing slides
+        if config.enable_images and visual_kind == VisualKind.NONE and image_query:
+            is_image_candidate = stype in ["image_insight", "case_study", "two_column"] or (
+                stype == "concept" and not slide.get("example") and len(image_tasks) < max_images
+            )
+            if is_image_candidate and len(image_tasks) < max_images and stype not in ["hero", "qa", "summary"]:
                 visual_kind = VisualKind.IMAGE
-                image_tasks.append(router.generate_image(visual_prompt))
+                image_tasks.append(resolve_stock_image(image_query))
                 image_slide_indices.append(i)
 
         # Attach initial visual spec
         slide["visual_spec"] = {
             "kind": visual_kind.value if hasattr(visual_kind, "value") else str(visual_kind),
             "asset_required": (visual_kind == VisualKind.IMAGE),
-            "image_prompt": visual_prompt if visual_kind == VisualKind.IMAGE else "",
+            "image_prompt": image_query if visual_kind == VisualKind.IMAGE else "",
             "diagram_spec": diagram_spec.dict() if diagram_spec else None,
+            "image_bytes": None,
         }
 
-    # 3. Resolve parallel AI images if any were requested
+    # 3. Concurrently resolve stock photos for selected slides (hard 30s cap)
     if image_tasks:
+        logger.info(f"[VisualAgent] Concurrently resolving {len(image_tasks)} stock photos...")
         try:
-            image_results = await asyncio.gather(*image_tasks, return_exceptions=True)
+            image_results = await asyncio.wait_for(
+                asyncio.gather(*image_tasks, return_exceptions=True),
+                timeout=30.0,
+            )
             for idx, img_res in zip(image_slide_indices, image_results):
+                slide = slides[idx]
                 if not isinstance(img_res, Exception) and img_res:
-                    slides[idx]["visual_spec"]["image_bytes"] = img_res
+                    slide["visual_spec"]["image_bytes"] = img_res
+                    slide["image_bytes"] = img_res  # backward compatibility alias
+                    logger.info(f"[VisualAgent] Attached {len(img_res)} image bytes to slide {idx+1} ('{slide.get('title', '')[:30]}')")
+                else:
+                    # Explicit fallback to clean text layout
+                    err_note = str(img_res) if isinstance(img_res, Exception) else "no match"
+                    logger.info(f"[VisualAgent] Slide {idx+1} stock image not available ({err_note}). Falling back to clean text layout.")
+                    slide["visual_spec"]["kind"] = VisualKind.NONE.value
+                    slide["visual_spec"]["asset_required"] = False
+        except asyncio.TimeoutError:
+            logger.warning(f"[VisualAgent] Image resolution timed out after 30s. Falling back to text layouts for all {len(image_tasks)} pending images.")
+            for idx in image_slide_indices:
+                slide = slides[idx]
+                slide["visual_spec"]["kind"] = VisualKind.NONE.value
+                slide["visual_spec"]["asset_required"] = False
         except Exception as e:
-            logger.error(f"[VisualAgent] Parallel image generation error: {e}")
+            logger.error(f"[VisualAgent] Batch image resolution error: {e}")
 
     return slides

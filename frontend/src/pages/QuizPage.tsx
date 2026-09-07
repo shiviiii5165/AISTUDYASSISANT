@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Loader2, CheckCircle2, AlertTriangle, Edit2, Trash2, ArrowUp, ArrowDown,
-  RefreshCw, Play, Save, Check, X, Clock, HelpCircle, ArrowLeft, ArrowRight
+  RefreshCw, Play, Save, Check, X, Clock, HelpCircle, ArrowLeft, ArrowRight, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
@@ -259,14 +259,23 @@ const QuizPage: React.FC = () => {
                 Make any necessary adjustments before publishing.
               </p>
             </div>
-            <button
-              onClick={handlePublish}
-              disabled={savingId === 'publish'}
-              className="flex items-center gap-2 rounded-xl bg-[var(--accent-green)] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:opacity-50"
-            >
-              {savingId === 'publish' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Publish Quiz
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handlePublish}
+                disabled={savingId === 'publish'}
+                className="flex items-center gap-2 rounded-xl bg-[var(--accent-green)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:opacity-50"
+              >
+                {savingId === 'publish' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                Publish Quiz
+              </button>
+              <button
+                onClick={() => navigate(`/quiz/${quizId}/live`)}
+                className="flex items-center gap-2 rounded-xl bg-[var(--accent-royal)] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[var(--accent-royal)]/25 transition-colors hover:bg-[var(--accent-green-deep)]"
+              >
+                <Users className="h-4 w-4" />
+                Start Live
+              </button>
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -392,14 +401,23 @@ const QuizPage: React.FC = () => {
             This quiz contains {questions.length} questions.
             {quiz.config?.timer_seconds && ` You have ${Math.floor(quiz.config.timer_seconds / 60)} minutes to complete it.`}
           </p>
-          <button
-            onClick={handleStartAttempt}
-            disabled={submitting}
-            className="mx-auto mt-8 flex items-center gap-2 rounded-xl bg-[var(--accent-green)] px-8 py-3.5 font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
-          >
-            {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
-            Start Quiz
-          </button>
+          <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={handleStartAttempt}
+              disabled={submitting}
+              className="flex items-center gap-2 rounded-xl bg-[var(--accent-green)] px-8 py-3.5 font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)]"
+            >
+              {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
+              Take Quiz (Self-Paced)
+            </button>
+            <button
+              onClick={() => navigate(`/quiz/${quizId}/live`)}
+              className="flex items-center gap-2 rounded-xl bg-[var(--accent-royal)] px-8 py-3.5 font-semibold text-white shadow-lg shadow-[var(--accent-royal)]/25 transition-colors hover:bg-[var(--accent-green-deep)]"
+            >
+              <Users className="h-5 w-5" />
+              Start Live Classroom
+            </button>
+          </div>
         </div>
       </AppLayout>
     );
@@ -480,7 +498,15 @@ const QuizPage: React.FC = () => {
 
   // Results View
   if (results) {
-    const scorePct = results.score ? Math.round((results.score.correct_count / results.score.total_questions) * 100) : 0;
+    const scorePct = typeof results.score === 'number'
+      ? Math.round(results.score)
+      : typeof results.score?.correct_count === 'number'
+      ? Math.round((results.score.correct_count / (results.score.total_questions || 1)) * 100)
+      : Math.round(((results.correct_count ?? 0) / (results.total_questions || 1)) * 100);
+
+    const correctCount = results.correct_count ?? results.score?.correct_count ?? 0;
+    const totalQ = results.total_questions ?? results.score?.total_questions ?? questions.length;
+    const perQuestionMap = new Map((results.per_question_results || []).map((r: any) => [r.question_id, r]));
     
     return (
       <AppLayout title="Quiz Results">
@@ -514,15 +540,16 @@ const QuizPage: React.FC = () => {
               {scorePct >= 80 ? 'Excellent work!' : scorePct >= 50 ? 'Good effort!' : 'Keep practicing!'}
             </h1>
             <p className="mt-2 text-[var(--text-secondary)]">
-              You scored {results.score?.correct_count} out of {results.score?.total_questions} questions correctly.
+              You scored {correctCount} out of {totalQ} questions correctly.
             </p>
           </div>
 
           <div className="space-y-6">
             <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">Question Review</h2>
             {questions.map((q, index) => {
-              const userAnswer = results.answers?.[q.id];
-              const isCorrect = Array.isArray(q.correct_answer) ? q.correct_answer.includes(userAnswer) : q.correct_answer === userAnswer;
+              const qRes = perQuestionMap.get(q.id);
+              const userAnswer = qRes ? qRes.given_answer : results.answers?.[q.id];
+              const isCorrect = qRes ? qRes.is_correct : (Array.isArray(q.correct_answer) ? q.correct_answer.includes(userAnswer) : q.correct_answer === userAnswer);
 
               return (
                 <div key={q.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">

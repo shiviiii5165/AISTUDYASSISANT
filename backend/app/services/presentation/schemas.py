@@ -92,6 +92,7 @@ class SlideSpec(BaseModel):
     body_bullets: List[str] = Field(default_factory=list)
     example: str = ""
     speaker_notes: str = ""
+    image_query: str = ""
     visual: Optional[VisualSpec] = None
     source_refs: List[SlideSourceRef] = Field(default_factory=list)
 
@@ -128,8 +129,8 @@ class PresentationConfig(BaseModel):
     @field_validator("slide_count")
     @classmethod
     def validate_slide_count(cls, v: int) -> int:
-        if v not in [10, 11, 12, 13, 14, 15]:
-            raise ValueError(f"slide_count must be exactly 10, 11, 12, 13, 14, or 15 (got {v})")
+        if v not in [10, 11, 12, 13, 14, 15, 16, 17]:
+            raise ValueError(f"slide_count must be between 10 and 17 (got {v})")
         return v
 
 
@@ -139,6 +140,7 @@ class PresentationSpec(BaseModel):
     config: PresentationConfig
     key_takeaways: List[str] = Field(default_factory=list)
     slides: List[SlideSpec] = Field(default_factory=list)
+    expansion_reason: str = ""
 
     def validate_exact_count(self) -> bool:
-        return len(self.slides) == self.config.slide_count
+        return self.config.slide_count <= len(self.slides) <= self.config.slide_count + 2

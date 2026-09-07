@@ -41,7 +41,12 @@ def build_presentation_spec(spec: PresentationSpec) -> bytes:
         slide = prs.slides.add_slide(blank_layout)
 
         # Convert Pydantic SlideSpec to dict if necessary
-        slide_dict = slide_spec.dict() if hasattr(slide_spec, "dict") else slide_spec
+        if hasattr(slide_spec, "model_dump"):
+            slide_dict = slide_spec.model_dump()
+        elif hasattr(slide_spec, "dict"):
+            slide_dict = slide_spec.dict()
+        else:
+            slide_dict = slide_spec
 
         # Render slide using the selected design system template
         render_func(
@@ -53,10 +58,12 @@ def build_presentation_spec(spec: PresentationSpec) -> bytes:
             deck_title=spec.title,
         )
 
-    # STRICT VALIDATION: Exact Slide Count Contract (explicit raise, never use assert in production)
-    if len(prs.slides) != spec.config.slide_count:
+    # STRICT VALIDATION: Slide Count Contract (Target slide_count up to slide_count + 2 for ontology coverage)
+    max_count = spec.config.slide_count + 2
+    if not (spec.config.slide_count <= len(prs.slides) <= max_count):
         raise ValueError(
-            f"Generated PPTX slide count ({len(prs.slides)}) does not match requested count ({spec.config.slide_count})"
+            f"Generated PPTX slide count ({len(prs.slides)}) is outside permitted range "
+            f"[{spec.config.slide_count}..{max_count}]"
         )
 
     buffer = io.BytesIO()

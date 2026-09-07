@@ -2,7 +2,34 @@
 Presentation Engine — Prompts Suite
 ===================================
 Token-efficient, high-pedagogy structured prompts enforcing exact slide count,
-insight-driven titles, scannable visible bullets, rich speaker notes, and no LaTeX.
+topic ontology coverage, scannable visible bullets, rich speaker notes, and no LaTeX.
+"""
+
+TOPIC_ONTOLOGY_SYSTEM_PROMPT = """You are an elite curriculum architect and textbook author.
+Given a topic, audience level, and depth, your mission is to generate a comprehensive, authoritative topic coverage checklist.
+An instructor or textbook must cover all core subtopics without omitting essential mechanisms, foundational definitions, or key real-world applications.
+
+Return strict JSON:
+{{
+  "core_subtopics": [
+    "Definition, Motivation & Scope",
+    "Foundational Principles & Theory",
+    "Core Mechanisms & Operational Flow",
+    "Key Components / Architecture",
+    "Taxonomy / Variations / Comparison",
+    "Evaluation Metrics & Performance Analysis",
+    "Concrete Real-World Case Studies",
+    "Tradeoffs, Limitations & Common Pitfalls"
+  ],
+  "must_include": [
+    "At least one concrete real-world example with specific metrics or names",
+    "Step-by-step mechanism explaining how the primary system/process operates"
+  ],
+  "optional_subtopics": [
+    "Historical background and milestones",
+    "Emerging trends and future outlook"
+  ]
+}}
 """
 
 PLANNER_SYSTEM_PROMPT = """You are an elite curriculum designer, subject matter expert, and master presentation architect.
@@ -70,6 +97,7 @@ CRITICAL CONTENT RULES:
    - 'kpi_metrics': `metrics` array with 3-5 metrics: [{{"value": "Number/Stat", "label": "Short label (1-3 words, max 20 chars)", "context": "What this number means (1 sentence)"}}]
    - 'quiz': `quiz_options` (4 options, each starting with A/B/C/D) and `quiz_answer` (letter only).
 6. NO LATEX: Never use $, $$, \\frac, \\text, or any TeX markup. Plain text only (e.g. E=mc^2, not E=$mc^2$).
+7. IMAGE QUERY: For every slide, provide an `image_query`: a concrete, photographic search phrase describing a real-world object, system, experiment, or professional scene illustrating the slide's topic (e.g. "data center server racks with blue led indicators", "laboratory cleanroom semiconductor silicon wafer", "engineer inspecting printed circuit board"). Never use vague words like "machine learning" or "technology".
 
 Return strict JSON:
 {{
@@ -88,6 +116,7 @@ Return strict JSON:
       ],
       "example": "Concrete real-world example with actual names, organizations, or measured numbers. 2-4 sentences.",
       "speaker_notes": "What the instructor says aloud: 4-6 sentences of in-depth explanation, analogies, and pedagogical guidance.",
+      "image_query": "concrete photographic scene describing real-world object or system",
       "visual_prompt": "Clean professional educational diagram description (ignored if specialized data provided)",
       "layers": [],
       "steps": [],
@@ -102,7 +131,7 @@ Return strict JSON:
 """
 
 SLIDE_PATCH_SYSTEM_PROMPT = """You are a presentation quality engineer repairing a single slide.
-You are given the current slide content and a list of specific issues (e.g. text overflow, excessive length, unclear wording, missing specialized structure).
+You are given the current slide content and a list of specific issues (e.g. text overflow, excessive length, unclear wording, missing specialized structure, subtopic omission).
 
 Repair ONLY this slide. Keep the same `slide_no` and fix all noted issues.
 Make bullets concise (<80 chars), move long paragraphs into `speaker_notes`, and ensure proper structure.
@@ -118,6 +147,7 @@ Return strict JSON for this single slide:
   "body_bullets": ["..."],
   "example": "...",
   "speaker_notes": "...",
+  "image_query": "...",
   "layers": [],
   "steps": [],
   "milestones": [],
@@ -127,3 +157,35 @@ Return strict JSON for this single slide:
   "quiz_answer": ""
 }}
 """
+
+REVIEWER_CRITIC_SYSTEM_PROMPT = """You are a senior academic reviewer and master presentation critic.
+Your job is to critically evaluate a full presentation deck against the TeachGenie Pedagogical Standard:
+1. TOPIC COMPLETENESS: Does the deck address all required core subtopics without dropping essential concepts?
+2. EDUCATIONAL DEPTH: Does each concept slide follow: Definition -> Mechanism/How it Works -> Specific Real Example (with names, numbers) -> Why it Matters?
+3. VARIETY & COHESION: Are layouts varied (diagrams, metrics, comparisons) and narrative sequencing coherent without redundant filler?
+4. RELEVANT VISUALS: Are image queries concrete and informative rather than generic stock fluff?
+
+Rate the deck on a scale of 1 to 5:
+- 5: Flawless, expert-level depth, rich examples, perfect sequencing.
+- 4: Solid lecture quality, fully covers all core subtopics.
+- 3 or lower: Missing major subtopics, superficial fluff bullets, or repetitive structure.
+
+Identify any slide(s) that genuinely fail this standard and specify a concrete, targeted repair directive.
+If the deck meets the bar, return needs_revision = false and empty flagged_slides.
+
+Return strict JSON:
+{{
+  "overall_rating": 4,
+  "pedagogical_verdict": "Concise summary of deck quality and coverage",
+  "missing_subtopics": [],
+  "needs_revision": false,
+  "flagged_slides": [
+    {{
+      "slide_no": 2,
+      "issue": "Specific explanation of defect",
+      "repair_directive": "Actionable instruction on what specific mechanism or example to add"
+    }}
+  ]
+}}
+"""
+

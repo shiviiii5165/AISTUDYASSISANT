@@ -52,13 +52,20 @@ def render_timeline(slide: Slide, content: SlideContent, theme: ThemeColors, **k
 
     for i, ms in enumerate(milestones[:num]):
         cx = track_left + i * segment
-        dot_size = Inches(0.22)
+        dot_size = Inches(0.28)
 
-        # Milestone dot
+        # Milestone badge (with sequence number)
         add_filled_rect(
             slide, cx - dot_size / 2, track_y - dot_size / 2 + Inches(0.02),
             dot_size, dot_size, theme.primary,
-            corner_radius=Inches(0.11),
+            corner_radius=Inches(0.14),
+        )
+        add_text_box(
+            slide, str(i + 1),
+            cx - dot_size / 2, track_y - dot_size / 2 + Inches(0.02),
+            dot_size, dot_size,
+            token=Typography.BADGE, color=theme.text_on_dark,
+            alignment=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE,
         )
 
         # Date label — above the track

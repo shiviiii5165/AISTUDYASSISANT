@@ -1,31 +1,31 @@
 """
 Content Agent
 =============
-Expands planned outline sections in efficient batches (5 slides per batch).
+Expands planned outline sections in efficient parallel batches (3-4 slides per batch).
 Retrieves targeted chunk context for each slide, enforces concise visible bullets (<80 chars),
 rich speaker notes, concrete examples, and specialized structured layout parameters.
 """
+import re
 import json
 import asyncio
+import logging
 from typing import List, Dict, Any, Optional
 from app.services.ai import router
 from .schemas import PresentationConfig, SlideSpec, SlideType
 from .prompts import CONTENT_BATCH_SYSTEM_PROMPT
 from ..knowledge import get_slide_context
 
+logger = logging.getLogger("teachgenie.presentation.content_agent")
 
-async def expand_presentation_content(
+
+async def _expand_single_batch(
+    batch: List[Dict[str, Any]],
     config: PresentationConfig,
     user_id: str,
-    outline_data: Dict[str, Any],
 ) -> List[Dict[str, Any]]:
-    """
-    Expands planned slides in batches of 5.
-    Returns fully hydrated slide dictionaries.
-    """
-    planned_slides = outline_data.get("slides", [])
-    batch = planned_slides
-    expanded_slides: List[Dict[str, Any]] = []
+    """Expands a single chunk of up to 4 slides."""
+    if not batch:
+        return []
 
     batch_context_parts = []
     batch_source_refs_map = {}
@@ -64,19 +64,28 @@ async def expand_presentation_content(
         {"role": "user", "content": user_content_str},
     ]
 
-    # 3. Call ModelRouter
-    batch_result = await router.generate_json(
-        task="content_generation",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=8192,
-    )
+    # 3. Call ModelRouter with safe token ceiling
+    try:
+        batch_result = await router.generate_json(
+            task="content_generation",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=2200,
+        )
+    except Exception as err:
+        logger.warning(f"[ContentAgent] Batch generation failed: {err}. Using fallback templates.")
+        batch_result = {}
 
-    raw_expanded = batch_result.get("slides", [])
-    
-    # If the LLM returned a list directly or missing fields, sanitize
-    if not raw_expanded and isinstance(batch_result, list):
+    if isinstance(batch_result, list):
         raw_expanded = batch_result
+    elif isinstance(batch_result, dict):
+        raw_expanded = batch_result.get("slides", [])
+        if not raw_expanded and "slide_no" in batch_result:
+            raw_expanded = [batch_result]
+    else:
+        raw_expanded = []
+
+    expanded_batch: List[Dict[str, Any]] = []
 
     # Map and sanitize each expanded slide
     for idx, orig_slide in enumerate(batch):
@@ -117,8 +126,84 @@ async def expand_presentation_content(
         if not found.get("type"):
             found["type"] = orig_slide.get("type", "concept")
 
-        expanded_slides.append(found)
+        # Preserve image_query or construct descriptive photographic fallback
+        img_q = (found.get("image_query") or "").strip()
+        if not img_q:
+            clean_title = re.sub(r"[^\w\s]", "", orig_slide.get("title", ""))
+            img_q = f"{clean_title} educational system demonstration photography"
+        found["image_query"] = img_q
+        found["visual_prompt"] = found.get("visual_prompt") or orig_slide.get("visual_hint", "")
+
+        expanded_batch.append(found)
+
+    return expanded_batch
+
+
+async def expand_presentation_content(
+    config: PresentationConfig,
+    user_id: str,
+    outline_data: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """
+    Expands planned slides in parallel batches of 3.
+    Returns fully hydrated slide dictionaries.
+    Hard-capped at 40s to prevent indefinite hangs.
+    """
+    planned_slides = outline_data.get("slides", [])
+    if not planned_slides:
+        return []
+
+    # Batch into chunks of 3 slides for parallel execution and strict token bounds
+    BATCH_SIZE = 3
+    batches = [planned_slides[i:i + BATCH_SIZE] for i in range(0, len(planned_slides), BATCH_SIZE)]
+    
+    # Process batches concurrently with asyncio.gather (hard 40s cap)
+    try:
+        batch_results = await asyncio.wait_for(
+            asyncio.gather(
+                *[_expand_single_batch(b, config, user_id) for b in batches],
+                return_exceptions=True,
+            ),
+            timeout=40.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(f"[ContentAgent] Batch expansion timed out after 40s. Using fallback templates for all slides.")
+        batch_results = []
+
+    expanded_slides: List[Dict[str, Any]] = []
+    for i, r in enumerate(batch_results):
+        if isinstance(r, Exception):
+            logger.warning(f"[ContentAgent] Batch {i+1} failed ({r}), using fallback templates.")
+            # Generate fallback slides for this batch
+            for s in batches[i]:
+                expanded_slides.append({
+                    "slide_no": s.get("slide_no"),
+                    "type": s.get("type", "concept"),
+                    "title": s.get("title", f"Slide {s.get('slide_no', 0)}"),
+                    "key_message": s.get("key_message", ""),
+                    "body_bullets": ["Key operational insight", "Supporting structural mechanism"],
+                    "speaker_notes": s.get("key_message", ""),
+                    "image_query": f"{s.get('title', '')} educational demonstration photography",
+                })
+        else:
+            expanded_slides.extend(r)
+
+    # If gather timed out, fill remaining slides with fallbacks
+    if len(expanded_slides) < len(planned_slides):
+        covered_slide_nos = {s.get("slide_no") for s in expanded_slides}
+        for s in planned_slides:
+            if s.get("slide_no") not in covered_slide_nos:
+                expanded_slides.append({
+                    "slide_no": s.get("slide_no"),
+                    "type": s.get("type", "concept"),
+                    "title": s.get("title", f"Slide {s.get('slide_no', 0)}"),
+                    "key_message": s.get("key_message", ""),
+                    "body_bullets": ["Key operational insight", "Supporting structural mechanism"],
+                    "speaker_notes": s.get("key_message", ""),
+                    "image_query": f"{s.get('title', '')} educational demonstration photography",
+                })
 
     # Final sort by slide_no
     expanded_slides.sort(key=lambda s: s.get("slide_no", 0))
     return expanded_slides
+

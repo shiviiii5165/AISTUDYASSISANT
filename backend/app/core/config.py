@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     CLOUDFLARE_ACCOUNT_ID: str = ""
     ANTHROPIC_API_KEY: str = ""
     
+    # Stock Photo API Keys
+    PEXELS_API_KEY: str = ""
+    PIXABAY_API_KEY: str = ""
+    UNSPLASH_ACCESS_KEY: str = ""
+    
     # Optional Multi-Key Pools (comma-separated or specific indexed keys)
     GEMINI_API_KEYS: str = ""
     GROQ_API_KEYS: str = ""

@@ -42,15 +42,24 @@ def render_timeline_diagram(
         detail = m.get("detail", "")
         cur_left = left + i * (card_width + gutter)
 
-        # Milestone dot
-        dot_size = Inches(0.2)
+        # Milestone badge (with sequence number)
+        dot_size = Inches(0.28)
         dot_x = cur_left + (card_width / 2) - (dot_size / 2)
         dot_y = axis_y - (dot_size / 2) + Inches(0.02)
         add_filled_rect(
             slide,
             dot_x, dot_y, dot_size, dot_size,
             fill_color=theme.primary,
-            corner_radius=Inches(0.1),
+            corner_radius=Inches(0.14),
+        )
+        add_text_box(
+            slide,
+            str(i + 1),
+            dot_x, dot_y, dot_size, dot_size,
+            token=Typography.BADGE,
+            color=theme.text_on_dark,
+            alignment=PP_ALIGN.CENTER,
+            anchor=MSO_ANCHOR.MIDDLE,
         )
 
         # Milestone card below axis

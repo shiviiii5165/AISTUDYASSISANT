@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   BookOpen, MessageSquare, Target, Menu, X, LogOut, LifeBuoy,
   Presentation, PlayCircle, GraduationCap, Map, HelpCircle,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Radio,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -35,6 +35,7 @@ const NAV_GROUPS: { heading: string; items: { path: string; label: string; icon:
       { path: '/decks', label: 'PPT Generator', icon: Presentation },
       { path: '/video', label: 'Video Generator', icon: PlayCircle },
       { path: '/quizzes', label: 'Quiz Generator', icon: HelpCircle },
+      { path: '/join', label: 'Live Quiz Room', icon: Radio },
     ],
   },
 ];

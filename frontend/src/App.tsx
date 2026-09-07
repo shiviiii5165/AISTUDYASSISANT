@@ -15,6 +15,10 @@ import SupportPage from './pages/SupportPage';
 import LessonPlannerPage from './pages/LessonPlannerPage';
 import QuizGeneratorPage from './pages/QuizGeneratorPage';
 import QuizPage from './pages/QuizPage';
+import JoinLiveQuizPage from './pages/JoinLiveQuizPage';
+import LiveQuizHostPage from './pages/LiveQuizHostPage';
+import LiveQuizParticipantPage from './pages/LiveQuizParticipantPage';
+import LiveQuizReportPage from './pages/LiveQuizReportPage';
 
 import { useAuthStore } from './store/useAuthStore';
 import CookieConsent from './components/CookieConsent';
@@ -173,6 +177,17 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/join" element={<JoinLiveQuizPage />} />
+          <Route 
+            path="/quiz/:quizId/live" 
+            element={
+              <ProtectedRoute>
+                <LiveQuizHostPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/live/:sessionId" element={<LiveQuizParticipantPage />} />
+          <Route path="/live/:sessionId/report" element={<LiveQuizReportPage />} />
           <Route 
             path="/video" 
             element={

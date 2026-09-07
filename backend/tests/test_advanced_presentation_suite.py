@@ -17,12 +17,14 @@ from pptx import Presentation
 # Setup sys path for backend
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Placeholder environment variables for isolated testing
+# Load .env if present for standalone runs
+from dotenv import load_dotenv
+_root_env = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+if os.path.exists(_root_env):
+    load_dotenv(_root_env)
 os.environ.setdefault("SUPABASE_URL", "https://placeholder.supabase.co")
 os.environ.setdefault("SUPABASE_KEY", "placeholder")
 os.environ.setdefault("SUPABASE_JWT_SECRET", "placeholder")
-os.environ.setdefault("GEMINI_API_KEY", "placeholder")
-os.environ.setdefault("GROQ_API_KEY", "placeholder")
 os.environ.setdefault("CASHFREE_APP_ID", "placeholder")
 os.environ.setdefault("CASHFREE_SECRET_KEY", "placeholder")
 

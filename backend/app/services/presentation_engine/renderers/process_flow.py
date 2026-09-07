@@ -38,49 +38,67 @@ def render_process_flow(slide: Slide, content: SlideContent, theme: ThemeColors,
 
     num_steps = min(len(steps), 6)
 
-    # Horizontal layout: step cards in a row
+    # Dynamic card height calculation from content volume
+    max_detail_chars = max((len(s.detail or "") for s in steps[:num_steps]), default=0)
+    max_title_chars = max((len(s.title or "") for s in steps[:num_steps]), default=0)
+
+    est_h = Inches(1.3)
+    if max_title_chars > 20:
+        est_h += Inches(0.3)
+    if max_detail_chars > 60:
+        est_h += Inches(0.9)
+    elif max_detail_chars > 20:
+        est_h += Inches(0.5)
+
+    card_height = max(Inches(2.3), min(est_h + Inches(0.4), Inches(3.8)))
+    content_area_h = Inches(4.5)
+    row_top = ZONE_CONTENT_TOP + max(Inches(0.1), (content_area_h - card_height) / 2)
+
     total_gap = Inches(0.2) * (num_steps - 1)
     card_width = (CONTENT_WIDTH - total_gap) / num_steps
-    card_height = Inches(3.5)
 
     for i, step in enumerate(steps[:num_steps]):
         x = MARGIN_LEFT + i * (card_width + Inches(0.2))
-        y = ZONE_CONTENT_TOP + Inches(0.3)
+        y = row_top
 
-        # Step card
+        # Step card with dynamic fit
         add_card(slide, x, y, card_width, card_height,
                  fill_color=theme.surface, border_color=theme.border)
 
         # Step number circle (colored badge)
-        num_size = Inches(0.5)
+        num_size = Inches(0.42)
         add_filled_rect(
-            slide, x + card_width / 2 - num_size / 2, y + Inches(0.2),
+            slide, x + card_width / 2 - num_size / 2, y + Inches(0.15),
             num_size, num_size, theme.primary,
-            corner_radius=Inches(0.25),
+            corner_radius=Inches(0.21),
         )
         add_text_box(
             slide, str(step.number),
-            x + card_width / 2 - num_size / 2, y + Inches(0.2),
+            x + card_width / 2 - num_size / 2, y + Inches(0.15),
             num_size, num_size,
             token=Typography.BADGE, color=theme.text_on_dark,
             alignment=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE,
         )
 
         # Step title
+        title_h = Inches(0.5) if max_title_chars <= 25 else Inches(0.7)
+        title_y = y + Inches(0.62)
         add_text_box(
             slide, step.title,
-            x + Inches(0.15), y + Inches(0.85),
-            card_width - Inches(0.3), Inches(0.6),
+            x + Inches(0.15), title_y,
+            card_width - Inches(0.3), title_h,
             token=Typography.BULLET, color=theme.text,
             alignment=PP_ALIGN.CENTER,
         )
 
         # Step detail
         if step.detail:
+            detail_y = title_y + title_h + Inches(0.04)
+            avail_h = max(Inches(0.5), y + card_height - detail_y - Inches(0.12))
             add_text_box(
                 slide, step.detail,
-                x + Inches(0.15), y + Inches(1.5),
-                card_width - Inches(0.3), Inches(1.5),
+                x + Inches(0.15), detail_y,
+                card_width - Inches(0.3), avail_h,
                 token=Typography.CAPTION, color=theme.text_muted,
                 alignment=PP_ALIGN.CENTER,
             )

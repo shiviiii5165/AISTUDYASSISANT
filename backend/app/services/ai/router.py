@@ -5,7 +5,9 @@ Routes AI tasks (planning, content batches, technical reasoning, QA repair, imag
 to the optimal provider based on task cost, speed, and capability.
 Provides graceful fallback cascade on provider failures without racing multiple models by default.
 """
+import asyncio
 import logging
+import time
 from typing import List, Dict, Any, Optional
 from .base import AIProvider, LLMResponse
 from .providers.gemini import GeminiProvider
@@ -25,14 +27,14 @@ class ModelRouter:
         # Task -> Preferred Provider & Model Mapping
         self.task_policies = {
             "planning": [
-                ("groq", "qwen/qwen3.8-27b"),
                 ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("gemini", "gemini-3.6-flash"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
             "content_generation": [
-                ("groq", "qwen/qwen3.8-27b"),
                 ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("gemini", "gemini-3.6-flash"),
                 ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
             ],
@@ -79,8 +81,16 @@ class ModelRouter:
     ) -> LLMResponse:
         policies = self.task_policies.get(task, [("groq", "qwen/qwen3.8-27b"), ("gemini", "gemini-3.6-flash")])
         errors = []
+        budget_start = time.time()
 
         for provider_name, model_name in policies:
+            # Budget check: stop trying more providers if caller's timeout is exhausted
+            elapsed = time.time() - budget_start
+            remaining = timeout - elapsed
+            if remaining <= 2.0:
+                errors.append(f"router: budget exhausted after {elapsed:.1f}s")
+                break
+
             if not health_manager.can_use_provider(provider_name):
                 logger.debug(f"Skipping {provider_name} due to open circuit.")
                 continue
@@ -92,7 +102,7 @@ class ModelRouter:
                     model=model_name,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    timeout=timeout,
+                    timeout=min(remaining, 30.0),
                 )
                 health_manager.record_success(provider_name)
                 return res
@@ -113,8 +123,16 @@ class ModelRouter:
     ) -> Dict[str, Any]:
         policies = self.task_policies.get(task, [("groq", "qwen/qwen3.8-27b"), ("gemini", "gemini-3.6-flash")])
         errors = []
+        budget_start = time.time()
 
         for provider_name, model_name in policies:
+            # Budget check: stop trying more providers if caller's timeout is exhausted
+            elapsed = time.time() - budget_start
+            remaining = timeout - elapsed
+            if remaining <= 2.0:
+                errors.append(f"router: budget exhausted after {elapsed:.1f}s")
+                break
+
             if not health_manager.can_use_provider(provider_name):
                 logger.debug(f"Skipping {provider_name} due to open circuit.")
                 continue
@@ -126,7 +144,7 @@ class ModelRouter:
                     model=model_name,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    timeout=timeout,
+                    timeout=min(remaining, 30.0),
                 )
                 health_manager.record_success(provider_name)
                 return res
@@ -137,12 +155,30 @@ class ModelRouter:
 
         raise RuntimeError(f"All providers exhausted for JSON task '{task}'. Errors: {' | '.join(errors)}")
 
-    async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
-        return await self.gemini.generate_embeddings(texts)
+    async def generate_embeddings(self, texts: List[str], timeout: float = 30.0) -> List[List[float]]:
+        try:
+            return await asyncio.wait_for(
+                self.gemini.generate_embeddings(texts, timeout=timeout),
+                timeout=timeout + 5.0,
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"[Router] generate_embeddings timed out after {timeout}s")
+            raise
 
-    async def generate_image(self, prompt: str) -> Optional[bytes]:
-        return await self.gemini.generate_image(prompt)
+    async def generate_image(self, prompt: str, timeout: float = 40.0) -> Optional[bytes]:
+        try:
+            return await asyncio.wait_for(
+                self.gemini.generate_image(prompt, timeout=timeout),
+                timeout=timeout + 5.0,
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"[Router] generate_image timed out after {timeout}s for prompt: {prompt[:60]}")
+            return None
+        except Exception as e:
+            logger.error(f"[Router] generate_image failed: {e}")
+            return None
 
 
 # Singleton router instance
 router = ModelRouter()
+

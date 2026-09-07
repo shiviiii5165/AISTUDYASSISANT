@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*.local
+.env.development
+*.env.development
 
 # Local test credentials (live JWTs) — never commit
 backend/test_tokens.json

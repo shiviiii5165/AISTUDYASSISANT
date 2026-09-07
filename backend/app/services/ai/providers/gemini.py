@@ -14,7 +14,7 @@ from app.core.config import settings
 
 
 def repair_json_str(text: str) -> str:
-    """Strip markdown fences, trailing commas, and unescaped newlines."""
+    """Strip markdown fences, trailing commas, double braces, and unescaped newlines."""
     text = text.strip()
     if text.startswith("```json"):
         text = text[7:]
@@ -23,6 +23,9 @@ def repair_json_str(text: str) -> str:
     if text.endswith("```"):
         text = text[:-3]
     text = text.strip()
+    # Fix double-brace wrapping ({{ ... }}) from some LLMs
+    while text.startswith("{{") and text.endswith("}}"):
+        text = text[1:-1].strip()
     text = re.sub(r',\s*([}\]])', r'\1', text)
     return text
 
@@ -65,8 +68,8 @@ _logger = logging.getLogger("teachgenie.ai.gemini")
 
 
 class GeminiProvider(AIProvider):
-    DEFAULT_MODEL = "gemini-2.5-flash"
-    FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"]
+    DEFAULT_MODEL = "gemini-3.6-flash"
+    FALLBACK_MODELS = ["gemini-3.5-flash-lite"]
     EMBEDDING_MODEL = "gemini-embedding-001"
 
     def __init__(self, api_key: Optional[str] = None, image_api_key: Optional[str] = None):
@@ -111,14 +114,25 @@ class GeminiProvider(AIProvider):
     ) -> LLMResponse:
         models_to_try = [model or self.DEFAULT_MODEL] + [m for m in self.FALLBACK_MODELS if m != model]
         last_error = None
+        budget_start = time.time()
 
         for target_model in models_to_try:
+            # Budget check: stop trying more models if caller's timeout is exhausted
+            elapsed = time.time() - budget_start
+            remaining = timeout - elapsed
+            if remaining <= 2.0:
+                last_error = f"Gemini budget exhausted after {elapsed:.1f}s (limit {timeout}s)"
+                break
+
+            # Per-model timeout: at most 30s or remaining budget, whichever is smaller
+            per_model_timeout = min(30.0, remaining)
+
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent?key={self.api_key}"
             payload = self._build_payload(messages, temperature, max_tokens)
             start_t = time.time()
 
             try:
-                async with httpx.AsyncClient(timeout=timeout) as client:
+                async with httpx.AsyncClient(timeout=per_model_timeout) as client:
                     resp = await client.post(url, json=payload)
                     latency = (time.time() - start_t) * 1000
 
@@ -176,6 +190,7 @@ class GeminiProvider(AIProvider):
         self,
         texts: List[str],
         model: Optional[str] = None,
+        timeout: float = 30.0,
     ) -> List[List[float]]:
         if not texts:
             return []
@@ -189,7 +204,7 @@ class GeminiProvider(AIProvider):
             "taskType": "RETRIEVAL_DOCUMENT"
         } for t in texts]
 
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(url, json={"requests": requests})
             resp.raise_for_status()
             data = resp.json()
@@ -199,6 +214,7 @@ class GeminiProvider(AIProvider):
         self,
         prompt: str,
         model: Optional[str] = None,
+        timeout: float = 40.0,
     ) -> Optional[bytes]:
         key = self.image_api_key or self.api_key
         if not key:
@@ -211,17 +227,30 @@ class GeminiProvider(AIProvider):
             "Style: soft muted color palette, no text overlays, no watermarks, "
             "suitable for a professional presentation slide. White or transparent background."
         )
+        budget_start = time.time()
 
         for m in models_to_try:
+            # Budget check
+            elapsed = time.time() - budget_start
+            remaining = timeout - elapsed
+            if remaining <= 2.0:
+                _logger.warning(f"[GeminiImage] Budget exhausted after {elapsed:.1f}s")
+                break
+
+            per_model_timeout = min(20.0, remaining)
+
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
             payload = {
                 "contents": [{"parts": [{"text": enhanced_prompt}]}],
                 "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
             }
             try:
-                async with httpx.AsyncClient(timeout=45.0) as client:
+                async with httpx.AsyncClient(timeout=per_model_timeout) as client:
                     resp = await client.post(url, json=payload)
                     if resp.status_code != 200:
+                        _logger.warning(
+                            f"[GeminiImage] Model '{m}' returned status {resp.status_code}: {resp.text[:200]}"
+                        )
                         continue
                     data = resp.json()
                     candidates = data.get("candidates", [])
@@ -231,6 +260,8 @@ class GeminiProvider(AIProvider):
                             inline_data = part.get("inlineData", {})
                             if "data" in inline_data:
                                 return base64.b64decode(inline_data["data"])
-            except Exception:
+            except Exception as e:
+                _logger.warning(f"[GeminiImage] Exception for model '{m}': {e}")
                 continue
         return None
+

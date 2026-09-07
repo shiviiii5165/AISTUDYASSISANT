@@ -729,6 +729,12 @@ const TopicDeckPage: React.FC = () => {
                         <p className="mt-2 text-sm text-[var(--text-secondary)]">
                           <span className="tabular-nums font-bold">{finalSlideCount}</span> slides, <span className="font-bold">{design}</span> template, 16:9 widescreen PPTX
                         </p>
+                        {finalSlideCount > slideCount && (
+                          <div className="mt-2.5 inline-flex items-center gap-2 rounded-lg border border-[var(--accent-royal)]/30 bg-[var(--accent-baby)]/20 px-3 py-1.5 text-xs font-medium text-[var(--accent-royal)]">
+                            <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span>Expanded to {finalSlideCount} slides to ensure complete topic coverage — you can trim manually.</span>
+                          </div>
+                        )}
                       </div>
                       <a
                         href={downloadUrl}

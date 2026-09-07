@@ -32,7 +32,7 @@ async def generate_outline_step(
     """Step 1: Generate N-slide outline."""
     config = PresentationConfig(
         topic=topic,
-        slide_count=slide_count if slide_count in [10, 11, 12, 13, 14, 15] else 12,
+        slide_count=slide_count if 10 <= slide_count <= 17 else 12,
         audience=audience,
         depth=depth,
         design=DesignSystem(design) if design in [e.value for e in DesignSystem] else DesignSystem.ACADEMIC_CLEAN,
@@ -53,9 +53,10 @@ async def expand_outline_step(
     user_id: str = "",
 ) -> Dict[str, Any]:
     """Step 2: Expand outline to full slide content in 5-slide batches."""
+    actual_count = len(outline_data.get("slides", [])) or slide_count
     config = PresentationConfig(
         topic=topic,
-        slide_count=slide_count if slide_count in [10, 11, 12, 13, 14, 15] else len(outline_data.get("slides", [])) or 12,
+        slide_count=actual_count if 10 <= actual_count <= 17 else 12,
         audience=audience,
         source_type=source_type,
         source_id=source_id,
@@ -80,7 +81,7 @@ async def quality_review_step(
     slides = expanded_data.get("slides") or expanded_data.get("sections") or []
     config = PresentationConfig(
         topic=topic,
-        slide_count=len(slides) if len(slides) in [10, 11, 12, 13, 14, 15] else 12,
+        slide_count=len(slides) if 10 <= len(slides) <= 17 else 12,
         audience=audience,
     )
     reviewed_slides = await run_presentation_qa(config, slides)
@@ -101,7 +102,7 @@ async def render_deck_step(
 ) -> str:
     """Step 3: Resolve visuals, render PPTX, upload to Supabase storage, update DB."""
     slides = final_deck_json.get("slides") or final_deck_json.get("sections") or []
-    slide_count = len(slides) if len(slides) in [10, 11, 12, 13, 14, 15] else 12
+    slide_count = len(slides) if 10 <= len(slides) <= 17 else 12
     
     config = PresentationConfig(
         topic=topic,

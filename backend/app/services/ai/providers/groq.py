@@ -14,8 +14,8 @@ from app.core.config import settings
 
 
 class GroqProvider(AIProvider):
-    DEFAULT_MODEL = "qwen/qwen3.8-27b"
-    FALLBACK_MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"]
+    DEFAULT_MODEL = "openai/gpt-oss-120b"
+    FALLBACK_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"]
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="groq")
@@ -29,6 +29,7 @@ class GroqProvider(AIProvider):
         temperature: float = 0.3,
         max_tokens: int = 4096,
         timeout: float = 60.0,
+        response_format: Optional[Dict[str, Any]] = None,
     ) -> LLMResponse:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -37,17 +38,31 @@ class GroqProvider(AIProvider):
         }
         models_to_try = [model or self.DEFAULT_MODEL] + [m for m in self.FALLBACK_MODELS if m != model]
         last_err = None
+        budget_start = time.time()
 
         for target_model in models_to_try:
+            # Budget check: stop trying more models if caller's timeout is exhausted
+            elapsed = time.time() - budget_start
+            remaining = timeout - elapsed
+            if remaining <= 2.0:
+                last_err = f"Groq budget exhausted after {elapsed:.1f}s (limit {timeout}s)"
+                break
+
+            # Per-model timeout: at most 30s or remaining budget, whichever is smaller
+            per_model_timeout = min(30.0, remaining)
+
             payload = {
                 "model": target_model,
                 "messages": messages,
                 "temperature": temperature,
                 "max_tokens": max_tokens,
             }
+            if response_format:
+                payload["response_format"] = response_format
+
             start_t = time.time()
             try:
-                async with httpx.AsyncClient(timeout=timeout) as client:
+                async with httpx.AsyncClient(timeout=per_model_timeout) as client:
                     resp = await client.post(url, json=payload, headers=headers)
                     latency = (time.time() - start_t) * 1000
 
@@ -90,5 +105,6 @@ class GroqProvider(AIProvider):
             temperature=temperature,
             max_tokens=max_tokens,
             timeout=timeout,
+            response_format={"type": "json_object"},
         )
         return safe_parse_json(response.text)
