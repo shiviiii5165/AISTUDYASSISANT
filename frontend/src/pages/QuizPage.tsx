@@ -506,7 +506,7 @@ const QuizPage: React.FC = () => {
 
     const correctCount = results.correct_count ?? results.score?.correct_count ?? 0;
     const totalQ = results.total_questions ?? results.score?.total_questions ?? questions.length;
-    const perQuestionMap = new Map((results.per_question_results || []).map((r: any) => [r.question_id, r]));
+    const perQuestionMap = new Map<string, any>((results.per_question_results || []).map((r: any) => [r.question_id, r]));
     
     return (
       <AppLayout title="Quiz Results">
@@ -547,7 +547,7 @@ const QuizPage: React.FC = () => {
           <div className="space-y-6">
             <h2 className="font-display text-xl font-bold text-[var(--text-primary)]">Question Review</h2>
             {questions.map((q, index) => {
-              const qRes = perQuestionMap.get(q.id);
+              const qRes: any = perQuestionMap.get(q.id);
               const userAnswer = qRes ? qRes.given_answer : results.answers?.[q.id];
               const isCorrect = qRes ? qRes.is_correct : (Array.isArray(q.correct_answer) ? q.correct_answer.includes(userAnswer) : q.correct_answer === userAnswer);
 
