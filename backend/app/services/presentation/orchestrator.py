@@ -8,6 +8,7 @@ Coordinates the hardened end-to-end presentation lifecycle:
 
 All steps are wrapped in per-step timeouts to prevent indefinite hangs.
 Total pipeline execution is hard-capped at PIPELINE_TIMEOUT_SECONDS.
+QA and Reviewer steps degrade gracefully — their failure never kills the pipeline.
 """
 from app.core.logging import logger
 import asyncio
@@ -24,12 +25,12 @@ from .reviewer_agent import run_reviewer_critic
 from app.db.supabase_client import supabase
 
 # --- Timeout Configuration (seconds) ---
-PIPELINE_TIMEOUT_SECONDS = 120.0
+PIPELINE_TIMEOUT_SECONDS = 240.0
 STEP_TIMEOUTS = {
-    "ontology": 30.0,
-    "planner": 45.0,
-    "content": 45.0,
-    "visual": 45.0,
+    "ontology": 35.0,
+    "planner": 50.0,
+    "content": 60.0,
+    "visual": 50.0,
     "qa": 30.0,
     "reviewer": 30.0,
 }
@@ -42,6 +43,18 @@ async def _run_step(name: str, coro, timeout: float):
     except asyncio.TimeoutError:
         logger.error(f"[Orchestrator] Step '{name}' timed out after {timeout}s — aborting step.")
         raise TimeoutError(f"Pipeline step '{name}' exceeded {timeout}s timeout")
+
+
+async def _run_step_graceful(name: str, coro, timeout: float, fallback):
+    """Execute a pipeline step with graceful degradation — returns fallback on any failure."""
+    try:
+        return await asyncio.wait_for(coro, timeout=timeout)
+    except asyncio.TimeoutError:
+        logger.warning(f"[Orchestrator] Step '{name}' timed out after {timeout}s — using fallback (graceful).")
+        return fallback
+    except Exception as e:
+        logger.warning(f"[Orchestrator] Step '{name}' failed ({e}) — using fallback (graceful).")
+        return fallback
 
 
 async def _generate_presentation_inner(
@@ -109,23 +122,25 @@ async def _generate_presentation_inner(
     if on_stage_update:
         on_stage_update("qa", 80)
 
-    # 4. STRUCTURAL QA AGENT (Bounds, length, auto-heal)
+    # 4. STRUCTURAL QA AGENT (Bounds, length, auto-heal) — GRACEFUL: failure uses slides as-is
     logger.info(f"[Orchestrator] Step 4: Running Python QA bounds & repair loop...")
-    qa_slides = await _run_step(
+    qa_slides = await _run_step_graceful(
         "qa",
         run_presentation_qa(config, slides_with_visuals),
         STEP_TIMEOUTS["qa"],
+        fallback=slides_with_visuals,
     )
 
     if on_stage_update:
         on_stage_update("review", 90)
 
-    # 4.5 REVIEWER / CRITIC AGENT (Pedagogical depth & variety check)
+    # 4.5 REVIEWER / CRITIC AGENT (Pedagogical depth & variety check) — GRACEFUL
     logger.info(f"[Orchestrator] Step 4.5: Running Reviewer Critic & targeted polish...")
-    final_slide_dicts = await _run_step(
+    final_slide_dicts = await _run_step_graceful(
         "reviewer",
         run_reviewer_critic(config, qa_slides, ontology=ontology),
         STEP_TIMEOUTS["reviewer"],
+        fallback=qa_slides,
     )
 
     # 5. Build strict PresentationSpec
@@ -215,7 +230,8 @@ async def generate_presentation_pipeline(
     """
     Executes the modular AI presentation generation pipeline.
     Returns (PresentationSpec, pptx_bytes).
-    Hard-capped at PIPELINE_TIMEOUT_SECONDS (120s) to prevent indefinite hangs.
+    Hard-capped at PIPELINE_TIMEOUT_SECONDS (240s) to prevent indefinite hangs.
+    QA and Reviewer steps degrade gracefully to avoid pipeline-killing timeouts.
     """
     pipeline_start = time.time()
     try:

@@ -6,6 +6,7 @@ underfit ratio) and performs targeted single-slide AI repair when structural or
 content defects are found. Respects slide count flex up to +2.
 """
 from app.core.logging import logger
+import asyncio
 import json
 from typing import List, Dict, Any, Optional
 from app.services.ai import router
@@ -99,20 +100,24 @@ async def repair_single_slide(
 ) -> Dict[str, Any]:
     """
     Targeted single-slide AI repair pass. Capped strictly at 1 invocation.
+    Hard-capped at 12s per repair to prevent pipeline stalls.
     """
     try:
         user_prompt = f"Fix issues in this slide:\nSlide Content:\n{json.dumps(slide, indent=2)}\n\nIssues Identified:\n" + "\n".join(issues)
         if directive:
             user_prompt += f"\n\nReviewer Repair Directive:\n{directive}"
 
-        patch_res = await router.generate_json(
-            task="repair",
-            messages=[
-                {"role": "system", "content": SLIDE_PATCH_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.2,
-            max_tokens=2000,
+        patch_res = await asyncio.wait_for(
+            router.generate_json(
+                task="repair",
+                messages=[
+                    {"role": "system", "content": SLIDE_PATCH_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.2,
+                max_tokens=2000,
+            ),
+            timeout=12.0,
         )
         if patch_res and patch_res.get("title"):
             # Preserve original visual_spec and numbering
@@ -120,9 +125,14 @@ async def repair_single_slide(
             patch_res["image_bytes"] = slide.get("image_bytes")
             patch_res["slide_no"] = slide.get("slide_no")
             return auto_heal_slide_python(patch_res)
+    except asyncio.TimeoutError:
+        logger.warning(f"[QA Agent] AI slide patch timed out (12s) for slide {slide.get('slide_no')} — using auto-healed version.")
     except Exception as e:
         logger.error(f"[QA Agent] AI slide patch failed for slide {slide.get('slide_no')}: {e}")
     return slide
+
+
+MAX_AI_REPAIRS = 3  # Cap expensive sequential LLM repair calls
 
 
 async def run_presentation_qa(
@@ -131,6 +141,7 @@ async def run_presentation_qa(
 ) -> List[Dict[str, Any]]:
     """
     Executes Python structural QA, auto-heals overflow, and performs targeted AI repair.
+    AI repairs are capped at MAX_AI_REPAIRS (3) to prevent timeout cascades.
     Allows slide count to flex up to config.slide_count + 2 without truncation.
     """
     max_allowed = config.slide_count + 2
@@ -151,15 +162,19 @@ async def run_presentation_qa(
             })
 
     # 2. Run Python QA & Auto-Healing on each slide
+    ai_repairs_used = 0
     repaired_slides = []
     for s in slides:
         healed = auto_heal_slide_python(s)
         issues = inspect_slide_structure(healed)
 
-        # 3. If major structural issues exist, trigger targeted single repair (max 1 pass)
-        if len(issues) >= 3:
-            logger.info(f"[QA Agent] Slide {s.get('slide_no')} has {len(issues)} structural issues; triggering AI patch.")
+        # 3. If major structural issues exist AND we haven't hit the repair cap, trigger AI patch
+        if len(issues) >= 3 and ai_repairs_used < MAX_AI_REPAIRS:
+            logger.info(f"[QA Agent] Slide {s.get('slide_no')} has {len(issues)} structural issues; triggering AI patch ({ai_repairs_used + 1}/{MAX_AI_REPAIRS}).")
             healed = await repair_single_slide(healed, issues)
+            ai_repairs_used += 1
+        elif len(issues) >= 3:
+            logger.info(f"[QA Agent] Slide {s.get('slide_no')} has {len(issues)} issues but AI repair cap reached — using auto-heal only.")
 
         repaired_slides.append(healed)
 

@@ -14,6 +14,7 @@ Acts as the final pedagogical and visual quality gate before PPTX rendering:
    - Strictly capped at 1 iteration (speed and stability prioritized).
 """
 from app.core.logging import logger
+import asyncio
 import json
 import re
 from typing import List, Dict, Any, Optional
@@ -209,8 +210,15 @@ async def run_reviewer_critic(
             s_no = s.get("slide_no")
             if s_no in repair_queue:
                 issues, directive = repair_queue[s_no]
-                healed = await repair_single_slide(s, issues, directive=directive)
-                repaired_slides.append(healed)
+                try:
+                    healed = await asyncio.wait_for(
+                        repair_single_slide(s, issues, directive=directive),
+                        timeout=12.0,
+                    )
+                    repaired_slides.append(healed)
+                except (asyncio.TimeoutError, Exception) as e:
+                    logger.warning(f"[ReviewerAgent] Repair for slide {s_no} failed ({e}) — keeping original.")
+                    repaired_slides.append(s)
             else:
                 repaired_slides.append(s)
         return repaired_slides

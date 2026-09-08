@@ -209,17 +209,17 @@ async def expand_presentation_content(
     BATCH_SIZE = 3
     batches = [planned_slides[i:i + BATCH_SIZE] for i in range(0, len(planned_slides), BATCH_SIZE)]
     
-    # Process batches concurrently with asyncio.gather (hard 40s cap)
+    # Process batches concurrently with asyncio.gather (hard 35s cap)
     try:
         batch_results = await asyncio.wait_for(
             asyncio.gather(
                 *[_expand_single_batch(b, config, user_id) for b in batches],
                 return_exceptions=True,
             ),
-            timeout=40.0,
+            timeout=35.0,
         )
     except asyncio.TimeoutError:
-        logger.warning(f"[ContentAgent] Batch expansion timed out after 40s. Using fallback templates for all slides.")
+        logger.warning(f"[ContentAgent] Batch expansion timed out after 35s. Using fallback templates for all slides.")
         batch_results = []
 
     expanded_slides: List[Dict[str, Any]] = []
