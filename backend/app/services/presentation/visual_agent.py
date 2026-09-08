@@ -25,6 +25,36 @@ async def resolve_slide_visuals(
     image_tasks = []
     image_slide_indices = []
 
+    # ═══════════════════════════════════════════════════════════════════════
+    # Deck-Level Visual Style Decision (consistent visual cohesion)
+    # ═══════════════════════════════════════════════════════════════════════
+    topic_lower = config.topic.lower()
+
+    # Abstract/conceptual topics → prefer illustration-style visuals
+    illustration_signals = ["algorithm", "theory", "abstract", "logic", "mathematics",
+                            "philosophy", "paradigm", "pattern", "principle", "model",
+                            "framework", "computation", "automata", "formal"]
+    # Concrete/physical topics → prefer stock photography
+    photo_signals = ["biology", "chemistry", "engineering", "medicine", "anatomy",
+                     "ecology", "geology", "architecture", "manufacturing", "agriculture",
+                     "food", "sports", "transport", "cooking", "wildlife", "ocean"]
+
+    illustration_score = sum(1 for s in illustration_signals if s in topic_lower)
+    photo_score = sum(1 for s in photo_signals if s in topic_lower)
+
+    if illustration_score > photo_score:
+        deck_visual_style = "illustration"
+    elif photo_score > illustration_score:
+        deck_visual_style = "stock_photo"
+    else:
+        deck_visual_style = "stock_photo"  # Default to stock photo for most topics
+
+    logger.info(f"[VisualAgent] Deck visual style: {deck_visual_style} "
+                f"(illustration={illustration_score}, photo={photo_score})")
+
+    # Consistent framing: all images in a deck use the same corner radius
+    DECK_CORNER_RADIUS = 0.12  # inches — applied consistently to all images
+
     # Lazy-load ImageService to avoid import-time initialization
     image_service = None
     if config.enable_images:
@@ -105,13 +135,15 @@ async def resolve_slide_visuals(
 
                 image_slide_indices.append(i)
 
-        # Attach initial visual spec
+        # Attach initial visual spec with deck-level style metadata
         slide["visual_spec"] = {
             "kind": visual_kind.value if hasattr(visual_kind, "value") else str(visual_kind),
             "asset_required": (visual_kind == VisualKind.IMAGE),
             "image_prompt": image_query if visual_kind == VisualKind.IMAGE else "",
             "diagram_spec": diagram_spec.dict() if diagram_spec else None,
             "image_bytes": None,
+            "deck_visual_style": deck_visual_style,
+            "corner_radius_inches": DECK_CORNER_RADIUS,
         }
 
     # 3. Concurrently resolve stock photos for selected slides (hard 30s cap)

@@ -18,6 +18,7 @@ from app.services.presentation_engine.renderers.base import (
     add_filled_rect, add_text_box, add_bullet_list, add_card, add_image,
     add_footer, add_speaker_notes, add_kpi_metrics, add_gradient_bar
 )
+from app.services.presentation_engine.renderers.eyebrow_tag import render_eyebrow_tag
 from ..diagrams import render_flow_diagram, render_architecture_diagram, render_timeline_diagram, render_comparison_diagram
 
 
@@ -72,13 +73,20 @@ def render_minimal_slide(
         add_speaker_notes(slide, notes)
         return
 
+    # Eyebrow tag (section label) above title — when present
+    section_label = slide_spec.get("section_label") or ""
+    title_top = Inches(0.8)
+    if section_label:
+        render_eyebrow_tag(slide, section_label, MARGIN_LEFT, Inches(0.55), theme)
+        title_top = Inches(0.95)
+
     # Title area
     add_text_box(
-        slide, title, MARGIN_LEFT, Inches(0.8), CONTENT_WIDTH, Inches(1.0),
+        slide, title, MARGIN_LEFT, title_top, CONTENT_WIDTH, Inches(1.0),
         token=Typography.SLIDE_TITLE, color=theme.text, bold=True, word_wrap=True
     )
 
-    content_top = Inches(2.0)
+    content_top = Inches(2.0) if not section_label else Inches(2.1)
     content_h = Inches(4.6)
 
     from .dispatch import dispatch_pedagogical_component
@@ -113,12 +121,13 @@ def render_minimal_slide(
 
             ex_top = content_top + bullet_h + Inches(0.2)
             ex_h = content_h - bullet_h - Inches(0.2)
+            card_pad = Inches(0.3)
             add_card(slide, MARGIN_LEFT, ex_top, text_w, ex_h,
                      fill_color=theme.surface, border_color=theme.border)
-            add_text_box(slide, "EXAMPLE", MARGIN_LEFT + Inches(0.2), ex_top + Inches(0.12),
-                         text_w - Inches(0.4), Inches(0.28), token=Typography.BADGE, color=theme.accent)
-            add_text_box(slide, example, MARGIN_LEFT + Inches(0.2), ex_top + Inches(0.42),
-                         text_w - Inches(0.4), ex_h - Inches(0.55),
+            add_text_box(slide, "EXAMPLE", MARGIN_LEFT + card_pad, ex_top + Inches(0.18),
+                         text_w - (card_pad * 2), Inches(0.28), token=Typography.BADGE, color=theme.accent)
+            add_text_box(slide, example, MARGIN_LEFT + card_pad, ex_top + Inches(0.48),
+                         text_w - (card_pad * 2), ex_h - Inches(0.65),
                          token=Typography.BODY, color=theme.text, italic=True, word_wrap=True)
         else:
             text_w = Inches(6.5)

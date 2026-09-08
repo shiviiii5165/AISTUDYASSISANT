@@ -21,6 +21,9 @@ from app.services.presentation_engine.renderers.worked_example_table import rend
 from app.services.presentation_engine.renderers.icon_badge_row import render_icon_badge_row
 from app.services.presentation_engine.renderers.hub_and_spoke import render_hub_and_spoke
 from app.services.presentation_engine.renderers.illustrated_icon_grid import render_illustrated_icon_grid
+from app.services.presentation_engine.renderers.concept_split import render_concept_split
+from app.services.presentation_engine.renderers.annotated_tiers import render_annotated_tiers
+from app.services.presentation_engine.renderers.example_grid import render_example_grid
 
 COMPONENT_RENDERERS = {
     "definition_box": render_definition_box,
@@ -33,6 +36,9 @@ COMPONENT_RENDERERS = {
     "icon_badge_row": render_icon_badge_row,
     "hub_and_spoke": render_hub_and_spoke,
     "illustrated_icon_grid": render_illustrated_icon_grid,
+    "concept_split": render_concept_split,
+    "annotated_tiers": render_annotated_tiers,
+    "example_grid": render_example_grid,
 }
 
 def to_slide_content(slide_spec: dict) -> SlideContent:
@@ -88,13 +94,24 @@ def dispatch_pedagogical_component(
     renderer = COMPONENT_RENDERERS.get(pattern_key)
     if renderer:
         content = to_slide_content(slide_spec)
+
+        # Build extra kwargs for variant selection
+        extra_kw = dict(
+            slide_number=slide_number,
+            total_slides=total_slides,
+            deck_title=deck_title,
+        )
+        # Thin-rule numeral variant for editorial/minimal themes on numbered_process
+        if pattern_key == "numbered_process":
+            theme_name = getattr(theme, "name", "").lower()
+            if any(t in theme_name for t in ["minimal", "charcoal", "editorial"]):
+                extra_kw["prefer_thin_rule"] = True
+
         renderer(
             slide=slide,
             content=content,
             theme=theme,
-            slide_number=slide_number,
-            total_slides=total_slides,
-            deck_title=deck_title
+            **extra_kw,
         )
 
         # After renderer fires, also add a corner image if available

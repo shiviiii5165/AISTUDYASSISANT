@@ -17,6 +17,7 @@ from app.services.presentation_engine.renderers.base import (
     add_filled_rect, add_text_box, add_bullet_list, add_card, add_image,
     add_footer, add_speaker_notes, add_kpi_metrics, add_gradient_bar
 )
+from app.services.presentation_engine.renderers.eyebrow_tag import render_eyebrow_tag
 from ..diagrams import render_flow_diagram, render_architecture_diagram, render_timeline_diagram, render_comparison_diagram
 
 
@@ -68,8 +69,15 @@ def render_editorial_slide(
         add_speaker_notes(slide, notes)
         return
 
+    # Eyebrow tag (section label) above title — when present
+    section_label = slide_spec.get("section_label") or ""
+    title_top = Inches(0.6)
+    if section_label:
+        render_eyebrow_tag(slide, section_label, MARGIN_LEFT, Inches(0.35), theme)
+        title_top = Inches(0.72)
+
     # Asymmetric Header: Title left, key message right
-    add_text_box(slide, title, MARGIN_LEFT, Inches(0.6), Inches(7.5), Inches(1.1),
+    add_text_box(slide, title, MARGIN_LEFT, title_top, Inches(7.5), Inches(1.1),
                  token=Typography.SLIDE_TITLE, color=theme.text, bold=True, word_wrap=True)
 
     if key_msg:
@@ -114,12 +122,13 @@ def render_editorial_slide(
 
             ex_top = content_top + bullet_h + Inches(0.2)
             ex_h = content_h - bullet_h - Inches(0.35)
+            card_pad = Inches(0.3)
             add_card(slide, right_left, ex_top, right_w, ex_h,
                      fill_color=theme.surface_alt, border_color=theme.border)
-            add_text_box(slide, "EXAMPLE", right_left + Inches(0.2), ex_top + Inches(0.12),
-                         right_w - Inches(0.4), Inches(0.28), token=Typography.BADGE, color=theme.accent)
-            add_text_box(slide, example, right_left + Inches(0.2), ex_top + Inches(0.42),
-                         right_w - Inches(0.4), ex_h - Inches(0.55),
+            add_text_box(slide, "EXAMPLE", right_left + card_pad, ex_top + Inches(0.18),
+                         right_w - (card_pad * 2), Inches(0.28), token=Typography.BADGE, color=theme.accent)
+            add_text_box(slide, example, right_left + card_pad, ex_top + Inches(0.48),
+                         right_w - (card_pad * 2), ex_h - Inches(0.65),
                          token=Typography.BODY, color=theme.text, italic=True, word_wrap=True)
         else:
             img_w = Inches(5.2)

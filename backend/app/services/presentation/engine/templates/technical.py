@@ -19,6 +19,7 @@ from app.services.presentation_engine.renderers.base import (
     add_footer, add_speaker_notes, add_kpi_metrics, add_gradient_bar,
     add_category_pill
 )
+from app.services.presentation_engine.renderers.eyebrow_tag import render_eyebrow_tag
 from ..diagrams import render_flow_diagram, render_architecture_diagram, render_timeline_diagram, render_comparison_diagram
 
 
@@ -84,11 +85,15 @@ def render_technical_slide(
     add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.06),
                      theme.primary, theme.accent)
 
-    # Category / Tag Pill
-    tag_str = stype.replace("_", " ").upper()
-    add_category_pill(slide, tag_str, MARGIN_LEFT, Inches(0.45),
-                      bg_color=theme.primary_light, text_color=theme.primary,
-                      width=Inches(1.8), height=Inches(0.28))
+    # Category / Tag Pill — prefer section_label (eyebrow tag) when present
+    section_label = slide_spec.get("section_label") or ""
+    if section_label:
+        render_eyebrow_tag(slide, section_label, MARGIN_LEFT, Inches(0.45), theme)
+    else:
+        tag_str = stype.replace("_", " ").upper()
+        add_category_pill(slide, tag_str, MARGIN_LEFT, Inches(0.45),
+                          bg_color=theme.primary_light, text_color=theme.primary,
+                          width=Inches(1.8), height=Inches(0.28))
 
     # Title
     add_text_box(slide, title, MARGIN_LEFT, Inches(0.8), CONTENT_WIDTH, Inches(0.85),
@@ -154,14 +159,15 @@ def render_technical_slide(
                         token=Typography.BULLET, text_color=theme.text, accent_color=theme.primary)
 
         # Right-side Technical Callout Card
+        card_pad = Inches(0.3)
         add_card(slide, col2_left, content_top, col2_w, content_h - Inches(0.2),
                  fill_color=theme.surface, border_color=theme.border)
-        add_text_box(slide, "SPECIFICATION DETAILS", col2_left + Inches(0.2), content_top + Inches(0.2),
-                     col2_w - Inches(0.4), Inches(0.3), token=Typography.BADGE, color=theme.primary)
+        add_text_box(slide, "SPECIFICATION DETAILS", col2_left + card_pad, content_top + Inches(0.2),
+                     col2_w - (card_pad * 2), Inches(0.3), token=Typography.BADGE, color=theme.primary)
         
         detail_text = example or key_msg or "Core architectural parameter specification and operational guarantees."
-        add_text_box(slide, detail_text, col2_left + Inches(0.2), content_top + Inches(0.6),
-                     col2_w - Inches(0.4), content_h - Inches(1.0), token=Typography.CAPTION,
+        add_text_box(slide, detail_text, col2_left + card_pad, content_top + Inches(0.6),
+                     col2_w - (card_pad * 2), content_h - Inches(1.0), token=Typography.CAPTION,
                      color=theme.text, word_wrap=True)
 
     add_footer(slide, slide_number, total_slides, theme, section_name=deck_title)

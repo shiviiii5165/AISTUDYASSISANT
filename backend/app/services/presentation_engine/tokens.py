@@ -109,6 +109,7 @@ class Typography:
     KPI_NUMBER     = TypeToken("Georgia", Pt(52), bold=True, line_spacing=1.0)
     KPI_LABEL      = TypeToken("Calibri", Pt(14), line_spacing=1.2)
     QUOTE          = TypeToken("Georgia", Pt(22), italic=True, line_spacing=1.4)
+    NUMERAL_STEP   = TypeToken("Georgia", Pt(28), bold=True, line_spacing=1.0)  # "01" / "02" thin-rule variant
 
     # Metadata
     CAPTION        = TypeToken("Calibri", Pt(11), line_spacing=1.2)

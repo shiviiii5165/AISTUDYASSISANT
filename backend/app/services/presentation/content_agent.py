@@ -187,6 +187,32 @@ def detect_content_pattern_fallback_dict(slide: Dict[str, Any]) -> str:
     if any(w in title_l for w in ["worked example", "step-by-step trace", "walkthrough", "trace table"]):
         return "worked_example_table"
 
+    # 9. Annotated Tiers — hierarchical / classification / taxonomy slides
+    tier_keywords = ["hierarchy", "classification", "taxonomy", "levels of", "layers of",
+                     "tiers of", "categories of", "spectrum", "pyramid", "maturity model"]
+    if any(w in comb for w in tier_keywords):
+        return "annotated_tiers"
+
+    # 10. Example Grid — application / use-case slides with 3+ concrete examples
+    app_keywords = ["application", "use case", "real-world", "industry", "example",
+                    "where is", "who uses", "practical use", "deployment"]
+    bullets = slide.get("body_bullets") or []
+    if any(w in title_l for w in app_keywords) and len(bullets) >= 3:
+        return "example_grid"
+
+    # 11. Concept Split — single-idea slide with strong image potential
+    # A concept slide that has an image_query AND definition-like content
+    # (key_insight or example present) gets the premium split-screen treatment
+    image_query = (slide.get("image_query") or "").strip()
+    has_definition_content = bool(slide.get("key_insight") or slide.get("example") or
+                                  (slide.get("body_bullets") and len(slide.get("body_bullets", [])) >= 2))
+    # Detect single-concept slides (not multi-item lists or process slides)
+    concept_keywords = ["what is", "core", "mechanism", "principle", "overview", "introduction",
+                        "fundamentals", "architecture", "concept", "how does", "types of"]
+    is_concept_like = any(w in title_l for w in concept_keywords) or slide.get("type") in ["concept", "definition"]
+    if image_query and has_definition_content and is_concept_like:
+        return "concept_split"
+
     # Default fallback: plain text bullets (never a shape or circle-pill)
     return "plain_concept"
 

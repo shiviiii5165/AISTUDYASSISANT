@@ -51,6 +51,14 @@ CRITICAL RULES:
    - BAD: "Understanding photosynthesis is important"
    - GOOD: "Chlorophyll absorbs red (680nm) and blue (430nm) light while reflecting green, which is why plants appear green to human eyes"
 7. NO LATEX: Never use LaTeX, MathJax, or TeX notation (no $, $$, \\text, \\frac). Write math/science in plain text (e.g. (a*b)/c, A -> B).
+8. SECTION LABELS (eyebrow tags): When the topic naturally breaks into labeled sections, types, phases, or categories, assign a SHORT section_label string to each slide indicating where it sits in the deck's structure. This appears as a small tag above the slide title.
+   - For a taxonomy (e.g. "Types of X"): use "TYPE 1", "TYPE 2", etc. for each type's concept slide, and "TYPE 1 — APPLICATIONS" for its applications slide.
+   - For a phased topic: use "PHASE 1", "PHASE 2", etc.
+   - For a chapter structure: use "CHAPTER OVERVIEW", "CORE MECHANISM", "REAL-WORLD IMPACT", etc.
+   - The hero slide and closing slide do NOT get section_labels.
+   - A slide introducing a taxonomy/overview before diving into individual items gets "CHAPTER OVERVIEW" or "OVERVIEW".
+   - Keep labels SHORT (2-4 words max). Reuse the same label root for related slides (e.g. "TYPE 1" and "TYPE 1 — APPLICATIONS").
+   - If the topic does NOT naturally break into labeled sections, omit section_label entirely (null/empty). Do NOT force generic labels.
 
 Return strict JSON:
 {{
@@ -63,7 +71,8 @@ Return strict JSON:
       "type": "hero",
       "title": "...",
       "key_message": "Complete, information-dense thesis sentence for this slide",
-      "visual_hint": "none|diagram|architecture|flow|timeline|comparison|image"
+      "visual_hint": "none|diagram|architecture|flow|timeline|comparison|image",
+      "section_label": null
     }}
   ]
 }}
@@ -83,6 +92,25 @@ GOOD bullets (specific, memorable, teachable):
 • "Chlorophyll a absorbs 680nm red and 430nm blue light — reflecting green"
 • "ADP + Pi → ATP releases ~30.5 kJ/mol; cells run ~300 ATP cycles per second"
 • "TCP 3-way handshake: SYN → SYN-ACK → ACK adds ~1 RTT to every new connection"
+
+CONCRETENESS STANDARD — stats and examples MUST hit this bar:
+Every stat MUST include a specific number with a named source. Every example MUST name a real entity, system, or study.
+
+BAD stat (REJECTED — vague, unsourced):
+• "The market is growing rapidly and is worth billions"
+• "Many organizations use this technology successfully"
+
+GOOD stat (REQUIRED level of specificity):
+• "The global ML market grew from $21.17B (2022) to a projected $209.91B by 2029 — 38.8% CAGR (Fortune Business Insights)"
+• "CRISPR gene editing reduced sickle cell disease symptoms in 29 of 31 patients (Vertex/CRISPR Therapeutics, NEJM 2023)"
+
+BAD example (REJECTED — generic, unnamed):
+• "Healthcare applications benefit from machine learning"
+• "Many companies use this approach to improve efficiency"
+
+GOOD example (REQUIRED level of specificity):
+• "Medical Diagnosis: Google Health's deep learning model detects diabetic retinopathy from retinal scans with 97.5% sensitivity, matching board-certified ophthalmologists (JAMA, 2019)"
+• "Fraud Detection: Visa's AI system screens 500M+ daily transactions, preventing an estimated $25B in annual fraud (Visa Annual Report 2022)"
 
 CRITICAL CONTENT RULES:
 1. INFORMATION-DENSE BULLETS: 4-6 bullets per slide. Each bullet must be a specific, standalone educational fact — a mechanism, number, cause-effect relationship, or real-world implication. Target 70-95 characters per bullet. Never use filler language.
@@ -119,6 +147,9 @@ CRITICAL CONTENT RULES:
     - "icon_badge_row": 3-5 core pillars / architectural facets
     - "hub_and_spoke": central concept with 4 surrounding satellites
     - "illustrated_icon_grid": structural CS data structures (stack, queue, tree, graph, database) ONLY
+    - "concept_split": split-screen concept slide — definition/key insight on one side, themed image on the other, with 2-3 icon-led sub-points. Best for single-idea slides with strong visual potential.
+    - "annotated_tiers": hierarchical tier diagram — pyramid (3 tiers) or stacked rectangles (4+) with annotated captions. Best for taxonomies, classification levels, or layered architectures.
+    - "example_grid": 2x2 or row grid of real-world application examples with icons. Best for "Applications of X" or "Use Cases" slides with 3-4 concrete domain examples.
     - "plain_concept": clean, high-density bullet points (use sparingly, max 30% of deck)
 
 Return strict JSON:

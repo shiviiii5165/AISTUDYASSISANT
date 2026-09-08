@@ -178,6 +178,7 @@ async def _generate_presentation_inner(
             speaker_notes=s.get("speaker_notes", ""),
             image_query=s.get("image_query", ""),
             content_pattern=s.get("content_pattern"),
+            section_label=s.get("section_label"),
             visual=vspec,
             source_refs=source_refs,
             layers=s.get("layers", []),

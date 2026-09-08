@@ -22,6 +22,7 @@ from app.services.presentation_engine.renderers.base import (
     add_footer, add_speaker_notes, add_category_pill, add_kpi_metrics,
     add_gradient_bar, add_accent_bar
 )
+from app.services.presentation_engine.renderers.eyebrow_tag import render_eyebrow_tag
 from ..diagrams import (
     render_flow_diagram, render_architecture_diagram,
     render_timeline_diagram, render_comparison_diagram
@@ -156,17 +157,25 @@ def render_academic_slide(
     add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.06),
                      theme.primary, theme.accent)
 
+    # Eyebrow tag (section label) above title — when present
+    section_label = slide_spec.get("section_label") or ""
+    title_top = Inches(0.5)
+    if section_label:
+        render_eyebrow_tag(slide, section_label, MARGIN_LEFT, Inches(0.25), theme)
+        title_top = Inches(0.62)  # Shift title down slightly to make room
+
     # Vertical accent bar next to title
-    add_accent_bar(slide, MARGIN_LEFT - Inches(0.15), Inches(0.45),
+    add_accent_bar(slide, MARGIN_LEFT - Inches(0.15), title_top - Inches(0.05),
                    width=Inches(0.06), height=Inches(0.65), color=theme.primary)
 
     add_text_box(
-        slide, title, MARGIN_LEFT, Inches(0.5), CONTENT_WIDTH, Inches(0.9),
+        slide, title, MARGIN_LEFT, title_top, CONTENT_WIDTH, Inches(0.9),
         token=Typography.SLIDE_TITLE, color=theme.text, bold=True, word_wrap=True
     )
 
     # Thin accent underline
-    add_filled_rect(slide, MARGIN_LEFT, Inches(1.42), Inches(2.2), Inches(0.03), fill_color=theme.primary)
+    underline_top = title_top + Inches(0.92)
+    add_filled_rect(slide, MARGIN_LEFT, underline_top, Inches(2.2), Inches(0.03), fill_color=theme.primary)
 
     # ─── Key Message as thesis subtitle ────────────────────────────────────
     has_key_msg = bool(key_msg and key_msg.strip())
@@ -260,14 +269,15 @@ def render_academic_slide(
                 slide, bullets, MARGIN_LEFT, content_top, text_w, content_h,
                 token=Typography.BULLET, text_color=theme.text, accent_color=theme.primary)
 
+            card_pad = Inches(0.3)
             add_card(slide, ex_left, content_top, ex_w, content_h - Inches(0.3),
                      fill_color=theme.surface_alt, border_color=theme.border)
-            add_text_box(slide, "EXAMPLE", ex_left + Inches(0.2), content_top + Inches(0.15),
-                         ex_w - Inches(0.4), Inches(0.32),
+            add_text_box(slide, "EXAMPLE", ex_left + card_pad, content_top + Inches(0.2),
+                         ex_w - (card_pad * 2), Inches(0.32),
                          token=Typography.BADGE, color=theme.primary)
             add_text_box(slide, example,
-                         ex_left + Inches(0.2), content_top + Inches(0.55),
-                         ex_w - Inches(0.4), content_h - Inches(1.0),
+                         ex_left + card_pad, content_top + Inches(0.6),
+                         ex_w - (card_pad * 2), content_h - Inches(1.1),
                          token=Typography.BODY, color=theme.text, italic=True, word_wrap=True)
         else:
             add_bullet_list(

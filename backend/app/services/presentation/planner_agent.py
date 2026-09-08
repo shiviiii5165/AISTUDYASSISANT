@@ -179,10 +179,15 @@ async def plan_presentation(
 
     # Guarantee slide 1 is hero and closing slide matches requirement
     raw_slides[0]["type"] = "hero"
+    raw_slides[0].pop("section_label", None)  # Hero never gets eyebrow tag
     if config.enable_quiz:
         raw_slides[-1]["type"] = "quiz"
+        raw_slides[-1].pop("section_label", None)
     elif raw_slides[-1].get("type") not in ["summary", "qa"]:
         raw_slides[-1]["type"] = "qa"
+    # Strip section_label from closing/summary/qa slides
+    if raw_slides[-1].get("type") in ["qa", "summary", "quiz"]:
+        raw_slides[-1].pop("section_label", None)
 
     plan_json["slides"] = raw_slides
     plan_json["expansion_reason"] = expansion_reason

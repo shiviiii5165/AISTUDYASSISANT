@@ -157,21 +157,10 @@ def add_filled_rect(
         shape = slide.shapes.add_shape(
             MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height
         )
-        # Set corner radius via XML
-        try:
-            from lxml import etree
-            sp = shape._element
-            ns = {'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'}
-            prstGeom = sp.find('.//a:prstGeom', ns)
-            if prstGeom is not None:
-                avLst = prstGeom.find('a:avLst', ns)
-                if avLst is None:
-                    avLst = etree.SubElement(prstGeom, '{http://schemas.openxmlformats.org/drawingml/2006/main}avLst')
-                gd = etree.SubElement(avLst, '{http://schemas.openxmlformats.org/drawingml/2006/main}gd')
-                gd.set('name', 'adj')
-                gd.set('fmla', f'val {int(corner_radius)}')
-        except Exception:
-            pass
+        min_dim = min(width, height)
+        if min_dim > 0:
+            adj = min(0.5, max(0.0, float(corner_radius) / float(min_dim)))
+            shape.adjustments[0] = adj
     else:
         shape = slide.shapes.add_shape(
             MSO_SHAPE.RECTANGLE, left, top, width, height
@@ -214,7 +203,7 @@ def add_card(
     shadow: bool = None,
 ) -> None:
     """Add a card (rounded rectangle with border and optional shadow)."""
-    from ..tokens import CARD_SHADOW
+    from ..tokens import CARD_SHADOW, CARD_CORNER_RADIUS
     shape = None
     # Use ROUNDED_RECTANGLE for cards
     shape = slide.shapes.add_shape(
@@ -229,21 +218,15 @@ def add_card(
     else:
         shape.line.fill.background()
 
-    # Corner radius
-    try:
-        from lxml import etree
-        sp = shape._element
-        ns = {'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'}
-        prstGeom = sp.find('.//a:prstGeom', ns)
-        if prstGeom is not None:
-            avLst = prstGeom.find('a:avLst', ns)
-            if avLst is None:
-                avLst = etree.SubElement(prstGeom, '{http://schemas.openxmlformats.org/drawingml/2006/main}avLst')
-            gd = etree.SubElement(avLst, '{http://schemas.openxmlformats.org/drawingml/2006/main}gd')
-            gd.set('name', 'adj')
-            gd.set('fmla', f'val {int(CARD_CORNER_RADIUS)}')
-    except Exception:
-        pass
+    # Subtle modern card rounding (Gamma/Stripe style)
+    # Standard roundRect adjustment is 0.0 to 0.5.
+    # Clamp between 0.02 and 0.06 so cards never deform into pills or circles
+    min_dim = min(width, height)
+    if min_dim > 0:
+        adj = min(0.06, max(0.02, float(CARD_CORNER_RADIUS) / float(min_dim)))
+        shape.adjustments[0] = adj
+    else:
+        shape.adjustments[0] = 0.04
 
     # Subtle shadow for premium depth
     use_shadow = shadow if shadow is not None else CARD_SHADOW
@@ -358,9 +341,12 @@ def add_image(
             prstGeom = etree.SubElement(spPr, '{http://schemas.openxmlformats.org/drawingml/2006/main}prstGeom')
             prstGeom.set('prst', 'roundRect')
             avLst = etree.SubElement(prstGeom, '{http://schemas.openxmlformats.org/drawingml/2006/main}avLst')
+            min_dim = min(final_w, final_h)
+            adj_pct = min(0.08, max(0.02, float(corner_radius) / float(min_dim))) if min_dim > 0 else 0.04
+            adj_val = int(adj_pct * 100000)
             gd = etree.SubElement(avLst, '{http://schemas.openxmlformats.org/drawingml/2006/main}gd')
             gd.set('name', 'adj')
-            gd.set('fmla', f'val {int(corner_radius)}')
+            gd.set('fmla', f'val {adj_val}')
         except Exception:
             pass
 
@@ -534,3 +520,55 @@ def add_speaker_notes(slide: Slide, notes_text: str) -> None:
         return
     notes_slide = slide.notes_slide
     notes_slide.notes_text_frame.text = notes_text
+
+
+def add_icon_led_point(
+    slide: Slide,
+    label: str,
+    description: str,
+    left: Emu, top: Emu, width: Emu,
+    theme: "ThemeColors",
+    icon_char: str = "▸",
+    point_height: Emu = Inches(0.75),
+) -> Emu:
+    """
+    Render an icon-led sub-point: small arrow/chevron + bold label + description.
+    Returns the bottom edge (top + actual height) for stacking.
+
+    Pattern: ▸ **Bold Label** — One supporting line of text.
+    """
+    icon_w = Inches(0.25)
+    text_left = left + icon_w
+
+    # Icon/arrow character
+    add_text_box(
+        slide, icon_char,
+        left, top, icon_w, Inches(0.3),
+        token=Typography.BODY,
+        color=theme.accent,
+        alignment=PP_ALIGN.LEFT,
+        bold=True,
+    )
+
+    # Label (bold)
+    add_text_box(
+        slide, label,
+        text_left, top, width - icon_w, Inches(0.3),
+        token=Typography.BODY,
+        color=theme.text,
+        alignment=PP_ALIGN.LEFT,
+        bold=True,
+    )
+
+    # Description (below label)
+    if description:
+        add_text_box(
+            slide, description,
+            text_left, top + Inches(0.3), width - icon_w, Inches(0.4),
+            token=Typography.BULLET_SMALL,
+            color=theme.text_muted,
+            alignment=PP_ALIGN.LEFT,
+        )
+
+    return top + point_height
+

@@ -45,6 +45,9 @@ class ContentPattern(str, Enum):
     ILLUSTRATED_ICON_GRID = "illustrated_icon_grid"
     PARALLEL_COMPARISON   = "parallel_comparison"
     PLAIN_CONCEPT         = "plain_concept"
+    CONCEPT_SPLIT         = "concept_split"
+    ANNOTATED_TIERS       = "annotated_tiers"
+    EXAMPLE_GRID          = "example_grid"
 
 
 class DesignSystem(str, Enum):
@@ -108,6 +111,7 @@ class SlideSpec(BaseModel):
     speaker_notes: str = ""
     image_query: str = ""
     content_pattern: Optional[ContentPattern] = None
+    section_label: Optional[str] = None  # Eyebrow tag: "TYPE 1", "CHAPTER OVERVIEW", etc.
     visual: Optional[VisualSpec] = None
     source_refs: List[SlideSourceRef] = Field(default_factory=list)
 
