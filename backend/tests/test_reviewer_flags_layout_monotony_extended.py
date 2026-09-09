@@ -26,7 +26,7 @@ def test_reviewer_flags_consecutive_pattern_repetition():
     ]
 
     deck_issues, _ = run_deterministic_deck_checks(deck)
-    has_repetition = any("Component repetition" in iss and "definition_box" in iss for iss in deck_issues)
+    has_repetition = any("Pattern repetition" in iss and "definition_box" in iss for iss in deck_issues)
     assert has_repetition, f"Expected component repetition issue, got: {deck_issues}"
 
 def test_reviewer_flags_pattern_over_concentration():
@@ -42,7 +42,7 @@ def test_reviewer_flags_pattern_over_concentration():
     ]
     # case_study_block: 4/7 = 57.1% > 35%
     deck_issues, _ = run_deterministic_deck_checks(deck)
-    has_monotony = any("Component monotony" in iss and "case_study_block" in iss for iss in deck_issues)
+    has_monotony = any("Pattern monotony" in iss and "case_study_block" in iss for iss in deck_issues)
     assert has_monotony, f"Expected component monotony issue for case_study_block, got: {deck_issues}"
 
 def test_reviewer_allows_diverse_pedagogical_mix():

@@ -100,6 +100,20 @@ class SlideSourceRef(BaseModel):
     snippet: str = ""
 
 
+class SlideSelfCheck(BaseModel):
+    """Quality self-check returned by the LLM for each generated slide."""
+    fits_schema: bool = True
+    has_example: bool = False
+    has_number: bool = False
+    no_filler: bool = True
+    no_duplicate_bullets: bool = True
+    no_title_repetition: bool = True
+    notes_present: bool = True
+    teacher_ready: bool = True
+    visually_balanced: bool = True
+    distinct_from_prior_slides: bool = True
+
+
 class SlideSpec(BaseModel):
     slide_no: int
     type: SlideType = SlideType.CONCEPT
@@ -112,6 +126,7 @@ class SlideSpec(BaseModel):
     image_query: str = ""
     content_pattern: Optional[ContentPattern] = None
     section_label: Optional[str] = None  # Eyebrow tag: "TYPE 1", "CHAPTER OVERVIEW", etc.
+    self_check: Optional[SlideSelfCheck] = None
     visual: Optional[VisualSpec] = None
     source_refs: List[SlideSourceRef] = Field(default_factory=list)
 

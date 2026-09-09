@@ -282,8 +282,8 @@ def test_qa_overflow_and_auto_healing():
 
     healed = auto_heal_slide_python(bad_slide)
     assert len(healed["body_bullets"]) <= 5, "Excess bullets were not trimmed"
-    assert "Additional points:" in healed["speaker_notes"], "Overflow was not migrated to speaker notes"
-    assert len(healed["title"]) <= 80, "Title was not trimmed"
+    assert "Additional context:" in healed["speaker_notes"], "Overflow was not migrated to speaker notes"
+    assert len(healed["title"]) <= 60, "Title was not trimmed to 60-char limit"
     print(f"Healed bullets count: {len(healed['body_bullets'])}")
     print(f"Healed speaker notes:\n{healed['speaker_notes']}")
     print(">>> Python QA overflow & auto-healing PASSED.")

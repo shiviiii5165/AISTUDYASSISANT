@@ -44,9 +44,9 @@ def test_deterministic_pre_checks_flag_layout_repetition():
     """Verify pre-checks catch 3 consecutive identical slide types."""
     slides = [
         {"slide_no": 1, "type": "hero", "title": "Hero", "body_bullets": []},
-        {"slide_no": 2, "type": "concept", "title": "Concept 1", "body_bullets": ["A"]},
-        {"slide_no": 3, "type": "concept", "title": "Concept 2", "body_bullets": ["B"]},
-        {"slide_no": 4, "type": "concept", "title": "Concept 3", "body_bullets": ["C"]},
+        {"slide_no": 2, "type": "summary", "title": "Concept 1", "body_bullets": ["A"]},
+        {"slide_no": 3, "type": "summary", "title": "Concept 2", "body_bullets": ["B"]},
+        {"slide_no": 4, "type": "summary", "title": "Concept 3", "body_bullets": ["C"]},
         {"slide_no": 5, "type": "qa", "title": "QA", "body_bullets": []},
     ]
 

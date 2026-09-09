@@ -14,7 +14,7 @@ from app.core.logging import logger
 import asyncio
 import time
 from typing import Dict, Any, Optional, Callable
-from .schemas import PresentationConfig, PresentationSpec, SlideSpec, VisualSpec, VisualKind, DiagramSpec, SlideSourceRef
+from .schemas import PresentationConfig, PresentationSpec, SlideSpec, SlideSelfCheck, VisualSpec, VisualKind, DiagramSpec, SlideSourceRef
 from .cache import get_cached_presentation, save_cached_presentation
 from .topic_ontology_agent import generate_topic_ontology, TopicOntologyChecklist
 from .planner_agent import plan_presentation
@@ -25,14 +25,14 @@ from .reviewer_agent import run_reviewer_critic
 from app.db.supabase_client import supabase
 
 # --- Timeout Configuration (seconds) ---
-PIPELINE_TIMEOUT_SECONDS = 240.0
+PIPELINE_TIMEOUT_SECONDS = 300.0
 STEP_TIMEOUTS = {
     "ontology": 35.0,
     "planner": 50.0,
-    "content": 60.0,
+    "content": 90.0,
     "visual": 50.0,
-    "qa": 30.0,
-    "reviewer": 30.0,
+    "qa": 40.0,
+    "reviewer": 35.0,
 }
 
 
@@ -167,6 +167,10 @@ async def _generate_presentation_inner(
 
         source_refs = [SlideSourceRef(**r) for r in s.get("source_refs", [])]
 
+        # Parse self_check if present
+        sc_data = s.get("self_check")
+        self_check_obj = SlideSelfCheck(**sc_data) if sc_data and isinstance(sc_data, dict) else None
+
         slide_obj = SlideSpec(
             slide_no=s.get("slide_no", 1),
             type=s.get("type", "concept"),
@@ -179,6 +183,7 @@ async def _generate_presentation_inner(
             image_query=s.get("image_query", ""),
             content_pattern=s.get("content_pattern"),
             section_label=s.get("section_label"),
+            self_check=self_check_obj,
             visual=vspec,
             source_refs=source_refs,
             layers=s.get("layers", []),

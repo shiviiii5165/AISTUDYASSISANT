@@ -27,32 +27,29 @@ class ModelRouter:
         # Task -> Preferred Provider & Model Mapping
         self.task_policies = {
             "planning": [
-                ("groq", "openai/gpt-oss-120b"),
-                ("groq", "qwen/qwen3.8-27b"),
-                ("gemini", "gemini-3.6-flash"),
-                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
+                ("openrouter", "openai/gpt-4o"),
+                ("gemini", "gemini-2.0-flash"),
+                ("groq", "llama-3.3-70b-versatile"),
             ],
             "content_generation": [
-                ("groq", "openai/gpt-oss-120b"),
-                ("groq", "qwen/qwen3.8-27b"),
-                ("gemini", "gemini-3.6-flash"),
-                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
+                ("openrouter", "openai/gpt-4o"),
+                ("gemini", "gemini-2.0-flash"),
+                ("groq", "llama-3.3-70b-versatile"),
             ],
             "technical_content": [
-                ("groq", "openai/gpt-oss-120b"),
-                ("groq", "qwen/qwen3.8-27b"),
-                ("gemini", "gemini-3.6-flash"),
-                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
+                ("openrouter", "openai/gpt-4o"),
+                ("gemini", "gemini-2.0-flash"),
+                ("groq", "llama-3.3-70b-versatile"),
             ],
             "repair": [
-                ("groq", "qwen/qwen3.8-27b"),
-                ("gemini", "gemini-3.5-flash-lite"),
-                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
+                ("openrouter", "openai/gpt-4o"),
+                ("gemini", "gemini-2.0-flash"),
+                ("groq", "llama-3.3-70b-versatile"),
             ],
             "qa": [
-                ("groq", "qwen/qwen3.8-27b"),
-                ("gemini", "gemini-3.5-flash-lite"),
-                ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
+                ("openrouter", "openai/gpt-4o"),
+                ("gemini", "gemini-2.0-flash"),
+                ("groq", "llama-3.3-70b-versatile"),
             ],
             "embedding": [
                 ("gemini", "gemini-embedding-001"),
