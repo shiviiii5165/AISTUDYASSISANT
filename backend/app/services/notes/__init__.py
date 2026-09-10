@@ -13,6 +13,10 @@ from .decision_engine import NotesDecisionEngine
 from .validator import NotesValidator
 from .generator import NotesGenerator
 from .repository import NotesRepository
+from .validation import (
+    validate_notes, validate_and_repair_notes,
+    ValidationResult, ValidationStatus, ValidationViolation
+)
 
 __all__ = [
     "NotesDocument",
@@ -31,4 +35,10 @@ __all__ = [
     "NotesValidator",
     "NotesGenerator",
     "NotesRepository",
+    "validate_notes",
+    "validate_and_repair_notes",
+    "ValidationResult",
+    "ValidationStatus",
+    "ValidationViolation",
 ]
+

@@ -25,6 +25,9 @@ from app.services.notes.context_extractor import NotesContextExtractor
 from app.services.notes.decision import decide_notes_plan, NotesDecisionEngine
 from app.services.notes.generator import NotesGenerator
 from app.services.notes.repository import NotesRepository
+from app.services.notes.validation import validate_notes, ValidationResult, ValidateNotesRequest
+from app.services.notes.generation.engine import ensure_generation_plan
+from app.services.notes.generation.schemas import GroundedSources
 
 logger = logging.getLogger("teachgenie.api.notes_generator")
 router = APIRouter()
@@ -130,6 +133,33 @@ async def generate_notes(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate study notes: {str(e)[:200]}"
+        )
+
+
+@router.post("/validate", response_model=ValidationResult)
+@limiter.limit("30/minute")
+async def validate_notes_endpoint(
+    request: Request,
+    payload: ValidateNotesRequest,
+    current_user=Depends(get_current_user)
+):
+    """
+    Step 4 Validation Endpoint.
+    Validates a NotesDocument against CanonicalNotesContext, NotesGenerationPlan, and optional GroundedSources.
+    """
+    try:
+        ctx = CanonicalNotesContext(**payload.context)
+        plan = ensure_generation_plan(payload.plan)
+        doc = NotesDocument(**payload.document)
+        sources = GroundedSources(**payload.sources) if payload.sources else None
+
+        result = await validate_notes(context=ctx, plan=plan, document=doc, sources=sources)
+        return result
+    except Exception as e:
+        logger.error(f"[NotesGeneratorAPI] Error validating notes: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to validate notes: {str(e)[:200]}"
         )
 
 

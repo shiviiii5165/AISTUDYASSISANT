@@ -167,3 +167,24 @@ class NotesValidator:
             warnings=list(dict.fromkeys(warnings)),
             feedback=list(dict.fromkeys(feedback))
         )
+
+    @staticmethod
+    async def validate(
+        doc: NotesDocument,
+        plan: Any,
+        ctx: CanonicalNotesContext,
+        sources: Any = None,
+        enable_llm: bool = True
+    ) -> Any:
+        """Step 4 Validation Engine bridge method."""
+        from .validation.engine import validate_notes
+        from .generation.engine import ensure_generation_plan
+        plan_obj = ensure_generation_plan(plan)
+        return await validate_notes(
+            context=ctx,
+            plan=plan_obj,
+            document=doc,
+            sources=sources,
+            enable_llm=enable_llm
+        )
+
