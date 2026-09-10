@@ -41,6 +41,39 @@ class ValidationDimension(str, Enum):
     SAFETY = "safety"
 
 
+class GroundingSupportType(str, Enum):
+    DIRECTLY_SUPPORTED = "DIRECTLY_SUPPORTED"
+    PARAPHRASE_SUPPORTED = "PARAPHRASE_SUPPORTED"
+    INFERRED_SUPPORTED = "INFERRED_SUPPORTED"
+    UNSUPPORTED = "UNSUPPORTED"
+    CONTRADICTED = "CONTRADICTED"
+    UNKNOWN = "UNKNOWN"
+
+
+class SourceGroundingFinding(BaseModel):
+    """Detailed grounding assessment for an individual claim or cited assertion."""
+    claim: str
+    source_ids: List[str] = Field(default_factory=list)
+    support_type: GroundingSupportType
+    evidence: Optional[str] = None
+    confidence: float = 1.0
+    severity: ViolationSeverity = ViolationSeverity.INFO
+
+
+class FormulaValidationStatus(str, Enum):
+    VERIFIED_DETERMINISTICALLY = "VERIFIED_DETERMINISTICALLY"
+    VERIFIED_SEMANTICALLY = "VERIFIED_SEMANTICALLY"
+    INVALID = "INVALID"
+    UNVERIFIED = "UNVERIFIED"
+
+
+class DimensionStatus(str, Enum):
+    PASSED = "passed"
+    FAILED = "failed"
+    WARNING = "warning"
+    UNAVAILABLE = "unavailable"
+
+
 class ValidationViolation(BaseModel):
     """Structured, actionable violation item explaining an observed defect."""
     code: str
@@ -76,6 +109,14 @@ class RepairRecommendation(BaseModel):
     targets: List[RepairTarget] = Field(default_factory=list)
 
 
+class RepairMetadata(BaseModel):
+    """Observability metadata tracking global repair budget and attempt history."""
+    repair_budget: int = 1
+    repair_attempts: int = 0
+    repair_source: str = "validation"
+    repaired_sections: List[str] = Field(default_factory=list)
+
+
 class ValidationResult(BaseModel):
     """
     Step 4 Validation Engine Output Contract.
@@ -87,6 +128,7 @@ class ValidationResult(BaseModel):
     status: ValidationStatus
     overall_score: float = Field(default=100.0, ge=0.0, le=100.0)
     dimension_scores: Dict[str, float] = Field(default_factory=dict)
+    dimension_statuses: Dict[str, DimensionStatus] = Field(default_factory=dict)
     violations: List[ValidationViolation] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
     evidence: Dict[str, Any] = Field(default_factory=dict)
@@ -98,6 +140,7 @@ class ValidationResult(BaseModel):
     pedagogical_results: Dict[str, Any] = Field(default_factory=dict)
     hallucination_results: Dict[str, Any] = Field(default_factory=dict)
     repair_recommendation: Optional[RepairRecommendation] = None
+    repair_metadata: Optional[RepairMetadata] = None
     validator_metadata: Dict[str, Any] = Field(default_factory=dict)
 
     @property

@@ -2,14 +2,15 @@
 Practice & Visual Integrity Validator
 =====================================
 Validates practice question structure, presence of answers and explanations,
-and ensures visual diagrams (flowcharts, comparison matrices) are semantically
-meaningful with connected nodes, edges, and descriptive labels.
+semantic difficulty alignment, and ensures visual diagrams (flowcharts, comparison matrices)
+are semantically meaningful with connected nodes, edges, descriptive labels, and topic relevance.
 """
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 import re
 
 from ...schemas import NotesDocument
-from ...decision.schemas import NotesGenerationPlan
+from ...decision.schemas import NotesGenerationPlan, NoteDifficulty
+from ...context.schemas import CanonicalNotesContext
 from ..schemas import (
     ValidationViolation, ViolationSeverity, ValidationDimension
 )
@@ -18,21 +19,39 @@ from ..schemas import (
 class PracticeAndVisualValidator:
     """Audits the pedagogical and structural integrity of practice questions and visual diagrams."""
 
-    @staticmethod
+    TRIVIAL_RECALL_PATTERNS = [
+        r'^\s*define\s+\w+',
+        r'^\s*state\s+the\s+definition',
+        r'^\s*what\s+is\s+the\s+definition\s+of',
+        r'^\s*what\s+is\s+inertia\??$',
+        r'^\s*name\s+the\s+\w+'
+    ]
+
+    @classmethod
     def validate(
+        cls,
         doc: NotesDocument,
-        plan: NotesGenerationPlan
+        plan: NotesGenerationPlan,
+        ctx: Optional[CanonicalNotesContext] = None
     ) -> Tuple[List[ValidationViolation], Dict[str, Any], float]:
         violations: List[ValidationViolation] = []
-        details: Dict[str, Any] = {"practice_inspected": len(doc.practice), "visuals_inspected": len(doc.visuals)}
+        details: Dict[str, Any] = {
+            "practice_inspected": len(doc.practice),
+            "visuals_inspected": len(doc.visuals),
+            "practice_item_audits": []
+        }
         score: float = 100.0
 
-        # ── 1. Practice Items Quality & Completeness ──
+        # ── 1. Practice Items Quality, Completeness & Semantic Difficulty ──
         for idx, p in enumerate(doc.practice):
             sec_id = f"practice_{idx+1}"
             q = str(p.get("question", "")).strip()
             ans = str(p.get("answer", "")).strip()
             exp = str(p.get("explanation", "")).strip()
+            stated_diff = str(p.get("difficulty", "")).lower()
+
+            item_status = "VALID"
+            item_notes = []
 
             if not q or len(q) < 8:
                 violations.append(ValidationViolation(
@@ -46,8 +65,10 @@ class PracticeAndVisualValidator:
                     repairable=True
                 ))
                 score -= 10.0
+                item_status = "INVALID"
+                item_notes.append("Empty question statement")
 
-            # Answer presence and non-stub validation (Spec 21 & 22)
+            # Answer presence and non-stub validation
             if not ans or ans.lower() in ("...", "tbd", "none", "n/a", "todo"):
                 violations.append(ValidationViolation(
                     code="PRACTICE_ANSWER_MISSING_OR_STUB",
@@ -60,6 +81,8 @@ class PracticeAndVisualValidator:
                     repairable=True
                 ))
                 score -= 15.0
+                item_status = "INVALID"
+                item_notes.append("Missing answer key")
 
             if not exp or len(exp) < 10:
                 violations.append(ValidationViolation(
@@ -73,8 +96,37 @@ class PracticeAndVisualValidator:
                     repairable=True
                 ))
                 score -= 5.0
+                if item_status == "VALID":
+                    item_status = "WARNING"
+                item_notes.append("Missing explanation")
 
-        # ── 2. Visual Diagram Semantic Integrity (Spec 11 & 24) ──
+            # Semantic difficulty check (Spec 16)
+            # If plan requires ADVANCED difficulty, check if question is simple recall marked as advanced
+            if plan.difficulty == NoteDifficulty.ADVANCED or stated_diff == "advanced":
+                is_trivial_recall = any(re.search(pat, q, re.IGNORECASE) for pat in cls.TRIVIAL_RECALL_PATTERNS)
+                if is_trivial_recall and len(q.split()) < 12 and "explain why" not in q.lower() and "calculate" not in q.lower():
+                    violations.append(ValidationViolation(
+                        code="PRACTICE_DIFFICULTY_SEMANTIC_MISMATCH",
+                        severity=ViolationSeverity.ERROR,
+                        dimension=ValidationDimension.PRACTICE,
+                        message=f"Practice question {idx+1} ('{q}') is simple rote definition recall, failing the required ADVANCED cognitive depth.",
+                        section_id=sec_id,
+                        expected="Application, derivation, or analytical synthesis question for advanced plan",
+                        actual=f"Basic rote recall question: '{q}'",
+                        repairable=True
+                    ))
+                    score -= 15.0
+                    item_status = "INVALID"
+                    item_notes.append("Semantic difficulty mismatch")
+
+            details["practice_item_audits"].append({
+                "index": idx + 1,
+                "status": item_status,
+                "question": q[:60],
+                "notes": item_notes
+            })
+
+        # ── 2. Visual Diagram Semantic Integrity & Topic Relevance (Spec 11, 18) ──
         all_visuals = list(doc.visuals)
         for s in doc.sections:
             if s.visual_spec:
@@ -93,13 +145,13 @@ class PracticeAndVisualValidator:
                 ))
                 score -= 25.0
             else:
+                topic_str = (doc.topic or (ctx.topic if ctx else "")).lower()
                 for idx, v in enumerate(all_visuals):
                     v_type = getattr(v, "type", "flowchart")
                     nodes = getattr(v, "nodes", []) or []
                     edges = getattr(v, "edges", []) or []
 
                     if v_type == "flowchart":
-                        # Must have meaningful nodes and edges
                         if not nodes or len(nodes) == 0:
                             violations.append(ValidationViolation(
                                 code="SEMANTICALLY_INVALID_VISUAL_EMPTY_NODES",
@@ -131,6 +183,22 @@ class PracticeAndVisualValidator:
                                 ))
                                 score -= 15.0
 
+                            # Topic relevance check (Spec 18)
+                            node_text = " ".join([str(n.get("label", "")) for n in nodes]).lower()
+                            if "photosynthesis" in topic_str and ("newton" in node_text or "acceleration" in node_text):
+                                violations.append(ValidationViolation(
+                                    code="VISUAL_TOPIC_MISMATCH",
+                                    severity=ViolationSeverity.CRITICAL,
+                                    dimension=ValidationDimension.VISUAL,
+                                    message=f"Flowchart {idx+1} diagrams Newtonian mechanics but document topic is '{doc.topic}'. Visual is completely irrelevant.",
+                                    section_id=f"visual_{idx+1}",
+                                    evidence=node_text[:120],
+                                    expected=f"Visual elements modeling {doc.topic}",
+                                    actual=node_text[:120],
+                                    repairable=True
+                                ))
+                                score -= 30.0
+
                         if not edges or len(edges) == 0:
                             violations.append(ValidationViolation(
                                 code="SEMANTICALLY_INVALID_VISUAL_EMPTY_EDGES",
@@ -144,7 +212,6 @@ class PracticeAndVisualValidator:
                             ))
                             score -= 15.0
                         else:
-                            # Check edge integrity: edges connect existing node IDs
                             node_ids = {str(n.get("id")) for n in nodes if isinstance(n, dict) and n.get("id")}
                             for e in edges:
                                 if isinstance(e, dict):

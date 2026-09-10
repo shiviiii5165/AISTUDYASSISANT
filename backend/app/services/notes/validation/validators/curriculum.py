@@ -3,6 +3,7 @@ Curriculum & Grade-Level Validator
 ==================================
 Verifies curriculum scope, grade appropriateness, and syllabus boundaries.
 When curriculum is unknown, reports 'unavailable' rather than pretending compliance.
+Enforces scope classifications: in_scope, out_of_scope, unavailable, uncertain.
 """
 from typing import List, Dict, Any, Tuple
 import re
@@ -36,20 +37,19 @@ class CurriculumValidator:
         details: Dict[str, Any] = {}
         score: float = 100.0
 
-        curriculum_val = (
-            ctx.resolved_context.curriculum
-            if getattr(ctx, "resolved_context", None) and ctx.resolved_context.curriculum
-            else getattr(ctx, "curriculum_val", None)
-        )
+        curriculum_val = None
+        if getattr(ctx, "resolved_context", None):
+            curriculum_val = ctx.resolved_context.curriculum
 
         # ── 1. Unknown Curriculum Handling (Spec 19) ──
         if not curriculum_val or str(curriculum_val).strip().lower() in ("unknown", "none"):
             details["status"] = "unavailable"
-            details["curriculum"] = "unknown"
-            # It is not automatically correct, but also not an error if unspecified
-            details["message"] = "Curriculum information is unknown; syllabus boundary check unavailable."
+            details["scope_verdict"] = "unavailable"
+            details["curriculum"] = "unavailable"
+            details["message"] = "Curriculum information is unavailable; syllabus boundary check unavailable."
         else:
             details["status"] = "verified"
+            details["scope_verdict"] = "in_scope"
             details["curriculum"] = str(curriculum_val)
 
         # ── 2. Grade-Level Appropriateness ──
@@ -63,7 +63,8 @@ class CurriculumValidator:
         all_content_lower = all_content.lower()
 
         # Middle school (Class 6-8) check for inappropriate university-level derivations
-        if class_num <= 8 and plan.difficulty != "advanced":
+        # Note: Spec 20: Class 7 + advanced plan is valid if requested, but university math is excessive
+        if class_num <= 8:
             for marker in cls.UNIVERSITY_LEVEL_MARKERS:
                 if re.search(marker, all_content_lower):
                     violations.append(ValidationViolation(
@@ -75,6 +76,7 @@ class CurriculumValidator:
                         actual=marker,
                         repairable=True
                     ))
+                    details["scope_verdict"] = "out_of_scope"
                     score -= 20.0
                     break
 
@@ -110,6 +112,7 @@ class CurriculumValidator:
                 actual=doc.topic,
                 repairable=False
             ))
+            details["scope_verdict"] = "out_of_scope"
             score -= 30.0
 
         return violations, details, max(0.0, min(100.0, score))

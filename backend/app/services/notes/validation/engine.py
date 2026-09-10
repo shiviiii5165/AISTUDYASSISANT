@@ -1,14 +1,19 @@
 """
-TeachGenie Notes Validation Engine — Main Pipeline (Step 4)
-===========================================================
-Executes multi-dimensional quality, grounding, factual, curriculum, and pedagogical
-audits on generated NotesDocuments against authoritative NotesGenerationPlans.
-Enforces deterministic gates before probabilistic AI judges, ensuring uncompromised
-observability, auditability, and safety without mutating trusted plans or context.
+TeachGenie Notes Validation Engine — Core Engine (Step 4)
+=========================================================
+Central quality gate coordinating deterministic checks, plan compliance audits,
+factual/formula verifications, curriculum alignment, and targeted AI semantic judging.
+Strict Invariants:
+1. Step 4 is 100% observational: never mutates context, plan, or document.
+2. Zero decision leakage: does not alter mastery, change difficulty, or pick pedagogical strategy.
+3. Deterministic first: fast arithmetic, formula, citation, and blueprint checks precede LLM judge.
+4. Critical violations cannot be overridden by high numeric dimension scores.
+5. Dimension statuses distinguish PASSED, FAILED, WARNING, UNAVAILABLE.
 """
-import time
 import logging
-from typing import List, Dict, Any, Optional
+import time
+import copy
+from typing import Optional, Dict, Any, List
 
 from ..schemas import NotesDocument
 from ..context.schemas import CanonicalNotesContext
@@ -17,7 +22,7 @@ from ..generation.schemas import GroundedSources
 from .schemas import (
     ValidationResult, ValidationStatus, ViolationSeverity,
     ValidationDimension, ValidationViolation, RepairRecommendation,
-    RepairAction, RepairTarget
+    RepairAction, RepairTarget, DimensionStatus
 )
 from .validators.plan_compliance import PlanComplianceValidator
 from .validators.factual_and_formulas import FactualAndFormulaValidator
@@ -38,15 +43,19 @@ async def validate_notes(
     enable_llm: bool = True
 ) -> ValidationResult:
     """
-    Step 4 Primary Entry Point: Validates generated notes against plan, context, and sources.
-    Observational only: NEVER mutates context, plan, or document.
+    Step 4 Core Quality Gate Pipeline.
+    Evaluates a generated NotesDocument against canonical context, authoritative plan,
+    and grounded sources. Step 4 is strictly observational and produces zero side-effects.
     """
     start_time = time.perf_counter()
     violations: List[ValidationViolation] = []
     warnings: List[str] = []
     dimension_scores: Dict[str, float] = {}
+    dimension_statuses: Dict[str, DimensionStatus] = {}
 
-    # ── 1. Schema & Structural Integrity (Deterministic) ──
+    logger.info(f"[ValidationEngine] Initiating validation for doc '{document.id}' on topic '{document.topic}'")
+
+    # ── 1. Structural & Schema Validation (Deterministic) ──
     schema_score = 100.0
     if not document.id:
         violations.append(ValidationViolation(
@@ -133,26 +142,47 @@ async def validate_notes(
     dimension_scores["pedagogy"] = ped_score
 
     # ── 7. Practice Quality & Visual Integrity Validation ──
-    prac_viols, prac_details, prac_score = PracticeAndVisualValidator.validate(document, plan)
+    prac_viols, prac_details, prac_score = PracticeAndVisualValidator.validate(document, plan, context)
     violations.extend(prac_viols)
     dimension_scores["practice_and_visual"] = prac_score
 
     # ── 8. Semantic AI Judge (Targeted, Prompt-Injection Defended) ──
     hallucination_details: Dict[str, Any] = {"status": "skipped"}
     if enable_llm:
-        # Run targeted semantic LLM audit only if document has sections to evaluate
         if document.sections:
             judge_viols, judge_details, judge_score = await SemanticJudge.evaluate_document(
                 document, plan, context, sources
             )
             violations.extend(judge_viols)
             hallucination_details = judge_details
-            # Factor into factual and pedagogical dimensions
             dimension_scores["factual"] = min(dimension_scores["factual"], judge_details.get("factual_score", 100.0))
             dimension_scores["pedagogy"] = min(dimension_scores["pedagogy"], judge_details.get("pedagogical_score", 100.0))
 
-    # ── 9. Scoring & Critical Violation Gating (Spec 39, 40, 58) ──
-    # Calculate weighted overall score
+    # ── 9. Dimension Status Categorization (Spec 14 & 15) ──
+    dim_map = {
+        "schema": [ValidationDimension.SCHEMA, ValidationDimension.STRUCTURAL],
+        "plan_compliance": [ValidationDimension.PLAN_COMPLIANCE],
+        "grounding": [ValidationDimension.GROUNDING],
+        "factual": [ValidationDimension.FACTUAL, ValidationDimension.FORMULA],
+        "curriculum": [ValidationDimension.CURRICULUM],
+        "pedagogy": [ValidationDimension.PEDAGOGY, ValidationDimension.MISCONCEPTION],
+        "practice_and_visual": [ValidationDimension.PRACTICE, ValidationDimension.VISUAL]
+    }
+
+    for dim_name, dim_enums in dim_map.items():
+        if dim_name == "curriculum" and curr_details.get("status") == "unavailable":
+            dimension_statuses[dim_name] = DimensionStatus.UNAVAILABLE
+            continue
+
+        dim_viols = [v for v in violations if v.dimension in dim_enums]
+        if any(v.severity in (ViolationSeverity.CRITICAL, ViolationSeverity.ERROR) for v in dim_viols):
+            dimension_statuses[dim_name] = DimensionStatus.FAILED
+        elif any(v.severity == ViolationSeverity.WARNING for v in dim_viols):
+            dimension_statuses[dim_name] = DimensionStatus.WARNING
+        else:
+            dimension_statuses[dim_name] = DimensionStatus.PASSED
+
+    # ── 10. Scoring & Critical Violation Gating (Spec 39, 40, 58) ──
     weights = {
         "schema": 0.15,
         "plan_compliance": 0.25,
@@ -161,10 +191,16 @@ async def validate_notes(
         "curriculum": 0.10,
         "pedagogy": 0.15
     }
+
+    # If curriculum is unavailable, exclude it from the active denominator (Spec 14 & 15)
+    is_curr_unavailable = (dimension_statuses.get("curriculum") == DimensionStatus.UNAVAILABLE)
+    active_weights = {k: v for k, v in weights.items() if not (k == "curriculum" and is_curr_unavailable)}
+    total_active_weight = sum(active_weights.values())
+
     overall_score = 0.0
-    for dim, weight in weights.items():
+    for dim, weight in active_weights.items():
         score_val = dimension_scores.get(dim, 100.0)
-        overall_score += score_val * weight
+        overall_score += score_val * (weight / total_active_weight)
     overall_score = round(max(0.0, min(100.0, overall_score)), 2)
 
     # Collect warnings from non-blocking violation messages
@@ -186,7 +222,6 @@ async def validate_notes(
         final_status = ValidationStatus.INVALID
         is_valid = False
     elif errors:
-        # If all errors are repairable, document is repairable
         if all(v.repairable for v in errors):
             final_status = ValidationStatus.REPAIRABLE
             is_valid = False
@@ -200,7 +235,7 @@ async def validate_notes(
         final_status = ValidationStatus.VALID
         is_valid = True
 
-    # ── 10. Construct Actionable Repair Recommendation (Spec 29) ──
+    # ── 11. Construct Actionable Repair Recommendation (Spec 29) ──
     repair_rec: Optional[RepairRecommendation] = None
     if final_status == ValidationStatus.REPAIRABLE:
         repair_targets = []
@@ -240,6 +275,7 @@ async def validate_notes(
         status=final_status,
         overall_score=overall_score,
         dimension_scores={k: round(v, 2) for k, v in dimension_scores.items()},
+        dimension_statuses=dimension_statuses,
         violations=violations,
         warnings=warnings,
         evidence={
