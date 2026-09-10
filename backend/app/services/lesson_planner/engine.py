@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 from .schemas import (
     LearningRoadmap, RoadmapStage, StageStatus, StageReadiness, 
     NextBestAction, ResourceType, ResourceStatus, ResourceRecommendation,
-    BloomLevel, StageActivity, StageDifferentiation, RoadmapEvent, ClassType
+    BloomLevel, StageActivity, StageDifferentiation, RoadmapEvent, ClassType,
+    StageAction
 )
 
 
@@ -208,7 +209,8 @@ class StateMachineEngine:
 class ResourceRecommenderEngine:
     """
     Computes deterministic recommendation usefulness scores and recommendation levels
-    for each stage (PPT, Video, Teach Me, Quiz, Notes, Worksheet).
+    for each stage (ACTIVE: PPT, Quiz, Teach Me; FUTURE / DISABLED: YouTube Recommendations,
+    Extra Learning Materials Hub). Video and Notes are removed from Lesson Planner workflow.
     """
 
     @staticmethod
@@ -224,7 +226,7 @@ class ResourceRecommenderEngine:
         is_lab = class_type == ClassType.LAB or "lab" in title_lower or "code" in title_lower
         is_exam_review = class_type in [ClassType.EXAM_REVIEW, ClassType.REVISION]
 
-        # 1. PPT Deck Recommendation
+        # 1. PPT Deck Recommendation (ACTIVE)
         ppt_score = 0.85
         ppt_status = ResourceStatus.RECOMMENDED
         ppt_reason = "Visual structure and key diagrams enhance multi-step comprehension."
@@ -244,7 +246,7 @@ class ResourceRecommenderEngine:
             reason=ppt_reason
         ))
 
-        # 2. Quiz / Assessment Recommendation
+        # 2. Quiz / Assessment Recommendation (ACTIVE)
         quiz_score = 0.80 if has_checkpoints else 0.50
         quiz_status = ResourceStatus.RECOMMENDED if has_checkpoints or is_exam_review else ResourceStatus.OPTIONAL
         quiz_reason = "Formative checkpoints verify concept mastery before advancing."
@@ -259,23 +261,7 @@ class ResourceRecommenderEngine:
             reason=quiz_reason
         ))
 
-        # 3. Video Lesson Recommendation
-        video_score = 0.65
-        video_status = ResourceStatus.OPTIONAL
-        video_reason = "Condensed video narration reinforces asynchronous self-paced review."
-        if "process" in title_lower or "animation" in title_lower or "motion" in title_lower:
-            video_score = 0.90
-            video_status = ResourceStatus.RECOMMENDED
-            video_reason = "Dynamic mechanisms benefit greatly from narrated animated video explanation."
-
-        recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.VIDEO,
-            usefulness_score=video_score,
-            status=video_status,
-            reason=video_reason
-        ))
-
-        # 4. Teach Me Interactive Session
+        # 3. Teach Me Interactive Session (ACTIVE)
         teach_score = 0.90
         teach_status = ResourceStatus.RECOMMENDED
         teach_reason = "Socratic interactive dialogue adapts real-time to student explanations."
@@ -290,19 +276,63 @@ class ResourceRecommenderEngine:
             reason=teach_reason
         ))
 
-        # 5. Learner Notes
-        notes_score = 0.88 if is_exam_review else 0.75
-        notes_status = ResourceStatus.RECOMMENDED if is_exam_review else ResourceStatus.OPTIONAL
-        notes_reason = "Curated study notes capture key definitions, formulas, and takeaway summaries."
-
+        # 4. YouTube Recommendations (ACTIVE)
         recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.NOTES,
-            usefulness_score=notes_score,
-            status=notes_status,
-            reason=notes_reason
+            resource_type=ResourceType.YOUTUBE_RECOMMENDATIONS,
+            usefulness_score=0.90,
+            status=ResourceStatus.RECOMMENDED,
+            reason="Curated educational video recommendations from verified academic channels."
+        ))
+
+        # 5. Extra Learning Materials Hub (ACTIVE)
+        recommendations.append(ResourceRecommendation(
+            resource_type=ResourceType.EXTRA_LEARNING_MATERIALS,
+            usefulness_score=0.88,
+            status=ResourceStatus.RECOMMENDED,
+            reason="Academic references, arXiv research papers, and official documentation."
         ))
 
         stage.resource_recommendations = recommendations
+
+        # Populate formal stage action contract (All 5 active downstream actions)
+        stage.actions = [
+            StageAction(
+                type="ppt",
+                enabled=True,
+                status="active",
+                title="Generate PPT",
+                description="Multi-slide presentation deck with diagrams and speaker notes."
+            ),
+            StageAction(
+                type="teachme",
+                enabled=True,
+                status="active",
+                title="TeachMe",
+                description="Interactive Socratic dialogue with adaptive checkpoints."
+            ),
+            StageAction(
+                type="quiz",
+                enabled=True,
+                status="active",
+                title="Take Quiz",
+                description="Diagnostic questions addressing key concepts and misconceptions."
+            ),
+            StageAction(
+                type="youtube_recommendations",
+                enabled=True,
+                status="active",
+                title="YouTube Recommendations",
+                description="Curated educational videos from verified academic channels."
+            ),
+            StageAction(
+                type="extra_learning_materials",
+                enabled=True,
+                status="active",
+                title="Extra Learning Materials Hub",
+                description="Academic references, arXiv research papers, and documentation."
+            )
+        ]
+
         return recommendations
 
 
@@ -566,14 +596,14 @@ class ChangeImpactEngine:
         stale_resources: List[ResourceType] = []
         
         if "objectives" in changed_fields or "title" in changed_fields:
-            # Major change -> PPT, Quiz, Notes, Video become stale
-            stale_resources.extend([ResourceType.PPT, ResourceType.QUIZ, ResourceType.NOTES, ResourceType.VIDEO, ResourceType.TEACH_ME])
+            # Major change -> PPT, Quiz, Teach Me become stale
+            stale_resources.extend([ResourceType.PPT, ResourceType.QUIZ, ResourceType.TEACH_ME])
         elif "checkpoint_questions" in changed_fields or "expected_misconceptions" in changed_fields:
             # Assessment changed -> Quiz and Teach Me become stale
             stale_resources.extend([ResourceType.QUIZ, ResourceType.TEACH_ME])
         elif "duration_minutes" in changed_fields:
-            # Timing changed -> Video duration may adjust
-            stale_resources.append(ResourceType.VIDEO)
+            # Timing changed -> No external resource dependencies
+            pass
 
         for rec in stage.resource_recommendations:
             if rec.resource_type in stale_resources and rec.status == ResourceStatus.READY:

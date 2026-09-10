@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   BookOpen, MessageSquare, Target, Menu, X, LogOut, LifeBuoy,
   Presentation, PlayCircle, GraduationCap, Map, HelpCircle,
-  ChevronLeft, ChevronRight, Radio,
+  ChevronLeft, ChevronRight, Radio, FileText,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -23,6 +23,7 @@ const NAV_GROUPS: { heading: string; items: { path: string; label: string; icon:
     heading: 'Study',
     items: [
       { path: '/dashboard', label: 'Dashboard', icon: Target },
+      { path: '/notes', label: 'AI Notes', icon: FileText },
       { path: '/teach', label: 'Teach Me', icon: GraduationCap },
       { path: '/library', label: 'My Library', icon: BookOpen },
       { path: '/chat', label: 'AI Chat', icon: MessageSquare },
@@ -44,7 +45,7 @@ const SUPPORT_ITEM = { path: '/support', label: 'Support', icon: LifeBuoy };
 
 // Routes where content manages its own internal scroll — the main area must be
 // fixed-height so flex-1 children (chat list, teach panel, history sidebars) fill the viewport correctly.
-const FIXED_HEIGHT_ROUTES = new Set(['/chat', '/teach', '/decks', '/quizzes', '/lesson-planner']);
+const FIXED_HEIGHT_ROUTES = new Set(['/chat', '/teach', '/decks', '/quizzes', '/lesson-planner', '/notes']);
 
 const AppLayout = ({ children, title }: { children: React.ReactNode; title: React.ReactNode }) => {
   const location = useLocation();

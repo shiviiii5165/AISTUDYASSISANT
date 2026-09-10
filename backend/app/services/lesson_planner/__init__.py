@@ -24,7 +24,8 @@ from .schemas import (
     SourceReference,
     CourseCoverage,
     SemesterPlan,
-    RoadmapEvent
+    RoadmapEvent,
+    StageAction
 )
 from .engine import (
     TimeBudgetEngine,
@@ -45,6 +46,17 @@ from .adapters import (
     QuizAdapter,
     NotesAdapter
 )
+from .youtube_recommendation import (
+    YouTubeRecommendationService,
+    YouTubeVideoRecommendation,
+    YouTubeRecommendationResponse
+)
+from .learning_materials import (
+    ExtraLearningMaterialsService,
+    ExtraLearningMaterialsResponse,
+    ExtraLearningMaterialItem,
+    ExtraLearningMaterialsCategories
+)
 
 __all__ = [
     "LearningRoadmap",
@@ -61,6 +73,7 @@ __all__ = [
     "ResourceType",
     "ResourceStatus",
     "ResourceRecommendation",
+    "StageAction",
     "RoadmapStatus",
     "ClassType",
     "StageActivity",
@@ -83,5 +96,12 @@ __all__ = [
     "VideoAdapter",
     "TeachMeAdapter",
     "QuizAdapter",
-    "NotesAdapter"
+    "NotesAdapter",
+    "YouTubeRecommendationService",
+    "YouTubeVideoRecommendation",
+    "YouTubeRecommendationResponse",
+    "ExtraLearningMaterialsService",
+    "ExtraLearningMaterialsResponse",
+    "ExtraLearningMaterialItem",
+    "ExtraLearningMaterialsCategories"
 ]

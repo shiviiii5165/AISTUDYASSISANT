@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 # Ensure .env is loaded into os.environ before any test module can poison it with placeholders
 _tests_dir = os.path.dirname(os.path.abspath(__file__))
 _backend_dir = os.path.dirname(_tests_dir)
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
 _root_dir = os.path.dirname(_backend_dir)
 _env_path = os.path.join(_root_dir, ".env")
 if os.path.exists(_env_path):

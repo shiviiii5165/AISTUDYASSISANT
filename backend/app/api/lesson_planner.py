@@ -10,7 +10,8 @@ from app.core.dependencies import get_current_user
 from app.services.lesson_planner.schemas import (
     LearningRoadmap, RoadmapStage, StageStatus, StageReadiness,
     NextBestAction, ResourceType, ResourceStatus, ResourceRecommendation,
-    RoadmapStatus, ClassType, StageActivity, LearningObjective, BloomLevel
+    RoadmapStatus, ClassType, StageActivity, LearningObjective, BloomLevel,
+    StageAction
 )
 from app.services.lesson_planner.generator import RoadmapGenerator
 from app.services.lesson_planner.engine import (
@@ -21,6 +22,8 @@ from app.services.lesson_planner.engine import (
 from app.services.lesson_planner.adapters import (
     PPTAdapter, VideoAdapter, TeachMeAdapter, QuizAdapter, NotesAdapter
 )
+from app.services.lesson_planner.youtube_recommendation import YouTubeRecommendationService
+from app.services.lesson_planner.learning_materials import ExtraLearningMaterialsService
 
 logger = logging.getLogger("teachgenie.api.lesson_planner")
 router = APIRouter()
@@ -488,27 +491,11 @@ async def generate_stage_video(
     stage_id: str,
     current_user = Depends(get_current_user)
 ):
-    user_id = str(getattr(current_user, 'id', 'anonymous'))
-    roadmap = _get_roadmap(roadmap_id, user_id)
-    if not roadmap:
-        raise HTTPException(status_code=404, detail="Roadmap not found")
-    stage = next((s for s in roadmap.stages if s.id == stage_id), None)
-    if not stage:
-        raise HTTPException(status_code=404, detail="Stage not found")
-
-    try:
-        video_config = VideoAdapter.create_video_config(roadmap, stage)
-    except Exception as e:
-        logger.error(f"Video config build failed for {roadmap_id}/{stage_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Could not build video config: {e}")
-        
-    for rec in stage.resource_recommendations:
-        if rec.resource_type == ResourceType.VIDEO:
-            rec.status = ResourceStatus.READY
-            rec.generated_at = datetime.now(timezone.utc)
-
-    _save_roadmap(roadmap, user_id)
-    return {"message": "Video configuration ready", "config": video_config.model_dump() if hasattr(video_config, 'model_dump') else str(video_config)}
+    # Disconnected from Lesson Planner workflow
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Video generation has been removed from the Lesson Planner workflow."
+    )
 
 
 @router.post("/{roadmap_id}/stages/{stage_id}/quiz")
@@ -546,27 +533,11 @@ async def generate_stage_notes(
     stage_id: str,
     current_user = Depends(get_current_user)
 ):
-    user_id = str(getattr(current_user, 'id', 'anonymous'))
-    roadmap = _get_roadmap(roadmap_id, user_id)
-    if not roadmap:
-        raise HTTPException(status_code=404, detail="Roadmap not found")
-    stage = next((s for s in roadmap.stages if s.id == stage_id), None)
-    if not stage:
-        raise HTTPException(status_code=404, detail="Stage not found")
-
-    try:
-        notes = NotesAdapter.generate_stage_notes(roadmap, stage)
-    except Exception as e:
-        logger.error(f"Notes generation failed for {roadmap_id}/{stage_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Could not generate notes: {e}")
-        
-    for rec in stage.resource_recommendations:
-        if rec.resource_type == ResourceType.NOTES:
-            rec.status = ResourceStatus.READY
-            rec.generated_at = datetime.now(timezone.utc)
-
-    _save_roadmap(roadmap, user_id)
-    return {"message": "Notes generated successfully", "notes": notes}
+    # Disconnected from Lesson Planner workflow
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Study notes generation has been removed from the Lesson Planner workflow."
+    )
 
 
 @router.post("/{roadmap_id}/stages/{stage_id}/teach")
@@ -594,13 +565,88 @@ async def get_teach_me_brief(
     return {"message": "Teach Me context ready", "brief": brief}
 
 
+@router.get("/{roadmap_id}/stages/{stage_id}/actions")
+async def get_stage_actions(
+    roadmap_id: str,
+    stage_id: str,
+    current_user = Depends(get_current_user)
+):
+    """
+    Returns the formal stage actions contract (Active: PPT, TeachMe, Quiz, YouTube Recommendations, Extra Learning Materials).
+    """
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    roadmap = _get_roadmap(roadmap_id, user_id)
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+    stage = next((s for s in roadmap.stages if s.id == stage_id), None)
+    if not stage:
+        raise HTTPException(status_code=404, detail="Stage not found")
+    if not stage.actions:
+        ResourceRecommenderEngine.evaluate_stage_resources(stage)
+    return {"stage_id": stage.id, "actions": stage.actions}
+
+
+@router.get("/{roadmap_id}/stages/{stage_id}/youtube-recommendations")
+async def get_stage_youtube_recommendations(
+    roadmap_id: str,
+    stage_id: str,
+    current_user = Depends(get_current_user)
+):
+    """
+    Live endpoint returning educational YouTube video recommendations for a lesson stage.
+    """
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    roadmap = _get_roadmap(roadmap_id, user_id)
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+    stage = next((s for s in roadmap.stages if s.id == stage_id), None)
+    if not stage:
+        raise HTTPException(status_code=404, detail="Stage not found")
+
+    res = await YouTubeRecommendationService.get_recommendations(
+        topic=roadmap.topic or stage.title,
+        stage=stage,
+        learner_level=roadmap.level,
+        language=roadmap.language
+    )
+    return res
+
+
+@router.get("/{roadmap_id}/stages/{stage_id}/learning-materials")
+async def get_stage_learning_materials(
+    roadmap_id: str,
+    stage_id: str,
+    current_user = Depends(get_current_user)
+):
+    """
+    Live endpoint returning Extra Learning Materials Hub resources (Academic References,
+    arXiv Research Papers, Documentation, and Extra Learning Material) for a lesson stage.
+    """
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    roadmap = _get_roadmap(roadmap_id, user_id)
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+    stage = next((s for s in roadmap.stages if s.id == stage_id), None)
+    if not stage:
+        raise HTTPException(status_code=404, detail="Stage not found")
+
+    res = await ExtraLearningMaterialsService.get_learning_materials(
+        topic=roadmap.topic or stage.title,
+        stage=stage,
+        learner_level=roadmap.level,
+        language=roadmap.language
+    )
+    return res
+
+
 @router.post("/{roadmap_id}/study-pack")
 async def generate_study_pack(
     roadmap_id: str,
     current_user = Depends(get_current_user)
 ):
     """
-    Generates all recommended resources across the entire roadmap using the canonical lesson data.
+    Generates all recommended active resources across the entire roadmap (PPT, Quiz).
+    Notes and Video are excluded from study-pack generation.
     """
     user_id = str(getattr(current_user, 'id', 'anonymous'))
     roadmap = _get_roadmap(roadmap_id, user_id)
@@ -616,10 +662,6 @@ async def generate_study_pack(
                     QuizAdapter.generate_stage_quiz_spec(roadmap, stage)
                     rec.status = ResourceStatus.READY
                     stage_res["generated"].append("quiz")
-                elif rec.resource_type == ResourceType.NOTES:
-                    NotesAdapter.generate_stage_notes(roadmap, stage)
-                    rec.status = ResourceStatus.READY
-                    stage_res["generated"].append("notes")
                 elif rec.resource_type == ResourceType.PPT:
                     PPTAdapter.create_presentation_config(roadmap, stage)
                     rec.status = ResourceStatus.READY

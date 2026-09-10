@@ -19,6 +19,7 @@ import JoinLiveQuizPage from './pages/JoinLiveQuizPage';
 import LiveQuizHostPage from './pages/LiveQuizHostPage';
 import LiveQuizParticipantPage from './pages/LiveQuizParticipantPage';
 import LiveQuizReportPage from './pages/LiveQuizReportPage';
+import NotesGeneratorPage from './pages/NotesGeneratorPage';
 
 import { useAuthStore } from './store/useAuthStore';
 import CookieConsent from './components/CookieConsent';
@@ -150,6 +151,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChatPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/notes" 
+            element={
+              <ProtectedRoute>
+                <NotesGeneratorPage />
               </ProtectedRoute>
             } 
           />

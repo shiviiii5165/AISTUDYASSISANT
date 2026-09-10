@@ -56,6 +56,19 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://aistudyassisant.onrender.com"
 
+    # Lesson Planner Feature Flags & Integrations
+    LESSON_PLANNER_YOUTUBE_ENABLED: bool = True
+    LESSON_PLANNER_MATERIALS_ENABLED: bool = True
+    YOUTUBE_API_KEY: str = ""
+
+    @property
+    def lesson_planner_youtube_enabled(self) -> bool:
+        return self.LESSON_PLANNER_YOUTUBE_ENABLED
+
+    @property
+    def lesson_planner_materials_enabled(self) -> bool:
+        return self.LESSON_PLANNER_MATERIALS_ENABLED
+
     model_config = SettingsConfigDict(
         env_file=_env_file if os.path.exists(_env_file) else None,
         env_file_encoding="utf-8",

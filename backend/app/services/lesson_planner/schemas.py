@@ -52,6 +52,8 @@ class ResourceType(str, Enum):
     WORKSHEET = "worksheet"
     HOMEWORK = "homework"
     DIAGRAM = "diagram"
+    YOUTUBE_RECOMMENDATIONS = "youtube_recommendations"
+    EXTRA_LEARNING_MATERIALS = "extra_learning_materials"
 
 
 class ResourceStatus(str, Enum):
@@ -63,6 +65,8 @@ class ResourceStatus(str, Enum):
     READY = "ready"
     FAILED = "failed"
     STALE = "stale"
+    COMING_SOON = "coming_soon"
+    DISABLED = "disabled"
 
 
 class RoadmapStatus(str, Enum):
@@ -131,6 +135,55 @@ class SourceReference(BaseModel):
     snippet: Optional[str] = None
 
 
+class StageAction(BaseModel):
+    type: str  # ppt, teachme, quiz, youtube_recommendations, extra_learning_materials
+    enabled: bool
+    status: str = "active"  # active, coming_soon, disabled
+    title: str = ""
+    description: str = ""
+
+
+class YouTubeVideoRecommendation(BaseModel):
+    title: str
+    channel: str
+    thumbnail: Optional[str] = None
+    duration: Optional[str] = None
+    url: str
+    relevance: float = 0.9
+    difficulty: str = "intermediate"
+    source: str = "YouTube"
+    reason: str = ""
+
+
+class YouTubeRecommendationResponse(BaseModel):
+    enabled: bool = True
+    status: str = "active"
+    items: List[YouTubeVideoRecommendation] = Field(default_factory=list)
+
+
+class ExtraLearningMaterialItem(BaseModel):
+    title: str
+    url: str
+    description: str
+    source: str
+    type: str
+    relevance: float = 0.9
+    difficulty: str = "intermediate"
+
+
+class ExtraLearningMaterialsCategories(BaseModel):
+    academic_references: List[ExtraLearningMaterialItem] = Field(default_factory=list)
+    research_papers: List[ExtraLearningMaterialItem] = Field(default_factory=list)
+    documentation: List[ExtraLearningMaterialItem] = Field(default_factory=list)
+    extra_learning_material: List[ExtraLearningMaterialItem] = Field(default_factory=list)
+
+
+class ExtraLearningMaterialsResponse(BaseModel):
+    enabled: bool = True
+    status: str = "active"
+    categories: ExtraLearningMaterialsCategories = Field(default_factory=ExtraLearningMaterialsCategories)
+
+
 class RoadmapStage(BaseModel):
     id: str
     concept_id: str
@@ -159,6 +212,7 @@ class RoadmapStage(BaseModel):
     # Differentiation & Resources
     differentiation: StageDifferentiation = Field(default_factory=StageDifferentiation)
     resource_recommendations: List[ResourceRecommendation] = Field(default_factory=list)
+    actions: List[StageAction] = Field(default_factory=list)
     source_refs: List[SourceReference] = Field(default_factory=list)
     
     next_best_action: NextBestAction = NextBestAction.TEACH

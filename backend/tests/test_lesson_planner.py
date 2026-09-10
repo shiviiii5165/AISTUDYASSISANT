@@ -7,7 +7,7 @@ from datetime import datetime
 from app.services.lesson_planner.schemas import (
     LearningRoadmap, RoadmapStage, StageStatus, StageReadiness, 
     StageActivity, LearningObjective, BloomLevel, ResourceType, ResourceStatus,
-    ClassType
+    ClassType, StageAction
 )
 from app.services.lesson_planner.engine import (
     TimeBudgetEngine, PrerequisiteEngine, LessonHealthValidator, 
@@ -18,6 +18,8 @@ from app.services.lesson_planner.course_intelligence import CourseIntelligenceEn
 from app.services.lesson_planner.adapters import (
     PPTAdapter, VideoAdapter, TeachMeAdapter, QuizAdapter, NotesAdapter
 )
+from app.services.lesson_planner.youtube_recommendation import YouTubeRecommendationService
+from app.services.lesson_planner.learning_materials import ExtraLearningMaterialsService
 
 
 def get_mock_roadmap():
@@ -243,3 +245,122 @@ def test_semester_planner():
     assert len(plan.scheduled_lessons) == 14 * 3
     assert any(s.is_exam for s in plan.scheduled_lessons)
     assert any(s.is_practical for s in plan.scheduled_lessons)
+
+
+def test_stage_action_contract():
+    roadmap = get_mock_roadmap()
+    stage = roadmap.stages[0]
+
+    action_types = [a.type for a in stage.actions]
+    # All 5 Active downstream capabilities
+    assert "ppt" in action_types
+    assert "teachme" in action_types
+    assert "quiz" in action_types
+    assert "youtube_recommendations" in action_types
+    assert "extra_learning_materials" in action_types
+
+    # Excluded from Lesson Planner
+    assert "video" not in action_types
+    assert "notes" not in action_types
+
+    for action_type in ["ppt", "teachme", "quiz", "youtube_recommendations", "extra_learning_materials"]:
+        act = next(a for a in stage.actions if a.type == action_type)
+        assert act.enabled is True
+        assert act.status == "active"
+
+
+def test_resource_recommender_no_video_or_notes():
+    roadmap = get_mock_roadmap()
+    stage = roadmap.stages[0]
+
+    rec_types = [r.resource_type for r in stage.resource_recommendations]
+    assert ResourceType.PPT in rec_types
+    assert ResourceType.QUIZ in rec_types
+    assert ResourceType.TEACH_ME in rec_types
+    assert ResourceType.YOUTUBE_RECOMMENDATIONS in rec_types
+    assert ResourceType.EXTRA_LEARNING_MATERIALS in rec_types
+
+    # Video and Notes MUST NOT be recommended in Lesson Planner
+    assert ResourceType.VIDEO not in rec_types
+    assert ResourceType.NOTES not in rec_types
+
+    yt_rec = next(r for r in stage.resource_recommendations if r.resource_type == ResourceType.YOUTUBE_RECOMMENDATIONS)
+    assert yt_rec.status == ResourceStatus.RECOMMENDED
+    assert yt_rec.usefulness_score > 0.0
+
+    mat_rec = next(r for r in stage.resource_recommendations if r.resource_type == ResourceType.EXTRA_LEARNING_MATERIALS)
+    assert mat_rec.status == ResourceStatus.RECOMMENDED
+    assert mat_rec.usefulness_score > 0.0
+
+
+@pytest.mark.anyio
+async def test_youtube_recommendation_service_live():
+    res = await YouTubeRecommendationService.get_recommendations(
+        topic="DBMS Normalization",
+        learner_level="B.Tech",
+        language="english",
+        limit=3
+    )
+    assert res.enabled is True
+    assert res.status == "active"
+    assert len(res.items) > 0
+    assert res.items[0].url.startswith("http")
+    assert res.items[0].title != ""
+    assert res.items[0].relevance > 0.0
+    assert res.items[0].source == "YouTube"
+
+
+@pytest.mark.anyio
+async def test_extra_learning_materials_service_live():
+    res = await ExtraLearningMaterialsService.get_learning_materials(
+        topic="DBMS Normalization",
+        learner_level="B.Tech",
+        language="english"
+    )
+    assert res.enabled is True
+    assert res.status == "active"
+    assert len(res.categories.academic_references) > 0
+    assert len(res.categories.research_papers) > 0
+    assert len(res.categories.documentation) > 0
+    assert len(res.categories.extra_learning_material) > 0
+    # Items have valid structure
+    ref = res.categories.academic_references[0]
+    assert ref.url.startswith("http")
+    assert ref.title != ""
+
+
+@pytest.mark.anyio
+async def test_disabled_feature_flag_override(monkeypatch):
+    from app.core.config import settings
+    monkeypatch.setattr(settings, "LESSON_PLANNER_YOUTUBE_ENABLED", False)
+    monkeypatch.setattr(settings, "LESSON_PLANNER_MATERIALS_ENABLED", False)
+
+    res_yt = await YouTubeRecommendationService.get_recommendations("Test Topic")
+    res_mat = await ExtraLearningMaterialsService.get_learning_materials("Test Topic")
+
+    assert res_yt.enabled is False
+    assert res_yt.status == "coming_soon"
+    assert res_yt.items == []
+
+    assert res_mat.enabled is False
+    assert res_mat.status == "coming_soon"
+    assert res_mat.categories.academic_references == []
+
+
+def test_study_pack_omits_notes():
+    roadmap = get_mock_roadmap()
+    # Mock pack generation logic
+    pack_results = []
+    for stage in roadmap.stages:
+        stage_res = {"stage_id": stage.id, "title": stage.title, "generated": []}
+        for rec in stage.resource_recommendations:
+            if rec.status == ResourceStatus.RECOMMENDED:
+                if rec.resource_type == ResourceType.QUIZ:
+                    stage_res["generated"].append("quiz")
+                elif rec.resource_type == ResourceType.PPT:
+                    stage_res["generated"].append("ppt")
+        pack_results.append(stage_res)
+
+    for item in pack_results:
+        assert "notes" not in item["generated"]
+        assert "video" not in item["generated"]

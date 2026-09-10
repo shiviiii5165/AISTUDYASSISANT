@@ -99,4 +99,6 @@ from app.api import quiz as quiz_api
 app.include_router(quiz_api.router, prefix="/api/quiz", tags=["quiz"])
 from app.api import live_quiz as live_quiz_api
 app.include_router(live_quiz_api.router, prefix="/api/live-quizzes", tags=["live-quiz"])
+from app.api import notes_generator
+app.include_router(notes_generator.router, prefix="/api/notes-generator", tags=["notes-generator"])
 

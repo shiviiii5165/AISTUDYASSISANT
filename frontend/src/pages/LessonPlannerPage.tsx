@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Clock, CheckCircle2, PlayCircle, BookOpen,
-  Presentation, Video, HelpCircle, ListChecks, PenTool,
-  Loader2, AlertTriangle, Lock, FileText, CheckCircle, Zap,
-  Plus, Share2, Download, Compass, X,
+  Presentation, HelpCircle, ListChecks, PenTool,
+  Loader2, AlertTriangle, Lock, CheckCircle, Zap,
+  Plus, Share2, Download, Compass, X, Video, GraduationCap,
+  ExternalLink, FileText
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
@@ -17,8 +18,8 @@ import { useAuthStore } from '../store/useAuthStore';
 // Types mapping to Backend schemas
 type StageStatus = 'locked' | 'available' | 'in_progress' | 'material_ready' | 'taught' | 'assessment_pending' | 'mastered' | 'needs_review' | 'blocked';
 type StageReadiness = 'ready' | 'prerequisite_required' | 'review_recommended' | 'blocked';
-type ResourceType = 'ppt' | 'video' | 'teach_me' | 'quiz' | 'notes' | 'worksheet' | 'homework' | 'diagram';
-type ResourceStatus = 'not_needed' | 'recommended' | 'optional' | 'selected' | 'generating' | 'ready' | 'failed' | 'stale';
+type ResourceType = 'ppt' | 'video' | 'teach_me' | 'quiz' | 'notes' | 'worksheet' | 'homework' | 'diagram' | 'youtube_recommendations' | 'extra_learning_materials';
+type ResourceStatus = 'not_needed' | 'recommended' | 'optional' | 'selected' | 'generating' | 'ready' | 'failed' | 'stale' | 'coming_soon' | 'disabled';
 
 interface LearningObjective {
   id: string;
@@ -32,6 +33,14 @@ interface StageActivity {
   title?: string;
   description: string;
   duration_minutes: number;
+}
+
+interface StageAction {
+  type: string;
+  enabled: boolean;
+  status: string;
+  title: string;
+  description: string;
 }
 
 interface ResourceRecommendation {
@@ -77,6 +86,7 @@ interface RoadmapStage {
   expected_misconceptions: string[];
   differentiation: StageDifferentiation;
   resource_recommendations: ResourceRecommendation[];
+  actions?: StageAction[];
   source_refs: SourceReference[];
   is_remedial?: boolean;
 }
@@ -99,7 +109,36 @@ interface LearningRoadmap {
   version: number;
 }
 
-/** Cards map to the resource_type values the backend recommends. */
+interface YouTubeVideoItem {
+  title: string;
+  channel: string;
+  thumbnail?: string;
+  duration?: string;
+  url: string;
+  relevance: number;
+  difficulty: string;
+  source: string;
+  reason?: string;
+}
+
+interface ExtraLearningMaterialItem {
+  title: string;
+  url: string;
+  description: string;
+  source: string;
+  type: string;
+  relevance: number;
+  difficulty: string;
+}
+
+interface ExtraMaterialsCategories {
+  academic_references: ExtraLearningMaterialItem[];
+  research_papers: ExtraLearningMaterialItem[];
+  documentation: ExtraLearningMaterialItem[];
+  extra_learning_material: ExtraLearningMaterialItem[];
+}
+
+/** Active downstream capabilities in Lesson Planner. */
 const RESOURCE_CARDS: {
   type: string;
   key: ResourceType;
@@ -109,10 +148,10 @@ const RESOURCE_CARDS: {
   cta: string;
 }[] = [
   { type: 'PPT', key: 'ppt', icon: Presentation, label: 'PowerPoint', desc: 'Multi-slide deck with concept diagrams and speaker notes.', cta: 'Create PPT deck' },
-  { type: 'Video', key: 'video', icon: Video, label: 'Video lesson', desc: 'Micro-learning video storyboard with voice narration.', cta: 'Create video lesson' },
   { type: 'Teach', key: 'teach_me', icon: BookOpen, label: 'Teach Me', desc: 'Interactive dialogue with live checkpoints.', cta: 'Launch Teach Me' },
   { type: 'Quiz', key: 'quiz', icon: HelpCircle, label: 'Quiz', desc: 'Diagnostic questions addressing common misconceptions.', cta: 'Create quiz' },
-  { type: 'Notes', key: 'notes', icon: FileText, label: 'Study notes', desc: 'Revision notes with key definitions.', cta: 'Generate notes' },
+  { type: 'YouTube', key: 'youtube_recommendations', icon: Video, label: 'YouTube Lectures', desc: 'Live curated video lectures and worked tutorials for this stage.', cta: 'Explore Videos' },
+  { type: 'Materials', key: 'extra_learning_materials', icon: GraduationCap, label: 'Learning Hub', desc: 'Live academic references, arXiv papers, and documentation.', cta: 'Browse Hub' },
 ];
 
 const RESOURCE_STATUS_LABELS: Partial<Record<ResourceStatus, string>> = {
@@ -124,6 +163,8 @@ const RESOURCE_STATUS_LABELS: Partial<Record<ResourceStatus, string>> = {
   failed: 'Failed',
   stale: 'Out of date',
   not_needed: 'Not needed',
+  coming_soon: 'Coming Soon',
+  disabled: 'Disabled',
 };
 
 const LessonPlannerPage: React.FC = () => {
@@ -147,11 +188,26 @@ const LessonPlannerPage: React.FC = () => {
     goal: 'Step-by-step normal forms with decomposition examples.'
   });
 
+interface HistoryItem {
+  id: string;
+  title: string;
+  date: string;
+  topic?: string;
+  created_at?: string;
+}
+
+interface LessonHealthReport {
+  score: number;
+  reasons: string[];
+  warnings: string[];
+  recommended_fixes: { type: string; label: string }[];
+}
+
   // Roadmap & Stage States
   const [roadmap, setRoadmap] = useState<LearningRoadmap | null>(null);
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'differentiation'>('details');
-  const [healthScore, setHealthScore] = useState<any>(null);
+  const [healthScore, setHealthScore] = useState<LessonHealthReport | null>(null);
   const [isEditingStage, setIsEditingStage] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', duration_minutes: 15, teacher_action: '', student_action: '' });
   const [actionNotification, setActionNotification] = useState<string | null>(null);
@@ -160,29 +216,73 @@ const LessonPlannerPage: React.FC = () => {
   const [errorNotification, setErrorNotification] = useState<string | null>(null);
   const [isTriggeringResource, setIsTriggeringResource] = useState<string | null>(null);
   
-  const [historyItems, setHistoryItems] = useState<any[]>([]);
+  // Modal states for live viewers
+  const [activeViewer, setActiveViewer] = useState<'youtube' | 'materials' | null>(null);
+  const [youtubeData, setYoutubeData] = useState<YouTubeVideoItem[] | null>(null);
+  const [materialsData, setMaterialsData] = useState<ExtraMaterialsCategories | null>(null);
+  const [materialsTab, setMaterialsTab] = useState<'academic_references' | 'research_papers' | 'documentation' | 'extra_learning_material'>('academic_references');
+  const [isViewerLoading, setIsViewerLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/`, {
-          headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setHistoryItems(data.roadmaps || []);
-        }
-        
-        // Auto-load roadmap if id in URL
-        if (initialRoadmapId && !roadmap) {
-          loadRoadmap(initialRoadmapId);
-        }
-      } catch (err) {
-        console.error('Failed to load history:', err);
+  const openYouTubeViewer = async (stage: RoadmapStage) => {
+    if (!roadmap) return;
+    setActiveViewer('youtube');
+    setIsViewerLoading(true);
+    setErrorNotification(null);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/youtube-recommendations`, {
+        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setYoutubeData(data.items || []);
+      } else {
+        setErrorNotification('Could not load YouTube recommendations. Please try again.');
       }
-    };
-    fetchHistory();
-  }, [initialRoadmapId]);
+    } catch (e) {
+      console.error(e);
+      setErrorNotification('Could not load YouTube recommendations.');
+    } finally {
+      setIsViewerLoading(false);
+    }
+  };
+
+  const openMaterialsViewer = async (stage: RoadmapStage) => {
+    if (!roadmap) return;
+    setActiveViewer('materials');
+    setIsViewerLoading(true);
+    setErrorNotification(null);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/learning-materials`, {
+        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMaterialsData(data.categories || null);
+      } else {
+        setErrorNotification('Could not load extra learning materials. Please try again.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorNotification('Could not load extra learning materials.');
+    } finally {
+      setIsViewerLoading(false);
+    }
+  };
+  
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+
+  const fetchHealth = async (id: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${id}/health`, {
+        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+      });
+      if (response.ok) {
+        setHealthScore(await response.json());
+      }
+    } catch (e) {
+      console.error('Failed to fetch lesson health', e);
+    }
+  };
 
   const loadRoadmap = async (id: string) => {
     try {
@@ -203,6 +303,35 @@ const LessonPlannerPage: React.FC = () => {
       setErrorNotification('Failed to load past roadmap.');
     }
   };
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/`, {
+          headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const items: HistoryItem[] = (data.roadmaps || []).map((r: any) => ({
+            id: r.id,
+            title: r.topic || r.title || 'Untitled Roadmap',
+            date: r.created_at || r.date || new Date().toISOString(),
+            topic: r.topic,
+            created_at: r.created_at
+          }));
+          setHistoryItems(items);
+        }
+        
+        // Auto-load roadmap if id in URL
+        if (initialRoadmapId && !roadmap) {
+          loadRoadmap(initialRoadmapId);
+        }
+      } catch (err) {
+        console.error('Failed to load history:', err);
+      }
+    };
+    fetchHistory();
+  }, [initialRoadmapId]);
 
   const selectedStage = roadmap?.stages.find(s => s.id === selectedStageId) || roadmap?.stages[0] || null;
 
@@ -259,19 +388,6 @@ const LessonPlannerPage: React.FC = () => {
       setErrorNotification('Could not generate the roadmap. Please check your connection and try again.');
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const fetchHealth = async (id: string) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${id}/health`, {
-        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
-      });
-      if (response.ok) {
-        setHealthScore(await response.json());
-      }
-    } catch (e) {
-      console.error('Failed to fetch lesson health', e);
     }
   };
 
@@ -415,6 +531,16 @@ const LessonPlannerPage: React.FC = () => {
 
   const handleGenerateResource = async (type: string) => {
     if (!roadmap || !selectedStage) return;
+
+    if (type === 'YouTube') {
+      openYouTubeViewer(selectedStage);
+      return;
+    }
+    if (type === 'Materials') {
+      openMaterialsViewer(selectedStage);
+      return;
+    }
+
     setIsTriggeringResource(type);
     setErrorNotification(null);
     try {
@@ -450,14 +576,11 @@ const LessonPlannerPage: React.FC = () => {
         
         if (type === 'PPT') {
           navigate('/decks', { state: { presetConfig: data.config } });
-        } else if (type === 'Video') {
-          navigate('/video', { state: { presetConfig: data.config } });
         } else if (type === 'Teach') {
           navigate('/teach', { state: { presetBrief: data.brief } });
         } else if (type === 'Quiz') {
           navigate('/quizzes', { state: { presetConfig: data.config } });
         }
-        // Notes doesn't have dedicated pages yet, so they just stay here and show notification.
       } else {
         /* Previously this path was silent, and the catch below reported
            success. A failure now reports a failure. */
@@ -837,7 +960,7 @@ const LessonPlannerPage: React.FC = () => {
                   {[
                     { t: 'Concept graph', d: 'Analyses topic dependencies and builds an ordered concept map.' },
                     { t: 'Stage sequencing', d: 'Creates stages aligned to Bloom levels, with time budgets and checkpoints.' },
-                    { t: 'Resources', d: 'Recommends and generates stage-specific decks, videos, quizzes and notes.' },
+                    { t: 'Resources', d: 'Recommends and generates stage-specific decks, interactive Socratic sessions, and quizzes.' },
                   ].map((step, i) => (
                     <li key={step.t} className="flex gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-green-light)] text-xs font-bold tabular-nums text-[var(--accent-green-text)]">
@@ -1143,7 +1266,7 @@ const LessonPlannerPage: React.FC = () => {
                         type="button"
                         role="tab"
                         aria-selected={activeTab === tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => setActiveTab(tab.id as 'details' | 'timeline' | 'differentiation')}
                         className={`border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors ${
                           activeTab === tab.id
                             ? 'border-[var(--accent-green)] text-[var(--accent-green-text)]'
@@ -1287,10 +1410,10 @@ const LessonPlannerPage: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                     {RESOURCE_CARDS.map((card) => {
                       /* Badge reflects the backend's recommendation for this
-                         stage. Previously these labels were hardcoded. */
+                         stage. */
                       const rec = selectedStage.resource_recommendations?.find(
                         r => r.resource_type === card.key
                       );
@@ -1300,11 +1423,11 @@ const LessonPlannerPage: React.FC = () => {
                       return (
                         <div
                           key={card.type}
-                          className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4"
+                          className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/30"
                         >
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-1 rounded bg-[var(--bg-card)] px-2 py-0.5 text-xs font-bold text-[var(--text-primary)]">
+                              <span className="flex items-center gap-1.5 rounded bg-[var(--bg-card)] px-2 py-0.5 text-xs font-bold text-[var(--text-primary)]">
                                 <Icon className="h-3.5 w-3.5 text-[var(--accent-green-text)]" aria-hidden="true" />
                                 {card.label}
                               </span>
@@ -1350,6 +1473,286 @@ const LessonPlannerPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ============================================================ */}
+      {/* LIVE VIEWER MODALS: YOUTUBE & LEARNING MATERIALS HUB          */}
+      {/* ============================================================ */}
+      <AnimatePresence>
+        {activeViewer === 'youtube' && selectedStage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                    <Video className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      YouTube Recommendations
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                        Live
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Curated educational lectures for stage: <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewer(null)}
+                  aria-label="Close modal"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Content Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {isViewerLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-green)]" />
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Searching and ranking educational video lectures...
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Matching pedagogical depth to {selectedStage.title}
+                    </p>
+                  </div>
+                ) : youtubeData && youtubeData.length > 0 ? (
+                  <div className="space-y-4">
+                    {youtubeData.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-col sm:flex-row gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-sm"
+                      >
+                        {/* Thumbnail / Duration */}
+                        <div className="relative shrink-0 w-full sm:w-44 h-28 rounded-lg overflow-hidden bg-black/10">
+                          {item.thumbnail ? (
+                            <img
+                              src={item.thumbnail}
+                              alt={item.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gray-900 text-white">
+                              <Video className="h-8 w-8 text-red-500" />
+                            </div>
+                          )}
+                          {item.duration && (
+                            <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wider">
+                              {item.duration}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 flex flex-col justify-between space-y-2">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-secondary)]">
+                                {item.channel}
+                              </span>
+                              <span className="rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5">
+                                {Math.round(item.relevance * 100)}% Match
+                              </span>
+                              <span className="rounded bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 capitalize">
+                                {item.difficulty}
+                              </span>
+                            </div>
+                            <h4 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2">
+                              {item.title}
+                            </h4>
+                            {item.reason && (
+                              <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">
+                                {item.reason}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-red-700"
+                            >
+                              <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                              Watch on YouTube
+                              <ExternalLink className="h-3 w-3 ml-0.5" aria-hidden="true" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
+                    No educational videos available for this specific stage.
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
+                <span>Educational recommendations are ranked by topic alignment.</span>
+                <button
+                  type="button"
+                  onClick={() => openYouTubeViewer(selectedStage)}
+                  className="font-semibold text-[var(--accent-green-text)] hover:underline"
+                >
+                  Refresh search
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {activeViewer === 'materials' && selectedStage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+                    <GraduationCap className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      Extra Learning Materials Hub
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                        Live
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Academic references & research papers for <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewer(null)}
+                  aria-label="Close modal"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex border-b border-[var(--border)] bg-[var(--bg-secondary)] px-6 overflow-x-auto">
+                {[
+                  { id: 'academic_references', label: 'Academic References', icon: BookOpen, count: materialsData?.academic_references?.length || 0 },
+                  { id: 'research_papers', label: 'Research Papers (arXiv)', icon: FileText, count: materialsData?.research_papers?.length || 0 },
+                  { id: 'documentation', label: 'Documentation', icon: ListChecks, count: materialsData?.documentation?.length || 0 },
+                  { id: 'extra_learning_material', label: 'Extra Material & Guides', icon: Sparkles, count: materialsData?.extra_learning_material?.length || 0 }
+                ].map(tab => {
+                  const TabIcon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setMaterialsTab(tab.id as any)}
+                      className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-semibold whitespace-nowrap transition-colors ${
+                        materialsTab === tab.id
+                          ? 'border-[var(--accent-green)] text-[var(--accent-green-text)]'
+                          : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <TabIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {tab.label}
+                      <span className="ml-1 rounded-full bg-[var(--bg-card)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)]">
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Content Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {isViewerLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-green)]" />
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Fetching verified academic references and research papers...
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Connecting to Wikipedia, arXiv, and official documentation
+                    </p>
+                  </div>
+                ) : (materialsData && materialsData[materialsTab]?.length > 0) ? (
+                  <div className="space-y-3">
+                    {materialsData[materialsTab].map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-sm"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                              {item.source}
+                            </span>
+                            <span className="rounded bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-bold capitalize">
+                              {item.difficulty}
+                            </span>
+                          </div>
+                          <h4 className="font-semibold text-sm text-[var(--text-primary)]">
+                            {item.title}
+                          </h4>
+                          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                            {item.description}
+                          </p>
+                        </div>
+
+                        <div className="pt-1">
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                          >
+                            Open Resource
+                            <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
+                    No materials found in this category for this stage.
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
+                <span>Sourced from Wikipedia, arXiv, and developer documentation.</span>
+                <button
+                  type="button"
+                  onClick={() => openMaterialsViewer(selectedStage)}
+                  className="font-semibold text-[var(--accent-green-text)] hover:underline"
+                >
+                  Refresh search
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 };
