@@ -8,7 +8,9 @@ from .schemas import (
     GroundedSources,
     GroundedSourceItem,
     PracticeQuestionItem,
-    GenerationResult
+    GenerationResult,
+    GenerationMode,
+    SemanticDeficit
 )
 from .prompt_builder import PromptBuilder
 from .output_parser import OutputParser
@@ -25,4 +27,6 @@ __all__ = [
     "GroundedSourceItem",
     "PracticeQuestionItem",
     "GenerationResult",
+    "GenerationMode",
+    "SemanticDeficit",
 ]

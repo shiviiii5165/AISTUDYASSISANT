@@ -3,9 +3,19 @@ TeachGenie Notes Generation Engine — Domain Schemas & Contracts
 ===============================================================
 Contracts for Step 3 of the Notes Intelligence Layer.
 Takes CanonicalNotesContext and NotesGenerationPlan to produce NotesDocument.
+Defines explicit generation modes, deficits, and source grounding models.
 """
+from enum import Enum
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, ConfigDict
+
+
+class GenerationMode(str, Enum):
+    AI_GENERATED = "ai_generated"
+    AI_GENERATED_REPAIRED = "ai_generated_repaired"
+    DETERMINISTIC_FALLBACK = "deterministic_fallback"
+    GENERATION_FAILED = "generation_failed"
+    GENERATION_INCOMPLETE = "generation_incomplete"
 
 
 class GroundedSourceItem(BaseModel):
@@ -55,10 +65,31 @@ class PracticeQuestionItem(BaseModel):
     target_concept: Optional[str] = None
 
 
+class SemanticDeficit(BaseModel):
+    """Tracks missing semantic requirements that warrant bounded regeneration."""
+    model_config = ConfigDict(populate_by_name=True)
+
+    missing_sections: List[str] = Field(default_factory=list)
+    practice_shortfall: int = 0
+    missing_visual: bool = False
+    unaddressed_misconceptions: List[str] = Field(default_factory=list)
+
+    @property
+    def has_deficits(self) -> bool:
+        return (
+            bool(self.missing_sections) or
+            self.practice_shortfall > 0 or
+            self.missing_visual or
+            bool(self.unaddressed_misconceptions)
+        )
+
+
 class GenerationResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     success: bool
     document: Any
+    generation_mode: str = GenerationMode.AI_GENERATED.value
+    structural_repairs: List[str] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
     model_identifier: Optional[str] = None

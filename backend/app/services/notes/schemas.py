@@ -108,15 +108,22 @@ class NotesDocument(BaseModel):
     lineage: Dict[str, Any] = Field(default_factory=dict)
     generation_metadata: Dict[str, Any] = Field(default_factory=dict)
     generation_warnings: List[str] = Field(default_factory=list)
+    generation_mode: Optional[str] = None
+    structural_repairs: List[str] = Field(default_factory=list)
 
     @field_validator("curriculum", mode="before")
     @classmethod
     def _validate_curriculum(cls, v: Any) -> str:
-        if hasattr(v, "board") and v.board:
-            return str(v.board)
+        if hasattr(v, "board"):
+            return str(v.board or "unknown")
         if isinstance(v, dict) and "board" in v:
-            return str(v["board"])
-        return str(v or "CBSE")
+            return str(v["board"] or "unknown")
+        if v is None:
+            return "unknown"
+        val = str(v).strip()
+        if not val or val.lower() == "none":
+            return "unknown"
+        return val
 
     @classmethod
     def create_synced(cls, **data: Any) -> "NotesDocument":
