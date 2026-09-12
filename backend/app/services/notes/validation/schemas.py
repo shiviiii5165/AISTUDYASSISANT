@@ -162,7 +162,8 @@ class ValidationResult(BaseModel):
 
 class ValidateNotesRequest(BaseModel):
     """Wire request for external validation invocation."""
-    context: Dict[str, Any]
-    plan: Dict[str, Any]
+    context: Optional[Dict[str, Any]] = None
+    snapshot_id: Optional[str] = None
+    plan: Optional[Dict[str, Any]] = None
     document: Dict[str, Any]
     sources: Optional[Dict[str, Any]] = None

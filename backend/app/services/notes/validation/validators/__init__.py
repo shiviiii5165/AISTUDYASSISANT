@@ -5,6 +5,7 @@ from .source_grounding import SourceGroundingValidator
 from .curriculum import CurriculumValidator
 from .pedagogy_and_misconceptions import PedagogyAndMisconceptionValidator
 from .practice_and_visual import PracticeAndVisualValidator
+from .learning_flow import LearningFlowValidator
 
 __all__ = [
     "PlanComplianceValidator",
@@ -13,4 +14,5 @@ __all__ = [
     "CurriculumValidator",
     "PedagogyAndMisconceptionValidator",
     "PracticeAndVisualValidator",
+    "LearningFlowValidator",
 ]

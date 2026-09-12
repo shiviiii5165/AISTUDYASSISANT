@@ -14,13 +14,52 @@ from app.core.config import settings
 
 
 class GroqProvider(AIProvider):
-    DEFAULT_MODEL = "llama-3.3-70b-versatile"
-    FALLBACK_MODELS = ["mixtral-8x7b-32768", "llama-3.1-8b-instant"]
+    # Logical Allowlist matching user specification
+    GROQ_PRODUCTION_MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
+    GROQ_PREVIEW_MODELS = ["qwen/qwen3.8-27b", "qwen/qwen3.6-27b"]
+
+    _cached_available_models: List[str] = []
+    _last_discovery_time: float = 0.0
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="groq")
         raw_key = (api_key or settings.GROQ_API_KEY or getattr(settings, "GROQ_API_KEYS", "") or "").strip()
         self.api_key = raw_key.split(",")[0].strip() if raw_key else ""
+
+    async def get_discovered_models(self) -> List[str]:
+        """Discovers live Groq models and intersects with internal allowlist."""
+        now = time.time()
+        if self._cached_available_models and (now - self._last_discovery_time < 3600):
+            return self._cached_available_models
+
+        discovered: List[str] = []
+        if not self.api_key:
+            return [settings.GROQ_PRIMARY_MODEL]
+
+        try:
+            url = "https://api.groq.com/openai/v1/models"
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                resp = await client.get(url, headers=headers)
+                if resp.status_code == 200:
+                    remote_ids = {m.get("id") for m in resp.json().get("data", [])}
+                    # Intersect in strict order: Preferred Production -> Preview -> Remaining
+                    for m in self.GROQ_PRODUCTION_MODELS:
+                        if m in remote_ids and m not in discovered:
+                            discovered.append(m)
+                    for m in self.GROQ_PREVIEW_MODELS:
+                        if m in remote_ids and m not in discovered:
+                            discovered.append(m)
+        except Exception as e:
+            pass
+
+        if not discovered:
+            configured_fallbacks = [m.strip() for m in settings.GROQ_FALLBACK_MODELS.split(",") if m.strip()]
+            discovered = [settings.GROQ_PRIMARY_MODEL] + configured_fallbacks
+
+        GroqProvider._cached_available_models = discovered
+        GroqProvider._last_discovery_time = now
+        return discovered
 
     async def generate_text(
         self,
@@ -36,7 +75,16 @@ class GroqProvider(AIProvider):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        models_to_try = [model or self.DEFAULT_MODEL] + [m for m in self.FALLBACK_MODELS if m != model]
+
+        # Dynamic model cascade selection
+        available = await self.get_discovered_models()
+        if model and model in available:
+            models_to_try = [model] + [m for m in available if m != model]
+        elif model:
+            models_to_try = [model] + available
+        else:
+            models_to_try = available
+
         last_err = None
         budget_start = time.time()
 
@@ -99,8 +147,14 @@ class GroqProvider(AIProvider):
         max_tokens: int = 4096,
         timeout: float = 60.0,
     ) -> Dict[str, Any]:
+        # Groq requires 'json' to be explicitly mentioned in messages when using json_object format
+        has_json_instruction = any("json" in m.get("content", "").lower() for m in messages)
+        json_messages = list(messages)
+        if not has_json_instruction:
+            json_messages.insert(0, {"role": "system", "content": "You are an educational assistant. You must respond in valid JSON format."})
+
         response = await self.generate_text(
-            messages=messages,
+            messages=json_messages,
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,

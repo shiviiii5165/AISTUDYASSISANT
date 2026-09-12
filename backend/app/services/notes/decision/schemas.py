@@ -10,6 +10,14 @@ from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.services.notes.schemas import NoteFormat, NoteDepth, NoteDifficulty
+from .learning_flow_schemas import (
+    LearningMode, CognitiveOperation, LearnerKnowledgeState,
+    LearnerEntryState, LearningStageItem, LearningCheckpoint,
+    AdaptationRule, MasteryCheckPlan, PrerequisiteStrategy,
+    ExplanationStrategy, InteractionStrategy, RetrievalStrategy,
+    MisconceptionStrategy, ExampleStrategy, PracticeStrategy,
+    RevisionStrategy, LearningFlowPlan
+)
 
 
 class PurposeType(str, Enum):
@@ -77,8 +85,10 @@ class SectionPlanItem(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     type: str
+    title: Optional[str] = None
     required: bool = True
     target: Optional[str] = None
+    sub_concepts: List[str] = Field(default_factory=list)
 
 
 class DecisionReason(BaseModel):
@@ -121,6 +131,8 @@ class NotesGenerationPlan(BaseModel):
     revision_plan: RevisionPlan
 
     constraints: List[str] = Field(default_factory=list)
+
+    learning_flow_plan: Optional[LearningFlowPlan] = None
 
     decision_reasons: List[DecisionReason] = Field(default_factory=list)
     evidence: Dict[str, Any] = Field(default_factory=dict)

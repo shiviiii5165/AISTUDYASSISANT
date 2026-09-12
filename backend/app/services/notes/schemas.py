@@ -54,6 +54,26 @@ class CalloutItem(BaseModel):
     text: str = ""
 
 
+class SectionSemanticEvidence(BaseModel):
+    """Internal auditable pedagogical metadata for Step 4 & certification. Omitted from student HTML/PDF."""
+    concept_id: Optional[str] = None
+    instructional_role: str = "core_concept"  # "core_concept" | "worked_example" | "comparison" | "misconception_remediation" | "revision"
+    explanation_present: bool = True
+    intuition_present: bool = False
+    example_present: bool = False
+    worked_example_present: bool = False
+    practice_targets: List[str] = Field(default_factory=list)
+    misconception_targets: List[str] = Field(default_factory=list)
+    visual_targets: List[str] = Field(default_factory=list)
+    revision_targets: List[str] = Field(default_factory=list)
+    learning_flow_stage: Optional[str] = None
+    learning_mode: Optional[str] = None
+    cognitive_operation: Optional[str] = None
+    is_interactive: bool = False
+    interaction_type: Optional[str] = None
+    provenance_reason: Optional[str] = None
+
+
 class NoteSection(BaseModel):
     id: str = Field(default_factory=lambda: f"sec_{int(datetime.now(timezone.utc).timestamp()*1000)}")
     section_type: str = "core_concept"  # "overview", "core_concept", "worked_example", "formula_box", "flowchart", "mind_map", "comparison_table", "common_misconceptions", "quick_summary", "exam_tips", "checkpoint_practice", etc.
@@ -66,6 +86,12 @@ class NoteSection(BaseModel):
     common_mistakes: List[str] = Field(default_factory=list)
     callouts: List[CalloutItem] = Field(default_factory=list)
     visual_spec: Optional[VisualSpec] = None
+    semantic_evidence: Optional[SectionSemanticEvidence] = None
+    provenance: Optional[str] = "generated_from_context"  # "curated_catalog" | "authoritative_source" | "generated_from_context" | "deterministic_fallback"
+
+    @property
+    def heading(self) -> str:
+        return self.title
 
 
 class NotesQualityReport(BaseModel):
@@ -110,6 +136,9 @@ class NotesDocument(BaseModel):
     generation_warnings: List[str] = Field(default_factory=list)
     generation_mode: Optional[str] = None
     structural_repairs: List[str] = Field(default_factory=list)
+    provenance: Optional[str] = "generated_from_context"
+    learning_flow_plan: Optional[Dict[str, Any]] = None
+    learning_flow_quality: Optional[Dict[str, Any]] = None
 
     @field_validator("curriculum", mode="before")
     @classmethod

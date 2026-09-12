@@ -25,39 +25,67 @@ class ModelRouter:
         self.openrouter = OpenRouterProvider()
 
         # Task -> Preferred Provider & Model Mapping
+        # Task -> Preferred Provider & Model Mapping (Adheres strictly to user specification)
         self.task_policies = {
             "planning": [
+                ("gemini", "gemini-3.8-flash"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
+            ],
+            "doubt_tutor": [
+                ("groq", "openai/gpt-oss-120b"),
+                ("gemini", "gemini-3.8-flash"),
+                ("groq", "qwen/qwen3.8-27b"),
+                ("gemini", "gemini-3.6-flash"),
+                ("openrouter", "openai/gpt-4o"),
+            ],
+            "semantic_qa": [
+                ("groq", "openai/gpt-oss-120b"),
+                ("gemini", "gemini-3.8-flash"),
+                ("groq", "qwen/qwen3.8-27b"),
+                ("gemini", "gemini-3.6-flash"),
             ],
             "content_generation": [
+                ("gemini", "gemini-3.8-flash"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
             ],
             "technical_content": [
+                ("gemini", "gemini-3.8-flash"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
             ],
             "repair": [
+                ("gemini", "gemini-3.8-flash"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
             ],
             "qa": [
+                ("gemini", "gemini-3.8-flash"),
+                ("gemini", "gemini-3.6-flash"),
+                ("groq", "openai/gpt-oss-120b"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
-                ("gemini", "gemini-2.0-flash"),
-                ("groq", "llama-3.3-70b-versatile"),
             ],
             "embedding": [
                 ("gemini", "gemini-embedding-001"),
             ],
             "image": [
-                ("gemini", "gemini-2.0-flash"),
+                ("gemini", "gemini-3.8-flash"),
             ]
         }
+        self.last_routed_calls: Dict[str, Dict[str, Any]] = {}
+
+    def get_last_routed(self, task: str) -> Optional[Dict[str, Any]]:
+        return self.last_routed_calls.get(task)
 
     def _get_provider(self, name: str) -> AIProvider:
         if name == "gemini":
@@ -71,11 +99,20 @@ class ModelRouter:
     async def generate_text(
         self,
         task: str,
-        messages: List[Dict[str, str]],
-        temperature: float = 0.3,
+        messages: Optional[List[Dict[str, str]]] = None,
+        prompt: Optional[str] = None,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
         max_tokens: int = 4096,
         timeout: float = 60.0,
     ) -> LLMResponse:
+        if messages is None:
+            messages = []
+            if system_instruction:
+                messages.append({"role": "system", "content": system_instruction})
+            if prompt:
+                messages.append({"role": "user", "content": prompt})
+
         policies = self.task_policies.get(task, [("groq", "qwen/qwen3.8-27b"), ("gemini", "gemini-3.6-flash")])
         errors = []
         budget_start = time.time()
@@ -102,23 +139,37 @@ class ModelRouter:
                     timeout=min(remaining, 30.0),
                 )
                 health_manager.record_success(provider_name)
+                self.last_routed_calls[task] = {"provider": provider_name, "model": model_name, "timestamp": time.time()}
                 return res
             except Exception as e:
-                logger.warning(f"Provider {provider_name}/{model_name} failed for task '{task}': {e}")
-                health_manager.record_failure(provider_name)
-                errors.append(f"{provider_name}: {str(e)[:120]}")
+                err_str = str(e)
+                logger.warning(f"Provider {provider_name}/{model_name} failed for task '{task}': {err_str[:120]}")
+                if "402" in err_str or "Payment Required" in err_str:
+                    health_manager.record_terminal_failure(provider_name, cooldown_seconds=3600)
+                else:
+                    health_manager.record_failure(provider_name)
+                errors.append(f"{provider_name}: {err_str[:120]}")
 
         raise RuntimeError(f"All providers exhausted for task '{task}'. Errors: {' | '.join(errors)}")
 
     async def generate_json(
         self,
         task: str,
-        messages: List[Dict[str, str]],
+        messages: Optional[List[Dict[str, str]]] = None,
+        prompt: Optional[str] = None,
+        system_instruction: Optional[str] = None,
         temperature: float = 0.2,
         max_tokens: int = 4096,
         timeout: float = 60.0,
     ) -> Dict[str, Any]:
-        policies = self.task_policies.get(task, [("groq", "qwen/qwen3.8-27b"), ("gemini", "gemini-3.6-flash")])
+        if messages is None:
+            messages = []
+            if system_instruction:
+                messages.append({"role": "system", "content": system_instruction})
+            if prompt:
+                messages.append({"role": "user", "content": prompt})
+
+        policies = self.task_policies.get(task, [("gemini", "gemini-3.8-flash"), ("groq", "openai/gpt-oss-120b")])
         errors = []
         budget_start = time.time()
 
@@ -144,11 +195,16 @@ class ModelRouter:
                     timeout=min(remaining, 30.0),
                 )
                 health_manager.record_success(provider_name)
+                self.last_routed_calls[task] = {"provider": provider_name, "model": model_name, "timestamp": time.time()}
                 return res
             except Exception as e:
-                logger.warning(f"Provider {provider_name}/{model_name} failed JSON generation for task '{task}': {e}")
-                health_manager.record_failure(provider_name)
-                errors.append(f"{provider_name}: {str(e)[:120]}")
+                err_str = str(e)
+                logger.warning(f"Provider {provider_name}/{model_name} failed JSON generation for task '{task}': {err_str[:120]}")
+                if "402" in err_str or "Payment Required" in err_str:
+                    health_manager.record_terminal_failure(provider_name, cooldown_seconds=3600)
+                else:
+                    health_manager.record_failure(provider_name)
+                errors.append(f"{provider_name}: {err_str[:120]}")
 
         raise RuntimeError(f"All providers exhausted for JSON task '{task}'. Errors: {' | '.join(errors)}")
 
@@ -178,4 +234,5 @@ class ModelRouter:
 
 # Singleton router instance
 router = ModelRouter()
+model_router = router
 

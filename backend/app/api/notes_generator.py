@@ -8,9 +8,11 @@ CRITICAL INVARIANT:
 This router is mounted at `/api/notes-generator`.
 The existing `/api/notes` router is strictly preserved for handwritten OCR image uploads.
 """
+import base64
 import logging
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import Response
 
 from app.core.dependencies import get_current_user
 from app.core.security import limiter
@@ -28,6 +30,11 @@ from app.services.notes.repository import NotesRepository
 from app.services.notes.validation import validate_notes, ValidationResult, ValidateNotesRequest
 from app.services.notes.generation.engine import ensure_generation_plan
 from app.services.notes.generation.schemas import GroundedSources
+from app.services.notes.rendering.pdf_renderer import PDFRenderer
+from app.services.notes.rendering.html_builder import HTMLNoteBuilder
+from app.services.notes.certification import (
+    StudentArtifactCertifier, DocumentQualityResult, CertifyArtifactRequest
+)
 
 logger = logging.getLogger("teachgenie.api.notes_generator")
 router = APIRouter()
@@ -146,20 +153,142 @@ async def validate_notes_endpoint(
     """
     Step 4 Validation Endpoint.
     Validates a NotesDocument against CanonicalNotesContext, NotesGenerationPlan, and optional GroundedSources.
+    Enforces API Security:
+    - If snapshot_id is provided, loads the authoritative, immutable context snapshot server-side,
+      preventing client-side context tamper or source trust escalation.
+    - If plan is omitted or if authoritative derivation is required, derives the trusted plan
+      server-side via NotesDecisionEngine.decide(ctx).
+    - Ensures arbitrary user-controlled payloads cannot bypass validator gates or escalate unverified sources.
     """
     try:
-        ctx = CanonicalNotesContext(**payload.context)
-        plan = ensure_generation_plan(payload.plan)
+        # Authoritative context resolution
+        if payload.snapshot_id:
+            snapshot = ContextSnapshotManager.get_snapshot(payload.snapshot_id)
+            if not snapshot:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Context snapshot '{payload.snapshot_id}' not found or expired."
+                )
+            ctx = snapshot.context
+        elif payload.context:
+            ctx = CanonicalNotesContext(**payload.context)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Either 'snapshot_id' or 'context' payload must be provided for validation."
+            )
+
+        # Authoritative plan resolution
+        if payload.plan:
+            plan = ensure_generation_plan(payload.plan)
+        else:
+            plan = decide_notes_plan(ctx)
+
         doc = NotesDocument(**payload.document)
         sources = GroundedSources(**payload.sources) if payload.sources else None
 
         result = await validate_notes(context=ctx, plan=plan, document=doc, sources=sources)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[NotesGeneratorAPI] Error validating notes: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to validate notes: {str(e)[:200]}"
+        )
+
+
+@router.post("/{note_id}/export-pdf")
+@limiter.limit("20/minute")
+async def export_note_pdf(
+    request: Request,
+    note_id: str,
+    certify: bool = True,
+    current_user=Depends(get_current_user)
+):
+    """
+    Exports a NoteDocument as a deterministic, publication-grade student PDF.
+    Optionally certifies the rendered artifact before returning.
+    """
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    doc = NotesRepository.get_note(note_id, user_id)
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Note document not found or access denied."
+        )
+
+    try:
+        html = HTMLNoteBuilder.build_html(doc)
+        pdf_bytes = await PDFRenderer.render_document(doc)
+
+        headers = {
+            "Content-Disposition": f'attachment; filename="teachgenie_notes_{note_id[:8]}.pdf"',
+            "Content-Type": "application/pdf"
+        }
+
+        if certify:
+            qa_result = await StudentArtifactCertifier.certify_artifact(
+                document=doc,
+                pdf_bytes=pdf_bytes,
+                html_content=html
+            )
+            headers["X-TeachGenie-Document-Hash"] = qa_result.document_hash
+            headers["X-TeachGenie-PDF-Hash"] = qa_result.pdf_hash
+            headers["X-TeachGenie-Certified"] = qa_result.artifact_status.value
+            headers["X-TeachGenie-Defects"] = str(len(qa_result.artifact_certification.defects))
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers=headers
+        )
+    except Exception as e:
+        logger.error(f"[NotesGeneratorAPI] Error exporting PDF for note {note_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export PDF: {str(e)[:200]}"
+        )
+
+
+@router.post("/certify-artifact", response_model=DocumentQualityResult)
+@limiter.limit("20/minute")
+async def certify_note_artifact(
+    request: Request,
+    payload: CertifyArtifactRequest,
+    current_user=Depends(get_current_user)
+):
+    """
+    Certifies a rendered student artifact (or generates and certifies PDF)
+    against the TeachGenie Quality Gate.
+    """
+    try:
+        doc = NotesDocument(**payload.document)
+        pdf_bytes = None
+        if payload.pdf_base64:
+            pdf_bytes = base64.b64decode(payload.pdf_base64)
+        elif payload.html_content:
+            pdf_bytes = await PDFRenderer.render_html(payload.html_content)
+        else:
+            pdf_bytes = await PDFRenderer.render_document(doc)
+
+        ctx = CanonicalNotesContext(**payload.context) if payload.context else None
+        plan = ensure_generation_plan(payload.plan) if payload.plan else None
+
+        result = await StudentArtifactCertifier.certify_artifact(
+            document=doc,
+            pdf_bytes=pdf_bytes,
+            html_content=payload.html_content,
+            context=ctx,
+            plan=plan
+        )
+        return result
+    except Exception as e:
+        logger.error(f"[NotesGeneratorAPI] Error certifying artifact: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to certify artifact: {str(e)[:200]}"
         )
 
 

@@ -30,6 +30,7 @@ from .validators.source_grounding import SourceGroundingValidator
 from .validators.curriculum import CurriculumValidator
 from .validators.pedagogy_and_misconceptions import PedagogyAndMisconceptionValidator
 from .validators.practice_and_visual import PracticeAndVisualValidator
+from .validators.learning_flow import LearningFlowValidator
 from .judge import SemanticJudge
 
 logger = logging.getLogger("teachgenie.notes.validation.engine")
@@ -145,6 +146,12 @@ async def validate_notes(
     prac_viols, prac_details, prac_score = PracticeAndVisualValidator.validate(document, plan, context)
     violations.extend(prac_viols)
     dimension_scores["practice_and_visual"] = prac_score
+
+    # ── 7b. Learning Flow & Adaptation Validation ──
+    flow_viols, flow_details, flow_score = LearningFlowValidator.validate(document, plan, context)
+    violations.extend(flow_viols)
+    if getattr(plan, "learning_flow_plan", None):
+        dimension_scores["pedagogy"] = min(dimension_scores["pedagogy"], flow_score)
 
     # ── 8. Semantic AI Judge (Targeted, Prompt-Injection Defended) ──
     hallucination_details: Dict[str, Any] = {"status": "skipped"}

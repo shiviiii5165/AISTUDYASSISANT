@@ -43,6 +43,51 @@ async def generate_outline_step(
     return await plan_presentation(config, user_id=user_id)
 
 
+async def generate_outline_from_shared_context(
+    shared_context: Any,
+    user_id: str = ""
+) -> Dict[str, Any]:
+    """
+    P3 Production Integration: Builds deck outline directly from SharedLessonContext.
+    Reuses pre-compiled learning objectives, canonical concepts, and stage timings
+    without regenerating redundant ontology.
+    """
+    topic = getattr(shared_context, "topic", "Lecture Deck")
+    stages = getattr(shared_context, "stage_timings", [])
+    objectives = getattr(shared_context, "objectives", [])
+    concepts = getattr(shared_context, "canonical_concepts", [])
+
+    slides = []
+    # Title slide
+    slides.append({
+        "slide_number": 1,
+        "title": topic,
+        "subtitle": f"Structured Lesson Plan ({len(stages)} Stages)",
+        "archetype": "title",
+        "key_points": [o.get("text", "") for o in objectives[:3]]
+    })
+
+    # Stage slides
+    for idx, st in enumerate(stages):
+        matching_concept = next((c.get("display_name") for c in concepts if c.get("stage_id") == st.get("stage_id")), topic)
+        slides.append({
+            "slide_number": idx + 2,
+            "title": st.get("title", f"Stage {idx+1}"),
+            "archetype": st.get("archetype", "content"),
+            "duration_minutes": st.get("duration_minutes", 10),
+            "concept": matching_concept,
+            "key_points": [f"Focus: {st.get('title')}", f"Duration: {st.get('duration_minutes', 10)} minutes"]
+        })
+
+    return {
+        "deck_title": topic,
+        "subtitle": "Generated from TeachGenie Lesson Planner Context",
+        "slides": slides,
+        "reused_context": True,
+        "knowledge_pack_id": getattr(shared_context, "knowledge_pack_id", None)
+    }
+
+
 async def expand_outline_step(
     topic: str,
     audience: str,

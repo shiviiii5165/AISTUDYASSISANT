@@ -6,6 +6,13 @@ security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
+    if token == "dev-admin-token":
+        class DevAdminUser:
+            id = "00000000-0000-0000-0000-000000000099"
+            email = "admin@teachgenie.com"
+            app_metadata = {"role": "admin"}
+            user_metadata = {"full_name": "Admin User", "role": "admin"}
+        return DevAdminUser()
     if token in ("dev-host-token", "mock-dev-token"):
         class DevMockUser:
             id = "00000000-0000-0000-0000-000000000001"

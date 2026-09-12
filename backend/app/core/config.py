@@ -22,8 +22,14 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     CEREBRAS_API_KEY: str = ""
     CLOUDFLARE_API_TOKEN: str = ""
-    CLOUDFLARE_ACCOUNT_ID: str = ""
     ANTHROPIC_API_KEY: str = ""
+    
+    # Centralized Production Model Identifiers
+    GROQ_PRIMARY_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_FALLBACK_MODELS: str = "qwen/qwen3.8-27b,openai/gpt-oss-20b,qwen/qwen3.6-27b"
+    GEMINI_PRIMARY_MODEL: str = "gemini-3.8-flash"
+    GEMINI_FALLBACK_MODEL: str = "gemini-3.6-flash"
+    OPENROUTER_PRIMARY_MODEL: str = "openai/gpt-4o"
     
     # Stock Photo API Keys (single-key legacy fields)
     PEXELS_API_KEY: str = ""
@@ -60,6 +66,18 @@ class Settings(BaseSettings):
     LESSON_PLANNER_YOUTUBE_ENABLED: bool = True
     LESSON_PLANNER_MATERIALS_ENABLED: bool = True
     YOUTUBE_API_KEY: str = ""
+
+    # Lesson Planner VNext Production-Safe Feature Flags (Default False)
+    LESSON_VNEXT_ENABLED: bool = False
+    LESSON_RESOURCE_INTELLIGENCE_ENABLED: bool = False
+    LESSON_YOUTUBE_SEGMENTS_ENABLED: bool = False
+    LESSON_ACADEMIC_ENGINE_ENABLED: bool = False
+    LESSON_CODING_RESOURCES_ENABLED: bool = False
+    LESSON_ADAPTIVE_ENGINE_ENABLED: bool = False
+    LESSON_AUTO_STUDENT_ADAPTATION_ENABLED: bool = False
+    LESSON_CLASS_ADAPTATION_ENABLED: bool = False
+    LESSON_CROSS_FEATURE_CONTEXT_ENABLED: bool = False
+    LESSON_OUTCOME_RANKING_ENABLED: bool = False
 
     @property
     def lesson_planner_youtube_enabled(self) -> bool:

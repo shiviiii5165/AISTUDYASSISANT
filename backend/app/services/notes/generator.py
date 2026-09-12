@@ -43,6 +43,45 @@ class NotesGenerator:
             logger.error(f"Generation Engine execution failed: {e}; falling back to deterministic fallback.")
             return NotesGenerator._generate_deterministic_fallback(ctx, decision)
 
+    @classmethod
+    def generate_from_lesson_gap_context(
+        cls,
+        topic: str,
+        weak_concepts: List[str],
+        prerequisite_gaps: List[str],
+        misconception_evidence: List[Dict[str, Any]]
+    ) -> NotesDocument:
+        """
+        P3 Production Integration: Builds targeted remedial revision notes directly
+        from weak concepts, diagnosed prerequisite gaps, and misconception evidence.
+        """
+        sections = []
+        # Section 1: Prerequisite refresher
+        sections.append(NoteSection(
+            id="sec_prereq_gap",
+            section_type="overview",
+            title="Prerequisite Foundations Refresher",
+            content="\n".join([f"Reinforcing foundation: {gap}. Essential before mastering {topic}." for gap in (prerequisite_gaps or ["Core prerequisites"])]),
+            key_points=prerequisite_gaps or ["Core prerequisite foundation"]
+        ))
+
+        # Section 2: Targeted Misconception Clearance
+        sections.append(NoteSection(
+            id="sec_misc_clearance",
+            section_type="common_misconceptions",
+            title="Common Misconceptions & Counterexamples",
+            content="\n".join([f"Misconception trap: {m.get('misconception', 'Common error')}. Correct insight: Grounded explanation." for m in (misconception_evidence or [{"misconception": "Concept inversion"}])]),
+            key_points=[m.get("misconception", "Common error") for m in (misconception_evidence or [])]
+        ))
+
+        return NotesDocument(
+            id=f"notes_remedial_{uuid.uuid4().hex[:8]}",
+            title=f"Targeted Revision Notes: {topic}",
+            topic=topic,
+            sections=sections,
+            metadata={"source": "vnext_adaptive_engine", "weak_concepts": weak_concepts}
+        )
+
     @staticmethod
     def _build_generation_prompt(ctx: CanonicalNotesContext, decision: DecisionOutput) -> str:
         """Constructs a comprehensive, instructionally dense pedagogical prompt."""

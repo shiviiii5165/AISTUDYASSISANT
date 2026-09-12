@@ -28,6 +28,7 @@ from .pedagogy_policy import PedagogyPolicyEngine
 from .visual_planner import VisualPlanner
 from .section_planner import SectionPlanner
 from .explainability import ExplainabilityEngine
+from .learning_flow_planner import LearningFlowPlanner
 
 
 def decide_notes_plan(context: CanonicalNotesContext) -> NotesGenerationPlan:
@@ -296,7 +297,20 @@ def decide_notes_plan(context: CanonicalNotesContext) -> NotesGenerationPlan:
         exam_state=exam_state
     )
 
-    # ── 15. Backward-Compatible Synthesis ──
+    # ── 15. Adaptive Learning Flow Synthesis ──
+    learning_flow_plan = LearningFlowPlanner.plan(
+        ctx=ctx,
+        mastery_bracket=mastery_decision.bracket,
+        avg_mastery=avg_mastery,
+        topic_category=topic_category,
+        primary_purpose=purpose_plan.primary,
+        exam_state=exam_state,
+        teaching_mode=teaching_strategy.mode
+    )
+    if learning_flow_plan and learning_flow_plan.practice_strategy and practice_plan.difficulty:
+        learning_flow_plan.practice_strategy.starting_difficulty = practice_plan.difficulty
+
+    # ── 16. Backward-Compatible Synthesis ──
     required_sections = [item.type for item in section_plan if item.required]
 
     return NotesGenerationPlan(
@@ -312,6 +326,7 @@ def decide_notes_plan(context: CanonicalNotesContext) -> NotesGenerationPlan:
         practice_plan=practice_plan,
         revision_plan=revision_plan,
         constraints=constraints,
+        learning_flow_plan=learning_flow_plan,
         decision_reasons=reasons,
         evidence=evidence,
         decision_trace=trace,
@@ -339,6 +354,11 @@ class NotesDecisionEngine:
     @staticmethod
     def decide(ctx: CanonicalNotesContext) -> NotesGenerationPlan:
         """Alias for evaluate: produces deterministic NotesGenerationPlan."""
+        return decide_notes_plan(ctx)
+
+    @staticmethod
+    def create_plan(ctx: CanonicalNotesContext) -> NotesGenerationPlan:
+        """Alias for decide: produces deterministic NotesGenerationPlan."""
         return decide_notes_plan(ctx)
 
     @staticmethod

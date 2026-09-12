@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, model_validator, ConfigDict
 from datetime import datetime, timezone
 import uuid
 from .normalizer import ContextNormalizer
+from .topic_descriptor import TopicDescriptor
 
 
 class NotesContextSource(str, Enum):
@@ -145,6 +146,7 @@ class LessonContext(BaseModel):
     stage_topic: Optional[str] = None
     stage_objective: Optional[str] = None
     learning_objectives: List[str] = Field(default_factory=list)
+    structured_objectives: Optional[Dict[str, List[str]]] = None
     activities: List[str] = Field(default_factory=list)
     teaching_method: Optional[str] = None  # e.g. "active", "inquiry", "passive", "discussion"
     teacher_explanation: Optional[str] = None
@@ -234,6 +236,7 @@ class CanonicalNotesContext(BaseModel):
     resolved_context: ResolvedContext
     provenance: ProvenanceContext
     completeness: ContextCompleteness
+    topic_descriptor: Optional[TopicDescriptor] = None
 
     # Optional generation override attributes for downstream compatibility
     requested_depth: Optional[Any] = None
@@ -277,13 +280,27 @@ class CanonicalNotesContext(BaseModel):
             if norm_v is not None:
                 mastery_dict[k.lower()] = norm_v
 
-        stu_ctx = StudentContext(
-            class_level=class_disp,
-            grade=grade_num,
-            language=lang_val,
-            current_learning_state={"mastery": mastery_dict},
-            status="resolved" if mastery_dict else "unknown"
-        )
+        stu_data = data.get("student")
+        if not mastery_dict and stu_data:
+            cls_map = stu_data.current_learning_state if hasattr(stu_data, "current_learning_state") else (stu_data.get("current_learning_state", {}) if isinstance(stu_data, dict) else {})
+            if isinstance(cls_map, dict):
+                for k, v in cls_map.get("mastery", {}).items():
+                    norm_v = ContextNormalizer.normalize_mastery(v)
+                    if norm_v is not None:
+                        mastery_dict[k.lower()] = norm_v
+
+        if isinstance(stu_data, StudentContext):
+            stu_ctx = stu_data
+            if mastery_dict and not stu_ctx.current_learning_state.get("mastery"):
+                stu_ctx.current_learning_state["mastery"] = mastery_dict
+        else:
+            stu_ctx = StudentContext(
+                class_level=class_disp,
+                grade=grade_num,
+                language=lang_val,
+                current_learning_state={"mastery": mastery_dict},
+                status="resolved" if mastery_dict else "unknown"
+            )
 
         curr_ctx = CurriculumContext(
             board=board,
@@ -292,15 +309,26 @@ class CanonicalNotesContext(BaseModel):
             status="resolved" if board else "unknown"
         )
 
-        les_ctx = LessonContext(
-            stage_title=data.get("stage_title") or data.get("roadmap_title"),
-            learning_objectives=data.get("learning_objectives") or [],
-            activities=data.get("lesson_activities") or [],
-            teacher_instructions=data.get("teacher_instructions") or [],
-            lesson_sequence=data.get("teaching_flow") or [],
-            expected_misconceptions=data.get("expected_misconceptions") or [],
-            status="resolved" if data.get("stage_title") or data.get("learning_objectives") else "unknown"
-        )
+        les_data = data.get("lesson")
+        if isinstance(les_data, LessonContext):
+            les_ctx = les_data
+            if data.get("expected_misconceptions") and not les_ctx.expected_misconceptions:
+                les_ctx.expected_misconceptions = list(data.get("expected_misconceptions"))
+        elif isinstance(les_data, dict):
+            les_ctx = LessonContext(**les_data)
+            if data.get("expected_misconceptions") and not les_ctx.expected_misconceptions:
+                les_ctx.expected_misconceptions = list(data.get("expected_misconceptions"))
+        else:
+            les_ctx = LessonContext(
+                stage_title=data.get("stage_title") or data.get("roadmap_title"),
+                learning_objectives=data.get("learning_objectives") or [],
+                structured_objectives=data.get("structured_objectives"),
+                activities=data.get("lesson_activities") or [],
+                teacher_instructions=data.get("teacher_instructions") or [],
+                lesson_sequence=data.get("teaching_flow") or [],
+                expected_misconceptions=data.get("expected_misconceptions") or [],
+                status="resolved" if data.get("stage_title") or data.get("learning_objectives") or data.get("structured_objectives") else "unknown"
+            )
 
         ass_ctx = AssessmentContext(
             weak_concepts=data.get("weak_concepts") or [],
@@ -365,12 +393,33 @@ class CanonicalNotesContext(BaseModel):
             "resolved_context": resolved,
             "provenance": prov,
             "completeness": comp,
+            "topic_descriptor": data.get("topic_descriptor") or TopicDescriptor.create(
+                topic=norm_topic or topic_raw,
+                subject=subject_val,
+                class_level=class_disp,
+                grade=grade_num,
+                board=board,
+                curriculum=board,
+                source_scope="lesson_plan" if data.get("learning_objectives") or (les_ctx and les_ctx.learning_objectives) else "general"
+            ),
             "requested_depth": data.get("requested_depth"),
             "requested_format": data.get("requested_format"),
         }
 
 
     # Backward compatibility properties for Decision Engine and existing generator routes
+    @property
+    def descriptor(self) -> TopicDescriptor:
+        if self.topic_descriptor:
+            return self.topic_descriptor
+        return TopicDescriptor.create(
+            topic=self.topic,
+            subject=self.subject,
+            class_level=self.class_level,
+            board=self.curriculum,
+            source_scope="lesson_plan" if self.lesson.learning_objectives else "general"
+        )
+
     @property
     def topic(self) -> str:
         return self.resolved_context.topic

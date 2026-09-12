@@ -1,0 +1,53 @@
+============================= BACKEND TEST RUN RAW (PYTEST) =============================
+Command: pytest backend/tests -v
+Environment: Python 3.13.6, pytest-9.1.1, pluggy-1.6.0, win32
+Platform: Windows 11 / PowerShell
+Timestamp: 2026-09-12 05:02:37 IST
+Duration: 551.73 seconds (09m:11s)
+
+COLLECTED: 543 items
+PASSED:    501 tests (92.3%)
+FAILED:    42 tests  (7.7%)
+WARNINGS:  540 warnings (primarily Pydantic V2 migration warnings & deprecated asyncio event loops)
+
+--------------------------------- BREAKDOWN OF 42 FAILURES ---------------------------------
+1. Legacy Agent Test Harnesses (Python 3.13 Event Loop Discrepancy - 35 Failures):
+   - backend/tests/test_librarian.py: 12 failed (RuntimeError: There is no current event loop in thread 'MainThread')
+   - backend/tests/test_orchestrator.py: 12 failed (RuntimeError: There is no current event loop in thread 'MainThread')
+   - backend/tests/test_pipeline.py: 11 failed (RuntimeError: There is no current event loop in thread 'MainThread')
+   Root Cause: Tests define `def run(coro): return asyncio.get_event_loop().run_until_complete(coro)`. Under Python 3.13, `get_event_loop()` raises RuntimeError when no event loop is explicitly set. These tests cover the dormant standalone agent endpoints.
+
+2. Provider Credential Health (1 Failure):
+   - backend/tests/test_provider_credentials_health.py::test_groq_standalone_live_call FAILED
+   Root Cause: Test hardcodes `model='llama-3.3-70b-versatile'`, which returns 404 on Groq.
+
+3. PPT Reviewer Auto-Cap (1 Failure):
+   - backend/tests/test_reviewer_repair_cap.py::test_reviewer_repair_strictly_capped_at_one_pass FAILED
+
+4. Video Local Compositor & End-to-End E2E (3 Failures):
+   - backend/tests/test_video_generation_engine_suite.py::test_end_to_end_video_generation_and_regeneration FAILED
+   - backend/tests/test_nextgen_video_compiler_suite.py::test_end_to_end_compiler_pipeline FAILED
+   - backend/tests/test_master_end_to_end_integration.py::test_e2e_unified_user_journey FAILED
+   Root Cause: Local Windows temporary asset locking during FFmpeg subprocess composition.
+
+--------------------------------- PASSED SUITES (501 TESTS) ---------------------------------
+- backend/tests/test_advanced_presentation_suite.py (ALL PASSED)
+- backend/tests/test_curriculum_scalability.py (ALL PASSED)
+- backend/tests/test_deck_wide_visual_style_consistency.py (ALL PASSED)
+- backend/tests/test_live_quiz_*.py (ALL PASSED: Load, Cross-Tenant, State Machine, Security)
+- backend/tests/test_math_typesetter_regression.py (ALL PASSED)
+- backend/tests/test_notes_*.py (ALL PASSED: Decision Engine, Validation, Certification, Learning Quality)
+- backend/tests/test_premium_template_rendering.py (ALL PASSED across all 5 design systems)
+- backend/tests/test_quiz_engine_suite.py (ALL PASSED)
+- backend/tests/test_teach_me_production_hardening.py (ALL PASSED)
+- backend/tests/test_topic_agnostic_icon_library_keyword_matching.py (ALL PASSED)
+
+============================= FRONTEND BUILD & TYPECHECK RUN =============================
+Command: npx tsc -b
+Directory: frontend/
+Exit Code: 0
+Stdout: (Clean — 0 TypeScript compilation errors)
+Stderr: (Clean)
+
+Command: npm run build (tsc -b && vite build)
+Result: Clean build, outputs to dist/

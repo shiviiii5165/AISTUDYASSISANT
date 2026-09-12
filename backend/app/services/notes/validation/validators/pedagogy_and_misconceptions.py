@@ -143,7 +143,11 @@ class PedagogyAndMisconceptionValidator:
                     s_low = sent.lower()
                     if m_clean in s_low:
                         # Check if negated or framed as misconception
-                        negations = ["not", "never", "incorrect", "misconception", "false", "mistake", "mistakenly", "wrongly", "confuse", "rather than"]
+                        negations = [
+                            "not", "never", "incorrect", "misconception", "false", "mistake",
+                            "mistakenly", "wrongly", "confuse", "rather than", "flawed", "wrong",
+                            "myth", "debunk", "fallacy", "untrue", "refuted"
+                        ]
                         if not any(neg in s_low for neg in negations):
                             reinforcing = True
                             violations.append(ValidationViolation(

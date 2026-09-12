@@ -1,0 +1,11 @@
+feature,current_calls,current_model,current_median_in_tok,current_median_out_tok,current_retries,current_cache_rate,current_provider_tool_fees_usd,current_unit_cost_usd,proposed_calls,proposed_model,proposed_median_in_tok,proposed_median_out_tok,proposed_cache_rate,proposed_unit_cost_usd,projected_cost_reduction_pct,classification
+Presentation (12 Slides),4,openrouter:openai/gpt-4o,7800,6500,0.1,0.0,0.0000,0.084500,2,google:gemini-2.5-flash,3200,2800,0.60,0.003500,95.8%,PROJECTED
+Study Notes Generator,1,openrouter:openai/gpt-4o,3500,2200,0.0,0.0,0.0000,0.030750,1,google:gemini-2.5-flash,1200,600,0.70,0.000800,97.4%,PROJECTED
+Diagnostic Quiz (10 MCQs),1,openrouter:openai/gpt-4o,2400,1800,0.0,0.0,0.0000,0.024000,1,google:gemini-2.5-flash,1500,1200,0.65,0.001170,95.1%,PROJECTED
+Tutor Turn (Socratic),2,openrouter:openai/gpt-4o,2250,600,0.0,0.0,0.0000,0.011625,1,groq:qwen/qwen3.8-27b,1100,350,0.20,0.000375,96.8%,PROJECTED
+Live Quiz Intervention,1,openrouter:openai/gpt-4o,1200,450,0.0,0.0,0.0000,0.007500,1,groq:openai/gpt-oss-20b,600,200,0.00,0.000080,98.9%,PROJECTED
+Lesson Plan,1,google:gemini-3.6-flash,3000,2500,0.0,0.0,0.0000,0.001950,1,google:gemini-2.5-flash,1600,1800,0.50,0.000600,69.2%,PROJECTED
+Educational Video (60s),1,openrouter:openai/gpt-4o,1400,800,0.1,0.0,0.0021,0.013600,1,google:gemini-2.5-flash,1200,750,0.40,0.003140,76.9%,PROJECTED
+PDF RAG Query,1,google:gemini-3.6-flash,4500,600,0.0,0.0,0.0000,0.001035,1,google:gemini-2.5-flash,1800,400,0.80,0.000300,71.0%,PROJECTED
+Handwritten OCR Note,1,google:gemini-flash-latest,1000,1200,0.0,0.0,0.0000,0.000870,1,google:gemini-2.5-flash,1000,1200,0.00,0.000870,0.0%,PROJECTED
+Exam Readiness Analysis,1,google:gemini-3.6-flash,3200,1500,0.0,0.0,0.0000,0.001380,1,google:gemini-2.5-flash,1400,900,0.50,0.000450,67.4%,PROJECTED

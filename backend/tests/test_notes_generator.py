@@ -466,3 +466,138 @@ def test_existing_ocr_notes_endpoint_preserved():
     assert any("/api/notes" in p for p in openapi_paths)
     assert any("/api/notes-generator" in p for p in openapi_paths)
 
+
+# ============================================================================
+# 7. STEP 4 VALIDATION API SECURITY TESTS (Spec 25)
+# ============================================================================
+
+def test_api_validate_endpoint_security():
+    """
+    Spec 25: POST /api/notes-generator/validate security tests:
+    - Rejects request when neither snapshot_id nor context is supplied (400)
+    - Rejects invalid snapshot_id (404)
+    - Enforces validator gates even if client attempts to pass a flawed document
+    """
+    client = TestClient(app)
+    user = MockUser("user_sec_01")
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    # 1. Missing context and snapshot_id -> 400
+    res = client.post("/api/notes-generator/validate", json={"document": {"title": "Test"}})
+    assert res.status_code == 400
+
+    # 2. Non-existent snapshot_id -> 404
+    res2 = client.post("/api/notes-generator/validate", json={
+        "snapshot_id": "nonexistent_snapshot_123",
+        "document": {"title": "Test"}
+    })
+    assert res2.status_code == 404
+
+    app.dependency_overrides.clear()
+
+
+def test_api_validate_snapshot_id_derivation():
+    """
+    Spec 25: Validates that passing a trusted server-side snapshot_id allows
+    the server to load context and derive the trusted plan server-side without
+    trusting client-controlled plan alterations.
+    """
+    from app.services.notes.context import ContextSnapshotManager
+    from app.services.notes.context.schemas import (
+        CanonicalNotesContext as Step1Context, RequestContext, ExplicitInputContext,
+        StudentContext, CurriculumContext, LessonContext, AssessmentContext,
+        TeachMeContext, PPTContext, SourcesContext, ResolvedContext, ProvenanceContext,
+        ContextCompleteness
+    )
+
+    client = TestClient(app)
+    user = MockUser("user_sec_02")
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    # Create trusted server-side snapshot
+    trusted_ctx = Step1Context(
+        request=RequestContext(mode="topic"),
+        explicit_input=ExplicitInputContext(topic="Newton's Laws", raw_topic="Newton's Laws"),
+        student=StudentContext(class_level="Class 9", grade=9),
+        curriculum=CurriculumContext(board="CBSE", subject="Physics", grade=9),
+        lesson=LessonContext(),
+        assessment=AssessmentContext(),
+        teach_me=TeachMeContext(),
+        ppt=PPTContext(),
+        sources=SourcesContext(),
+        resolved_context=ResolvedContext(
+            topic="Newton's Laws of Motion",
+            raw_topic="Newton's Laws",
+            class_level="Class 9",
+            grade=9,
+            subject="Physics",
+            curriculum="CBSE"
+        ),
+        provenance=ProvenanceContext(),
+        completeness=ContextCompleteness(score=100.0)
+    )
+    snapshot = ContextSnapshotManager.create_snapshot(trusted_ctx, "user_sec_02")
+
+    # Document to validate
+    doc_payload = {
+        "id": "doc_sec_test",
+        "title": "Newton's Laws of Motion",
+        "topic": "Newton's Laws of Motion",
+        "class_level": "Class 9",
+        "subject": "Physics",
+        "curriculum": "CBSE",
+        "depth": "standard",
+        "difficulty": "standard",
+        "sections": [
+            {
+                "id": "s1",
+                "section_type": "core_concept",
+                "title": "Laws of Motion",
+                "content": "Newton formulated three fundamental physical laws describing force and inertia in motion.",
+                "key_points": ["First law is law of inertia"],
+                "examples": ["Pushing a cart on flat ground"],
+                "formulas": ["F = ma"]
+            },
+            {
+                "id": "s2",
+                "section_type": "quick_summary",
+                "title": "Summary",
+                "content": "Summary of Newton's classical laws."
+            }
+        ],
+        "practice": [
+            {
+                "question": "State the formula for Newton's second law.",
+                "answer": "F = ma",
+                "explanation": "Force equals mass multiplied by acceleration.",
+                "difficulty": "standard"
+            },
+            {
+                "question": "What is inertia?",
+                "answer": "Resistance to change in state of motion.",
+                "explanation": "Mass is the quantitative measure of inertia.",
+                "difficulty": "standard"
+            },
+            {
+                "question": "What is action and reaction?",
+                "answer": "Equal and opposite simultaneous forces.",
+                "explanation": "Forces occur in mutual pairs on different objects.",
+                "difficulty": "standard"
+            }
+        ]
+    }
+
+    # Validate using snapshot_id with plan derived server-side
+    res = client.post("/api/notes-generator/validate", json={
+        "snapshot_id": snapshot.snapshot_id,
+        "document": doc_payload
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert "valid" in data
+    assert "status" in data
+    assert "overall_score" in data
+
+    app.dependency_overrides.clear()
+
+

@@ -152,6 +152,28 @@ def submit_attempt(
         "idempotency_key": idempotency_key or attempt.get("idempotency_key"),
     }
     updated = repo.finalize_attempt(attempt_id, fields)
+
+    # P3 Production Integration: Emit Standard Learning Evidence to LearningEvidenceService
+    try:
+        from app.services.lesson_planner.vnext.shared_context import LearningEvidenceService
+        from app.services.lesson_planner.schemas import LearningEvidenceRecord
+        for pq in result.get("per_question_results", []):
+            c_id = pq.get("concept_id") or "general_quiz_concept"
+            rec = LearningEvidenceRecord(
+                student_id=user_id,
+                concept_id=c_id,
+                source_type="quiz",
+                source_id=attempt.get("quiz_id"),
+                question_id=str(pq.get("question_id") or ""),
+                event_id=f"quiz_attempt_{attempt_id}_{pq.get('question_id')}",
+                correctness=bool(pq.get("is_correct", False)),
+                confidence=0.85
+            )
+            LearningEvidenceService.record_evidence(rec)
+    except Exception as ev_err:
+        # Non-blocking emission
+        pass
+
     return _result_view(updated or {**attempt, **fields}, timed_out=timed_out)
 
 

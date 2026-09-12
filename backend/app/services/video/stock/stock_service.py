@@ -101,7 +101,44 @@ async def search_stock_media(
         except Exception as e:
             logger.info(f"[StockService] Pexels search notice: {e}")
 
-    # 3. Fallback placeholder metadata if no external API key is configured
+    # 3. Query Pixabay if API key is present
+    pixabay_key = os.getenv("PIXABAY_API_KEY")
+    if pixabay_key:
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                res = await client.get(
+                    "https://pixabay.com/api/videos/",
+                    params={
+                        "key": pixabay_key,
+                        "q": query_str,
+                        "per_page": 3,
+                    },
+                )
+                if res.status_code == 200:
+                    data = res.json()
+                    hits = data.get("hits", [])
+                    if hits:
+                        hit = hits[0]
+                        vids = hit.get("videos", {})
+                        # Prefer large or medium HD format
+                        selected_vid = vids.get("large") or vids.get("medium") or vids.get("small")
+                        if selected_vid and selected_vid.get("url"):
+                            result = StockMediaResult(
+                                asset_id=f"pixabay_{hit.get('id')}",
+                                provider="Pixabay",
+                                media_url=selected_vid.get("url"),
+                                duration=float(hit.get("duration", 8)),
+                                width=int(selected_vid.get("width", 1280)),
+                                height=int(selected_vid.get("height", 720)),
+                                creator=hit.get("user", "Pixabay Contributor"),
+                                attribution_text=f"Video by {hit.get('user', 'Contributor')} from Pixabay",
+                            ).to_dict()
+                            STOCK_ASSET_CACHE[query_hash] = result
+                            return result
+        except Exception as e:
+            logger.info(f"[StockService] Pixabay search notice: {e}")
+
+    # 4. Fallback placeholder metadata if no external API key returned results
     fallback_res = StockMediaResult(
         asset_id=f"stock_fallback_{query_hash[:8]}",
         provider="Internal Curated",

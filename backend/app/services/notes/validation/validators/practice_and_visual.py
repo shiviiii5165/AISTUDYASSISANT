@@ -119,12 +119,48 @@ class PracticeAndVisualValidator:
                     item_status = "INVALID"
                     item_notes.append("Semantic difficulty mismatch")
 
+            # Check non-repetitive questions
+            q_tokens = set(re.findall(r'\w+', q.lower()))
+            for prev_idx, prev_item in enumerate(doc.practice[:idx]):
+                prev_q = str(prev_item.get("question", "")).strip()
+                prev_tokens = set(re.findall(r'\w+', prev_q.lower()))
+                if q_tokens and prev_tokens:
+                    jaccard = len(q_tokens & prev_tokens) / len(q_tokens | prev_tokens)
+                    if jaccard > 0.85:
+                        violations.append(ValidationViolation(
+                            code="PRACTICE_QUESTION_REPETITIVE",
+                            severity=ViolationSeverity.WARNING,
+                            dimension=ValidationDimension.PRACTICE,
+                            message=f"Practice question {idx+1} is repetitive of question {prev_idx+1}.",
+                            section_id=sec_id,
+                            expected="Distinct practice questions",
+                            actual=q[:80],
+                            repairable=True
+                        ))
+                        score -= 5.0
+                        item_notes.append("Repetitive question")
+                        break
+
             details["practice_item_audits"].append({
                 "index": idx + 1,
                 "status": item_status,
                 "question": q[:60],
                 "notes": item_notes
             })
+
+        # Check practice count against plan requirement
+        if plan.practice_plan.required and plan.practice_plan.count > 0:
+            if len(doc.practice) < plan.practice_plan.count:
+                violations.append(ValidationViolation(
+                    code="PRACTICE_COUNT_DEFICIT",
+                    severity=ViolationSeverity.ERROR,
+                    dimension=ValidationDimension.PRACTICE,
+                    message=f"Plan specified {plan.practice_plan.count} practice questions, but document only provides {len(doc.practice)}.",
+                    expected=f"{plan.practice_plan.count} practice questions",
+                    actual=f"{len(doc.practice)} questions",
+                    repairable=True
+                ))
+                score -= 10.0
 
         # ── 2. Visual Diagram Semantic Integrity & Topic Relevance (Spec 11, 18) ──
         all_visuals = list(doc.visuals)

@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Clock, CheckCircle2, PlayCircle, BookOpen,
   Presentation, HelpCircle, ListChecks, PenTool,
-  Loader2, AlertTriangle, Lock, CheckCircle, Zap,
+  Loader2, AlertTriangle, Lock, Unlock, CheckCircle, Zap,
   Plus, Share2, Download, Compass, X, Video, GraduationCap,
-  ExternalLink, FileText
+  ExternalLink, FileText, ThumbsUp, ThumbsDown, Shield,
+  RefreshCw, Layers, Award, Target, Info, ArrowRight, Check,
+  BookMarked, BrainCircuit, Activity
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
@@ -20,6 +22,81 @@ type StageStatus = 'locked' | 'available' | 'in_progress' | 'material_ready' | '
 type StageReadiness = 'ready' | 'prerequisite_required' | 'review_recommended' | 'blocked';
 type ResourceType = 'ppt' | 'video' | 'teach_me' | 'quiz' | 'notes' | 'worksheet' | 'homework' | 'diagram' | 'youtube_recommendations' | 'extra_learning_materials';
 type ResourceStatus = 'not_needed' | 'recommended' | 'optional' | 'selected' | 'generating' | 'ready' | 'failed' | 'stale' | 'coming_soon' | 'disabled';
+export type ProductMode = 'teacher_classroom' | 'student_self_study' | 'research_advanced';
+
+export interface ResourceScoreBreakdown {
+  concept_match: number;
+  level_fit: number;
+  authority: number;
+  freshness: number;
+  evidence_quality: number;
+  accessibility: number;
+}
+
+export interface UniversalResourceCard {
+  id: string;
+  title: string;
+  type: string; // video_segment, paper, coding_problem, docs, textbook
+  why_recommended: string;
+  what_it_covers: string;
+  learner_level: string;
+  use_during: string;
+  exact_section?: string;
+  timestamp_start?: string;
+  timestamp_end?: string;
+  time_required_minutes?: number;
+  source_authority: string;
+  quality_score: number; // 0 to 100
+  score_breakdown?: ResourceScoreBreakdown;
+  year?: number;
+  access_type: string;
+  url: string;
+  is_preprint?: boolean;
+  has_retraction_notice?: boolean;
+  venue_label?: string;
+  confidence?: number;
+}
+
+export interface PlanRecompileDiff {
+  reason: string;
+  evidence_summary: string;
+  stages_added: any[];
+  stages_modified: any[];
+  stages_compressed: any[];
+  net_duration_change: number;
+  requires_teacher_approval: boolean;
+}
+
+export interface TeacherLockItem {
+  stage_id?: string;
+  lock_type: string;
+  target_identifier: string;
+  is_locked: boolean;
+  notes?: string;
+}
+
+export interface ExplainabilityStageReport {
+  stage_id: string;
+  title: string;
+  archetype: string;
+  duration: number;
+  why_this_stage: string;
+  why_now: string;
+  teaching_goal: string;
+  bloom_level: string;
+  is_locked: boolean;
+}
+
+export interface ExplainabilityReport {
+  plan_id: string;
+  mode: string;
+  domain: string;
+  intent: string;
+  volatility: string;
+  total_duration: number;
+  adaptive_reserve: number;
+  stages: ExplainabilityStageReport[];
+}
 
 interface LearningObjective {
   id: string;
@@ -89,6 +166,16 @@ interface RoadmapStage {
   actions?: StageAction[];
   source_refs: SourceReference[];
   is_remedial?: boolean;
+  // VNext fields
+  archetype?: string;
+  why_this_stage?: string;
+  why_now?: string;
+  teaching_goal?: string;
+  pedagogy_method?: string;
+  visual_requirements?: string[];
+  assessment_requirement?: string;
+  is_locked?: boolean;
+  universal_resources?: UniversalResourceCard[];
 }
 
 interface LearningRoadmap {
@@ -107,6 +194,13 @@ interface LearningRoadmap {
   overall_progress: number;
   health_score: number;
   version: number;
+  // VNext fields
+  mode?: ProductMode;
+  domain?: string;
+  intent?: string;
+  volatility?: string;
+  adaptive_reserve_minutes?: number;
+  teacher_locks?: TeacherLockItem[];
 }
 
 interface YouTubeVideoItem {
@@ -216,12 +310,258 @@ interface LessonHealthReport {
   const [errorNotification, setErrorNotification] = useState<string | null>(null);
   const [isTriggeringResource, setIsTriggeringResource] = useState<string | null>(null);
   
+  // Product Mode & Adaptive States
+  const [selectedMode, setSelectedMode] = useState<ProductMode>('teacher_classroom');
+  const [adaptationAlert, setAdaptationAlert] = useState<PlanRecompileDiff | null>(null);
+  const [isRecompiling, setIsRecompiling] = useState(false);
+  const [isSimulatingEvidence, setIsSimulatingEvidence] = useState(false);
+  
+  // Explainability Modal
+  const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const [explainReport, setExplainReport] = useState<ExplainabilityReport | null>(null);
+  const [isExplainLoading, setIsExplainLoading] = useState(false);
+  
+  // Universal Resources Modal
+  const [universalModalOpen, setUniversalModalOpen] = useState(false);
+  const [universalResourcesList, setUniversalResourcesList] = useState<UniversalResourceCard[]>([]);
+  const [universalFilter, setUniversalFilter] = useState<'all' | 'video_segment' | 'paper' | 'coding_problem' | 'docs'>('all');
+  const [isUniversalLoading, setIsUniversalLoading] = useState(false);
+
   // Modal states for live viewers
   const [activeViewer, setActiveViewer] = useState<'youtube' | 'materials' | null>(null);
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoItem[] | null>(null);
   const [materialsData, setMaterialsData] = useState<ExtraMaterialsCategories | null>(null);
   const [materialsTab, setMaterialsTab] = useState<'academic_references' | 'research_papers' | 'documentation' | 'extra_learning_material'>('academic_references');
   const [isViewerLoading, setIsViewerLoading] = useState(false);
+
+  const formatArchetype = (archetype?: string) => {
+    if (!archetype) return 'Explanation';
+    return archetype
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  const getArchetypeBadgeClass = (archetype?: string) => {
+    switch (archetype) {
+      case 'hook_and_anchor':
+        return 'bg-amber-100 text-amber-900 border-amber-300';
+      case 'worked_example_fading':
+      case 'worked_example':
+        return 'bg-blue-100 text-blue-900 border-blue-300';
+      case 'guided_practice_peer_check':
+      case 'guided_practice':
+        return 'bg-emerald-100 text-emerald-900 border-emerald-300';
+      case 'socratic_dialogue':
+        return 'bg-purple-100 text-purple-900 border-purple-300';
+      case 'contrastive_analogy':
+        return 'bg-rose-100 text-rose-900 border-rose-300';
+      case 'formative_exit_ticket':
+      case 'diagnostic_check':
+        return 'bg-orange-100 text-orange-900 border-orange-300';
+      case 'remediation':
+        return 'bg-red-100 text-red-900 border-red-300';
+      default:
+        return 'bg-[var(--accent-baby)]/30 text-[var(--accent-royal)] border-[var(--border)]';
+    }
+  };
+
+  const handleToggleStageLock = async (stage: RoadmapStage) => {
+    if (!roadmap) return;
+    const newLockStatus = !stage.is_locked;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/locks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        },
+        body: JSON.stringify({
+          stage_id: stage.id,
+          lock_type: 'stage',
+          target_identifier: stage.id,
+          is_locked: newLockStatus,
+          notes: newLockStatus ? 'Teacher locked' : 'Teacher unlocked'
+        })
+      });
+      if (res.ok) {
+        setRoadmap(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            stages: prev.stages.map(s => s.id === stage.id ? { ...s, is_locked: newLockStatus } : s)
+          };
+        });
+        setActionNotification(newLockStatus ? `Stage "${stage.title}" locked. It will not be altered during adaptive recompilation.` : `Stage "${stage.title}" unlocked.`);
+      } else {
+        setErrorNotification('Failed to toggle stage lock.');
+      }
+    } catch (err) {
+      console.error('Failed to toggle lock', err);
+      setErrorNotification('Failed to toggle stage lock.');
+    }
+  };
+
+  const handleSimulateEvidence = async (misconceptionCandidate = "Primary Key vs Candidate Key confusion") => {
+    if (!roadmap || !selectedStage) return;
+    setIsSimulatingEvidence(true);
+    setErrorNotification(null);
+    try {
+      // 1. Ingest formative diagnostic evidence
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/evidence`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        },
+        body: JSON.stringify({
+          student_id: 'student_batch_simulated',
+          concept_id: selectedStage.concept_id || selectedStage.id,
+          source_type: 'checkpoint',
+          correctness: false,
+          misconception_candidate: misconceptionCandidate,
+          confidence: 0.88
+        })
+      });
+
+      // 2. Request adaptive recompile diff with 20% threshold
+      const recompileRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/recompile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        },
+        body: JSON.stringify({
+          threshold: 0.20,
+          teacher_decision: (roadmap.mode || selectedMode) === 'student_self_study' ? 'accept' : undefined
+        })
+      });
+
+      if (recompileRes.ok) {
+        const data = await recompileRes.json();
+        if (data.recompiled) {
+          if ((roadmap.mode || selectedMode) === 'student_self_study') {
+            setRoadmap(prev => prev ? { ...prev, stages: data.stages } : null);
+            setActionNotification('Self-study adaptive repair automatically inserted into roadmap!');
+          } else {
+            setAdaptationAlert(data.diff);
+            setActionNotification('Formative misconception detected (>20% threshold). Review adaptive recommendation below.');
+          }
+        } else {
+          setActionNotification('Formative checkpoint recorded. Error rate is below adaptive threshold.');
+        }
+      }
+    } catch (err) {
+      console.error('Evidence simulation failed', err);
+      setErrorNotification('Could not simulate diagnostic evidence.');
+    } finally {
+      setIsSimulatingEvidence(false);
+    }
+  };
+
+  const handleAcceptAdaptation = async () => {
+    if (!roadmap) return;
+    setIsRecompiling(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/recompile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        },
+        body: JSON.stringify({
+          threshold: 0.20,
+          teacher_decision: 'accept'
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.stages) {
+          setRoadmap(prev => prev ? { ...prev, stages: data.stages } : null);
+          setAdaptationAlert(null);
+          setActionNotification('Adaptive plan approved! Remediation inserted and recap compressed successfully.');
+        }
+      } else {
+        setErrorNotification('Could not accept adaptation.');
+      }
+    } catch (err) {
+      console.error('Failed to accept adaptation', err);
+      setErrorNotification('Could not accept adaptation.');
+    } finally {
+      setIsRecompiling(false);
+    }
+  };
+
+  const handleDismissAdaptation = () => {
+    setAdaptationAlert(null);
+    setActionNotification('Adaptive intervention dismissed. Current plan preserved.');
+  };
+
+  const handleFetchWhyReport = async () => {
+    if (!roadmap) return;
+    setExplainModalOpen(true);
+    setIsExplainLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/why`, {
+        headers: {
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setExplainReport(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch why report', err);
+    } finally {
+      setIsExplainLoading(false);
+    }
+  };
+
+  const openUniversalResourcesModal = async (stage: RoadmapStage) => {
+    if (!roadmap) return;
+    setUniversalModalOpen(true);
+    setIsUniversalLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/stages/${stage.id}/resources`, {
+        headers: {
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUniversalResourcesList(data.resources || []);
+      } else if (stage.universal_resources && stage.universal_resources.length > 0) {
+        setUniversalResourcesList(stage.universal_resources);
+      }
+    } catch (e) {
+      console.error('Failed to fetch universal resources', e);
+      if (stage.universal_resources) setUniversalResourcesList(stage.universal_resources);
+    } finally {
+      setIsUniversalLoading(false);
+    }
+  };
+
+  const handleResourceFeedback = async (resourceId: string, helpful: boolean) => {
+    if (!roadmap || !selectedStage) return;
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/resource-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+        },
+        body: JSON.stringify({
+          resource_id: resourceId,
+          stage_id: selectedStage.id,
+          helpful,
+          feedback: helpful ? 'High relevance to lesson stage' : 'Irrelevant or misaligned'
+        })
+      });
+      setActionNotification(helpful ? 'Resource feedback saved (Trust Boosted).' : 'Resource feedback saved (De-emphasized).');
+    } catch (e) {
+      console.error('Resource feedback failed', e);
+    }
+  };
 
   const openYouTubeViewer = async (stage: RoadmapStage) => {
     if (!roadmap) return;
@@ -357,25 +697,53 @@ interface LessonHealthReport {
     setIsGenerating(true);
     setActionNotification(null);
     setErrorNotification(null);
+    setAdaptationAlert(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
-        },
-        body: JSON.stringify({
-          topic: parsedConfig.topic || "DBMS Normalization",
-          level: parsedConfig.level,
-          language: parsedConfig.language,
-          class_type: parsedConfig.class_type,
-          target_duration_minutes: parsedConfig.duration_minutes,
-          custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
-        })
-      });
+      let data: LearningRoadmap;
+      try {
+        const v2Response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/plan`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+          },
+          body: JSON.stringify({
+            topic: parsedConfig.topic || "DBMS Normalization",
+            level: parsedConfig.level,
+            language: parsedConfig.language,
+            class_type: parsedConfig.class_type,
+            target_duration_minutes: parsedConfig.duration_minutes,
+            mode: selectedMode,
+            custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
+          })
+        });
+        if (v2Response.ok) {
+          data = await v2Response.json();
+        } else {
+          throw new Error("V2 fallback");
+        }
+      } catch {
+        // Safe backward-compatible fallback to V1
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
+          },
+          body: JSON.stringify({
+            topic: parsedConfig.topic || "DBMS Normalization",
+            level: parsedConfig.level,
+            language: parsedConfig.language,
+            class_type: parsedConfig.class_type,
+            target_duration_minutes: parsedConfig.duration_minutes,
+            custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
+          })
+        });
 
-      if (!response.ok) throw new Error("Failed to generate roadmap.");
-      const data: LearningRoadmap = await response.json();
+        if (!response.ok) throw new Error("Failed to generate roadmap.");
+        data = await response.json();
+      }
+
       setRoadmap(data);
       if (data.stages.length > 0) {
         setSelectedStageId(data.stages[0].id);
@@ -688,40 +1056,79 @@ interface LessonHealthReport {
               <Compass className="h-5 w-5 text-[var(--accent-green-text)]" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)]">
-                Adaptive lesson roadmap
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)]">
+                  Adaptive lesson roadmap
+                </h2>
+                {roadmap && (
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wide uppercase border ${
+                    (roadmap.mode || selectedMode) === 'teacher_classroom'
+                      ? 'bg-blue-50 text-blue-800 border-blue-200'
+                      : (roadmap.mode || selectedMode) === 'student_self_study'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-purple-50 text-purple-800 border-purple-200'
+                  }`}>
+                    {(roadmap.mode || selectedMode) === 'teacher_classroom' && <Shield className="h-3 w-3" />}
+                    {(roadmap.mode || selectedMode) === 'student_self_study' && <Sparkles className="h-3 w-3" />}
+                    {(roadmap.mode || selectedMode) === 'research_advanced' && <GraduationCap className="h-3 w-3" />}
+                    {(roadmap.mode || selectedMode).replace(/_/g, ' ')}
+                  </span>
+                )}
+                {roadmap?.adaptive_reserve_minutes ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                    <Clock className="h-3 w-3" />
+                    Adaptive reserve: {roadmap.adaptive_reserve_minutes}m
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-0.5 text-sm text-[var(--text-secondary)]">
-                Sequences your topic by prerequisite, budgets time per stage, and generates the
-                teaching resources for each one.
+                Evidence-Adaptive Teaching Operating System. Autonomous pedagogy, time-budget scaffolding, and live diagnostic adaptation.
               </p>
             </div>
           </div>
 
           {roadmap && (
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleFetchWhyReport}
+                className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
+              >
+                <Info className="h-4 w-4 text-[var(--accent-royal)]" aria-hidden="true" />
+                Why this plan?
+              </button>
+              {selectedStage && (
+                <button
+                  type="button"
+                  onClick={() => openUniversalResourcesModal(selectedStage)}
+                  className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
+                >
+                  <Layers className="h-4 w-4 text-[var(--accent-royal)]" aria-hidden="true" />
+                  Universal resources
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleGenerateStudyPack}
                 disabled={isTriggeringResource === 'studypack'}
-                className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)] disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)] disabled:opacity-50"
               >
                 {isTriggeringResource === 'studypack' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Download className="h-4 w-4" aria-hidden="true" />
+                  <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
-                Generate study pack
+                Study pack
               </button>
               <button
                 type="button"
                 onClick={handlePublish}
-                className="flex items-center gap-2 rounded-full bg-[var(--accent-royal)] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[var(--accent-royal)]/25 transition-all hover:bg-[var(--accent-green-deep)] active:translate-y-px"
+                className="flex items-center gap-2 rounded-full bg-[var(--accent-royal)] px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-[var(--accent-royal)]/25 transition-all hover:bg-[var(--accent-green-deep)] active:translate-y-px"
               >
                 {roadmap.status === 'published' ? (
-                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                 ) : (
-                  <Share2 className="h-4 w-4" aria-hidden="true" />
+                  <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
                 )}
                 {roadmap.status === 'published' ? 'Published' : 'Publish roadmap'}
               </button>
@@ -800,6 +1207,71 @@ interface LessonHealthReport {
                   className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-royal)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-royal)] transition-all"
                 />
               </div>
+
+              {/* Product Mode Selector */}
+              <fieldset>
+                <legend className="mb-2.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  Operating Mode
+                </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      id: 'teacher_classroom',
+                      title: 'Teacher Classroom',
+                      icon: Shield,
+                      badge: 'Teacher-in-Control',
+                      desc: 'Active checkpoints & teacher locks. Recompilations require 1-click approval.'
+                    },
+                    {
+                      id: 'student_self_study',
+                      title: 'Student Self-Study',
+                      icon: Sparkles,
+                      badge: 'Autonomous Repair',
+                      desc: 'Self-paced confidence building. Automatically detects and fixes prerequisite gaps.'
+                    },
+                    {
+                      id: 'research_advanced',
+                      title: 'Research / Advanced',
+                      icon: GraduationCap,
+                      badge: 'Q1-Q4 & A*/A Papers',
+                      desc: 'Deep scholarly literature, arXiv papers, journal quartile rankings, and proofs.'
+                    }
+                  ].map((mode) => {
+                    const isSelected = selectedMode === mode.id;
+                    const ModeIcon = mode.icon;
+                    return (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        onClick={() => setSelectedMode(mode.id as ProductMode)}
+                        className={`flex flex-col justify-between text-left p-3.5 rounded-xl border transition-all ${
+                          isSelected
+                            ? 'border-[var(--accent-royal)] bg-[var(--accent-baby)]/15 shadow-sm ring-1 ring-[var(--accent-royal)]'
+                            : 'border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--accent-royal)]/40 hover:bg-[var(--bg-hover)]'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+                              <ModeIcon className={`h-4 w-4 ${isSelected ? 'text-[var(--accent-royal)]' : 'text-[var(--text-secondary)]'}`} />
+                              {mode.title}
+                            </span>
+                            {isSelected && (
+                              <CheckCircle2 className="h-4 w-4 text-[var(--accent-royal)]" />
+                            )}
+                          </div>
+                          <span className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[var(--text-secondary)] mb-1.5">
+                            {mode.badge}
+                          </span>
+                          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                            {mode.desc}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
 
               <fieldset>
                 <legend className="mb-3 block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
@@ -980,7 +1452,99 @@ interface LessonHealthReport {
           /* ============================================================ */
           /* 2. ROADMAP CANVAS                                            */
           /* ============================================================ */
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="space-y-6">
+            {/* Adaptation Alert Banner */}
+            <AnimatePresence>
+              {adaptationAlert && (
+                <motion.div
+                  initial={{ opacity: 0, y: -12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  className="rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-500/10 via-rose-500/5 to-purple-500/10 p-5 shadow-lg backdrop-blur-md"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-white font-bold shadow-sm">
+                          <Zap className="h-4 w-4" />
+                        </span>
+                        <h4 className="font-display text-base font-bold text-[var(--text-primary)]">
+                          Evidence-Adaptive Intervention Triggered
+                        </h4>
+                        <span className="rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          &gt;20% Misconception Threshold
+                        </span>
+                      </div>
+                      <p className="text-sm text-[var(--text-secondary)]">
+                        <strong className="text-[var(--text-primary)]">Diagnosis:</strong> {adaptationAlert.reason || adaptationAlert.evidence_summary || 'Diagnostic failure detected on prerequisite concept.'}
+                      </p>
+
+                      {/* Before / After Diff Breakdown */}
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-amber-200/60">
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5">
+                          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                            + Added Remediation
+                          </span>
+                          <span className="text-xs font-semibold text-emerald-900 line-clamp-1">
+                            {adaptationAlert.stages_added?.[0]?.title || 'Targeted Prerequisite Repair'}
+                          </span>
+                          <span className="text-[11px] font-medium text-emerald-700">
+                            +{adaptationAlert.stages_added?.[0]?.duration_minutes || 5} mins
+                          </span>
+                        </div>
+
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-2.5">
+                          <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
+                            - Compressed Stage
+                          </span>
+                          <span className="text-xs font-semibold text-amber-900 line-clamp-1">
+                            {adaptationAlert.stages_compressed?.[0]?.stage_id ? 'Review & Recap Stage' : 'Recap Stage Compressed'}
+                          </span>
+                          <span className="text-[11px] font-medium text-amber-700">
+                            -{adaptationAlert.stages_compressed?.[0]?.reduction_minutes || 3} mins
+                          </span>
+                        </div>
+
+                        <div className="rounded-xl border border-purple-200 bg-purple-50/80 p-2.5">
+                          <span className="text-[10px] font-bold text-purple-800 uppercase tracking-wider block">
+                            Net Duration Impact
+                          </span>
+                          <span className="text-xs font-semibold text-purple-900">
+                            {adaptationAlert.net_duration_change >= 0 ? `+${adaptationAlert.net_duration_change}` : adaptationAlert.net_duration_change} min net
+                          </span>
+                          <span className="text-[11px] font-medium text-purple-700">
+                            Absorbed by {roadmap.adaptive_reserve_minutes || 10}m Reserve
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Teacher Action Controls */}
+                    <div className="flex md:flex-col shrink-0 gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={handleAcceptAdaptation}
+                        disabled={isRecompiling}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[var(--accent-royal)] px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[var(--accent-green-deep)] transition-all disabled:opacity-50"
+                      >
+                        {isRecompiling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                        Accept Adaptation
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDismissAdaptation}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Keep Current Plan
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
 
             {/* Left: roadmap track */}
             <div className="space-y-4 lg:col-span-4">
@@ -1041,6 +1605,7 @@ interface LessonHealthReport {
                   const isSelected = selectedStage?.id === stage.id;
                   const badge = getStatusBadge(stage.status);
                   const BadgeIcon = badge.icon;
+                  const archetypeClass = getArchetypeBadgeClass(stage.archetype);
 
                   return (
                     <li key={stage.id}>
@@ -1066,7 +1631,10 @@ interface LessonHealthReport {
 
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-2">
-                            <span className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                            <span className="truncate text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                              {stage.is_locked && (
+                                <span title="Locked by teacher"><Lock className="h-3 w-3 text-amber-600 shrink-0" /></span>
+                              )}
                               {stage.is_remedial && (
                                 <span className="mr-1 font-bold text-[var(--accent-green-text)]">
                                   Recap:
@@ -1083,10 +1651,15 @@ interface LessonHealthReport {
                             {stage.description}
                           </span>
 
-                          <span className="mt-2 flex items-center gap-2">
+                          <span className="mt-2 flex items-center gap-1.5 flex-wrap">
                             <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${badge.cls}`}>
                               {badge.label}
                             </span>
+                            {stage.archetype && (
+                              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${archetypeClass}`}>
+                                {formatArchetype(stage.archetype)}
+                              </span>
+                            )}
                             {stage.objectives.length > 0 && (
                               <span className="rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-1.5 py-0.5 text-[10px] text-[var(--text-secondary)]">
                                 {stage.objectives[0].bloom_level}
@@ -1138,10 +1711,15 @@ interface LessonHealthReport {
                 <div className="space-y-5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 md:p-6">
                   <div className="flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-center">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="rounded-full bg-[var(--accent-green-light)] px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-[var(--accent-green-text)]">
                           Stage {roadmap.stages.indexOf(selectedStage) + 1}
                         </span>
+                        {selectedStage.archetype && (
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${getArchetypeBadgeClass(selectedStage.archetype)}`}>
+                            {formatArchetype(selectedStage.archetype)}
+                          </span>
+                        )}
                         <span className="text-xs font-medium tabular-nums text-[var(--text-secondary)]">
                           {selectedStage.duration_minutes} minutes
                         </span>
@@ -1151,7 +1729,31 @@ interface LessonHealthReport {
                       </h3>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStageLock(selectedStage)}
+                        aria-pressed={selectedStage.is_locked}
+                        className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                          selectedStage.is_locked
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : 'border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                        }`}
+                        title={selectedStage.is_locked ? 'Unlock stage' : 'Lock stage to protect against adaptive changes'}
+                      >
+                        {selectedStage.is_locked ? (
+                          <>
+                            <Lock className="h-4 w-4 text-amber-700" aria-hidden="true" />
+                            Locked
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="h-4 w-4" aria-hidden="true" />
+                            Lock stage
+                          </>
+                        )}
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => handleMarkTaught(selectedStage)}
@@ -1172,7 +1774,7 @@ interface LessonHealthReport {
                         className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
                       >
                         <Plus className="h-4 w-4" aria-hidden="true" />
-                        Add recap stage
+                        Add recap
                       </button>
 
                       <button
@@ -1186,6 +1788,30 @@ interface LessonHealthReport {
                       </button>
                     </div>
                   </div>
+
+                  {/* Why Now / Pedagogical Scaffolding Callout */}
+                  {(selectedStage.why_now || selectedStage.why_this_stage) && (
+                    <div className="flex items-start gap-3 rounded-xl border border-blue-200/80 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 p-4">
+                      <div className="rounded-lg bg-blue-100 p-2 text-blue-700 shrink-0 mt-0.5">
+                        <BrainCircuit className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-blue-900">
+                            Pedagogical Sequence: Why Now?
+                          </span>
+                          {selectedStage.pedagogy_method && (
+                            <span className="rounded bg-blue-200/60 px-2 py-0.5 text-[10px] font-semibold text-blue-800">
+                              {selectedStage.pedagogy_method}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-blue-950 leading-relaxed">
+                          {selectedStage.why_now || selectedStage.why_this_stage}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Inline editor */}
                   {isEditingStage ? (
@@ -1326,11 +1952,27 @@ interface LessonHealthReport {
                       </div>
 
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-                          <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                            <HelpCircle className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
-                            Checkpoint questions
-                          </h4>
+                        <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                              <HelpCircle className="h-4 w-4 text-[var(--accent-green-text)]" aria-hidden="true" />
+                              Checkpoint questions
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => handleSimulateEvidence("Primary Key vs Candidate Key confusion")}
+                              disabled={isSimulatingEvidence}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-900 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                              title="Simulate class evidence with >20% error rate on candidate keys"
+                            >
+                              {isSimulatingEvidence ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Activity className="h-3 w-3 text-amber-600" />
+                              )}
+                              Simulate Checkpoint Diagnostic
+                            </button>
+                          </div>
                           <ul className="list-disc space-y-1.5 pl-4 text-xs text-[var(--text-secondary)]">
                             {selectedStage.checkpoint_questions.map((q, i) => (
                               <li key={i}>{q}</li>
@@ -1401,13 +2043,23 @@ interface LessonHealthReport {
 
                 {/* Resource generation */}
                 <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 md:p-6">
-                  <div>
-                    <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
-                      Stage resources
-                    </h3>
-                    <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-                      Generated from this stage's objectives, timings and checkpoints.
-                    </p>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
+                        Stage resources
+                      </h3>
+                      <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                        Generated from this stage's objectives, timings and checkpoints.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openUniversalResourcesModal(selectedStage)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                    >
+                      <Layers className="h-3.5 w-3.5 text-[var(--accent-royal)]" />
+                      Browse Universal Resources Hub
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
@@ -1468,7 +2120,8 @@ interface LessonHealthReport {
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
           </div>
         </div>
@@ -1747,6 +2400,341 @@ interface LessonHealthReport {
                   className="font-semibold text-[var(--accent-green-text)] hover:underline"
                 >
                   Refresh search
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* EXPLAINABILITY MODAL: WHY THIS PLAN?                         */}
+        {/* ============================================================ */}
+        {explainModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 bg-gradient-to-r from-blue-50/60 to-purple-50/60">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-royal)] text-white shadow-sm">
+                    <BrainCircuit className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      Pedagogical Rationale: Why This Plan?
+                      <span className="rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                        Deterministic OS
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Scaffolding, Bloom progression, and cognitive load audit.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExplainModalOpen(false)}
+                  aria-label="Close modal"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {isExplainLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-royal)]" />
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Synthesizing explainability audit...
+                    </p>
+                  </div>
+                ) : explainReport ? (
+                  <div className="space-y-6">
+                    {/* Meta stats */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] block mb-1">
+                          Canonical Domain
+                        </span>
+                        <span className="text-xs font-bold text-[var(--text-primary)] capitalize">
+                          {explainReport.domain?.replace(/_/g, ' ') || 'General Academic'}
+                        </span>
+                      </div>
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] block mb-1">
+                          Teaching Intent
+                        </span>
+                        <span className="text-xs font-bold text-[var(--text-primary)] capitalize">
+                          {explainReport.intent?.replace(/_/g, ' ') || 'Teach'}
+                        </span>
+                      </div>
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-3.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] block mb-1">
+                          Topic Volatility
+                        </span>
+                        <span className="text-xs font-bold text-[var(--text-primary)] capitalize">
+                          {explainReport.volatility || 'Low'}
+                        </span>
+                      </div>
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-1">
+                          Adaptive Reserve
+                        </span>
+                        <span className="text-xs font-bold text-amber-900">
+                          {explainReport.adaptive_reserve || 10} minutes
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Stage Breakdown Table */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-1.5">
+                        <ListChecks className="h-4 w-4 text-[var(--accent-royal)]" />
+                        Stage Sequencing Justification
+                      </h4>
+
+                      <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold">
+                              <th className="p-3 w-12 text-center">#</th>
+                              <th className="p-3">Stage &amp; Archetype</th>
+                              <th className="p-3 w-20">Duration</th>
+                              <th className="p-3">Why This Stage?</th>
+                              <th className="p-3">Why Now?</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[var(--border)]">
+                            {explainReport.stages?.map((st, idx) => (
+                              <tr key={st.stage_id} className="hover:bg-[var(--bg-secondary)]/50 transition-colors">
+                                <td className="p-3 font-bold text-center text-[var(--text-secondary)]">
+                                  {idx + 1}
+                                </td>
+                                <td className="p-3 font-medium">
+                                  <div className="flex items-center gap-1.5">
+                                    {st.is_locked && <Lock className="h-3 w-3 text-amber-600 shrink-0" />}
+                                    <span className="text-[var(--text-primary)] font-semibold">{st.title}</span>
+                                  </div>
+                                  <span className={`inline-block mt-1 text-[10px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 border ${getArchetypeBadgeClass(st.archetype)}`}>
+                                    {formatArchetype(st.archetype)}
+                                  </span>
+                                </td>
+                                <td className="p-3 font-semibold tabular-nums text-[var(--text-secondary)]">
+                                  {st.duration}m
+                                </td>
+                                <td className="p-3 text-[var(--text-secondary)] leading-relaxed">
+                                  {st.why_this_stage || st.teaching_goal || 'Builds core conceptual competency.'}
+                                </td>
+                                <td className="p-3 text-[var(--text-secondary)] leading-relaxed">
+                                  {st.why_now || 'Sequenced following prerequisite readiness.'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
+                    No explainability data available for this roadmap.
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
+                <span>Deterministic explanation generated from curriculum graph &amp; Bloom taxonomy.</span>
+                <button
+                  type="button"
+                  onClick={() => setExplainModalOpen(false)}
+                  className="rounded-lg bg-[var(--accent-royal)] text-white px-4 py-1.5 text-xs font-bold hover:bg-[var(--accent-green-deep)] transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* UNIVERSAL RESOURCES HUB MODAL                                */}
+        {/* ============================================================ */}
+        {universalModalOpen && selectedStage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 bg-gradient-to-r from-emerald-50/60 to-blue-50/60">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                    <Layers className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      Universal Resources Hub
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                        Verified
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Precision-targeted video segments, Q1-Q4 papers, and official documentation for <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUniversalModalOpen(false)}
+                  aria-label="Close modal"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex border-b border-[var(--border)] bg-[var(--bg-secondary)] px-6 overflow-x-auto gap-2 py-2.5">
+                {[
+                  { id: 'all', label: 'All Resources' },
+                  { id: 'video_segment', label: 'Timestamped Videos' },
+                  { id: 'paper', label: 'Academic Papers (Q1-Q4)' },
+                  { id: 'coding_problem', label: 'Coding Progression' },
+                  { id: 'docs', label: 'Official Docs' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setUniversalFilter(tab.id as any)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                      universalFilter === tab.id
+                        ? 'bg-[var(--accent-royal)] text-white shadow-sm'
+                        : 'bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Content List */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {isUniversalLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-royal)]" />
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      Retrieving verified universal resource cards...
+                    </p>
+                  </div>
+                ) : universalResourcesList && universalResourcesList.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {universalResourcesList
+                      .filter(r => universalFilter === 'all' || r.type === universalFilter)
+                      .map((res) => (
+                        <div
+                          key={res.id}
+                          className="flex flex-col justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 hover:border-[var(--accent-royal)]/40 hover:shadow-sm transition-all"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="rounded bg-[var(--bg-card)] border border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--accent-royal)]">
+                                {res.type.replace(/_/g, ' ')}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                {res.timestamp_start && res.timestamp_end && (
+                                  <span className="rounded bg-rose-50 text-rose-800 border border-rose-200 px-1.5 py-0.5 text-[10px] font-mono font-bold">
+                                    ⏱️ {res.timestamp_start}–{res.timestamp_end}
+                                  </span>
+                                )}
+                                {res.venue_label && (
+                                  <span className="rounded bg-purple-100 text-purple-900 border border-purple-300 px-1.5 py-0.5 text-[10px] font-bold">
+                                    {res.venue_label}
+                                  </span>
+                                )}
+                                <span className="rounded bg-emerald-100 text-emerald-900 px-1.5 py-0.5 text-[10px] font-bold">
+                                  {res.quality_score}/100
+                                </span>
+                              </div>
+                            </div>
+
+                            <h4 className="text-sm font-bold text-[var(--text-primary)] line-clamp-2">
+                              {res.title}
+                            </h4>
+
+                            <p className="text-xs text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
+                              {res.what_it_covers || res.why_recommended}
+                            </p>
+
+                            <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                              <span>Source: {res.source_authority}</span>
+                              {res.use_during && (
+                                <>
+                                  <span>•</span>
+                                  <span className="capitalize">Use during: {res.use_during.replace(/_/g, ' ')}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                            <a
+                              href={res.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-[var(--accent-royal)] hover:underline"
+                            >
+                              Open Resource
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+
+                            {/* Trust Feedback buttons */}
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleResourceFeedback(res.id, true)}
+                                title="Resource was helpful"
+                                className="rounded p-1.5 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                              >
+                                <ThumbsUp className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleResourceFeedback(res.id, false)}
+                                title="Resource was not helpful"
+                                className="rounded p-1.5 hover:bg-red-100 text-red-700 transition-colors"
+                              >
+                                <ThumbsDown className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
+                    No universal resource cards found for this category.
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
+                <span>Verified deterministic resources. No hallucinatory or simulated links.</span>
+                <button
+                  type="button"
+                  onClick={() => openUniversalResourcesModal(selectedStage)}
+                  className="font-semibold text-[var(--accent-royal)] hover:underline"
+                >
+                  Refresh resources
                 </button>
               </div>
             </motion.div>

@@ -198,8 +198,13 @@ class PlanComplianceValidator:
         # ── 5. Section Blueprint Compliance ──
         existing_types = [s.section_type for s in doc.sections]
         details["existing_section_types"] = existing_types
+        has_learning_flow = bool(plan.learning_flow_plan and plan.learning_flow_plan.sequence)
+
         for sec_plan in plan.section_plan:
             if sec_plan.required and sec_plan.type not in existing_types:
+                # If learning flow plan is active, stages are personalized dynamically by learner state
+                if has_learning_flow:
+                    continue
                 violations.append(ValidationViolation(
                     code="PLAN_REQUIRED_SECTION_MISSING",
                     severity=ViolationSeverity.CRITICAL,

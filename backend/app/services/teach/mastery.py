@@ -115,4 +115,22 @@ def calculate_mastery_update(
     else:
         decision = "simpler_check"
 
+    # P3 Production Integration: Emit Standard Learning Evidence
+    try:
+        from app.services.lesson_planner.vnext.shared_context import LearningEvidenceService
+        from app.services.lesson_planner.schemas import LearningEvidenceRecord
+        rec = LearningEvidenceRecord(
+            student_id="student_teach_me",
+            concept_id=getattr(eval_result, "concept_id", "teach_me_concept") or "teach_me_concept",
+            source_type="teach_me",
+            source_id="session_auto",
+            question_id=f"eval_{difficulty}",
+            correctness=(eval_result.correctness == "correct"),
+            confidence=round(max(0.1, eval_result.score), 2),
+            misconception_candidate=eval_result.misconception
+        )
+        LearningEvidenceService.record_evidence(rec)
+    except Exception:
+        pass
+
     return new_score, delta, label, decision

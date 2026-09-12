@@ -35,7 +35,12 @@ class CircuitBreaker:
         
         if self.failures >= self.failure_threshold and self.state != ProviderState.OPEN:
             self.state = ProviderState.OPEN
-            logger.warning(f"Circuit breaker OPENED after {self.failures} failures. Cooldown for {self.cooldown_seconds}s.")
+    def record_terminal_failure(self, cooldown_seconds: int = 3600):
+        """Immediately trips circuit breaker for persistent errors like 402 Payment Required."""
+        self.state = ProviderState.OPEN
+        self.last_failure_time = time.time()
+        self.cooldown_seconds = cooldown_seconds
+        logger.warning(f"Circuit breaker TERMINALLY TRIPPED. Cooldown set to {cooldown_seconds}s.")
 
     def can_execute(self) -> bool:
         """Determines if a request should be allowed to proceed."""
@@ -75,6 +80,9 @@ class ProviderHealthManager:
 
     def record_failure(self, provider_name: str):
         self.get_breaker(provider_name).record_failure()
+
+    def record_terminal_failure(self, provider_name: str, cooldown_seconds: int = 3600):
+        self.get_breaker(provider_name).record_terminal_failure(cooldown_seconds)
 
 # Global health manager
 health_manager = ProviderHealthManager()
