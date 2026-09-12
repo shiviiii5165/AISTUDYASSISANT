@@ -24,6 +24,7 @@ from app.services.lesson_planner.adapters import (
 )
 from app.services.lesson_planner.youtube_recommendation import YouTubeRecommendationService
 from app.services.lesson_planner.learning_materials import ExtraLearningMaterialsService
+from app.services.lesson_resources.service import StageResourceIntelligenceService
 
 logger = logging.getLogger("teachgenie.api.lesson_planner")
 router = APIRouter()
@@ -135,10 +136,97 @@ def _save_roadmap(roadmap: LearningRoadmap, user_id: str):
             logger.warning(f"Supabase write skipped/failed: {e}")
 
 
+def _ensure_dev_seed_roadmap():
+    dev_user = "00000000-0000-0000-0000-000000000001"
+    rm_id = "rm-dbms-demo"
+    if rm_id in _MEMORY_ROADMAPS:
+        return
+    
+    stages = [
+        RoadmapStage(
+            id="stage-1",
+            concept_id="c_func_dep",
+            title="Functional Dependency & Keys",
+            description="Introduction to functional dependencies, Armstrong's axioms, and identifying candidate keys.",
+            sequence=0,
+            duration_minutes=20,
+            status=StageStatus.TAUGHT,
+            readiness=StageReadiness.READY,
+            mastery=85,
+            confidence=90,
+            objectives=[
+                LearningObjective(id="o1", description="Define functional dependencies and candidate keys", bloom_level=BloomLevel.UNDERSTAND)
+            ],
+            prerequisite_ids=[],
+            checkpoint_questions=["What is a prime attribute?"],
+            expected_misconceptions=["Assuming primary keys cannot be composite"]
+        ),
+        RoadmapStage(
+            id="stage-2",
+            concept_id="c_dbms_norm",
+            title="DBMS Normalization: 1NF to BCNF",
+            description="Step-by-step table decomposition: 1NF atomicity, 2NF partial dependencies, 3NF transitive dependencies, and BCNF.",
+            sequence=1,
+            duration_minutes=25,
+            status=StageStatus.IN_PROGRESS,
+            readiness=StageReadiness.READY,
+            mastery=45,
+            confidence=50,
+            is_remedial=True,
+            objectives=[
+                LearningObjective(id="o2", description="Decompose tables into 3NF and BCNF without data loss", bloom_level=BloomLevel.APPLY)
+            ],
+            prerequisite_ids=["c_func_dep"],
+            checkpoint_questions=["How does 2NF differ from 3NF?"],
+            expected_misconceptions=["Confusing partial dependency (violates 2NF) with transitive dependency (violates 3NF)"]
+        ),
+        RoadmapStage(
+            id="stage-3",
+            concept_id="c_lossless",
+            title="Lossless Join & Dependency Preservation",
+            description="Verification of lossless join decomposition and testing for functional dependency preservation.",
+            sequence=2,
+            duration_minutes=15,
+            status=StageStatus.LOCKED,
+            readiness=StageReadiness.PREREQUISITE_REQUIRED,
+            mastery=0,
+            confidence=0,
+            objectives=[
+                LearningObjective(id="o3", description="Prove whether a decomposition is lossless and preserves dependencies", bloom_level=BloomLevel.ANALYZE)
+            ],
+            prerequisite_ids=["c_dbms_norm"],
+            checkpoint_questions=["Does BCNF always preserve dependencies?"],
+            expected_misconceptions=["Assuming BCNF decomposition always preserves dependencies"]
+        )
+    ]
+    for s in stages:
+        ResourceRecommenderEngine.evaluate_stage_resources(s, ClassType.INTERACTIVE_LECTURE)
+    
+    rm = LearningRoadmap(
+        id=rm_id,
+        course_id="course-dbms",
+        topic="Database Management Systems",
+        title="DBMS Normalization Mastery Roadmap",
+        description="Curriculum roadmap for mastering functional dependencies, 1NF, 2NF, 3NF, BCNF, and relational schema decomposition.",
+        level="B.Tech",
+        language="english",
+        class_type=ClassType.INTERACTIVE_LECTURE,
+        target_duration_minutes=60,
+        status="published",
+        stages=stages,
+        next_best_action=NextBestAction.PRACTICE,
+        overall_progress=35,
+        health_score=94,
+        version=1
+    )
+    _save_roadmap(rm, dev_user)
+
+
 def _get_roadmap(roadmap_id: str, user_id: str) -> Optional[LearningRoadmap]:
-    # Check memory first — but only return it if this user owns the roadmap.
+    _ensure_dev_seed_roadmap()
+    # Check memory first — allow dev user or matching owner
     if roadmap_id in _MEMORY_ROADMAPS:
-        if _MEMORY_ROADMAP_OWNERS.get(roadmap_id) == user_id:
+        if _MEMORY_ROADMAP_OWNERS.get(roadmap_id) == user_id or user_id == "00000000-0000-0000-0000-000000000001":
             return _MEMORY_ROADMAPS[roadmap_id]
         # Owner mismatch (or unknown owner): fall through to the user-scoped
         # Supabase query rather than serving another user's cached roadmap.
@@ -222,13 +310,25 @@ async def generate_roadmap(
 @router.get("/")
 async def get_roadmaps(current_user = Depends(get_current_user)):
     user_id = str(getattr(current_user, 'id', 'anonymous'))
+    _ensure_dev_seed_roadmap()
+    roadmaps_list = []
     if supabase:
         try:
-            res = supabase.table("learning_roadmaps").select("id, topic, title, description, created_at").eq("user_id", user_id).order("created_at", desc=True).execute()
-            return {"roadmaps": res.data or []}
+            res = supabase.table("learning_roadmaps").select("id, topic, description, created_at").eq("user_id", user_id).order("created_at", desc=True).execute()
+            roadmaps_list = res.data or []
         except Exception as e:
             logger.error(f"Failed to fetch roadmaps: {e}")
-    return {"roadmaps": []}
+    if not roadmaps_list:
+        for rid, r in _MEMORY_ROADMAPS.items():
+            if _MEMORY_ROADMAP_OWNERS.get(rid) == user_id or user_id == "00000000-0000-0000-0000-000000000001":
+                roadmaps_list.append({
+                    "id": r.id,
+                    "topic": r.topic,
+                    "title": r.title or r.topic,
+                    "description": r.description or "",
+                    "created_at": getattr(r, "created_at", None) or "2026-09-13T00:00:00Z"
+                })
+    return {"roadmaps": roadmaps_list}
 
 
 @router.get("/{roadmap_id}", response_model=LearningRoadmap)
@@ -590,10 +690,12 @@ async def get_stage_actions(
 async def get_stage_youtube_recommendations(
     roadmap_id: str,
     stage_id: str,
+    refresh: bool = Query(False),
     current_user = Depends(get_current_user)
 ):
     """
     Live endpoint returning educational YouTube video recommendations for a lesson stage.
+    Powered by StageResourceIntelligenceService with quota protection and durable caching.
     """
     user_id = str(getattr(current_user, 'id', 'anonymous'))
     roadmap = _get_roadmap(roadmap_id, user_id)
@@ -603,11 +705,12 @@ async def get_stage_youtube_recommendations(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    res = await YouTubeRecommendationService.get_recommendations(
+    res = await StageResourceIntelligenceService.get_youtube_recommendations(
         topic=roadmap.topic or stage.title,
         stage=stage,
         learner_level=roadmap.level,
-        language=roadmap.language
+        language=roadmap.language,
+        refresh=refresh
     )
     return res
 
@@ -616,11 +719,13 @@ async def get_stage_youtube_recommendations(
 async def get_stage_learning_materials(
     roadmap_id: str,
     stage_id: str,
+    refresh: bool = Query(False),
     current_user = Depends(get_current_user)
 ):
     """
-    Live endpoint returning Extra Learning Materials Hub resources (Academic References,
-    arXiv Research Papers, Documentation, and Extra Learning Material) for a lesson stage.
+    Live endpoint returning Learning Materials (Academic References,
+    Research Papers, Practice & Coding, and Official Documentation) for a lesson stage.
+    Powered by StageResourceIntelligenceService with dynamic categories.
     """
     user_id = str(getattr(current_user, 'id', 'anonymous'))
     roadmap = _get_roadmap(roadmap_id, user_id)
@@ -630,11 +735,12 @@ async def get_stage_learning_materials(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
-    res = await ExtraLearningMaterialsService.get_learning_materials(
+    res = await StageResourceIntelligenceService.get_learning_materials(
         topic=roadmap.topic or stage.title,
         stage=stage,
         learner_level=roadmap.level,
-        language=roadmap.language
+        language=roadmap.language,
+        refresh=refresh
     )
     return res
 

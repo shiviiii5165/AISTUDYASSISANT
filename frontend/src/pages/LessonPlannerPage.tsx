@@ -8,7 +8,7 @@ import {
   Plus, Share2, Download, Compass, X, Video, GraduationCap,
   ExternalLink, FileText, ThumbsUp, ThumbsDown, Shield,
   RefreshCw, Layers, Award, Target, Info, ArrowRight, Check,
-  BookMarked, BrainCircuit, Activity
+  BookMarked, BrainCircuit, Activity, Code
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import HistorySidebar from '../components/HistorySidebar';
@@ -207,32 +207,50 @@ interface YouTubeVideoItem {
   title: string;
   channel: string;
   thumbnail?: string;
+  thumbnail_fallbacks?: string[];
   duration?: string;
   url: string;
   relevance: number;
+  match_percentage?: number | null;
+  fit_label?: string;
   difficulty: string;
   source: string;
   reason?: string;
+  why_recommended?: string;
 }
 
 interface ExtraLearningMaterialItem {
+  id?: string;
   title: string;
   url: string;
   description: string;
   source: string;
   type: string;
   relevance: number;
+  fit_label?: string;
   difficulty: string;
+  publication_type?: string;
+  peer_review_status?: string;
+  venue?: string;
+  year?: number;
+  citation_count?: number;
+  open_access?: boolean;
+  doi?: string;
+  arxiv_id?: string;
+  why_recommended?: string;
+  verification_level?: string;
 }
 
 interface ExtraMaterialsCategories {
-  academic_references: ExtraLearningMaterialItem[];
-  research_papers: ExtraLearningMaterialItem[];
-  documentation: ExtraLearningMaterialItem[];
-  extra_learning_material: ExtraLearningMaterialItem[];
+  academic_references?: ExtraLearningMaterialItem[];
+  research_papers?: ExtraLearningMaterialItem[];
+  practice_coding?: ExtraLearningMaterialItem[];
+  documentation?: ExtraLearningMaterialItem[];
+  guides_tutorials?: ExtraLearningMaterialItem[];
+  extra_learning_material?: ExtraLearningMaterialItem[];
 }
 
-/** Active downstream capabilities in Lesson Planner. */
+/** Active downstream capabilities in Lesson Planner. Exactly 5 learner-facing actions. */
 const RESOURCE_CARDS: {
   type: string;
   key: ResourceType;
@@ -241,11 +259,11 @@ const RESOURCE_CARDS: {
   desc: string;
   cta: string;
 }[] = [
-  { type: 'PPT', key: 'ppt', icon: Presentation, label: 'PowerPoint', desc: 'Multi-slide deck with concept diagrams and speaker notes.', cta: 'Create PPT deck' },
-  { type: 'Teach', key: 'teach_me', icon: BookOpen, label: 'Teach Me', desc: 'Interactive dialogue with live checkpoints.', cta: 'Launch Teach Me' },
-  { type: 'Quiz', key: 'quiz', icon: HelpCircle, label: 'Quiz', desc: 'Diagnostic questions addressing common misconceptions.', cta: 'Create quiz' },
-  { type: 'YouTube', key: 'youtube_recommendations', icon: Video, label: 'YouTube Lectures', desc: 'Live curated video lectures and worked tutorials for this stage.', cta: 'Explore Videos' },
-  { type: 'Materials', key: 'extra_learning_materials', icon: GraduationCap, label: 'Learning Hub', desc: 'Live academic references, arXiv papers, and documentation.', cta: 'Browse Hub' },
+  { type: 'PPT', key: 'ppt', icon: Presentation, label: 'PowerPoint', desc: 'Multi-slide presentation deck with concept diagrams and speaker notes.', cta: 'Create PPT deck' },
+  { type: 'Teach', key: 'teach_me', icon: BookOpen, label: 'Teach Me', desc: 'Interactive Socratic dialogue with live checkpoints.', cta: 'Launch Teach Me' },
+  { type: 'Quiz', key: 'quiz', icon: HelpCircle, label: 'Quiz', desc: 'Diagnostic questions addressing key concepts and misconceptions.', cta: 'Create quiz' },
+  { type: 'YouTube', key: 'youtube_recommendations', icon: Video, label: 'YouTube Recommendations', desc: 'Live curated video lectures and worked tutorials for this stage.', cta: 'Explore Videos' },
+  { type: 'Materials', key: 'extra_learning_materials', icon: GraduationCap, label: 'Learning Materials', desc: 'Verified academic references, research papers, and documentation.', cta: 'Browse Materials' },
 ];
 
 const RESOURCE_STATUS_LABELS: Partial<Record<ResourceStatus, string>> = {
@@ -321,17 +339,12 @@ interface LessonHealthReport {
   const [explainReport, setExplainReport] = useState<ExplainabilityReport | null>(null);
   const [isExplainLoading, setIsExplainLoading] = useState(false);
   
-  // Universal Resources Modal
-  const [universalModalOpen, setUniversalModalOpen] = useState(false);
-  const [universalResourcesList, setUniversalResourcesList] = useState<UniversalResourceCard[]>([]);
-  const [universalFilter, setUniversalFilter] = useState<'all' | 'video_segment' | 'paper' | 'coding_problem' | 'docs'>('all');
-  const [isUniversalLoading, setIsUniversalLoading] = useState(false);
 
   // Modal states for live viewers
   const [activeViewer, setActiveViewer] = useState<'youtube' | 'materials' | null>(null);
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoItem[] | null>(null);
   const [materialsData, setMaterialsData] = useState<ExtraMaterialsCategories | null>(null);
-  const [materialsTab, setMaterialsTab] = useState<'academic_references' | 'research_papers' | 'documentation' | 'extra_learning_material'>('academic_references');
+  const [materialsTab, setMaterialsTab] = useState<string>('academic_references');
   const [isViewerLoading, setIsViewerLoading] = useState(false);
 
   const formatArchetype = (archetype?: string) => {
@@ -517,59 +530,20 @@ interface LessonHealthReport {
     }
   };
 
-  const openUniversalResourcesModal = async (stage: RoadmapStage) => {
-    if (!roadmap) return;
-    setUniversalModalOpen(true);
-    setIsUniversalLoading(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/stages/${stage.id}/resources`, {
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUniversalResourcesList(data.resources || []);
-      } else if (stage.universal_resources && stage.universal_resources.length > 0) {
-        setUniversalResourcesList(stage.universal_resources);
-      }
-    } catch (e) {
-      console.error('Failed to fetch universal resources', e);
-      if (stage.universal_resources) setUniversalResourcesList(stage.universal_resources);
-    } finally {
-      setIsUniversalLoading(false);
-    }
+
+  const extractYouTubeId = (url?: string): string | null => {
+    if (!url) return null;
+    const match = url.match(/(?:v=|\/embed\/|\.be\/)([0-9A-Za-z_-]{11})/);
+    return match ? match[1] : null;
   };
 
-  const handleResourceFeedback = async (resourceId: string, helpful: boolean) => {
-    if (!roadmap || !selectedStage) return;
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/${roadmap.id}/resource-feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
-        },
-        body: JSON.stringify({
-          resource_id: resourceId,
-          stage_id: selectedStage.id,
-          helpful,
-          feedback: helpful ? 'High relevance to lesson stage' : 'Irrelevant or misaligned'
-        })
-      });
-      setActionNotification(helpful ? 'Resource feedback saved (Trust Boosted).' : 'Resource feedback saved (De-emphasized).');
-    } catch (e) {
-      console.error('Resource feedback failed', e);
-    }
-  };
-
-  const openYouTubeViewer = async (stage: RoadmapStage) => {
+  const openYouTubeViewer = async (stage: RoadmapStage, refresh: boolean = false) => {
     if (!roadmap) return;
     setActiveViewer('youtube');
     setIsViewerLoading(true);
     setErrorNotification(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/youtube-recommendations`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/youtube-recommendations${refresh ? '?refresh=true' : ''}`, {
         headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
       });
       if (res.ok) {
@@ -586,24 +560,28 @@ interface LessonHealthReport {
     }
   };
 
-  const openMaterialsViewer = async (stage: RoadmapStage) => {
+  const openMaterialsViewer = async (stage: RoadmapStage, refresh: boolean = false) => {
     if (!roadmap) return;
     setActiveViewer('materials');
     setIsViewerLoading(true);
     setErrorNotification(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/learning-materials`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/learning-materials${refresh ? '?refresh=true' : ''}`, {
         headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setMaterialsData(data.categories || null);
+        const cats = data.categories || null;
+        setMaterialsData(cats);
+        if (data.visible_tabs && data.visible_tabs.length > 0) {
+          setMaterialsTab(data.visible_tabs[0]);
+        }
       } else {
-        setErrorNotification('Could not load extra learning materials. Please try again.');
+        setErrorNotification('Could not load learning materials. Please try again.');
       }
     } catch (e) {
       console.error(e);
-      setErrorNotification('Could not load extra learning materials.');
+      setErrorNotification('Could not load learning materials.');
     } finally {
       setIsViewerLoading(false);
     }
@@ -631,9 +609,12 @@ interface LessonHealthReport {
       });
       if (res.ok) {
         const data = await res.json();
-        setRoadmap(data.roadmap);
+        const rm = data.roadmap || data;
+        setRoadmap(rm);
         setSearchParams(prev => { prev.set('id', id); return prev; });
-        if (data.roadmap.stages.length > 0) setSelectedStageId(data.roadmap.stages[0].id);
+        if (rm && Array.isArray(rm.stages) && rm.stages.length > 0) {
+          setSelectedStageId(rm.stages[0].id);
+        }
         fetchHealth(id);
       } else {
         throw new Error('Failed to fetch');
@@ -1097,16 +1078,7 @@ interface LessonHealthReport {
                 <Info className="h-4 w-4 text-[var(--accent-royal)]" aria-hidden="true" />
                 Why this plan?
               </button>
-              {selectedStage && (
-                <button
-                  type="button"
-                  onClick={() => openUniversalResourcesModal(selectedStage)}
-                  className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
-                >
-                  <Layers className="h-4 w-4 text-[var(--accent-royal)]" aria-hidden="true" />
-                  Universal resources
-                </button>
-              )}
+
               <button
                 type="button"
                 onClick={handleGenerateStudyPack}
@@ -2041,76 +2013,89 @@ interface LessonHealthReport {
                   )}
                 </div>
 
-                {/* Resource generation */}
-                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 md:p-6">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div>
-                      <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
-                        Stage resources
-                      </h3>
-                      <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-                        Generated from this stage's objectives, timings and checkpoints.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => openUniversalResourcesModal(selectedStage)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                    >
-                      <Layers className="h-3.5 w-3.5 text-[var(--accent-royal)]" />
-                      Browse Universal Resources Hub
-                    </button>
+                {/* Stage Resources Rebuilt Responsive Grid */}
+                <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 md:p-6 w-full min-w-0">
+                  <div>
+                    <h3 className="font-display text-lg font-semibold text-[var(--text-primary)]">
+                      Stage resources
+                    </h3>
+                    <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                      Teacher-calibrated learning actions generated from stage objectives and student mastery needs.
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                  <div
+                    className="w-full min-w-0"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+                      gap: '1rem'
+                    }}
+                  >
                     {RESOURCE_CARDS.map((card) => {
-                      /* Badge reflects the backend's recommendation for this
-                         stage. */
+                      /* Badge reflects the backend's calibrated recommendation for this stage. */
                       const rec = selectedStage.resource_recommendations?.find(
                         r => r.resource_type === card.key
                       );
-                      const badgeLabel = rec ? RESOURCE_STATUS_LABELS[rec.status] : undefined;
+                      const isRecommended = rec?.status === 'recommended';
+                      const isPrimary = isRecommended && (
+                        (rec?.usefulness_score && rec.usefulness_score >= 0.95) ||
+                        (rec?.reason && (rec.reason.toLowerCase().includes('primary') || rec.reason.toLowerCase().includes('top pick')))
+                      );
                       const Icon = card.icon;
 
                       return (
                         <div
                           key={card.type}
-                          className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/30"
+                          className="flex flex-col h-full min-w-0 justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-xs"
                         >
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-1.5 rounded bg-[var(--bg-card)] px-2 py-0.5 text-xs font-bold text-[var(--text-primary)]">
+                          <div className="space-y-2">
+                            {/* Card Header: Icon + Title on left, inside RecommendationBadge on right */}
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="flex items-center gap-1.5 rounded-lg bg-[var(--bg-card)] px-2.5 py-1 text-xs font-bold text-[var(--text-primary)] border border-[var(--border)]/70 shrink-0">
                                 <Icon className="h-3.5 w-3.5 text-[var(--accent-green-text)]" aria-hidden="true" />
-                                {card.label}
+                                <span className="truncate max-w-[125px]">{card.label}</span>
                               </span>
-                              {badgeLabel && (
-                                <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                                  rec?.status === 'recommended'
-                                    ? 'bg-[var(--accent-green-light)] text-[var(--accent-green-text)]'
-                                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
-                                }`}>
-                                  {badgeLabel}
+                              {isPrimary ? (
+                                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs shrink-0 whitespace-nowrap">
+                                  Top Pick
                                 </span>
-                              )}
+                              ) : isRecommended ? (
+                                <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold shrink-0 whitespace-nowrap">
+                                  Recommended
+                                </span>
+                              ) : null}
                             </div>
-                            <p className="text-xs text-[var(--text-secondary)]">{card.desc}</p>
+
+                            {/* Description */}
+                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-3">
+                              {card.desc}
+                            </p>
+
+                            {/* Pedagogical Reason */}
                             {rec?.reason && (
-                              <p className="text-[11px] italic text-[var(--text-muted)]">{rec.reason}</p>
+                              <p className="text-[11px] italic text-[var(--text-muted)] line-clamp-3 leading-snug">
+                                {rec.reason}
+                              </p>
                             )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleGenerateResource(card.type)}
-                            disabled={isTriggeringResource === card.type}
-                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--accent-green)] py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:opacity-50"
-                          >
-                            {isTriggeringResource === card.type ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                            )}
-                            {card.cta}
-                          </button>
+
+                          {/* CTA Button: pinned cleanly to the bottom across the entire grid row */}
+                          <div className="mt-auto pt-3">
+                            <button
+                              type="button"
+                              onClick={() => handleGenerateResource(card.type)}
+                              disabled={isTriggeringResource === card.type}
+                              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--accent-green)] py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--accent-green-hover)] disabled:opacity-50"
+                            >
+                              {isTriggeringResource === card.type ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                              )}
+                              {card.cta}
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
@@ -2137,7 +2122,7 @@ interface LessonHealthReport {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+              className="relative flex max-h-[88vh] w-full max-w-4xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
@@ -2149,7 +2134,7 @@ interface LessonHealthReport {
                     <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
                       YouTube Recommendations
                       <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
-                        Live
+                        Verified
                       </span>
                     </h3>
                     <p className="text-xs text-[var(--text-secondary)]">
@@ -2161,7 +2146,7 @@ interface LessonHealthReport {
                   type="button"
                   onClick={() => setActiveViewer(null)}
                   aria-label="Close modal"
-                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </button>
@@ -2170,97 +2155,131 @@ interface LessonHealthReport {
               {/* Content Body */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {isViewerLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-green)]" />
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
-                      Searching and ranking educational video lectures...
-                    </p>
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Matching pedagogical depth to {selectedStage.title}
-                    </p>
-                  </div>
-                ) : youtubeData && youtubeData.length > 0 ? (
                   <div className="space-y-4">
-                    {youtubeData.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-col sm:flex-row gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-sm"
-                      >
-                        {/* Thumbnail / Duration */}
-                        <div className="relative shrink-0 w-full sm:w-44 h-28 rounded-lg overflow-hidden bg-black/10">
-                          {item.thumbnail ? (
-                            <img
-                              src={item.thumbnail}
-                              alt={item.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gray-900 text-white">
-                              <Video className="h-8 w-8 text-red-500" />
-                            </div>
-                          )}
-                          {item.duration && (
-                            <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wider">
-                              {item.duration}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 flex flex-col justify-between space-y-2">
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-secondary)]">
-                                {item.channel}
-                              </span>
-                              <span className="rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5">
-                                {Math.round(item.relevance * 100)}% Match
-                              </span>
-                              <span className="rounded bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 capitalize">
-                                {item.difficulty}
-                              </span>
-                            </div>
-                            <h4 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2">
-                              {item.title}
-                            </h4>
-                            {item.reason && (
-                              <p className="mt-1 text-xs text-[var(--text-secondary)] line-clamp-2">
-                                {item.reason}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-red-700"
-                            >
-                              <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                              Watch on YouTube
-                              <ExternalLink className="h-3 w-3 ml-0.5" aria-hidden="true" />
-                            </a>
-                          </div>
+                    <div className="flex items-center justify-center gap-2 py-2 text-xs text-[var(--text-secondary)]">
+                      <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-green)]" />
+                      <span>Searching and ranking verified educational lectures...</span>
+                    </div>
+                    {[1, 2, 3].map(n => (
+                      <div key={n} className="flex flex-col sm:flex-row gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 animate-pulse">
+                        <div className="w-full sm:w-44 h-28 rounded-lg bg-[var(--border)]/70 shrink-0" />
+                        <div className="flex-1 space-y-2 py-1">
+                          <div className="h-4 bg-[var(--border)]/70 rounded w-1/3" />
+                          <div className="h-4 bg-[var(--border)]/70 rounded w-3/4" />
+                          <div className="h-3 bg-[var(--border)]/70 rounded w-full" />
                         </div>
                       </div>
                     ))}
                   </div>
+                ) : youtubeData && youtubeData.length > 0 ? (
+                  <div className="space-y-4">
+                    {youtubeData.map((item, idx) => {
+                      const videoId = extractYouTubeId(item.url);
+                      const initialThumb = item.thumbnail || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : undefined);
+
+                      return (
+                        <div
+                          key={idx}
+                          className="flex flex-col sm:flex-row gap-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-xs"
+                        >
+                          {/* Thumbnail / Duration */}
+                          <div className="relative shrink-0 w-full sm:w-48 h-30 rounded-lg overflow-hidden bg-black/10 flex items-center justify-center">
+                            {initialThumb ? (
+                              <img
+                                src={initialThumb}
+                                alt={item.title}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  if (videoId && !target.src.includes('hqdefault.jpg')) {
+                                    target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                                  } else if (videoId && !target.src.includes('mqdefault.jpg')) {
+                                    target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                                  } else {
+                                    target.style.display = 'none';
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-gray-900 text-white">
+                                <Video className="h-8 w-8 text-red-500" />
+                              </div>
+                            )}
+                            {item.duration && (
+                              <span className="absolute bottom-2 right-2 rounded bg-black/85 px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wider">
+                                {item.duration}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Video Details */}
+                          <div className="flex-1 flex flex-col justify-between space-y-2">
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-secondary)] border border-[var(--border)]">
+                                  {item.channel}
+                                </span>
+                                <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5">
+                                  {item.fit_label || (item.relevance >= 0.82 ? 'Excellent fit' : item.relevance >= 0.68 ? 'Strong fit' : 'Useful supplement')}
+                                </span>
+                                {item.match_percentage != null && (
+                                  <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary)] border border-[var(--border)]">
+                                    {item.match_percentage}% Match
+                                  </span>
+                                )}
+                                <span className="rounded bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 capitalize">
+                                  {item.difficulty}
+                                </span>
+                              </div>
+                              <h4 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2">
+                                {item.title}
+                              </h4>
+
+                              {/* Why Recommended Callout */}
+                              {(item.why_recommended || item.reason) && (
+                                <div className="mt-2 rounded-lg bg-emerald-50/80 border border-emerald-200/70 p-2.5 text-[11px] text-emerald-950 flex items-start gap-2">
+                                  <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                                  <div className="flex-1">
+                                    <span className="font-bold text-emerald-900 mr-1.5">Why recommended:</span>
+                                    <span className="leading-relaxed">{item.why_recommended || item.reason}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="pt-2">
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-red-700"
+                              >
+                                <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                                Watch on YouTube
+                                <ExternalLink className="h-3 w-3 ml-0.5" aria-hidden="true" />
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
-                    No educational videos available for this specific stage.
+                    No verified educational videos matching this stage's exact concepts were found.
                   </div>
                 )}
               </div>
 
               {/* Footer */}
               <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
-                <span>Educational recommendations are ranked by topic alignment.</span>
+                <span>Recommendations ranked by concept alignment and pedagogical fit.</span>
                 <button
                   type="button"
-                  onClick={() => openYouTubeViewer(selectedStage)}
-                  className="font-semibold text-[var(--accent-green-text)] hover:underline"
+                  onClick={() => openYouTubeViewer(selectedStage, true)}
+                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--accent-green-text)] hover:underline cursor-pointer"
                 >
+                  <RefreshCw className="h-3 w-3" />
                   Refresh search
                 </button>
               </div>
@@ -2274,7 +2293,7 @@ interface LessonHealthReport {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+              className="relative flex max-h-[88vh] w-full max-w-4xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
@@ -2284,13 +2303,13 @@ interface LessonHealthReport {
                   </span>
                   <div>
                     <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
-                      Extra Learning Materials Hub
+                      Learning Materials
                       <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
-                        Live
+                        Verified
                       </span>
                     </h3>
                     <p className="text-xs text-[var(--text-secondary)]">
-                      Academic references & research papers for <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
+                      Academic references, research papers, and documentation for <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
                     </p>
                   </div>
                 </div>
@@ -2298,107 +2317,200 @@ interface LessonHealthReport {
                   type="button"
                   onClick={() => setActiveViewer(null)}
                   aria-label="Close modal"
-                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
 
-              {/* Category Tabs */}
-              <div className="flex border-b border-[var(--border)] bg-[var(--bg-secondary)] px-6 overflow-x-auto">
-                {[
-                  { id: 'academic_references', label: 'Academic References', icon: BookOpen, count: materialsData?.academic_references?.length || 0 },
-                  { id: 'research_papers', label: 'Research Papers (arXiv)', icon: FileText, count: materialsData?.research_papers?.length || 0 },
-                  { id: 'documentation', label: 'Documentation', icon: ListChecks, count: materialsData?.documentation?.length || 0 },
-                  { id: 'extra_learning_material', label: 'Extra Material & Guides', icon: Sparkles, count: materialsData?.extra_learning_material?.length || 0 }
-                ].map(tab => {
-                  const TabIcon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setMaterialsTab(tab.id as any)}
-                      className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-semibold whitespace-nowrap transition-colors ${
-                        materialsTab === tab.id
-                          ? 'border-[var(--accent-green)] text-[var(--accent-green-text)]'
-                          : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <TabIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                      {tab.label}
-                      <span className="ml-1 rounded-full bg-[var(--bg-card)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)]">
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Dynamic Category Tabs: Only display tabs with actual items! */}
+              {(() => {
+                const ALL_TABS = [
+                  { id: 'academic_references', label: 'Academic References', icon: BookOpen },
+                  { id: 'research_papers', label: 'Research Papers', icon: FileText },
+                  { id: 'practice_coding', label: 'Practice & Coding', icon: Code },
+                  { id: 'documentation', label: 'Official Documentation', icon: ListChecks },
+                  { id: 'guides_tutorials', label: 'Guides & Tutorials', icon: Sparkles }
+                ];
+                const activeTabs = ALL_TABS.filter(tab => {
+                  const list = materialsData ? (materialsData as any)[tab.id] : [];
+                  return Array.isArray(list) && list.length > 0;
+                });
 
-              {/* Content Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                {isViewerLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-green)]" />
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
-                      Fetching verified academic references and research papers...
-                    </p>
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Connecting to Wikipedia, arXiv, and official documentation
-                    </p>
-                  </div>
-                ) : (materialsData && materialsData[materialsTab]?.length > 0) ? (
-                  <div className="space-y-3">
-                    {materialsData[materialsTab].map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-sm"
-                      >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                              {item.source}
-                            </span>
-                            <span className="rounded bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-bold capitalize">
-                              {item.difficulty}
-                            </span>
-                          </div>
-                          <h4 className="font-semibold text-sm text-[var(--text-primary)]">
-                            {item.title}
-                          </h4>
-                          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                            {item.description}
-                          </p>
-                        </div>
+                return (
+                  <>
+                    {activeTabs.length > 0 && (
+                      <div className="flex border-b border-[var(--border)] bg-[var(--bg-secondary)] px-6 overflow-x-auto gap-1">
+                        {activeTabs.map(tab => {
+                          const TabIcon = tab.icon;
+                          const count = materialsData ? ((materialsData as any)[tab.id]?.length || 0) : 0;
+                          const isSelected = (materialsTab === tab.id) || (activeTabs.length > 0 && !activeTabs.some(t => t.id === materialsTab) && tab.id === activeTabs[0].id);
 
-                        <div className="pt-1">
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                          >
-                            Open Resource
-                            <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
-                          </a>
-                        </div>
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setMaterialsTab(tab.id)}
+                              className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'border-[var(--accent-green)] text-[var(--accent-green-text)]'
+                                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                              }`}
+                            >
+                              <TabIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                              {tab.label}
+                              <span className="ml-1 rounded-full bg-[var(--bg-card)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] border border-[var(--border)]">
+                                {count}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
-                    No materials found in this category for this stage.
-                  </div>
-                )}
-              </div>
+                    )}
+
+                    {/* Content Body */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                      {isViewerLoading ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-center gap-2 py-2 text-xs text-[var(--text-secondary)]">
+                            <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-green)]" />
+                            <span>Retrieving verified academic references and documentation...</span>
+                          </div>
+                          {[1, 2, 3].map(n => (
+                            <div key={n} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 animate-pulse space-y-2">
+                              <div className="h-4 bg-[var(--border)]/70 rounded w-1/4" />
+                              <div className="h-4 bg-[var(--border)]/70 rounded w-2/3" />
+                              <div className="h-3 bg-[var(--border)]/70 rounded w-full" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : activeTabs.length > 0 ? (
+                        <div className="space-y-3">
+                          {(() => {
+                            const effectiveTab = activeTabs.some(t => t.id === materialsTab) ? materialsTab : activeTabs[0].id;
+                            const items: ExtraLearningMaterialItem[] = materialsData ? ((materialsData as any)[effectiveTab] || []) : [];
+
+                            return items.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-xs"
+                              >
+                                <div className="space-y-2">
+                                  {/* Evidence and Provenance Badges */}
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] border border-[var(--border)]">
+                                        {item.source}
+                                      </span>
+                                      {item.publication_type && (
+                                        <span className="rounded bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5">
+                                          {item.publication_type}
+                                        </span>
+                                      )}
+                                      {item.peer_review_status && item.peer_review_status !== 'Unknown' && (
+                                        <span className={`rounded text-[10px] font-bold px-2 py-0.5 ${
+                                          item.peer_review_status === 'Peer-reviewed'
+                                            ? 'bg-purple-100 text-purple-800'
+                                            : 'bg-amber-100 text-amber-800'
+                                        }`}>
+                                          {item.peer_review_status}
+                                        </span>
+                                      )}
+                                      {item.venue && (
+                                        <span className="rounded bg-[var(--bg-card)] border border-[var(--border)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary)]">
+                                          {item.venue}
+                                        </span>
+                                      )}
+                                      {item.year && (
+                                        <span className="text-[10px] text-[var(--text-muted)] font-medium">({item.year})</span>
+                                      )}
+                                      {item.citation_count !== undefined && item.citation_count !== null && (
+                                        <span className="text-[10px] text-[var(--text-muted)] font-semibold">
+                                          {item.citation_count} citations
+                                        </span>
+                                      )}
+                                      {item.open_access && (
+                                        <span className="rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5">
+                                          Open Access
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
+                                      {item.fit_label || 'Verified Resource'}
+                                    </span>
+                                  </div>
+
+                                  <h4 className="font-semibold text-sm text-[var(--text-primary)] leading-snug">
+                                    {item.title}
+                                  </h4>
+                                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                                    {item.description}
+                                  </p>
+
+                                  {/* Dynamic Why Recommended Callout */}
+                                  {item.why_recommended && (
+                                    <div className="rounded-lg bg-blue-50/70 border border-blue-200/60 p-2.5 text-[11px] text-blue-950 flex items-start gap-2">
+                                      <Sparkles className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
+                                      <div className="flex-1">
+                                        <span className="font-bold text-blue-900 mr-1.5">Relevance:</span>
+                                        <span className="leading-relaxed">{item.why_recommended}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="pt-2 flex items-center justify-between">
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                                  >
+                                    Open Resource
+                                    <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
+                                  </a>
+                                  {item.doi && (
+                                    <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                                      DOI: {item.doi}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="py-14 text-center space-y-3">
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                            No sufficiently relevant verified resources were found for this stage.
+                          </p>
+                          <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
+                            TeachGenie enforces strict relevance filters to prevent off-topic recommendations.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => openMaterialsViewer(selectedStage, true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent-green)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--accent-green-hover)] cursor-pointer"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Refresh Search
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Footer */}
               <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
-                <span>Sourced from Wikipedia, arXiv, and developer documentation.</span>
+                <span>Authoritative materials verified via Wikipedia, Semantic Scholar, Crossref, and arXiv.</span>
                 <button
                   type="button"
-                  onClick={() => openMaterialsViewer(selectedStage)}
-                  className="font-semibold text-[var(--accent-green-text)] hover:underline"
+                  onClick={() => openMaterialsViewer(selectedStage, true)}
+                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--accent-green-text)] hover:underline cursor-pointer"
                 >
+                  <RefreshCw className="h-3 w-3" />
                   Refresh search
                 </button>
               </div>
@@ -2563,183 +2675,6 @@ interface LessonHealthReport {
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* UNIVERSAL RESOURCES HUB MODAL                                */}
-        {/* ============================================================ */}
-        {universalModalOpen && selectedStage && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4 bg-gradient-to-r from-emerald-50/60 to-blue-50/60">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                    <Layers className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
-                      Universal Resources Hub
-                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
-                        Verified
-                      </span>
-                    </h3>
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Precision-targeted video segments, Q1-Q4 papers, and official documentation for <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setUniversalModalOpen(false)}
-                  aria-label="Close modal"
-                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
-                >
-                  <X className="h-5 w-5" aria-hidden="true" />
-                </button>
-              </div>
-
-              {/* Filter Tabs */}
-              <div className="flex border-b border-[var(--border)] bg-[var(--bg-secondary)] px-6 overflow-x-auto gap-2 py-2.5">
-                {[
-                  { id: 'all', label: 'All Resources' },
-                  { id: 'video_segment', label: 'Timestamped Videos' },
-                  { id: 'paper', label: 'Academic Papers (Q1-Q4)' },
-                  { id: 'coding_problem', label: 'Coding Progression' },
-                  { id: 'docs', label: 'Official Docs' }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setUniversalFilter(tab.id as any)}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                      universalFilter === tab.id
-                        ? 'bg-[var(--accent-royal)] text-white shadow-sm'
-                        : 'bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Content List */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {isUniversalLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 space-y-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-[var(--accent-royal)]" />
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
-                      Retrieving verified universal resource cards...
-                    </p>
-                  </div>
-                ) : universalResourcesList && universalResourcesList.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {universalResourcesList
-                      .filter(r => universalFilter === 'all' || r.type === universalFilter)
-                      .map((res) => (
-                        <div
-                          key={res.id}
-                          className="flex flex-col justify-between rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 hover:border-[var(--accent-royal)]/40 hover:shadow-sm transition-all"
-                        >
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className="rounded bg-[var(--bg-card)] border border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--accent-royal)]">
-                                {res.type.replace(/_/g, ' ')}
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                {res.timestamp_start && res.timestamp_end && (
-                                  <span className="rounded bg-rose-50 text-rose-800 border border-rose-200 px-1.5 py-0.5 text-[10px] font-mono font-bold">
-                                    ⏱️ {res.timestamp_start}–{res.timestamp_end}
-                                  </span>
-                                )}
-                                {res.venue_label && (
-                                  <span className="rounded bg-purple-100 text-purple-900 border border-purple-300 px-1.5 py-0.5 text-[10px] font-bold">
-                                    {res.venue_label}
-                                  </span>
-                                )}
-                                <span className="rounded bg-emerald-100 text-emerald-900 px-1.5 py-0.5 text-[10px] font-bold">
-                                  {res.quality_score}/100
-                                </span>
-                              </div>
-                            </div>
-
-                            <h4 className="text-sm font-bold text-[var(--text-primary)] line-clamp-2">
-                              {res.title}
-                            </h4>
-
-                            <p className="text-xs text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
-                              {res.what_it_covers || res.why_recommended}
-                            </p>
-
-                            <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                              <span>Source: {res.source_authority}</span>
-                              {res.use_during && (
-                                <>
-                                  <span>•</span>
-                                  <span className="capitalize">Use during: {res.use_during.replace(/_/g, ' ')}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
-                            <a
-                              href={res.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs font-bold text-[var(--accent-royal)] hover:underline"
-                            >
-                              Open Resource
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-
-                            {/* Trust Feedback buttons */}
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleResourceFeedback(res.id, true)}
-                                title="Resource was helpful"
-                                className="rounded p-1.5 hover:bg-emerald-100 text-emerald-700 transition-colors"
-                              >
-                                <ThumbsUp className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleResourceFeedback(res.id, false)}
-                                title="Resource was not helpful"
-                                className="rounded p-1.5 hover:bg-red-100 text-red-700 transition-colors"
-                              >
-                                <ThumbsDown className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center text-sm text-[var(--text-secondary)]">
-                    No universal resource cards found for this category.
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
-                <span>Verified deterministic resources. No hallucinatory or simulated links.</span>
-                <button
-                  type="button"
-                  onClick={() => openUniversalResourcesModal(selectedStage)}
-                  className="font-semibold text-[var(--accent-royal)] hover:underline"
-                >
-                  Refresh resources
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
       </AnimatePresence>
     </AppLayout>
   );

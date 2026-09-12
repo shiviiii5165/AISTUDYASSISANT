@@ -34,6 +34,24 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initializeAuth: async () => {
     try {
+      if (import.meta.env.DEV && (typeof window !== 'undefined' && (window.location.search.includes('mock_auth=true') || localStorage.getItem('teachgenie_dev_auth') === 'true'))) {
+        if (window.location.search.includes('mock_auth=true')) {
+          localStorage.setItem('teachgenie_dev_auth', 'true');
+        }
+        const devUser: UserProfile = {
+          id: '00000000-0000-0000-0000-000000000001',
+          email: 'teacher@teachgenie.com',
+          full_name: 'Teacher Jane',
+          plan: 'pro'
+        };
+        const devSession = {
+          access_token: 'mock-dev-token',
+          user: { id: devUser.id, email: devUser.email }
+        };
+        set({ user: devUser, session: devSession, loading: false });
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       const syncUserProfile = async (currentSession: any) => {

@@ -218,79 +218,54 @@ class ResourceRecommenderEngine:
         stage: RoadmapStage,
         class_type: ClassType = ClassType.INTERACTIVE_LECTURE
     ) -> List[ResourceRecommendation]:
+        from app.services.lesson_resources.action_recommender import StageActionRecommender
+        from app.services.lesson_resources.intent_profile import IntentProfileBuilder
+        from app.services.lesson_resources.schemas import StageActionPriority
+
+        # Build pedagogical profile to evaluate true action priorities (PRIMARY, RECOMMENDED, AVAILABLE)
+        profile = IntentProfileBuilder.build(
+            roadmap_id="live",
+            stage_id=stage.id,
+            topic=stage.title,
+            stage_title=stage.title,
+            stage_description=stage.description or "",
+            archetype=getattr(stage, "archetype", None),
+            is_remedial=getattr(stage, "is_remedial", False),
+            concept_id=getattr(stage, "concept_id", None),
+            objectives=[getattr(o, "description", str(o)) for o in getattr(stage, "objectives", [])],
+            weaknesses=getattr(stage, "expected_misconceptions", [])
+        )
+
+        action_recs = StageActionRecommender.evaluate_actions(profile)
+        rec_map = {r.key: r for r in action_recs}
+
         recommendations: List[ResourceRecommendation] = []
 
-        title_lower = (stage.title + " " + stage.description).lower()
-        has_checkpoints = bool(stage.checkpoint_questions)
-        has_misconceptions = bool(stage.expected_misconceptions)
-        is_lab = class_type == ClassType.LAB or "lab" in title_lower or "code" in title_lower
-        is_exam_review = class_type in [ClassType.EXAM_REVIEW, ClassType.REVISION]
+        type_mapping = [
+            ("ppt", ResourceType.PPT, 0.85),
+            ("quiz", ResourceType.QUIZ, 0.80),
+            ("teach_me", ResourceType.TEACH_ME, 0.90),
+            ("youtube_recommendations", ResourceType.YOUTUBE_RECOMMENDATIONS, 0.88),
+            ("extra_learning_materials", ResourceType.EXTRA_LEARNING_MATERIALS, 0.86),
+        ]
 
-        # 1. PPT Deck Recommendation (ACTIVE)
-        ppt_score = 0.85
-        ppt_status = ResourceStatus.RECOMMENDED
-        ppt_reason = "Visual structure and key diagrams enhance multi-step comprehension."
-        if is_lab:
-            ppt_score = 0.40
-            ppt_status = ResourceStatus.OPTIONAL
-            ppt_reason = "Lab session prioritizes live coding and terminal output over slides."
-        elif "formula" in title_lower or "architecture" in title_lower or "diagram" in title_lower:
-            ppt_score = 0.95
-            ppt_status = ResourceStatus.RECOMMENDED
-            ppt_reason = "Concept features architecture / structural flow ideal for presentation slides."
-        
-        recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.PPT,
-            usefulness_score=ppt_score,
-            status=ppt_status,
-            reason=ppt_reason
-        ))
+        for key, res_type, base_score in type_mapping:
+            action_info = rec_map.get(key)
+            if action_info and action_info.priority in (StageActionPriority.PRIMARY, StageActionPriority.RECOMMENDED):
+                rec_status = ResourceStatus.RECOMMENDED
+                score = min(1.0, base_score + 0.10) if action_info.priority == StageActionPriority.PRIMARY else base_score
+            else:
+                rec_status = ResourceStatus.OPTIONAL
+                score = max(0.50, base_score - 0.20)
 
-        # 2. Quiz / Assessment Recommendation (ACTIVE)
-        quiz_score = 0.80 if has_checkpoints else 0.50
-        quiz_status = ResourceStatus.RECOMMENDED if has_checkpoints or is_exam_review else ResourceStatus.OPTIONAL
-        quiz_reason = "Formative checkpoints verify concept mastery before advancing."
-        if has_misconceptions:
-            quiz_score = min(1.0, quiz_score + 0.15)
-            quiz_reason = "Diagnostic quiz helps identify and address anticipated student misconceptions."
-        
-        recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.QUIZ,
-            usefulness_score=quiz_score,
-            status=quiz_status,
-            reason=quiz_reason
-        ))
+            reason = action_info.reason if action_info else "Standard stage resource."
 
-        # 3. Teach Me Interactive Session (ACTIVE)
-        teach_score = 0.90
-        teach_status = ResourceStatus.RECOMMENDED
-        teach_reason = "Socratic interactive dialogue adapts real-time to student explanations."
-        if is_exam_review:
-            teach_score = 0.70
-            teach_status = ResourceStatus.OPTIONAL
-
-        recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.TEACH_ME,
-            usefulness_score=teach_score,
-            status=teach_status,
-            reason=teach_reason
-        ))
-
-        # 4. YouTube Recommendations (ACTIVE)
-        recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.YOUTUBE_RECOMMENDATIONS,
-            usefulness_score=0.90,
-            status=ResourceStatus.RECOMMENDED,
-            reason="Curated educational video recommendations from verified academic channels."
-        ))
-
-        # 5. Extra Learning Materials Hub (ACTIVE)
-        recommendations.append(ResourceRecommendation(
-            resource_type=ResourceType.EXTRA_LEARNING_MATERIALS,
-            usefulness_score=0.88,
-            status=ResourceStatus.RECOMMENDED,
-            reason="Academic references, arXiv research papers, and official documentation."
-        ))
+            recommendations.append(ResourceRecommendation(
+                resource_type=res_type,
+                usefulness_score=score,
+                status=rec_status,
+                reason=reason
+            ))
 
         stage.resource_recommendations = recommendations
 
@@ -328,8 +303,8 @@ class ResourceRecommenderEngine:
                 type="extra_learning_materials",
                 enabled=True,
                 status="active",
-                title="Extra Learning Materials Hub",
-                description="Academic references, arXiv research papers, and documentation."
+                title="Learning Materials",
+                description="Academic references, research papers, and documentation."
             )
         ]
 

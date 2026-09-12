@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     LESSON_PLANNER_YOUTUBE_ENABLED: bool = True
     LESSON_PLANNER_MATERIALS_ENABLED: bool = True
     YOUTUBE_API_KEY: str = ""
+    SEMANTIC_SCHOLAR_API_KEY: str = ""
+    CROSSREF_MAILTO: str = "contact@teachgenie.online"
+    TAVILY_API_KEY: str = ""
 
     # Lesson Planner VNext Production-Safe Feature Flags (Default False)
     LESSON_VNEXT_ENABLED: bool = False

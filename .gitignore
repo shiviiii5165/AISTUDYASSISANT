@@ -50,3 +50,7 @@ Thumbs.db
 # Persistence runtime store
 backend/app/data/persistence/*.json
 !backend/app/data/persistence/.gitkeep
+
+# Runtime disk cache
+.cache/
+**/.cache/
