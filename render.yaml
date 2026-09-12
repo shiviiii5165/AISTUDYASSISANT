@@ -38,3 +38,11 @@ services:
         sync: false
       - key: CASHFREE_SECRET_KEY
         sync: false
+      - key: CASHFREE_ENVIRONMENT
+        value: TEST
+      - key: PEXELS_API_KEY
+        sync: false
+      - key: PIXABAY_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
