@@ -1,0 +1,7 @@
+{
+  "git.path": "C:\\Users\\Lenovo\\AppData\\Local\\GitHubDesktop\\app-3.6.5\\resources\\app\\git\\cmd\\git.exe",
+  "git.enabled": true,
+  "git.autorefresh": true,
+  "git.autoRepositoryDetection": true,
+  "git.repositoryScanMaxDepth": 5
+}
