@@ -51,6 +51,38 @@ interface SceneSpec {
   status: string;
 }
 
+export interface QualityScoreData {
+  total_score: number;
+  passed_gates: boolean;
+  concept_coverage: number;
+  prerequisite_order: number;
+  visual_relevance: number;
+  example_quality: number;
+  misconception_handling: number;
+  language_naturalness: number;
+  narration_visual_sync: number;
+  doubt_context_readiness: number;
+}
+
+export interface RepairLogData {
+  pre_repair_score: number;
+  post_repair_score: number;
+  score_delta: number;
+  repair_actions: string[];
+}
+
+export interface TelemetryData {
+  intent_parse_ms: number;
+  domain_detection_ms: number;
+  curriculum_ms: number;
+  storyboard_ms: number;
+  visual_render_ms: number;
+  tts_ms: number;
+  composition_ms: number;
+  qa_ms: number;
+  repair_ms: number;
+}
+
 interface VideoMetrics {
   total_duration_sec: number;
   ai_video_seconds: number;
@@ -61,6 +93,9 @@ interface VideoMetrics {
   cost_per_minute_usd: number;
   ai_generation_ratio: number;
   render_time_sec: number;
+  quality_score?: QualityScoreData;
+  repair_log?: RepairLogData;
+  telemetry?: TelemetryData;
 }
 
 interface StoryboardData {
@@ -581,7 +616,7 @@ const VideoGeneratorPage: React.FC = () => {
   const currentScene = storyboard?.scenes[activeSceneIndex];
 
   return (
-    <AppLayout>
+    <AppLayout title="TeachGenie AI Video Teacher">
       <SEO
         title="TeachGenie AI Video Teacher | Interactive Pedagogical Learning"
         description="Create dynamic concept videos with animated visualizers and ask context-aware doubts directly while watching."

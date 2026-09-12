@@ -3,6 +3,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import GenieAvatar from './GenieAvatar';
 
 interface GreetingHeaderProps {
+  /** Optional custom title override */
+  title?: string;
   /** Override the default subtitle text */
   subtitle?: string;
   /** Override the default mascot image (default: /logo.png, the Scholar Genie) */
@@ -22,6 +24,7 @@ interface GreetingHeaderProps {
  * a screenful. Renders an h2 because AppLayout's topbar owns the page h1.
  */
 const GreetingHeader: React.FC<GreetingHeaderProps> = ({
+  title,
   subtitle = 'What would you like to work on today?',
   avatarImageSrc,
   avatarGlowVariant,
@@ -50,7 +53,7 @@ const GreetingHeader: React.FC<GreetingHeaderProps> = ({
       />
       <div className="min-w-0">
         <h2 className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-          {getGreeting()}, {firstName}.
+          {title || `${getGreeting()}, ${firstName}.`}
         </h2>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">{subtitle}</p>
       </div>
