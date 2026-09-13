@@ -5,6 +5,7 @@ Deterministic, concept-dense query synthesis for search providers.
 Avoids noisy sentence queries and enforces staged broadening.
 """
 
+import re
 from typing import List, Dict
 from .schemas import ResourceIntentProfile, StageIntent
 
@@ -69,13 +70,33 @@ class ResourceQueryPlanner:
         """
         Builds academic search queries for Semantic Scholar and arXiv.
         Focuses on foundational terms, formal concepts, and theory.
+        Guarantees that queries are never built from generic stage-title tokens (e.g. 'objects classes').
         """
         topic = profile.canonical_topic
         concepts = profile.concept_names
-        
-        q1 = f"{topic} {' '.join(concepts[:3])}".strip()
-        if len(concepts) >= 4:
-            q2 = f"{topic} {' '.join(concepts[2:5])}".strip()
+
+        # Domain and language anchoring
+        domain_anchor = ""
+        if profile.domain == "computer_science" or profile.is_programming_topic:
+            lang = profile.programming_language or "Computer Science"
+            if lang.lower() not in topic.lower():
+                domain_anchor = f"{lang} "
+
+        meaningful_concepts = [
+            c for c in concepts
+            if c.lower() not in ["object", "objects", "class", "classes", "stage", "overview"]
+        ]
+        if not meaningful_concepts:
+            meaningful_concepts = concepts
+
+        q1 = f"{domain_anchor}{topic} {' '.join(meaningful_concepts[:3])}".strip()
+        # Guard: Never search academic providers with generic token soup like "objects classes"
+        tokens = set(re.findall(r"\w+", q1.lower()))
+        if tokens.issubset({"object", "objects", "class", "classes", "stage", "overview"}):
+            q1 = "Python object-oriented programming objects and classes"
+
+        if len(meaningful_concepts) >= 4:
+            q2 = f"{domain_anchor}{topic} {' '.join(meaningful_concepts[2:5])}".strip()
             return [q1, q2]
         return [q1]
 

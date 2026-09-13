@@ -170,20 +170,30 @@ class ResourceNeedDetector:
 
         # 3. Coding Resources Visibility Policy (Sections 14 & 33)
         if domain in [CanonicalDomain.COMPUTER_SCIENCE, CanonicalDomain.SOFTWARE_ENGINEERING]:
+            stage_desc = f"{stage.title} {stage.description}".lower()
+            objective_texts = [getattr(o, "description", str(o)).lower() for o in stage.objectives]
+            has_coding_objective = any(
+                any(k in ot for k in ["code", "implement", "practice", "debug", "apply", "design", "interview", "project", "program", "class", "object", "function", "syntax", "method", "variable", "oop"])
+                for ot in objective_texts
+            ) or any(k in stage_desc for k in ["class", "object", "function", "variable", "code", "syntax", "method", "oop", "program", "algorithm", "data structure"])
+
             if stage.archetype in [StageArchetype.CODING, StageArchetype.GUIDED_PRACTICE, StageArchetype.INDEPENDENT_PRACTICE] or \
-               intent in [TeachingIntent.IMPLEMENT, TeachingIntent.PRACTICE, TeachingIntent.INTERVIEW_PREP, TeachingIntent.PROJECT]:
+               intent in [TeachingIntent.IMPLEMENT, TeachingIntent.PRACTICE, TeachingIntent.INTERVIEW_PREP, TeachingIntent.PROJECT] or \
+               has_coding_objective:
                 needs.add("coding")
 
         # 4. Official Documentation Visibility Policy (Section 14)
-        if domain in [CanonicalDomain.SOFTWARE_ENGINEERING, CanonicalDomain.ECE]:
+        if domain in [CanonicalDomain.COMPUTER_SCIENCE, CanonicalDomain.SOFTWARE_ENGINEERING, CanonicalDomain.ECE]:
             needs.add("docs")
 
         # 5. Research Papers Visibility Policy (Sections 15 & 33)
-        # Strictly NEVER show papers to primary or secondary school students
+        # Strictly NEVER show research papers by default for basic programming concepts.
+        # A B.Tech label alone is NOT sufficient.
+        is_pg_phd = any(k in level_lower for k in ["phd", "doctorate", "m.tech", "postgraduate", "pg", "graduate research"])
         if not is_school:
             if mode == ProductMode.RESEARCH_ADVANCED or intent == TeachingIntent.RESEARCH:
                 needs.add("research")
-            elif is_advanced_higher_ed and stage.archetype in [StageArchetype.RESEARCH_REVIEW, StageArchetype.CASE_STUDY, StageArchetype.EXTENSION]:
+            elif is_pg_phd and stage.archetype in [StageArchetype.RESEARCH_REVIEW, StageArchetype.CASE_STUDY, StageArchetype.EXTENSION]:
                 needs.add("research")
 
         # 6. Core Textbook / OER References are universally useful

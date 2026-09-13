@@ -1,0 +1,338 @@
+[
+  {
+    "topic": "object and class in python",
+    "stage_title": "Objects & Classes Overview",
+    "domain": "computer_science",
+    "specialization": "python_programming",
+    "visible_categories": [
+      "documentation",
+      "practice_coding",
+      "guides_tutorials",
+      "academic_references"
+    ],
+    "coding_cards_count": 2,
+    "coding_diagnostics": {
+      "official_docs": {
+        "state": "SUCCESS",
+        "query": "object and class in python official documentation",
+        "http_status": 200,
+        "latency_ms": 0.023365020751953125,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "geeksforgeeks": {
+        "state": "SUCCESS",
+        "query": "GeeksforGeeks object and class in python",
+        "http_status": 200,
+        "latency_ms": 0.01430511474609375,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "leetcode": {
+        "state": "DISABLED_BY_POLICY",
+        "query": "object and class in python",
+        "http_status": null,
+        "latency_ms": 0.0002384185791015625,
+        "raw_count": 0,
+        "post_filter_count": 0,
+        "final_count": 0,
+        "failure_reason": "Stage teaches conceptual OOP; LeetCode algorithmic progression disabled by policy."
+      }
+    },
+    "materials_count": {
+      "academic_references": 1,
+      "research_papers": 0,
+      "documentation": 3,
+      "practice_coding": 3,
+      "guides_tutorials": 3
+    },
+    "research_papers_displayed": false,
+    "sample_cards": [
+      {
+        "title": "Python Official Documentation: Classes and Objects",
+        "url": "https://docs.python.org/3/tutorial/classes.html",
+        "source": "Python Software Foundation",
+        "why_recommended": "Primary authoritative language specification and official tutorial."
+      },
+      {
+        "title": "GeeksforGeeks: Python Classes and Objects",
+        "url": "https://www.geeksforgeeks.org/python-classes-and-objects/",
+        "source": "GeeksforGeeks Verified Reference",
+        "why_recommended": "Canonical implementation reference with code snippets and time/space complexity analysis."
+      }
+    ]
+  },
+  {
+    "topic": "Dynamic Programming",
+    "stage_title": "0/1 Knapsack Problem",
+    "domain": "computer_science",
+    "specialization": "algorithms_data_structures",
+    "visible_categories": [
+      "practice_coding",
+      "guides_tutorials"
+    ],
+    "coding_cards_count": 4,
+    "coding_diagnostics": {
+      "official_docs": {
+        "state": "NO_RELEVANT_RESULTS",
+        "query": "Dynamic Programming",
+        "http_status": null,
+        "latency_ms": 0.0,
+        "raw_count": 0,
+        "post_filter_count": 0,
+        "final_count": 0,
+        "failure_reason": "No registered official docs provider for this domain."
+      },
+      "geeksforgeeks": {
+        "state": "SUCCESS",
+        "query": "GeeksforGeeks Dynamic Programming",
+        "http_status": 200,
+        "latency_ms": 0.08082389831542969,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "leetcode": {
+        "state": "SUCCESS",
+        "query": "LeetCode Dynamic Programming",
+        "http_status": 200,
+        "latency_ms": 0.20623207092285156,
+        "raw_count": 3,
+        "post_filter_count": 3,
+        "final_count": 3,
+        "failure_reason": null
+      }
+    },
+    "materials_count": {
+      "academic_references": 0,
+      "research_papers": 0,
+      "documentation": 0,
+      "practice_coding": 3,
+      "guides_tutorials": 3
+    },
+    "research_papers_displayed": false,
+    "sample_cards": [
+      {
+        "title": "GeeksforGeeks: Dynamic Programming Overview & Practice",
+        "url": "https://www.geeksforgeeks.org/dynamic-programming/",
+        "source": "GeeksforGeeks Verified Reference",
+        "why_recommended": "Canonical implementation reference with code snippets and time/space complexity analysis."
+      },
+      {
+        "title": "LeetCode Easy: Climbing Stairs",
+        "url": "https://leetcode.com/problems/climbing-stairs/",
+        "source": "LeetCode Curated Pattern",
+        "why_recommended": "Curated Easy problem verifying algorithmic pattern mastery for Dynamic Programming."
+      },
+      {
+        "title": "LeetCode Medium: Coin Change",
+        "url": "https://leetcode.com/problems/coin-change/",
+        "source": "LeetCode Curated Pattern",
+        "why_recommended": "Curated Medium problem verifying algorithmic pattern mastery for Dynamic Programming."
+      }
+    ]
+  },
+  {
+    "topic": "Binary Search Tree",
+    "stage_title": "BST Insertion and Deletion",
+    "domain": "computer_science",
+    "specialization": "algorithms_data_structures",
+    "visible_categories": [
+      "documentation",
+      "practice_coding",
+      "guides_tutorials",
+      "academic_references"
+    ],
+    "coding_cards_count": 4,
+    "coding_diagnostics": {
+      "official_docs": {
+        "state": "NO_RELEVANT_RESULTS",
+        "query": "Binary Search Tree",
+        "http_status": null,
+        "latency_ms": 0.0,
+        "raw_count": 0,
+        "post_filter_count": 0,
+        "final_count": 0,
+        "failure_reason": "No registered official docs provider for this domain."
+      },
+      "geeksforgeeks": {
+        "state": "SUCCESS",
+        "query": "GeeksforGeeks Binary Search Tree",
+        "http_status": 200,
+        "latency_ms": 0.08392333984375,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "leetcode": {
+        "state": "SUCCESS",
+        "query": "LeetCode Binary Search Tree",
+        "http_status": 200,
+        "latency_ms": 0.19311904907226562,
+        "raw_count": 3,
+        "post_filter_count": 3,
+        "final_count": 3,
+        "failure_reason": null
+      }
+    },
+    "materials_count": {
+      "academic_references": 3,
+      "research_papers": 0,
+      "documentation": 1,
+      "practice_coding": 3,
+      "guides_tutorials": 3
+    },
+    "research_papers_displayed": false,
+    "sample_cards": [
+      {
+        "title": "GeeksforGeeks: Binary Search Tree Data Structure",
+        "url": "https://www.geeksforgeeks.org/binary-search-tree-data-structure/",
+        "source": "GeeksforGeeks Verified Reference",
+        "why_recommended": "Canonical implementation reference with code snippets and time/space complexity analysis."
+      },
+      {
+        "title": "LeetCode Easy: Search in a Binary Search Tree",
+        "url": "https://leetcode.com/problems/search-in-a-binary-search-tree/",
+        "source": "LeetCode Curated Pattern",
+        "why_recommended": "Curated Easy problem verifying algorithmic pattern mastery for Binary Search Tree."
+      },
+      {
+        "title": "LeetCode Medium: Insert into a Binary Search Tree",
+        "url": "https://leetcode.com/problems/insert-into-a-binary-search-tree/",
+        "source": "LeetCode Curated Pattern",
+        "why_recommended": "Curated Medium problem verifying algorithmic pattern mastery for Binary Search Tree."
+      }
+    ]
+  },
+  {
+    "topic": "React Server Components",
+    "stage_title": "Server vs Client Components Architecture",
+    "domain": "software_engineering",
+    "specialization": "web_development",
+    "visible_categories": [
+      "documentation",
+      "practice_coding",
+      "guides_tutorials"
+    ],
+    "coding_cards_count": 2,
+    "coding_diagnostics": {
+      "official_docs": {
+        "state": "SUCCESS",
+        "query": "React Server Components official documentation",
+        "http_status": 200,
+        "latency_ms": 0.06031990051269531,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "geeksforgeeks": {
+        "state": "SUCCESS",
+        "query": "GeeksforGeeks React Server Components",
+        "http_status": 200,
+        "latency_ms": 0.07796287536621094,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "leetcode": {
+        "state": "DISABLED_BY_POLICY",
+        "query": "React Server Components",
+        "http_status": null,
+        "latency_ms": 0.0002384185791015625,
+        "raw_count": 0,
+        "post_filter_count": 0,
+        "final_count": 0,
+        "failure_reason": "Stage teaches conceptual OOP; LeetCode algorithmic progression disabled by policy."
+      }
+    },
+    "materials_count": {
+      "academic_references": 0,
+      "research_papers": 0,
+      "documentation": 2,
+      "practice_coding": 3,
+      "guides_tutorials": 3
+    },
+    "research_papers_displayed": false,
+    "sample_cards": [
+      {
+        "title": "React Official Documentation: Server Components",
+        "url": "https://react.dev/reference/rsc/server-components",
+        "source": "React Team / Meta",
+        "why_recommended": "Primary authoritative standard documentation for React Server Components."
+      },
+      {
+        "title": "GeeksforGeeks: React Server Components Architecture",
+        "url": "https://www.geeksforgeeks.org/reactjs-server-components/",
+        "source": "GeeksforGeeks Verified Reference",
+        "why_recommended": "Canonical implementation reference with code snippets and time/space complexity analysis."
+      }
+    ]
+  },
+  {
+    "topic": "Massive MIMO",
+    "stage_title": "Beamforming and Spatial Multiplexing",
+    "domain": "electrical_engineering",
+    "specialization": "wireless_communications",
+    "visible_categories": [
+      "documentation",
+      "guides_tutorials"
+    ],
+    "coding_cards_count": 1,
+    "coding_diagnostics": {
+      "official_docs": {
+        "state": "NO_RELEVANT_RESULTS",
+        "query": "Massive MIMO",
+        "http_status": null,
+        "latency_ms": 0.0,
+        "raw_count": 0,
+        "post_filter_count": 0,
+        "final_count": 0,
+        "failure_reason": "No registered official docs provider for this domain."
+      },
+      "geeksforgeeks": {
+        "state": "SUCCESS",
+        "query": "GeeksforGeeks Massive MIMO",
+        "http_status": 200,
+        "latency_ms": 0.017642974853515625,
+        "raw_count": 1,
+        "post_filter_count": 1,
+        "final_count": 1,
+        "failure_reason": null
+      },
+      "leetcode": {
+        "state": "DISABLED_BY_POLICY",
+        "query": "Massive MIMO",
+        "http_status": null,
+        "latency_ms": 0.0002384185791015625,
+        "raw_count": 0,
+        "post_filter_count": 0,
+        "final_count": 0,
+        "failure_reason": "Stage teaches conceptual OOP; LeetCode algorithmic progression disabled by policy."
+      }
+    },
+    "materials_count": {
+      "academic_references": 0,
+      "research_papers": 0,
+      "documentation": 1,
+      "practice_coding": 0,
+      "guides_tutorials": 1
+    },
+    "research_papers_displayed": false,
+    "sample_cards": [
+      {
+        "title": "GeeksforGeeks: Massive MIMO Implementation & Complexity Guide",
+        "url": "https://www.geeksforgeeks.org/massive-mimo/",
+        "source": "GeeksforGeeks Verified Reference",
+        "why_recommended": "Canonical implementation reference with code snippets and time/space complexity analysis."
+      }
+    ]
+  }
+]

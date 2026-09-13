@@ -205,4 +205,12 @@ class StageActionRecommender:
                 ),
             ]
 
+        if profile.is_programming_topic or profile.domain == "computer_science":
+            recs.append(StageActionRecommendation(
+                key="coding_resources",
+                priority=StageActionPriority.RECOMMENDED if intent in (StageIntent.CONCEPT_LEARNING, StageIntent.INTRODUCTION, StageIntent.PRACTICE) else StageActionPriority.AVAILABLE,
+                badge_label="Recommended" if intent in (StageIntent.CONCEPT_LEARNING, StageIntent.INTRODUCTION, StageIntent.PRACTICE) else None,
+                reason="Official documentation, GeeksforGeeks conceptual guides, and calibrated practice."
+            ))
+
         return recs

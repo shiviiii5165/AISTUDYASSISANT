@@ -11,6 +11,7 @@ import re
 import math
 from typing import List, Tuple
 from .schemas import ResourceCandidate, ResourceIntentProfile, StageIntent
+from .verification import ResourceVerificationEngine
 
 import logging
 
@@ -43,12 +44,27 @@ class ResourceRanker:
         survivors: List[ResourceCandidate] = []
 
         # ============================================================
-        # PHASE 1: HARD REJECTION (Negative Filter + Minimum Concept Overlap)
+        # PHASE 1: HARD REJECTION (Negative Filter + Domain + Concept Overlap)
         # ============================================================
         for c in candidates:
             text_corpus = f"{c.title} {c.description} {c.author_or_channel}".lower()
 
-            # 1. Reject if matching negative terms (unless explicitly part of stage objectives)
+            # 1. Hard Domain & Concept Gating
+            if profile.context:
+                if not ResourceVerificationEngine.is_domain_compatible(c, profile.context):
+                    logger.info(
+                        f"[RankingDiagnostic] REJECTED | title='{c.title[:45]}' | "
+                        f"negative_filter_result='REJECTED: domain incompatible'"
+                    )
+                    continue
+                if not ResourceVerificationEngine.is_concept_compatible(c, profile.context):
+                    logger.info(
+                        f"[RankingDiagnostic] REJECTED | title='{c.title[:45]}' | "
+                        f"negative_filter_result='REJECTED: concept incompatible'"
+                    )
+                    continue
+
+            # 2. Reject if matching negative terms (unless explicitly part of stage objectives)
             is_negative = False
             matched_neg = None
             for neg in profile.negative_terms:
@@ -67,7 +83,7 @@ class ResourceRanker:
                 )
                 continue
 
-            # 2. Check concept overlap (Must contain canonical topic or at least 1 core concept)
+            # 3. Check concept overlap (Must contain canonical topic or at least 1 core concept)
             topic_words = [w for w in re.split(r"[\s\-—:]+", profile.canonical_topic.lower()) if len(w) > 3]
             has_topic_match = any(tw in text_corpus for tw in topic_words)
             has_concept_match = any(c_name.lower() in text_corpus for c_name in profile.concept_names)
@@ -99,6 +115,10 @@ class ResourceRanker:
             # 2. Objective Coverage (20%)
             matched_objs = [obj for obj in profile.learning_objectives if any(w in text_corpus for w in obj.lower().split() if len(w) > 4)]
             objective_score = min(1.0, len(matched_objs) / max(1, len(profile.learning_objectives)))
+
+            # If no concept match and no topic match, discard
+            if concept_score < 0.2 and objective_score == 0.0:
+                continue
 
             # 3. Stage Intent Match (15%)
             intent_score = 0.70  # baseline

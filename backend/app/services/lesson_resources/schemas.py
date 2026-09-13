@@ -47,6 +47,40 @@ class StageActionPriority(str, Enum):
     AVAILABLE = "AVAILABLE"      # standard action without distracting badge
 
 
+class ProviderDiagnosticState(str, Enum):
+    SUCCESS = "SUCCESS"
+    NO_RELEVANT_RESULTS = "NO_RELEVANT_RESULTS"
+    PROVIDER_TIMEOUT = "PROVIDER_TIMEOUT"
+    HTTP_BLOCKED = "HTTP_BLOCKED"
+    RATE_LIMITED = "RATE_LIMITED"
+    PARSER_FAILURE = "PARSER_FAILURE"
+    INVALID_RESULT = "INVALID_RESULT"
+    DISABLED_BY_POLICY = "DISABLED_BY_POLICY"
+
+
+class ResourceQueryContext(BaseModel):
+    """
+    Full canonical educational context for resource retrieval.
+    Guarantees that queries are never built from isolated stage-title tokens.
+    """
+    roadmap_id: str
+    plan_version: str = "1.0"
+    stage_id: str
+    original_topic: str
+    normalized_topic: str
+    domain: str
+    specialization: Optional[str] = None
+    learner_level: str = "B.Tech"
+    primary_intent: str = "CONCEPT_LEARNING"
+    instructional_mode: str = "DIRECT_INSTRUCTION"
+    stage_type: str = "concept_intro"
+    learning_objectives: List[str] = Field(default_factory=list)
+    canonical_concept_ids: List[str] = Field(default_factory=list)
+    prerequisites: List[str] = Field(default_factory=list)
+    resource_role: str = "conceptual_reference"
+    negative_terms: List[str] = Field(default_factory=list)
+
+
 class ResourceIntentProfile(BaseModel):
     """
     Rich pedagogical intent extracted from the roadmap, stage, and learner profile.
@@ -56,18 +90,21 @@ class ResourceIntentProfile(BaseModel):
     roadmap_id: str
     stage_id: str
     domain: str = "general"
+    specialization: Optional[str] = None
     subject: str = ""
     canonical_topic: str
     stage_title: str
     concept_ids: List[str] = Field(default_factory=list)
     concept_names: List[str] = Field(default_factory=list)
     concept_synonyms: List[str] = Field(default_factory=list)
+    canonical_concept_ids: List[str] = Field(default_factory=list)
     learning_objectives: List[str] = Field(default_factory=list)
     prerequisites: List[str] = Field(default_factory=list)
     misconceptions: List[str] = Field(default_factory=list)
     learner_weaknesses: List[str] = Field(default_factory=list)
     mastery_state: str = "in_progress"
     learner_level: str = "B.Tech"
+    instructional_mode: str = "DIRECT_INSTRUCTION"
     preferred_language: str = "english"
     stage_intent: StageIntent = StageIntent.CONCEPT_LEARNING
     is_programming_topic: bool = False
@@ -76,6 +113,7 @@ class ResourceIntentProfile(BaseModel):
     query_terms: List[str] = Field(default_factory=list)
     negative_terms: List[str] = Field(default_factory=list)
     recommended_resource_types: List[ResourceType] = Field(default_factory=list)
+    context: Optional[ResourceQueryContext] = None
 
 
 class ResourceCandidate(BaseModel):
@@ -209,7 +247,33 @@ class LearningMaterialsResponseOutput(BaseModel):
 
 
 class StageActionRecommendation(BaseModel):
-    key: str  # ppt, teach_me, quiz, youtube_recommendations, extra_learning_materials
+    key: str  # ppt, teach_me, quiz, youtube_recommendations, extra_learning_materials, coding_resources
     priority: StageActionPriority
     badge_label: Optional[str] = None  # "Top Pick", "Recommended", None
     reason: str
+
+
+class CodingResourceItemOutput(BaseModel):
+    id: str
+    title: str
+    source: str  # "Python Official Documentation", "GeeksforGeeks", "LeetCode", etc.
+    type: str    # "official_docs", "coding_reference", "coding_problem", "practice"
+    url: str
+    description: str
+    why_recommended: str
+    difficulty: Optional[str] = None
+    fit_label: str = "Strong fit"
+    diagnostic_state: ProviderDiagnosticState = ProviderDiagnosticState.SUCCESS
+    exact_section: Optional[str] = None
+    time_required_minutes: Optional[int] = None
+
+
+class CodingResourcesResponseOutput(BaseModel):
+    enabled: bool = True
+    status: str = "active"
+    canonical_topic: str
+    domain: str = "computer_science"
+    specialization: Optional[str] = None
+    items: List[CodingResourceItemOutput] = Field(default_factory=list)
+    provider_diagnostics: Dict[str, Any] = Field(default_factory=dict)
+    diagnostic_info: Optional[Dict[str, Any]] = None

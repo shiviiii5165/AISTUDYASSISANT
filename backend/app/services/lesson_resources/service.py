@@ -20,7 +20,12 @@ from .schemas import (
     LearningMaterialsResponseOutput,
     LearningMaterialsCategoriesOutput,
     MaterialItemOutput,
-    StageActionRecommendation
+    StageActionRecommendation,
+    CodingResourceItemOutput,
+    CodingResourcesResponseOutput,
+    ProviderDiagnosticState,
+    StageIntent,
+    VerificationLevel
 )
 from .intent_profile import IntentProfileBuilder
 from .query_planner import ResourceQueryPlanner
@@ -29,7 +34,7 @@ from .resource_ranker import ResourceRanker
 from .action_recommender import StageActionRecommender
 from .cache import DurableResourceCache
 
-# Import providers
+# Import providers and vnext coding engine
 from .providers.youtube_provider import YouTubeProvider
 from .providers.semantic_scholar_provider import SemanticScholarProvider
 from .providers.crossref_provider import CrossrefProvider
@@ -37,6 +42,7 @@ from .providers.arxiv_provider import ArxivProvider
 from .providers.tavily_provider import TavilyProvider
 from .providers.wikipedia_provider import WikipediaProvider
 from .providers.trusted_domains import OFFICIAL_DOCS_DOMAINS, CODING_PRACTICE_DOMAINS, TUTORIAL_GUIDE_DOMAINS
+from app.services.lesson_planner.schemas import RoadmapStage
 
 logger = logging.getLogger("teachgenie.lesson_resources.service")
 
@@ -105,8 +111,8 @@ class StageResourceIntelligenceService:
 
         raw_candidates = await YouTubeProvider.fetch_candidates(queries, min_candidates=4, target_results=12)
 
-        # 4. URL & metadata verification
-        verified_candidates = ResourceVerificationEngine.filter_and_verify(raw_candidates)
+        # 4. URL & metadata verification with hard domain gating
+        verified_candidates = ResourceVerificationEngine.filter_and_verify(raw_candidates, context=profile.context)
 
         # 5. Two-phase pedagogical ranking with negative term rejection
         ranked = ResourceRanker.rank_candidates(
@@ -206,6 +212,16 @@ class StageResourceIntelligenceService:
             logger.info(f"[ResourceService] Returning cached Learning Materials for {profile.canonical_topic}")
             return LearningMaterialsResponseOutput(**cached_data)
 
+        # Check research visibility policy:
+        # A B.Tech label alone is NOT sufficient to trigger research papers for basic programming concepts.
+        is_pg_phd = any(k in (profile.learner_level or "").lower() for k in ["phd", "doctorate", "m.tech", "postgraduate", "pg", "graduate research"])
+        stage_requires_research = any("research" in obj.lower() for obj in profile.learning_objectives)
+        allow_research = (
+            profile.stage_intent in [StageIntent.ADVANCED_RESEARCH]
+            or is_pg_phd
+            or stage_requires_research
+        )
+
         # 3. Plan provider queries
         wiki_queries = ResourceQueryPlanner.plan_wikipedia_queries(profile)
         paper_queries = ResourceQueryPlanner.plan_paper_queries(profile)
@@ -215,8 +231,6 @@ class StageResourceIntelligenceService:
         # 4. Concurrently fetch candidates from specialized providers
         tasks = [
             WikipediaProvider.fetch_references(wiki_queries, max_results=3),
-            SemanticScholarProvider.fetch_papers(paper_queries, limit_per_query=4),
-            ArxivProvider.fetch_preprints(paper_queries, max_results=3),
             TavilyProvider.fetch_domain_resources(
                 query=docs_queries[0],
                 include_domains=list(OFFICIAL_DOCS_DOMAINS.keys()),
@@ -230,6 +244,11 @@ class StageResourceIntelligenceService:
                 max_results=3
             )
         ]
+
+        # ONLY query academic providers if research policy allows it
+        if allow_research:
+            tasks.append(SemanticScholarProvider.fetch_papers(paper_queries, limit_per_query=4))
+            tasks.append(ArxivProvider.fetch_preprints(paper_queries, max_results=3))
 
         # Fetch coding problems ONLY if topic is programming
         if profile.is_programming_topic and practice_queries:
@@ -245,19 +264,62 @@ class StageResourceIntelligenceService:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         wiki_candidates = results[0] if isinstance(results[0], list) else []
-        s2_candidates = results[1] if isinstance(results[1], list) else []
-        arxiv_candidates = results[2] if isinstance(results[2], list) else []
-        docs_candidates = results[3] if isinstance(results[3], list) else []
-        guide_candidates = results[4] if isinstance(results[4], list) else []
-        coding_candidates = results[5] if len(results) > 5 and isinstance(results[5], list) else []
+        docs_candidates = results[1] if isinstance(results[1], list) else []
+        guide_candidates = results[2] if isinstance(results[2], list) else []
+
+        idx = 3
+        s2_candidates = []
+        arxiv_candidates = []
+        if allow_research:
+            s2_candidates = results[idx] if len(results) > idx and isinstance(results[idx], list) else []
+            idx += 1
+            arxiv_candidates = results[idx] if len(results) > idx and isinstance(results[idx], list) else []
+            idx += 1
+
+        coding_candidates = results[idx] if len(results) > idx and isinstance(results[idx], list) else []
+
+        # 4b. Inject authoritative CodingResourceEngine candidates (Official Docs, GFG, LeetCode if algo)
+        coding_engine_candidates: List[ResourceCandidate] = []
+        if profile.is_programming_topic or profile.domain == "computer_science":
+            from app.services.lesson_planner.vnext.resources.coding_engine import CodingResourceEngine
+            stage_concept_id = getattr(stage, "concept_id", "") or (stage.get("concept_id") if isinstance(stage, dict) else "") or "c_default"
+            stage_obj = stage if isinstance(stage, RoadmapStage) else RoadmapStage(
+                id=stage_id,
+                concept_id=stage_concept_id,
+                title=stage_title,
+                description=stage_desc,
+                duration_minutes=15
+            )
+            cards = CodingResourceEngine.get_coding_resources(profile.canonical_topic, stage_obj)
+            for card in cards:
+                if card.type == "official_docs":
+                    c_type = ResourceType.OFFICIAL_DOCUMENTATION
+                elif card.type == "coding_problem":
+                    c_type = ResourceType.CODING_PROBLEM
+                else:
+                    c_type = ResourceType.GUIDE
+
+                coding_engine_candidates.append(ResourceCandidate(
+                    id=card.id,
+                    provider="coding_engine",
+                    resource_type=c_type,
+                    title=card.title,
+                    canonical_url=card.url,
+                    description=card.what_it_covers,
+                    source_name=card.source_authority,
+                    author_or_channel=card.source_authority,
+                    verified=True,
+                    verification_levels=[VerificationLevel.PROVIDER_VERIFIED, VerificationLevel.DOMAIN_VERIFIED],
+                    why_recommended=card.why_recommended
+                ))
 
         all_candidates = (
-            wiki_candidates + s2_candidates + arxiv_candidates +
-            docs_candidates + guide_candidates + coding_candidates
+            coding_engine_candidates + wiki_candidates + docs_candidates +
+            guide_candidates + coding_candidates + s2_candidates + arxiv_candidates
         )
 
-        # 5. Verify URLs and integrity
-        verified = ResourceVerificationEngine.filter_and_verify(all_candidates)
+        # 5. Verify URLs and integrity with hard domain and concept gating
+        verified = ResourceVerificationEngine.filter_and_verify(all_candidates, context=profile.context)
 
         # 6. Rank candidates
         ranked = ResourceRanker.rank_candidates(verified, profile, min_relevance_threshold=0.45, max_results=18)
@@ -296,7 +358,7 @@ class StageResourceIntelligenceService:
         for r in ranked:
             if r.resource_type == ResourceType.ACADEMIC_REFERENCE:
                 academic_refs.append(to_output(r, "academic_references"))
-            elif r.resource_type == ResourceType.RESEARCH_PAPER:
+            elif r.resource_type == ResourceType.RESEARCH_PAPER and allow_research:
                 research_papers.append(to_output(r, "research_papers"))
             elif r.resource_type in (ResourceType.CODING_PROBLEM, ResourceType.PRACTICE_PROBLEM):
                 if profile.is_programming_topic:
@@ -307,21 +369,22 @@ class StageResourceIntelligenceService:
                 guides_tutorials.append(to_output(r, "guides_tutorials"))
 
         # 8. Dynamic Visible Tabs: only display categories with verified results!
+        # Priority order for CS/programming: documentation, practice_coding, guides, academic
         visible_tabs: List[str] = []
-        if academic_refs:
-            visible_tabs.append("academic_references")
-        if research_papers:
-            visible_tabs.append("research_papers")
-        if practice_coding and profile.is_programming_topic:
-            visible_tabs.append("practice_coding")
         if documentation:
             visible_tabs.append("documentation")
+        if practice_coding and profile.is_programming_topic:
+            visible_tabs.append("practice_coding")
         if guides_tutorials:
             visible_tabs.append("guides_tutorials")
+        if academic_refs:
+            visible_tabs.append("academic_references")
+        if allow_research and research_papers:
+            visible_tabs.append("research_papers")
 
         categories = LearningMaterialsCategoriesOutput(
             academic_references=academic_refs[:3],
-            research_papers=research_papers[:3],
+            research_papers=research_papers[:3] if allow_research else [],
             practice_coding=practice_coding[:3],
             documentation=documentation[:3],
             guides_tutorials=guides_tutorials[:3],
@@ -331,6 +394,7 @@ class StageResourceIntelligenceService:
         diagnostic = {
             "canonical_topic": profile.canonical_topic,
             "is_programming": profile.is_programming_topic,
+            "allow_research": allow_research,
             "visible_tabs": visible_tabs,
             "raw_count": len(all_candidates),
             "ranked_count": len(ranked),
@@ -350,6 +414,103 @@ class StageResourceIntelligenceService:
         # Cache response
         if visible_tabs:
             DurableResourceCache.set(profile, "learning_materials", response.dict())
+
+        return response
+
+    @classmethod
+    async def get_coding_resources(
+        cls,
+        topic: str,
+        stage: Any = None,
+        learner_level: str = "B.Tech",
+        refresh: bool = False
+    ) -> CodingResourcesResponseOutput:
+        """
+        Dedicated endpoint returning authoritative Official Documentation,
+        GeeksforGeeks conceptual reference, and LeetCode problem progression.
+        """
+        stage_title = _extract_stage_field(stage, "title", topic)
+        stage_id = _extract_stage_field(stage, "id", "default_stage")
+        stage_desc = _extract_stage_field(stage, "description", "")
+        archetype = _extract_stage_field(stage, "archetype", None)
+        is_remedial = _extract_stage_field(stage, "is_remedial", False)
+        objectives = _extract_stage_field(stage, "learning_objectives", [])
+        weaknesses = _extract_stage_field(stage, "weaknesses", [])
+
+        profile = IntentProfileBuilder.build(
+            roadmap_id="live_roadmap",
+            stage_id=stage_id,
+            topic=topic,
+            stage_title=stage_title,
+            stage_description=stage_desc,
+            archetype=archetype,
+            learner_level=learner_level,
+            is_remedial=is_remedial,
+            objectives=objectives,
+            weaknesses=weaknesses
+        )
+
+        cached_data = DurableResourceCache.get(profile, "coding_resources", bypass=refresh)
+        if cached_data:
+            logger.info(f"[ResourceService] Returning cached Coding Resources for {profile.canonical_topic}")
+            return CodingResourcesResponseOutput(**cached_data)
+
+        stage_concept_id = getattr(stage, "concept_id", "") or (stage.get("concept_id") if isinstance(stage, dict) else "") or "c_default"
+        stage_obj = stage if isinstance(stage, RoadmapStage) else RoadmapStage(
+            id=stage_id,
+            concept_id=stage_concept_id,
+            title=stage_title,
+            description=stage_desc,
+            duration_minutes=15
+        )
+
+        from app.services.lesson_planner.vnext.resources.coding_engine import CodingResourceEngine
+        cards, diagnostics = CodingResourceEngine.get_coding_resources_with_diagnostics(
+            topic=profile.canonical_topic,
+            stage=stage_obj
+        )
+
+        items: List[CodingResourceItemOutput] = []
+        for c in cards:
+            state = ProviderDiagnosticState.SUCCESS
+            if c.type == "official_docs":
+                state = diagnostics.get("official_docs", {}).get("state", ProviderDiagnosticState.SUCCESS)
+            elif "geeksforgeeks" in c.url:
+                state = diagnostics.get("geeksforgeeks", {}).get("state", ProviderDiagnosticState.SUCCESS)
+            elif "leetcode" in c.url:
+                state = diagnostics.get("leetcode", {}).get("state", ProviderDiagnosticState.SUCCESS)
+
+            items.append(CodingResourceItemOutput(
+                id=c.id,
+                title=c.title,
+                source=c.source_authority,
+                type=c.type,
+                url=c.url,
+                description=c.what_it_covers,
+                why_recommended=c.why_recommended,
+                fit_label="Strong fit",
+                diagnostic_state=state,
+                exact_section=c.exact_section,
+                time_required_minutes=c.time_required_minutes
+            ))
+
+        response = CodingResourcesResponseOutput(
+            enabled=True,
+            status="active",
+            canonical_topic=profile.canonical_topic,
+            domain=profile.domain,
+            specialization=profile.specialization,
+            items=items,
+            provider_diagnostics=diagnostics,
+            diagnostic_info={
+                "canonical_topic": profile.canonical_topic,
+                "total_items": len(items),
+                "cache_status": "bypass" if refresh else "miss"
+            }
+        )
+
+        if items:
+            DurableResourceCache.set(profile, "coding_resources", response.dict())
 
         return response
 
@@ -382,3 +543,8 @@ class StageResourceIntelligenceService:
         )
 
         return StageActionRecommender.evaluate_actions(profile)
+
+
+# Alias for backward compatibility and testing
+LessonResourceIntelligenceService = StageResourceIntelligenceService
+

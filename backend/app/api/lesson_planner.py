@@ -745,6 +745,34 @@ async def get_stage_learning_materials(
     return res
 
 
+@router.get("/{roadmap_id}/stages/{stage_id}/coding-resources")
+async def get_stage_coding_resources(
+    roadmap_id: str,
+    stage_id: str,
+    refresh: bool = Query(False),
+    current_user = Depends(get_current_user)
+):
+    """
+    Live endpoint returning authoritative Coding Resources (Official Docs,
+    GeeksforGeeks, and LeetCode progression) for a lesson stage.
+    """
+    user_id = str(getattr(current_user, 'id', 'anonymous'))
+    roadmap = _get_roadmap(roadmap_id, user_id)
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+    stage = next((s for s in roadmap.stages if s.id == stage_id), None)
+    if not stage:
+        raise HTTPException(status_code=404, detail="Stage not found")
+
+    res = await StageResourceIntelligenceService.get_coding_resources(
+        topic=roadmap.topic or stage.title,
+        stage=stage,
+        learner_level=roadmap.level,
+        refresh=refresh
+    )
+    return res
+
+
 @router.post("/{roadmap_id}/study-pack")
 async def generate_study_pack(
     roadmap_id: str,

@@ -20,7 +20,7 @@ import { useAuthStore } from '../store/useAuthStore';
 // Types mapping to Backend schemas
 type StageStatus = 'locked' | 'available' | 'in_progress' | 'material_ready' | 'taught' | 'assessment_pending' | 'mastered' | 'needs_review' | 'blocked';
 type StageReadiness = 'ready' | 'prerequisite_required' | 'review_recommended' | 'blocked';
-type ResourceType = 'ppt' | 'video' | 'teach_me' | 'quiz' | 'notes' | 'worksheet' | 'homework' | 'diagram' | 'youtube_recommendations' | 'extra_learning_materials';
+type ResourceType = 'ppt' | 'video' | 'teach_me' | 'quiz' | 'notes' | 'worksheet' | 'homework' | 'diagram' | 'youtube_recommendations' | 'extra_learning_materials' | 'coding';
 type ResourceStatus = 'not_needed' | 'recommended' | 'optional' | 'selected' | 'generating' | 'ready' | 'failed' | 'stale' | 'coming_soon' | 'disabled';
 export type ProductMode = 'teacher_classroom' | 'student_self_study' | 'research_advanced';
 
@@ -176,6 +176,8 @@ interface RoadmapStage {
   assessment_requirement?: string;
   is_locked?: boolean;
   universal_resources?: UniversalResourceCard[];
+  canonical_concept_ids?: string[];
+  domain?: string;
 }
 
 interface LearningRoadmap {
@@ -193,6 +195,8 @@ interface LearningRoadmap {
   next_best_action: string;
   overall_progress: number;
   health_score: number;
+  learner_level?: string;
+  instructional_mode?: string;
   version: number;
   // VNext fields
   mode?: ProductMode;
@@ -250,7 +254,65 @@ interface ExtraMaterialsCategories {
   extra_learning_material?: ExtraLearningMaterialItem[];
 }
 
-/** Active downstream capabilities in Lesson Planner. Exactly 5 learner-facing actions. */
+/** Module-level SPA session cache (persists across modal closes, stage changes, tab switches) */
+const resourceSessionCache = new Map<string, any>();
+const inFlightResourceRequests = new Map<string, Promise<any>>();
+
+export function computeResourceCacheKey(
+  roadmapId: string,
+  planVersion: number | string,
+  stageId: string,
+  conceptIds: string[] | undefined,
+  resourceType: string,
+  learnerLevel: string = '',
+  instructionalMode: string = ''
+): string {
+  const sortedConcepts = conceptIds ? [...conceptIds].sort().join(',') : '';
+  return `${roadmapId}:${planVersion}:${stageId}:${sortedConcepts}:${resourceType}:${learnerLevel}:${instructionalMode}`;
+}
+
+export function invalidateResourceCache(roadmapId?: string, stageId?: string, resourceType?: string) {
+  if (!roadmapId) {
+    resourceSessionCache.clear();
+    return;
+  }
+  for (const key of Array.from(resourceSessionCache.keys())) {
+    const parts = key.split(':');
+    const [kRoadmap, , kStage, , kType] = parts;
+    if (kRoadmap === roadmapId) {
+      if (!stageId || kStage === stageId) {
+        if (!resourceType || kType === resourceType) {
+          resourceSessionCache.delete(key);
+        }
+      }
+    }
+  }
+}
+
+interface CodingResourcesData {
+  stage_id?: string;
+  stage_title?: string;
+  topic?: string;
+  domain?: string;
+  specialization?: string;
+  categories?: {
+    official_docs?: ExtraLearningMaterialItem[];
+    geeksforgeeks?: ExtraLearningMaterialItem[];
+    practice?: ExtraLearningMaterialItem[];
+    [key: string]: ExtraLearningMaterialItem[] | undefined;
+  };
+  diagnostics?: Record<string, {
+    status?: string;
+    query?: string;
+    http_status?: number;
+    latency_ms?: number;
+    candidates_count?: number;
+    failure_reason?: string;
+  }>;
+  visible_tabs?: string[];
+}
+
+/** Active downstream capabilities in Lesson Planner. */
 const RESOURCE_CARDS: {
   type: string;
   key: ResourceType;
@@ -264,6 +326,7 @@ const RESOURCE_CARDS: {
   { type: 'Quiz', key: 'quiz', icon: HelpCircle, label: 'Quiz', desc: 'Diagnostic questions addressing key concepts and misconceptions.', cta: 'Create quiz' },
   { type: 'YouTube', key: 'youtube_recommendations', icon: Video, label: 'YouTube Recommendations', desc: 'Live curated video lectures and worked tutorials for this stage.', cta: 'Explore Videos' },
   { type: 'Materials', key: 'extra_learning_materials', icon: GraduationCap, label: 'Learning Materials', desc: 'Verified academic references, research papers, and documentation.', cta: 'Browse Materials' },
+  { type: 'Coding', key: 'coding', icon: Code, label: 'Coding Resources', desc: 'Authoritative language documentation, conceptual references, and calibrated practice.', cta: 'Explore Coding Resources' },
 ];
 
 const RESOURCE_STATUS_LABELS: Partial<Record<ResourceStatus, string>> = {
@@ -341,10 +404,12 @@ interface LessonHealthReport {
   
 
   // Modal states for live viewers
-  const [activeViewer, setActiveViewer] = useState<'youtube' | 'materials' | null>(null);
+  const [activeViewer, setActiveViewer] = useState<'youtube' | 'materials' | 'coding' | null>(null);
   const [youtubeData, setYoutubeData] = useState<YouTubeVideoItem[] | null>(null);
   const [materialsData, setMaterialsData] = useState<ExtraMaterialsCategories | null>(null);
   const [materialsTab, setMaterialsTab] = useState<string>('academic_references');
+  const [codingData, setCodingData] = useState<CodingResourcesData | null>(null);
+  const [codingTab, setCodingTab] = useState<string>('official_docs');
   const [isViewerLoading, setIsViewerLoading] = useState(false);
 
   const formatArchetype = (archetype?: string) => {
@@ -540,22 +605,63 @@ interface LessonHealthReport {
   const openYouTubeViewer = async (stage: RoadmapStage, refresh: boolean = false) => {
     if (!roadmap) return;
     setActiveViewer('youtube');
-    setIsViewerLoading(true);
     setErrorNotification(null);
-    try {
+
+    const cacheKey = computeResourceCacheKey(
+      roadmap.id,
+      roadmap.version || 1,
+      stage.id,
+      stage.canonical_concept_ids,
+      'youtube',
+      roadmap.learner_level || parsedConfig.level || '',
+      (roadmap as any).instructional_mode || ''
+    );
+
+    if (!refresh && resourceSessionCache.has(cacheKey)) {
+      setYoutubeData(resourceSessionCache.get(cacheKey));
+      setIsViewerLoading(false);
+      return;
+    }
+
+    if (refresh) {
+      resourceSessionCache.delete(cacheKey);
+    }
+
+    if (inFlightResourceRequests.has(cacheKey)) {
+      setIsViewerLoading(true);
+      try {
+        const data = await inFlightResourceRequests.get(cacheKey);
+        setYoutubeData(data.items || []);
+      } catch (e) {
+        console.error(e);
+        setErrorNotification('Could not load YouTube recommendations.');
+      } finally {
+        setIsViewerLoading(false);
+      }
+      return;
+    }
+
+    setIsViewerLoading(true);
+    const fetchPromise = (async () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/youtube-recommendations${refresh ? '?refresh=true' : ''}`, {
         headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setYoutubeData(data.items || []);
-      } else {
-        setErrorNotification('Could not load YouTube recommendations. Please try again.');
-      }
+      if (!res.ok) throw new Error('Failed to load YouTube recommendations');
+      return await res.json();
+    })();
+
+    inFlightResourceRequests.set(cacheKey, fetchPromise);
+
+    try {
+      const data = await fetchPromise;
+      const items = data.items || [];
+      resourceSessionCache.set(cacheKey, items);
+      setYoutubeData(items);
     } catch (e) {
       console.error(e);
-      setErrorNotification('Could not load YouTube recommendations.');
+      setErrorNotification('Could not load YouTube recommendations. Please try again.');
     } finally {
+      inFlightResourceRequests.delete(cacheKey);
       setIsViewerLoading(false);
     }
   };
@@ -563,26 +669,146 @@ interface LessonHealthReport {
   const openMaterialsViewer = async (stage: RoadmapStage, refresh: boolean = false) => {
     if (!roadmap) return;
     setActiveViewer('materials');
-    setIsViewerLoading(true);
     setErrorNotification(null);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/learning-materials${refresh ? '?refresh=true' : ''}`, {
-        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const cats = data.categories || null;
-        setMaterialsData(cats);
+
+    const cacheKey = computeResourceCacheKey(
+      roadmap.id,
+      roadmap.version || 1,
+      stage.id,
+      stage.canonical_concept_ids,
+      'materials',
+      roadmap.learner_level || parsedConfig.level || '',
+      (roadmap as any).instructional_mode || ''
+    );
+
+    if (!refresh && resourceSessionCache.has(cacheKey)) {
+      const cached = resourceSessionCache.get(cacheKey);
+      setMaterialsData(cached.categories || null);
+      if (cached.visible_tabs && cached.visible_tabs.length > 0) {
+        setMaterialsTab(cached.visible_tabs[0]);
+      }
+      setIsViewerLoading(false);
+      return;
+    }
+
+    if (refresh) {
+      resourceSessionCache.delete(cacheKey);
+    }
+
+    if (inFlightResourceRequests.has(cacheKey)) {
+      setIsViewerLoading(true);
+      try {
+        const data = await inFlightResourceRequests.get(cacheKey);
+        setMaterialsData(data.categories || null);
         if (data.visible_tabs && data.visible_tabs.length > 0) {
           setMaterialsTab(data.visible_tabs[0]);
         }
-      } else {
-        setErrorNotification('Could not load learning materials. Please try again.');
+      } catch (e) {
+        console.error(e);
+        setErrorNotification('Could not load learning materials.');
+      } finally {
+        setIsViewerLoading(false);
+      }
+      return;
+    }
+
+    setIsViewerLoading(true);
+    const fetchPromise = (async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/learning-materials${refresh ? '?refresh=true' : ''}`, {
+        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+      });
+      if (!res.ok) throw new Error('Failed to load learning materials');
+      return await res.json();
+    })();
+
+    inFlightResourceRequests.set(cacheKey, fetchPromise);
+
+    try {
+      const data = await fetchPromise;
+      resourceSessionCache.set(cacheKey, data);
+      const cats = data.categories || null;
+      setMaterialsData(cats);
+      if (data.visible_tabs && data.visible_tabs.length > 0) {
+        setMaterialsTab(data.visible_tabs[0]);
       }
     } catch (e) {
       console.error(e);
-      setErrorNotification('Could not load learning materials.');
+      setErrorNotification('Could not load learning materials. Please try again.');
     } finally {
+      inFlightResourceRequests.delete(cacheKey);
+      setIsViewerLoading(false);
+    }
+  };
+
+  const openCodingViewer = async (stage: RoadmapStage, refresh: boolean = false) => {
+    if (!roadmap) return;
+    setActiveViewer('coding');
+    setErrorNotification(null);
+
+    const cacheKey = computeResourceCacheKey(
+      roadmap.id,
+      roadmap.version || 1,
+      stage.id,
+      stage.canonical_concept_ids,
+      'coding',
+      roadmap.learner_level || parsedConfig.level || '',
+      (roadmap as any).instructional_mode || ''
+    );
+
+    if (!refresh && resourceSessionCache.has(cacheKey)) {
+      const cached = resourceSessionCache.get(cacheKey);
+      setCodingData(cached);
+      if (cached.visible_tabs && cached.visible_tabs.length > 0) {
+        setCodingTab(cached.visible_tabs[0]);
+      }
+      setIsViewerLoading(false);
+      return;
+    }
+
+    if (refresh) {
+      resourceSessionCache.delete(cacheKey);
+    }
+
+    if (inFlightResourceRequests.has(cacheKey)) {
+      setIsViewerLoading(true);
+      try {
+        const data = await inFlightResourceRequests.get(cacheKey);
+        setCodingData(data);
+        if (data.visible_tabs && data.visible_tabs.length > 0) {
+          setCodingTab(data.visible_tabs[0]);
+        }
+      } catch (e) {
+        console.error(e);
+        setErrorNotification('Could not load coding resources.');
+      } finally {
+        setIsViewerLoading(false);
+      }
+      return;
+    }
+
+    setIsViewerLoading(true);
+    const fetchPromise = (async () => {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/${roadmap.id}/stages/${stage.id}/coding-resources${refresh ? '?refresh=true' : ''}`, {
+        headers: { 'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}` }
+      });
+      if (!res.ok) throw new Error('Failed to load coding resources');
+      return await res.json();
+    })();
+
+    inFlightResourceRequests.set(cacheKey, fetchPromise);
+
+    try {
+      const data = await fetchPromise;
+      resourceSessionCache.set(cacheKey, data);
+      setCodingData(data);
+      if (data.visible_tabs && data.visible_tabs.length > 0) {
+        setCodingTab(data.visible_tabs[0]);
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorNotification('Could not load coding resources. Please try again.');
+    } finally {
+      inFlightResourceRequests.delete(cacheKey);
       setIsViewerLoading(false);
     }
   };
@@ -887,6 +1113,10 @@ interface LessonHealthReport {
     }
     if (type === 'Materials') {
       openMaterialsViewer(selectedStage);
+      return;
+    }
+    if (type === 'Coding') {
+      openCodingViewer(selectedStage);
       return;
     }
 
@@ -2032,17 +2262,35 @@ interface LessonHealthReport {
                       gap: '1rem'
                     }}
                   >
-                    {RESOURCE_CARDS.map((card) => {
-                      /* Badge reflects the backend's calibrated recommendation for this stage. */
-                      const rec = selectedStage.resource_recommendations?.find(
-                        r => r.resource_type === card.key
-                      );
-                      const isRecommended = rec?.status === 'recommended';
-                      const isPrimary = isRecommended && (
-                        (rec?.usefulness_score && rec.usefulness_score >= 0.95) ||
-                        (rec?.reason && (rec.reason.toLowerCase().includes('primary') || rec.reason.toLowerCase().includes('top pick')))
-                      );
-                      const Icon = card.icon;
+                    {(() => {
+                      const isProgrammingStage = (() => {
+                        const topic = (roadmap?.topic || parsedConfig.topic || '').toLowerCase();
+                        const stageTitle = (selectedStage.title || '').toLowerCase();
+                        const stageDomain = (selectedStage as any).domain || '';
+                        const programmingKeywords = ['python', 'java', 'c++', 'c#', 'javascript', 'typescript', 'rust', 'go', 'coding', 'programming', 'oop', 'class', 'object', 'algorithm', 'data structure', 'tree', 'graph', 'recursion', 'sorting', 'bst', 'sql', 'mimo'];
+                        return (
+                          stageDomain === 'computer_science' ||
+                          programmingKeywords.some(kw => topic.includes(kw) || stageTitle.includes(kw)) ||
+                          selectedStage.resource_recommendations?.some(r => r.resource_type === 'coding' || (r.resource_type as string) === 'practice_coding')
+                        );
+                      })();
+
+                      const cardsToRender = RESOURCE_CARDS.filter(card => {
+                        if (card.type === 'Coding') return isProgrammingStage;
+                        return true;
+                      });
+
+                      return cardsToRender.map((card) => {
+                        /* Badge reflects the backend's calibrated recommendation for this stage. */
+                        const rec = selectedStage.resource_recommendations?.find(
+                          r => r.resource_type === card.key
+                        );
+                        const isRecommended = rec?.status === 'recommended' || (card.type === 'Coding' && isProgrammingStage);
+                        const isPrimary = isRecommended && (
+                          (rec?.usefulness_score && rec.usefulness_score >= 0.95) ||
+                          (rec?.reason && (rec.reason.toLowerCase().includes('primary') || rec.reason.toLowerCase().includes('top pick')))
+                        );
+                        const Icon = card.icon;
 
                       return (
                         <div
@@ -2098,7 +2346,8 @@ interface LessonHealthReport {
                           </div>
                         </div>
                       );
-                    })}
+                    });
+                  })()}
                   </div>
                 </div>
 
@@ -2508,6 +2757,235 @@ interface LessonHealthReport {
                 <button
                   type="button"
                   onClick={() => openMaterialsViewer(selectedStage, true)}
+                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--accent-green-text)] hover:underline cursor-pointer"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Refresh search
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* CODING RESOURCES MODAL                                       */}
+        {/* ============================================================ */}
+        {activeViewer === 'coding' && selectedStage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative flex max-h-[88vh] w-full max-w-4xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                    <Code className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      Coding Resources
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+                        Verified
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Authoritative language documentation, conceptual references, and calibrated practice for <span className="font-semibold text-[var(--text-primary)]">"{selectedStage.title}"</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewer(null)}
+                  aria-label="Close modal"
+                  className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Diagnostics Strip */}
+              {codingData?.diagnostics && (
+                <div className="flex items-center gap-2 px-6 py-2 bg-[var(--bg-secondary)]/50 border-b border-[var(--border)] text-[11px] overflow-x-auto">
+                  <span className="font-bold text-[var(--text-muted)] uppercase tracking-wider text-[10px]">Providers:</span>
+                  {Object.entries(codingData.diagnostics).map(([prov, diag]: [string, any]) => {
+                    const isSuccess = diag.status === 'SUCCESS';
+                    const isPolicyDisabled = diag.status === 'DISABLED_BY_POLICY';
+                    const badgeBg = isSuccess
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : isPolicyDisabled
+                      ? 'bg-slate-100 text-slate-600 border-slate-300'
+                      : 'bg-amber-100 text-amber-800 border-amber-300';
+                    const displayLabel = prov === 'official_docs' ? 'Official Docs' : prov === 'geeksforgeeks' ? 'GeeksforGeeks' : prov === 'leetcode' ? 'LeetCode' : prov;
+
+                    return (
+                      <div key={prov} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold ${badgeBg}`}>
+                        <span>{displayLabel}:</span>
+                        <span className="font-mono">{diag.status}</span>
+                        {diag.latency_ms !== undefined && <span className="text-[9px] opacity-75">({diag.latency_ms}ms)</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Dynamic Category Tabs */}
+              {(() => {
+                const ALL_CODING_TABS = [
+                  { id: 'official_docs', label: 'Official Documentation', icon: BookOpen },
+                  { id: 'geeksforgeeks', label: 'Conceptual References', icon: Sparkles },
+                  { id: 'practice', label: 'Practice Problems', icon: Code }
+                ];
+                const activeTabs = ALL_CODING_TABS.filter(tab => {
+                  const list = codingData?.categories ? (codingData.categories as any)[tab.id] : [];
+                  return Array.isArray(list) && list.length > 0;
+                });
+
+                return (
+                  <>
+                    {activeTabs.length > 0 && (
+                      <div className="flex border-b border-[var(--border)] bg-[var(--bg-secondary)] px-6 overflow-x-auto gap-1">
+                        {activeTabs.map(tab => {
+                          const TabIcon = tab.icon;
+                          const count = codingData?.categories ? ((codingData.categories as any)[tab.id]?.length || 0) : 0;
+                          const isSelected = (codingTab === tab.id) || (activeTabs.length > 0 && !activeTabs.some(t => t.id === codingTab) && tab.id === activeTabs[0].id);
+
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setCodingTab(tab.id)}
+                              className={`flex items-center gap-2 border-b-2 px-4 py-3 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'border-[var(--accent-green)] text-[var(--accent-green-text)]'
+                                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                              }`}
+                            >
+                              <TabIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                              {tab.label}
+                              <span className="ml-1 rounded-full bg-[var(--bg-card)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--text-secondary)] border border-[var(--border)]">
+                                {count}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Content Body */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                      {isViewerLoading ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-center gap-2 py-2 text-xs text-[var(--text-secondary)]">
+                            <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-green)]" />
+                            <span>Retrieving verified coding resources and documentation...</span>
+                          </div>
+                          {[1, 2, 3].map(n => (
+                            <div key={n} className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 animate-pulse space-y-2">
+                              <div className="h-4 bg-[var(--border)]/70 rounded w-1/4" />
+                              <div className="h-4 bg-[var(--border)]/70 rounded w-2/3" />
+                              <div className="h-3 bg-[var(--border)]/70 rounded w-full" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : activeTabs.length > 0 ? (
+                        <div className="space-y-3">
+                          {(() => {
+                            const effectiveTab = activeTabs.some(t => t.id === codingTab) ? codingTab : activeTabs[0].id;
+                            const items: any[] = codingData?.categories ? ((codingData.categories as any)[effectiveTab] || []) : [];
+
+                            return items.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 transition-all hover:border-[var(--accent-green)]/40 hover:shadow-xs"
+                              >
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="rounded bg-[var(--bg-card)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] border border-[var(--border)]">
+                                        {item.source}
+                                      </span>
+                                      {item.difficulty && (
+                                        <span className="rounded bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5">
+                                          {item.difficulty}
+                                        </span>
+                                      )}
+                                      {item.level && (
+                                        <span className="rounded bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5">
+                                          {item.level}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
+                                      {item.fit_label || 'Recommended'}
+                                    </span>
+                                  </div>
+
+                                  <h4 className="font-semibold text-sm text-[var(--text-primary)] leading-snug">
+                                    {item.title}
+                                  </h4>
+                                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                                    {item.description}
+                                  </p>
+
+                                  {/* Relevance Explanation */}
+                                  {item.why_recommended && (
+                                    <div className="rounded-lg bg-emerald-50/70 border border-emerald-200/60 p-2.5 text-[11px] text-emerald-950 flex items-start gap-2">
+                                      <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                                      <div className="flex-1">
+                                        <span className="font-bold text-emerald-900 mr-1.5">Relevance:</span>
+                                        <span className="leading-relaxed">{item.why_recommended}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="pt-2 flex items-center justify-between">
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                                  >
+                                    Open Resource
+                                    <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
+                                  </a>
+                                </div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="py-14 text-center space-y-3">
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                            No verified coding resources found matching this stage.
+                          </p>
+                          <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
+                            TeachGenie verifies all coding links against authoritative documentation and conceptual references.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => openCodingViewer(selectedStage, true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent-green)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--accent-green-hover)] cursor-pointer"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Refresh Search
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* Footer */}
+              <div className="border-t border-[var(--border)] px-6 py-3.5 bg-[var(--bg-secondary)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
+                <span>Prioritized by official documentation and authoritative reference quality.</span>
+                <button
+                  type="button"
+                  onClick={() => openCodingViewer(selectedStage, true)}
                   className="inline-flex items-center gap-1.5 font-semibold text-[var(--accent-green-text)] hover:underline cursor-pointer"
                 >
                   <RefreshCw className="h-3 w-3" />
