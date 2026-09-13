@@ -36,7 +36,7 @@ from app.services.knowledge.sources import EvidenceItem, SourceType
 
 def run(coro):
     """Run an async coroutine synchronously for pytest."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 def _make_evidence(text: str, score: float, source_name: str = "TestDoc.pdf", page: int = 1) -> EvidenceItem:

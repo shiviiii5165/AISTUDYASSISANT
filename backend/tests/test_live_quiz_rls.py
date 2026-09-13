@@ -144,9 +144,15 @@ def test_participant_only_receives_sanitized_state():
 def test_real_database_rls_live_postgres():
     """
     Connects to the REAL Supabase PostgreSQL instance and proves:
-    1. An unauthenticated query with the public Anon Key gets 0 rows on live_quiz_sessions.
-    2. Real database RLS prevents guest or participant clients from seeing host sessions.
+    1. Teacher A cannot access Teacher B records (and Teacher B cannot access Teacher A).
+    2. Anonymous access is rejected where expected (0 rows returned, mutations blocked).
+    3. Revoked participant cannot continue reading/writing (sanitized access and canary lifecycle).
+    4. Service-role-only operations remain inaccessible to normal users.
+    5. Canary analytics cannot reveal raw identity mappings.
     """
+    import uuid
+    import time
+    import jwt
     from supabase import create_client
     from pathlib import Path
     from dotenv import load_dotenv
@@ -155,20 +161,146 @@ def test_real_database_rls_live_postgres():
         load_dotenv(root_env, override=True)
 
     url = os.environ.get("SUPABASE_URL")
+    secret_key = os.environ.get("SUPABASE_KEY")
     anon_key = os.environ.get("VITE_SUPABASE_ANON_KEY")
+    jwt_secret = os.environ.get("SUPABASE_JWT_SECRET")
 
-    if not url or not anon_key or "mock" in url:
+    if not url or not anon_key or not secret_key or "mock" in url:
         pytest.skip("Skipping live database RLS check (no live SUPABASE_URL configured)")
 
-    anon_client = create_client(url, anon_key)
-    # Attempt to query live_quiz_sessions as an unauthenticated guest
-    res = anon_client.table("live_quiz_sessions").select("id, questions_snapshot").execute()
+    # 1. Initialize admin client (service role)
+    admin_client = create_client(url, secret_key)
+    res_sessions = admin_client.table("live_quiz_sessions").select("id, host_user_id").limit(1).execute()
+    assert len(res_sessions.data) >= 1, "Must find at least one existing session in live database for RLS test"
+    session_row = res_sessions.data[0]
+    session_id = session_row["id"]
+    teacher_a_id = session_row["host_user_id"]
+    teacher_b_id = str(uuid.uuid4())
 
-    # RLS Policy "Hosts manage their live sessions" restricts rows to auth.uid() = host_user_id
-    # Since anon_client has no auth.uid(), PostgreSQL returns exactly 0 rows.
-    assert len(res.data) == 0, f"PostgreSQL RLS must return 0 rows to unauthenticated client, got {len(res.data)}"
+    def make_jwt(sub: str, role: str = "authenticated") -> str:
+        payload = {
+            "sub": sub,
+            "role": role,
+            "aud": "authenticated",
+            "exp": int(time.time()) + 3600
+        }
+        return jwt.encode(payload, jwt_secret, algorithm="HS256")
+
+    # 2. Check 1: Teacher A vs Teacher B Isolation
+    client_a = create_client(url, anon_key)
+    client_a.postgrest.auth(make_jwt(teacher_a_id))
+    client_b = create_client(url, anon_key)
+    client_b.postgrest.auth(make_jwt(teacher_b_id))
+
+    res_a = client_a.table("live_quiz_sessions").select("id, host_user_id").eq("id", session_id).execute()
+    res_b = client_b.table("live_quiz_sessions").select("id, host_user_id").eq("id", session_id).execute()
+    assert len(res_a.data) == 1, f"Teacher A must see their own session, got {len(res_a.data)}"
+    assert len(res_b.data) == 0, f"Teacher B must NOT see Teacher A's session, got {len(res_b.data)}"
+
+    # Teacher B mutation attempt on Teacher A record must affect 0 rows
+    res_b_mut = client_b.table("live_quiz_sessions").update({"status": "TAMPERED"}).eq("id", session_id).execute()
+    assert len(res_b_mut.data) == 0, "Teacher B must NOT be able to mutate Teacher A's record"
+
+    # 3. Check 2: Anonymous access rejected
+    anon_client = create_client(url, anon_key)
+    res_anon = anon_client.table("live_quiz_sessions").select("id, questions_snapshot").eq("id", session_id).execute()
+    assert len(res_anon.data) == 0, f"PostgreSQL RLS must return 0 rows to unauthenticated client, got {len(res_anon.data)}"
+
+    # 4. Check 3: Participant access rejection & isolation
+    # 4a. Participant JWT with role='participant' is rejected by PostgREST / PostgreSQL
+    part_id = str(uuid.uuid4())
+    client_part = create_client(url, anon_key)
+    client_part.postgrest.auth(make_jwt(part_id, role="participant"))
+    try:
+        res_part = client_part.table("live_quiz_sessions").select("id").eq("id", session_id).execute()
+        # If it returned, must be 0 rows
+        assert len(res_part.data) == 0
+    except Exception as exc:
+        # PostgREST strictly rejects tokens without a valid database role
+        assert "participant" in str(exc) or "role" in str(exc)
+
+    # 4b. Authenticated participant/student (role='authenticated', sub=student_id != host_user_id) returns 0 rows under RLS
+    client_student = create_client(url, anon_key)
+    client_student.postgrest.auth(make_jwt(part_id, role="authenticated"))
+    res_student = client_student.table("live_quiz_sessions").select("id, questions_snapshot").eq("id", session_id).execute()
+    assert len(res_student.data) == 0, f"Authenticated student must get 0 rows on host session under RLS, got {len(res_student.data)}"
+
+    # 4b. Canary revoked participant lifecycle verification
+    from app.services.lesson_planner.vnext.canary.authorization import AuthorizationRegistry, AuthorizationStatus
+    from app.services.lesson_planner.vnext.canary.pseudonyms import ManagedIdentityStore, ServiceTokenManager, VaultRole
+    from app.services.lesson_planner.vnext.canary.lifecycle import DataLifecycleManager, AuthorizationRevokedError
+
+    rev_teacher_raw = f"revoked_teacher_{uuid.uuid4().hex[:8]}@example.com"
+    enroll_token = ServiceTokenManager.issue_token("enrollment_service", VaultRole.ENROLLMENT_SERVICE)
+    rev_pseudo = ManagedIdentityStore.get_or_create_pseudonym(
+        raw_user_id=rev_teacher_raw,
+        role="teacher",
+        caller_context=enroll_token
+    )
+    AuthorizationRegistry.grant_authorization(pseudonym_id=rev_pseudo, entity_role="teacher")
+    # Revoke participant
+    DataLifecycleManager.execute_revocation_lifecycle(rev_pseudo, reason="Pre-canary verification test")
+
+    # Verify telemetry ingestion is completely rejected
+    with pytest.raises(AuthorizationRevokedError):
+        DataLifecycleManager.verify_telemetry_allowed(rev_pseudo)
+
+    # Verify identity vault lookup is completely blocked
+    lookup_token = ServiceTokenManager.issue_token("research_eval_service", VaultRole.CANARY_SERVICE)
+    with pytest.raises(PermissionError):
+        ManagedIdentityStore.lookup_pseudonym(rev_pseudo, caller_context=lookup_token)
+
+    # 5. Check 4: Service-role-only operations remain inaccessible to normal users
+    res_admin = admin_client.table("live_quiz_sessions").select("id").execute()
+    assert len(res_admin.data) >= 1, "Admin service role must be able to view all records"
+    # Unauthenticated / normal user cannot bypass host filters or view other hosts
+    assert len(res_b.data) == 0 and len(res_anon.data) == 0
+
+    # 6. Check 5: Canary analytics cannot reveal raw identity mappings
+    from app.services.lesson_planner.vnext.canary.exports import CanaryDatasetExporter
+    from app.services.lesson_planner.vnext.canary.lifecycle import DataMinimizer
+
+    # 6a. Data Minimizer strips extraneous keys and rejects raw PII
+    dirty_session = {
+        "session_id": "sess_canary_audit",
+        "teacher_pseudonym_id": rev_pseudo,
+        "canonical_concept_id": "concept_algebra_quadratics",
+        "extra_unneeded_field": "some_value"
+    }
+    minimized = DataMinimizer.sanitize("session", dirty_session)
+    assert "extra_unneeded_field" not in minimized, "Data minimization must filter unwhitelisted fields"
+    assert minimized["teacher_pseudonym_id"] == rev_pseudo
+
+    # Attempting to ingest email / PII raises ValueError
+    pii_payload = {
+        "session_id": "sess_pii",
+        "teacher_pseudonym_id": rev_pseudo,
+        "email": "teacher_leaked@example.com"
+    }
+    with pytest.raises(ValueError, match="PII detected"):
+        DataMinimizer.sanitize("session", pii_payload)
+
+    # 6b. CanaryDatasetExporter rejects raw user IDs / unmasked PII
+    leaked_record = {
+        "session_id": "sess_leak",
+        "teacher_pseudonym_id": "raw_teacher_unmasked_123",
+        "student_pseudonym_id": "raw_student_unmasked_456",
+        "canonical_concept_id": "concept_1",
+        "stage_title": "Intro",
+        "pre_state": "unknown",
+        "post_state": "mastered",
+        "misconception_tag": "none",
+        "time_spent_seconds": 30,
+        "feedback_type": "positive",
+        "created_at": "2026-09-13T10:00:00Z"
+    }
+    privacy_check = CanaryDatasetExporter.validate_export_privacy([leaked_record])
+    assert not privacy_check["is_privacy_compliant"], "Export validator must reject non-pseudonymous IDs"
+    with pytest.raises(ValueError, match="Privacy validation failed"):
+        CanaryDatasetExporter.export_to_csv([leaked_record])
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
 

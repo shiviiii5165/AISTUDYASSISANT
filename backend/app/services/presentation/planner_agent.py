@@ -52,6 +52,76 @@ def check_subtopic_coverage(core_subtopics: List[str], slides: List[Dict[str, An
     return covered, missing
 
 
+def _build_deterministic_plan(config: PresentationConfig, ontology: TopicOntologyChecklist) -> Dict[str, Any]:
+    """
+    Deterministic fallback outline generator when LLM providers are unavailable or fail.
+    Preserves exact structural planner invariants:
+    - Hero slide at index 0.
+    - Closing slide at index -1 (quiz or qa).
+    - If core subtopics fit comfortably within target slide count (len(core_subtopics) < slide_count - 2),
+      generates exactly config.slide_count slides with zero unnecessary expansion.
+    - If core subtopics exceed/tightly fill slide count (len(core_subtopics) >= slide_count - 2),
+      flexes up to config.slide_count + 2 to avoid dropping core subtopics.
+    """
+    slides = []
+
+    # Hero Slide
+    slides.append({
+        "slide_no": 1,
+        "type": "hero",
+        "title": f"{config.topic}: Architecture & Foundations",
+        "key_message": f"Core principles and pedagogical overview of {config.topic}.",
+        "visual_hint": "diagram",
+    })
+
+    expansion_permitted = len(ontology.core_subtopics) >= (config.slide_count - 2)
+
+    # Intermediate concept slides from ontology core subtopics
+    for idx, subtopic in enumerate(ontology.core_subtopics):
+        slides.append({
+            "slide_no": len(slides) + 1,
+            "type": "concept",
+            "title": f"{subtopic}: Core Architecture & Mechanism",
+            "key_message": f"Essential operational principles governing {subtopic} in {config.topic}.",
+            "visual_hint": "diagram",
+        })
+
+    # If subtopic count fits comfortably, pad with structured concept slides up to target (target - 1 for closing)
+    target_intermediate = config.slide_count - 2
+    if len(ontology.core_subtopics) < target_intermediate:
+        counter = len(ontology.core_subtopics) + 1
+        while len(slides) < (config.slide_count - 1):
+            slides.append({
+                "slide_no": len(slides) + 1,
+                "type": "concept",
+                "title": f"Applied Analysis & Verification Part {counter}",
+                "key_message": f"Deep-dive technical mechanics and edge-case validation for {config.topic}.",
+                "visual_hint": "diagram",
+            })
+            counter += 1
+
+    # Closing Slide
+    closing_type = "quiz" if config.enable_quiz else "qa"
+    slides.append({
+        "slide_no": len(slides) + 1,
+        "type": closing_type,
+        "title": "Interactive Knowledge Check" if config.enable_quiz else "Q&A, Review & Key Takeaways",
+        "key_message": f"Synthesis and mastery assessment for {config.topic}.",
+        "visual_hint": "cards",
+    })
+
+    expansion_reason = ""
+    if len(slides) > config.slide_count and expansion_permitted:
+        expansion_reason = f"Expanded to {len(slides)} slides to provide complete coverage for {len(ontology.core_subtopics)} core subtopics"
+
+    return {
+        "deck_title": config.topic,
+        "subtitle": f"{config.audience.title()} Level  •  {config.language.title()}",
+        "slides": slides,
+        "expansion_reason": expansion_reason,
+    }
+
+
 async def plan_presentation(
     config: PresentationConfig,
     user_id: str,
@@ -121,26 +191,32 @@ async def plan_presentation(
         {"role": "user", "content": user_prompt},
     ]
 
-    # 4. Generate structured plan via ModelRouter
-    plan_json = await router.generate_json(
-        task="planning",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=4000,
-    )
+    # 4. Generate structured plan via ModelRouter with deterministic fallback
+    try:
+        plan_json = await router.generate_json(
+            task="planning",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=4000,
+        )
+    except Exception as e:
+        logger.warning(f"[Planner] LLM generation failed ({e}), using deterministic fallback outline")
+        plan_json = _build_deterministic_plan(config, ontology)
 
     raw_slides = plan_json.get("slides", [])
-    expansion_reason = ""
+    expansion_reason = plan_json.get("expansion_reason", "")
 
     # 5. Deterministic Coverage Audit & Repair
-    max_allowed = config.slide_count + 2
+    expansion_permitted = len(ontology.core_subtopics) >= (config.slide_count - 2)
+    max_allowed = (config.slide_count + 2) if expansion_permitted else config.slide_count
+
     covered, missing = check_subtopic_coverage(ontology.core_subtopics, raw_slides)
 
     if missing:
         logger.info(f"[Planner] {len(missing)} core subtopics initially unmapped: {missing}")
         # Repair: add or merge missing subtopics
         for m_sub in missing:
-            if len(raw_slides) < max_allowed:
+            if expansion_permitted and len(raw_slides) < max_allowed:
                 # Add slide before closing slides
                 insert_pos = max(1, len(raw_slides) - 2)
                 raw_slides.insert(insert_pos, {
@@ -152,14 +228,24 @@ async def plan_presentation(
                 })
                 expansion_reason = f"Expanded to {len(raw_slides)} slides to fully cover: {', '.join(missing)}"
             else:
-                # Merge into the last concept slide
-                for s in reversed(raw_slides):
-                    if s.get("type") in ["concept", "definition", "two_column"]:
-                        s["title"] = f"{s.get('title', '')} & {m_sub}"[:100]
-                        s["key_message"] = f"{s.get('key_message', '')} Covers {m_sub}."
+                # Check if there is a generic placeholder slide to repurpose without increasing slide count
+                repurposed = False
+                for s in raw_slides[1:-1]:
+                    s_title = s.get("title", "")
+                    if any(s_title.startswith(prefix) for prefix in ["Key Principle", "Applied Analysis", "Overview"]):
+                        s["title"] = f"{m_sub}: Core Architecture & Mechanism"
+                        s["key_message"] = f"Essential operational principles governing {m_sub} in {config.topic}."
+                        repurposed = True
                         break
+                if not repurposed:
+                    # Merge into the last concept slide
+                    for s in reversed(raw_slides):
+                        if s.get("type") in ["concept", "definition", "two_column"]:
+                            s["title"] = f"{s.get('title', '')} & {m_sub}"[:100]
+                            s["key_message"] = f"{s.get('key_message', '')} Covers {m_sub}."
+                            break
 
-    # 6. Slide Count Clamping between config.slide_count and max_allowed
+    # 6. Slide Count Clamping strictly according to expansion allowance
     if len(raw_slides) > max_allowed:
         raw_slides = raw_slides[:max_allowed]
     elif len(raw_slides) < config.slide_count:
@@ -172,6 +258,9 @@ async def plan_presentation(
                 "key_message": f"Core component analysis for {config.topic}",
                 "visual_hint": "diagram",
             })
+
+    if len(raw_slides) <= config.slide_count:
+        expansion_reason = ""
 
     # Renumber strictly 1..N
     for i, s in enumerate(raw_slides):

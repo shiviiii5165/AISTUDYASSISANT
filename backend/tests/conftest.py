@@ -35,7 +35,11 @@ _PROTECTED_KEY_NAMES = [
     "SUPABASE_URL",
     "SUPABASE_KEY",
     "SUPABASE_JWT_SECRET",
+    "CANARY_VAULT_MASTER_KEY",
+    "CANARY_SERVICE_AUTH_SECRET",
+    "CANARY_PSEUDONYMIZATION_SALT",
 ]
+os.environ.setdefault("CANARY_VAULT_MASTER_KEY", "teachgenie_test_vault_master_key_2026_aes_gcm_pytest")
 _REAL_ENV_KEYS = {k: os.environ[k] for k in _PROTECTED_KEY_NAMES if k in os.environ and os.environ[k] != "placeholder"}
 
 

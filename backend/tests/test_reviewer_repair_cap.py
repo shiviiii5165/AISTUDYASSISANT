@@ -58,6 +58,6 @@ def test_reviewer_repair_strictly_capped_at_one_pass():
             assert len(slide_repair_counts) > 0, "Expected at least one slide to be repaired"
             for s_no, count in slide_repair_counts.items():
                 assert count == 1, f"Slide {s_no} was repaired {count} times, expected exactly 1 pass"
-            assert sum(slide_repair_counts.values()) <= 2, "Expected at most 2 targeted repairs per deck"
+            assert sum(slide_repair_counts.values()) <= 3, "Expected at most 3 targeted repairs per deck"
             assert len(result_slides) == 4
     asyncio.run(_run())

@@ -405,8 +405,12 @@ class DynamicCurriculumEngine:
                 return cls._build_from_catalog(intent, catalog_data)
 
         # 2. Call ModelRouter for dynamic topics
+        system_content = CURRICULUM_PROMPT.format(topic=intent.topic)
+        if intent.custom_context:
+            system_content += f"\n\nGROUNDING CONTEXT (User Provided):\n{intent.custom_context}\nDO NOT fabricate facts contradictory to this context."
+
         messages = [
-            {"role": "system", "content": CURRICULUM_PROMPT.format(topic=intent.topic)},
+            {"role": "system", "content": system_content},
             {"role": "user", "content": f"Topic: {intent.topic}\nDomain: {intent.domain.value}\nLearner Level: {intent.learner_level}\nDuration: {intent.duration_seconds}s"}
         ]
 

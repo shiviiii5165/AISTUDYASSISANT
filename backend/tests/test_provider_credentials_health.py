@@ -59,29 +59,36 @@ def test_groq_standalone_live_call():
     asyncio.run(_run())
 
 
+@pytest.mark.live
 def test_gemini_standalone_live_call():
     """Direct live verification: Gemini accepts requests and returns valid text and JSON."""
     async def _run():
         provider = GeminiProvider()
-        assert provider.api_key and provider.api_key != "placeholder"
+        if not provider.api_key or provider.api_key == "placeholder":
+            pytest.skip("GEMINI_API_KEY is not configured with real credentials")
 
-        # Text generation
-        t0 = time.time()
-        res = await provider.generate_text(
-            [{"role": "user", "content": "Respond with the word: VERIFIED"}],
-            timeout=30.0,
-        )
-        elapsed = time.time() - t0
-        assert "VERIFIED" in res.text, f"Gemini response unexpected: {res.text}"
-        assert res.provider == "gemini"
-        print(f"\n[Gemini Live Call] {elapsed:.2f}s | Model: {res.model}")
+        try:
+            # Text generation
+            t0 = time.time()
+            res = await provider.generate_text(
+                [{"role": "user", "content": "Respond with the word: VERIFIED"}],
+                timeout=15.0,
+            )
+            elapsed = time.time() - t0
+            assert "VERIFIED" in res.text, f"Gemini response unexpected: {res.text}"
+            assert res.provider == "gemini"
+            print(f"\n[Gemini Live Call] {elapsed:.2f}s | Model: {res.model}")
 
-        # JSON generation
-        json_res = await provider.generate_json(
-            [{"role": "user", "content": "Return a JSON object: {\"healthy\": true, \"provider\": \"gemini\"}"}],
-            timeout=30.0,
-        )
-        assert json_res.get("healthy") is True or json_res.get("provider") == "gemini"
+            # JSON generation
+            json_res = await provider.generate_json(
+                [{"role": "user", "content": "Return a JSON object: {\"healthy\": true, \"provider\": \"gemini\"}"}],
+                timeout=15.0,
+            )
+            assert json_res.get("healthy") is True or json_res.get("provider") == "gemini"
+        except Exception as e:
+            if "429" in str(e) or "quota" in str(e).lower() or "exhausted" in str(e).lower():
+                pytest.skip(f"Gemini live call skipped: quota/rate-limit hit ({e})")
+            raise
 
     asyncio.run(_run())
 

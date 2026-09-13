@@ -310,7 +310,8 @@ def test_paper_section_intelligence():
 # 7. OUTCOME LEARNING TELEMETRY & ADAPTIVE RANKING
 # ---------------------------------------------------------------------------
 
-def test_outcome_learning_sample_gating():
+def test_outcome_learning_sample_gating(monkeypatch):
+    monkeypatch.setattr(settings, "LESSON_OUTCOME_RANKING_ENABLED", True)
     card = UniversalResourceCard(
         id="res_outcome_test",
         title="Interactive Recursion Visualizer",
@@ -322,8 +323,8 @@ def test_outcome_learning_sample_gating():
         url="https://example.com/visualizer"
     )
 
-    # 1. Fewer than 10 samples -> score NOT modified (sample gating)
-    for _ in range(5):
+    # 1. Fewer than 20 samples -> score NOT modified (sample gating under N >= 20 policy)
+    for _ in range(10):
         ResourceOutcomeEngine.record_outcome_signal(
             resource_id="res_outcome_test",
             concept_id="c_recursion",
@@ -337,8 +338,8 @@ def test_outcome_learning_sample_gating():
     cards_unmodified = ResourceOutcomeEngine.apply_outcome_aware_ranking([card])
     assert cards_unmodified[0].quality_score == 85
 
-    # 2. Add 7 more samples (total 12 >= 10) -> score is blended upward
-    for _ in range(7):
+    # 2. Add 12 more samples (total 22 >= 20) -> score is blended upward
+    for _ in range(12):
         ResourceOutcomeEngine.record_outcome_signal(
             resource_id="res_outcome_test",
             concept_id="c_recursion",
