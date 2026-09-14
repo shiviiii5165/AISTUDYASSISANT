@@ -159,6 +159,45 @@ KNOWN_TOPIC_REGISTRY: Dict[str, Dict[str, Any]] = {
         "is_programming": False,
         "negative_terms": ["python", "javascript", "leetcode", "react", "css"]
     },
+    "digital_communication": {
+        "match_patterns": [r"digital\s+communi", r"pulse\s+shaping", r"nyquist.*criterion", r"intersymbol\s+interference", r"\bisi\b", r"qam"],
+        "canonical_topic": "Digital Communication: Pulse Shaping and Nyquist Criterion",
+        "domain": "electrical_engineering",
+        "specialization": "communications",
+        "subject": "Digital Communication Systems",
+        "concepts": [
+            "Pulse Shaping", "Nyquist ISI Criterion", "Raised Cosine Filter",
+            "Intersymbol Interference", "Eye Diagram", "QAM Modulation"
+        ],
+        "canonical_concept_ids": [
+            "ee.comm.pulse_shaping", "ee.comm.nyquist_isi", "ee.comm.raised_cosine"
+        ],
+        "synonyms": ["digital transmission", "pulse shaping filter", "zero-ISI signaling"],
+        "weaknesses": ["Distinguishing excess bandwidth roll-off factor from symbol rate", "Interpreting eye diagram closure"],
+        "misconceptions": ["Assuming rectangular pulses in time have finite bandwidth (sinc has infinite spectrum)"],
+        "is_programming": False,
+        "negative_terms": ["python", "javascript", "leetcode", "react", "css", "marketing communication"]
+    },
+    "transformer_architecture": {
+        "match_patterns": [r"transformer\s+architect", r"self[- ]attention", r"multi[- ]head\s+attention", r"attention\s+is\s+all\s+you\s+need", r"\btransformers?\b.*nlp"],
+        "canonical_topic": "Transformer Architecture: Self-Attention and Multi-Head Attention",
+        "domain": "computer_science",
+        "specialization": "deep_learning_nlp",
+        "subject": "Deep Learning & Natural Language Processing",
+        "concepts": [
+            "Self-Attention", "Multi-Head Attention", "Scaled Dot-Product Attention",
+            "Positional Encoding", "Layer Normalization", "Feed-Forward Networks"
+        ],
+        "canonical_concept_ids": [
+            "cs.dl.transformer.self_attention", "cs.dl.transformer.multi_head_attention", "cs.dl.transformer.positional_encoding"
+        ],
+        "synonyms": ["transformer neural network", "multi-head self-attention mechanism", "attention is all you need"],
+        "weaknesses": ["Understanding quadratic complexity of O(N^2) attention with sequence length", "Role of key-value-query projections"],
+        "misconceptions": ["Confusing self-attention with cross-attention", "Thinking transformers require sequential recurrent hidden states"],
+        "is_programming": True,
+        "programming_language": "Python/PyTorch",
+        "negative_terms": ["electrical transformer", "high voltage transformer", "substation", "step up transformer", "magnetic core"]
+    },
     "dbms_normalization": {
         "match_patterns": [r"normalization", r"normal\s+form", r"1nf", r"2nf", r"3nf", r"bcnf", r"functional\s+dependency"],
         "canonical_topic": "Database Normalization",
@@ -314,6 +353,73 @@ def detect_stage_intent(stage_title: str, archetype: Optional[str] = None, is_re
     return StageIntent.CONCEPT_LEARNING
 
 
+def evaluate_research_visibility(
+    domain: str,
+    specialization: Optional[str] = None,
+    topic: str = "",
+    stage_title: str = "",
+    learner_level: str = "B.Tech",
+    primary_intent: StageIntent = StageIntent.CONCEPT_LEARNING,
+    instructional_mode: str = "DIRECT_INSTRUCTION",
+    stage_type: str = "concept_intro",
+    learning_objectives: Optional[List[str]] = None
+) -> tuple[bool, str, str]:
+    """
+    Evaluates research visibility dynamically based on:
+    - domain
+    - concept depth
+    - stage type
+    - learner level
+    - primary intent
+    - instructional mode
+    - source authority need
+
+    Returns:
+      (is_visible, policy_tier, reason)
+      policy_tier: 'HIDDEN' | 'OPTIONAL_CONTEXTUAL' | 'STRONGLY_VISIBLE'
+    """
+    level_lower = (learner_level or "").lower()
+    is_pg_phd = any(k in level_lower for k in ["phd", "doctorate", "m.tech", "postgraduate", "pg", "graduate research"])
+    
+    # M.Tech / PhD: research is strongly visible across all domains
+    if is_pg_phd:
+        return (True, "STRONGLY_VISIBLE", "Postgraduate / PhD curriculum warrants primary literature and research papers.")
+
+    # Explicit research pedagogical intent / stage type
+    objectives = learning_objectives or []
+    stage_requires_research = any("research" in obj.lower() for obj in objectives)
+    if primary_intent == StageIntent.ADVANCED_RESEARCH or stage_type in ["deep_dive", "advanced_research"] or stage_requires_research:
+        return (True, "STRONGLY_VISIBLE", "Pedagogical stage archetype explicitly requires scholarly research evidence.")
+
+    # Domain & source authority need analysis
+    domain_lower = (domain or "").lower()
+    spec_lower = (specialization or "").lower()
+    text = f"{topic} {stage_title}".lower()
+
+    # Authoritative Engineering / Communications / Signal Processing (Massive MIMO, Digital Comm, ECE, EE)
+    # IEEE / technical references = visible, selected research = optional/contextual
+    is_telecom_or_ee = any(d in domain_lower for d in ["electrical", "telecom", "wireless", "communication", "signal_processing", "electronics"]) or \
+                       any(s in spec_lower for s in ["wireless", "communication", "signal"]) or \
+                       any(k in text for k in ["mimo", "beamforming", "nyquist", "pulse shaping", "modulation", "antenna", "signal processing"])
+    if is_telecom_or_ee:
+        return (True, "OPTIONAL_CONTEXTUAL", "Engineering domain (EE/Wireless Communications) requires IEEE technical references and foundational literature.")
+
+    # Advanced AI / Deep Learning seminal architecture (e.g. Transformer Architecture)
+    is_seminal_ai = any(k in text for k in ["transformer", "self-attention", "attention is all you need", "diffusion model", "reinforcement learning"])
+    if is_seminal_ai:
+        return (True, "OPTIONAL_CONTEXTUAL", "Advanced CS topic requires seminal architectural literature (e.g. NeurIPS/ICML foundational papers).")
+
+    # Introductory programming syntax, basic OOP, standard web frameworks (Python OOP, React Basics)
+    is_intro_programming = any(k in text for k in ["object and class", "objects & classes", "python class", "react", "syntax", "variables", "loops", "functions"]) or \
+                           (domain_lower in ["computer_science", "software_engineering"] and stage_type in ["concept_intro", "overview", "mental_model", "explanation"])
+    if is_intro_programming:
+        return (False, "HIDDEN", "Introductory programming/syntax stages prioritize official specifications and practice; research papers hidden by policy.")
+
+    # Standard B.Tech algorithms/data structures (DP, BST)
+    # Default to hidden unless deep dive / research stage
+    return (False, "HIDDEN", "Undergraduate foundations prioritize textbooks, documentation, and practice problems over academic preprints.")
+
+
 class IntentProfileBuilder:
     """
     Constructs a precision ResourceIntentProfile from curriculum and stage context.
@@ -333,8 +439,12 @@ class IntentProfileBuilder:
         is_remedial: bool = False,
         concept_id: Optional[str] = None,
         objectives: Optional[List[str]] = None,
-        weaknesses: Optional[List[str]] = None
+        weaknesses: Optional[List[str]] = None,
+        plan_version: Any = 1,
+        canonical_concept_ids: Optional[List[str]] = None
     ) -> ResourceIntentProfile:
+        from app.services.lesson_planner.vnext.canonical_concepts import CanonicalConceptResolver
+
         cleaned_title = clean_stage_title(stage_title)
         intent = detect_stage_intent(stage_title, archetype, is_remedial)
         combined_text = f"{topic} {stage_title} {stage_description or ''} {cleaned_title}".lower()
@@ -349,13 +459,43 @@ class IntentProfileBuilder:
             if matched_profile:
                 break
 
+        # Resolve stage-level canonical concepts to guarantee stage-specific identity
+        valid_provided_concepts = []
+        if canonical_concept_ids:
+            valid_provided_concepts = [c for c in canonical_concept_ids if not re.match(r"^concept_\d+$", str(c), re.IGNORECASE)]
+
+        resolved_stage_concepts = CanonicalConceptResolver.resolve_stage_concepts(
+            topic=topic,
+            stage_title=stage_title,
+            stage_description=stage_description or "",
+            stage_objectives=objectives,
+            stage_concept_id=concept_id
+        )
+
+        if valid_provided_concepts:
+            stage_canonical_concept_ids = valid_provided_concepts
+        elif resolved_stage_concepts and resolved_stage_concepts != ["UNRESOLVED_CANONICAL_CONCEPT"]:
+            stage_canonical_concept_ids = resolved_stage_concepts
+        elif matched_profile:
+            stage_canonical_concept_ids = list(matched_profile.get("canonical_concept_ids", []))
+        else:
+            stage_canonical_concept_ids = resolved_stage_concepts
+
+        # Generic concept ID sanitization
+        fallback_id = None
+        if concept_id:
+            if re.match(r"^concept_\d+$", str(concept_id).strip(), re.IGNORECASE):
+                fallback_id = "UNRESOLVED_CANONICAL_CONCEPT"
+            else:
+                fallback_id = str(concept_id).strip()
+
         if matched_profile:
             canonical_topic = matched_profile["canonical_topic"]
             domain = matched_profile["domain"]
             specialization = matched_profile.get("specialization")
             subject = matched_profile["subject"]
             concepts = list(matched_profile["concepts"])
-            canonical_concept_ids = list(matched_profile.get("canonical_concept_ids", []))
+            canonical_concept_ids = stage_canonical_concept_ids
             synonyms = list(matched_profile["synonyms"])
             profile_weaknesses = list(matched_profile["weaknesses"])
             misconceptions = list(matched_profile["misconceptions"])
@@ -432,21 +572,18 @@ class IntentProfileBuilder:
         else:
             recommended_types.append(ResourceType.GUIDE)
 
-        # Research visibility policy:
-        # Strictly NEVER show research papers by default for basic programming concepts.
-        # A B.Tech label alone is NOT sufficient.
-        # Must only appear if:
-        # primary_intent == RESEARCH / ADVANCED_RESEARCH
-        # OR instructional_mode == DEEP_DIVE
-        # OR learner explicitly requests research
-        # OR stage explicitly requires research evidence
-        # OR PG/PhD policy requires it
-        is_pg_phd = any(k in learner_level.lower() for k in ["phd", "doctorate", "m.tech", "postgraduate", "pg", "graduate research"])
-        stage_requires_research = any("research" in obj.lower() for obj in final_objectives)
-        allow_research = (
-            intent in [StageIntent.ADVANCED_RESEARCH]
-            or is_pg_phd
-            or stage_requires_research
+        # Multi-dimensional Research visibility policy:
+        # Evaluates domain, concept depth, stage type, learner level, primary intent, instructional mode, and source authority need.
+        allow_research, research_tier, research_reason = evaluate_research_visibility(
+            domain=domain,
+            specialization=specialization,
+            topic=canonical_topic,
+            stage_title=cleaned_title,
+            learner_level=learner_level,
+            primary_intent=intent,
+            instructional_mode="DIRECT_INSTRUCTION",
+            stage_type=archetype or "concept_intro",
+            learning_objectives=final_objectives
         )
         if allow_research:
             recommended_types.append(ResourceType.RESEARCH_PAPER)
@@ -463,7 +600,7 @@ class IntentProfileBuilder:
         # Build ResourceQueryContext
         query_context = ResourceQueryContext(
             roadmap_id=roadmap_id,
-            plan_version="1.0",
+            plan_version=str(plan_version),
             stage_id=stage_id,
             original_topic=topic,
             normalized_topic=canonical_topic,
@@ -507,5 +644,8 @@ class IntentProfileBuilder:
             query_terms=query_terms,
             negative_terms=negative_terms,
             recommended_resource_types=recommended_types,
+            stage_archetype=archetype or "concept_intro",
+            plan_version=plan_version,
+            fallback_concept_id=fallback_id,
             context=query_context
         )

@@ -213,4 +213,13 @@ class StageActionRecommender:
                 reason="Official documentation, GeeksforGeeks conceptual guides, and calibrated practice."
             ))
 
+        # Enforce UI Card Budget Invariant: at most 2 RECOMMENDED
+        rec_count = 0
+        for r in recs:
+            if r.priority == StageActionPriority.RECOMMENDED:
+                rec_count += 1
+                if rec_count > 2:
+                    r.priority = StageActionPriority.AVAILABLE
+                    r.badge_label = None
+
         return recs

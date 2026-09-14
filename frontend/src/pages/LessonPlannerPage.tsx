@@ -50,11 +50,15 @@ export interface UniversalResourceCard {
   score_breakdown?: ResourceScoreBreakdown;
   year?: number;
   access_type: string;
-  url: string;
+  url?: string | null;
+  related_practice_url?: string | null;
   is_preprint?: boolean;
   has_retraction_notice?: boolean;
   venue_label?: string;
   confidence?: number;
+  source_provenance?: string;
+  delivery_provenance?: string;
+  provenance?: string;
 }
 
 export interface PlanRecompileDiff {
@@ -221,12 +225,16 @@ interface YouTubeVideoItem {
   source: string;
   reason?: string;
   why_recommended?: string;
+  source_provenance?: string;
+  delivery_provenance?: string;
+  provenance?: string;
 }
 
 interface ExtraLearningMaterialItem {
   id?: string;
   title: string;
-  url: string;
+  url?: string | null;
+  related_practice_url?: string | null;
   description: string;
   source: string;
   type: string;
@@ -243,6 +251,9 @@ interface ExtraLearningMaterialItem {
   arxiv_id?: string;
   why_recommended?: string;
   verification_level?: string;
+  source_provenance?: string;
+  delivery_provenance?: string;
+  provenance?: string;
 }
 
 interface ExtraMaterialsCategories {
@@ -618,7 +629,11 @@ interface LessonHealthReport {
     );
 
     if (!refresh && resourceSessionCache.has(cacheKey)) {
-      setYoutubeData(resourceSessionCache.get(cacheKey));
+      const cached = resourceSessionCache.get(cacheKey) || [];
+      const withCacheProv = Array.isArray(cached)
+        ? cached.map((it: any) => ({ ...it, delivery_provenance: 'FRONTEND_CACHE_HIT' }))
+        : cached;
+      setYoutubeData(withCacheProv);
       setIsViewerLoading(false);
       return;
     }
@@ -683,7 +698,16 @@ interface LessonHealthReport {
 
     if (!refresh && resourceSessionCache.has(cacheKey)) {
       const cached = resourceSessionCache.get(cacheKey);
-      setMaterialsData(cached.categories || null);
+      const rawCats = cached.categories || {};
+      const withCacheProv: any = {};
+      for (const [k, list] of Object.entries(rawCats)) {
+        if (Array.isArray(list)) {
+          withCacheProv[k] = list.map((it: any) => ({ ...it, delivery_provenance: 'FRONTEND_CACHE_HIT' }));
+        } else {
+          withCacheProv[k] = list;
+        }
+      }
+      setMaterialsData(withCacheProv);
       if (cached.visible_tabs && cached.visible_tabs.length > 0) {
         setMaterialsTab(cached.visible_tabs[0]);
       }
@@ -757,8 +781,17 @@ interface LessonHealthReport {
 
     if (!refresh && resourceSessionCache.has(cacheKey)) {
       const cached = resourceSessionCache.get(cacheKey);
-      setCodingData(cached);
-      if (cached.visible_tabs && cached.visible_tabs.length > 0) {
+      const rawCats = cached?.categories || {};
+      const withCacheProv: any = {};
+      for (const [k, list] of Object.entries(rawCats)) {
+        if (Array.isArray(list)) {
+          withCacheProv[k] = list.map((it: any) => ({ ...it, delivery_provenance: 'FRONTEND_CACHE_HIT' }));
+        } else {
+          withCacheProv[k] = list;
+        }
+      }
+      setCodingData({ ...cached, categories: withCacheProv });
+      if (cached?.visible_tabs && cached.visible_tabs.length > 0) {
         setCodingTab(cached.visible_tabs[0]);
       }
       setIsViewerLoading(false);
@@ -798,7 +831,18 @@ interface LessonHealthReport {
     inFlightResourceRequests.set(cacheKey, fetchPromise);
 
     try {
-      const data = await fetchPromise;
+      const rawData = await fetchPromise;
+      const data = { ...rawData };
+      if (data && Array.isArray(data.items) && !data.categories) {
+        const official_docs = data.items.filter((it: any) => it.type === 'official_docs');
+        const geeksforgeeks = data.items.filter((it: any) => it.url?.includes('geeksforgeeks') || it.source?.includes('GeeksforGeeks'));
+        const practice = data.items.filter((it: any) => it.url?.includes('leetcode') || it.type === 'coding_problem' || it.type === 'practice_problem' || it.type === 'diagnostic_micro_problem' || it.related_practice_url?.includes('leetcode'));
+        data.categories = { official_docs, geeksforgeeks, practice };
+        data.visible_tabs = [];
+        if (official_docs.length > 0) data.visible_tabs.push('official_docs');
+        if (geeksforgeeks.length > 0) data.visible_tabs.push('geeksforgeeks');
+        if (practice.length > 0) data.visible_tabs.push('practice');
+      }
       resourceSessionCache.set(cacheKey, data);
       setCodingData(data);
       if (data.visible_tabs && data.visible_tabs.length > 0) {
@@ -2479,6 +2523,16 @@ interface LessonHealthReport {
                                 <span className="rounded bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 capitalize">
                                   {item.difficulty}
                                 </span>
+                                {(item.source_provenance || item.provenance) && (
+                                  <span className="rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-mono font-medium">
+                                    {item.source_provenance || item.provenance}
+                                  </span>
+                                )}
+                                {item.delivery_provenance && item.delivery_provenance !== 'LIVE_FETCH' && (
+                                  <span className="rounded bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 text-[9px] font-mono font-semibold">
+                                    {item.delivery_provenance}
+                                  </span>
+                                )}
                               </div>
                               <h4 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2">
                                 {item.title}
@@ -2684,9 +2738,21 @@ interface LessonHealthReport {
                                         </span>
                                       )}
                                     </div>
-                                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
-                                      {item.fit_label || 'Verified Resource'}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {(item.source_provenance || item.provenance) && (
+                                        <span className="rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-mono font-medium">
+                                          {item.source_provenance || item.provenance}
+                                        </span>
+                                      )}
+                                      {item.delivery_provenance && item.delivery_provenance !== 'LIVE_FETCH' && (
+                                        <span className="rounded bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 text-[9px] font-mono font-semibold">
+                                          {item.delivery_provenance}
+                                        </span>
+                                      )}
+                                      <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
+                                        {item.fit_label || 'Verified Resource'}
+                                      </span>
+                                    </div>
                                   </div>
 
                                   <h4 className="font-semibold text-sm text-[var(--text-primary)] leading-snug">
@@ -2710,7 +2776,7 @@ interface LessonHealthReport {
 
                                 <div className="pt-2 flex items-center justify-between">
                                   <a
-                                    href={item.url}
+                                    href={item.url || undefined}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -2718,11 +2784,18 @@ interface LessonHealthReport {
                                     Open Resource
                                     <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
                                   </a>
-                                  {item.doi && (
-                                    <span className="text-[10px] text-[var(--text-muted)] font-mono">
-                                      DOI: {item.doi}
-                                    </span>
-                                  )}
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {item.arxiv_id && (
+                                      <span className="text-[10px] text-[var(--text-muted)] font-mono bg-[var(--bg-card)] px-1.5 py-0.5 rounded border border-[var(--border)]">
+                                        arXiv:{item.arxiv_id}
+                                      </span>
+                                    )}
+                                    {item.doi && (
+                                      <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                                        DOI: {item.doi}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ));
@@ -2918,9 +2991,21 @@ interface LessonHealthReport {
                                         </span>
                                       )}
                                     </div>
-                                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
-                                      {item.fit_label || 'Recommended'}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {(item.source_provenance || item.provenance) && (
+                                        <span className="rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-mono font-medium">
+                                          {item.source_provenance || item.provenance}
+                                        </span>
+                                      )}
+                                      {item.delivery_provenance && item.delivery_provenance !== 'LIVE_FETCH' && (
+                                        <span className="rounded bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 text-[9px] font-mono font-semibold">
+                                          {item.delivery_provenance}
+                                        </span>
+                                      )}
+                                      <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
+                                        {item.fit_label || 'Recommended'}
+                                      </span>
+                                    </div>
                                   </div>
 
                                   <h4 className="font-semibold text-sm text-[var(--text-primary)] leading-snug">
@@ -2943,15 +3028,34 @@ interface LessonHealthReport {
                                 </div>
 
                                 <div className="pt-2 flex items-center justify-between">
-                                  <a
-                                    href={item.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                                  >
-                                    Open Resource
-                                    <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
-                                  </a>
+                                  {item.url ? (
+                                    <a
+                                      href={item.url || undefined}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3.5 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                                    >
+                                      Open Resource
+                                      <ExternalLink className="h-3 w-3 ml-0.5 text-[var(--text-secondary)]" aria-hidden="true" />
+                                    </a>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 px-3 py-1.5 text-xs font-semibold text-purple-800 dark:text-purple-300">
+                                        Internal Diagnostic
+                                      </span>
+                                      {item.related_practice_url && (
+                                        <a
+                                          href={item.related_practice_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                                        >
+                                          Related Practice
+                                          <ExternalLink className="h-2.5 w-2.5 ml-0.5 text-[var(--text-muted)]" aria-hidden="true" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ));

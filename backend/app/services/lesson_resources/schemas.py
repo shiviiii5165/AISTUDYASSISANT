@@ -58,6 +58,26 @@ class ProviderDiagnosticState(str, Enum):
     DISABLED_BY_POLICY = "DISABLED_BY_POLICY"
 
 
+class SourceProvenance(str, Enum):
+    LIVE_SEARCH_RESULT = "LIVE_SEARCH_RESULT"
+    CURATED_CANONICAL_MAPPING = "CURATED_CANONICAL_MAPPING"
+    DIRECT_URL_VERIFIED = "DIRECT_URL_VERIFIED"
+    INTERNAL_GENERATED = "INTERNAL_GENERATED"
+
+
+class DeliveryProvenance(str, Enum):
+    FRESH_COMPUTE = "FRESH_COMPUTE"
+    LIVE_PROVIDER_FETCH = "LIVE_PROVIDER_FETCH"
+    LIVE_FETCH = "LIVE_FETCH"
+    BACKEND_CACHE_HIT = "BACKEND_CACHE_HIT"
+    FRONTEND_CACHE_HIT = "FRONTEND_CACHE_HIT"
+
+
+# Backward compatibility alias
+ProviderProvenance = SourceProvenance
+
+
+
 class ResourceQueryContext(BaseModel):
     """
     Full canonical educational context for resource retrieval.
@@ -113,6 +133,9 @@ class ResourceIntentProfile(BaseModel):
     query_terms: List[str] = Field(default_factory=list)
     negative_terms: List[str] = Field(default_factory=list)
     recommended_resource_types: List[ResourceType] = Field(default_factory=list)
+    stage_archetype: Optional[str] = None
+    plan_version: Any = 1
+    fallback_concept_id: Optional[str] = None
     context: Optional[ResourceQueryContext] = None
 
 
@@ -167,6 +190,9 @@ class ResourceCandidate(BaseModel):
 
     verified: bool = True
     verification_levels: List[VerificationLevel] = Field(default_factory=list)
+    source_provenance: str = SourceProvenance.LIVE_SEARCH_RESULT.value
+    delivery_provenance: str = DeliveryProvenance.LIVE_FETCH.value
+    provenance: str = SourceProvenance.LIVE_SEARCH_RESULT.value
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -185,6 +211,9 @@ class YouTubeItemOutput(BaseModel):
     reason: str = ""
     why_recommended: Optional[str] = None
     verification_level: str = "PROVIDER_VERIFIED"
+    source_provenance: str = SourceProvenance.LIVE_SEARCH_RESULT.value
+    delivery_provenance: str = DeliveryProvenance.LIVE_FETCH.value
+    provenance: str = SourceProvenance.LIVE_SEARCH_RESULT.value
 
 
 class YouTubeResponseOutput(BaseModel):
@@ -203,7 +232,8 @@ class YouTubeResponseOutput(BaseModel):
 class MaterialItemOutput(BaseModel):
     id: Optional[str] = None
     title: str
-    url: str
+    url: Optional[str] = None
+    related_practice_url: Optional[str] = None
     description: str
     source: str
     type: str
@@ -221,6 +251,9 @@ class MaterialItemOutput(BaseModel):
     arxiv_id: Optional[str] = None
     why_recommended: Optional[str] = None
     verification_level: str = "DOMAIN_VERIFIED"
+    source_provenance: str = SourceProvenance.LIVE_SEARCH_RESULT.value
+    delivery_provenance: str = DeliveryProvenance.FRESH_COMPUTE.value
+    provenance: str = SourceProvenance.LIVE_SEARCH_RESULT.value
 
 
 class LearningMaterialsCategoriesOutput(BaseModel):
@@ -257,8 +290,9 @@ class CodingResourceItemOutput(BaseModel):
     id: str
     title: str
     source: str  # "Python Official Documentation", "GeeksforGeeks", "LeetCode", etc.
-    type: str    # "official_docs", "coding_reference", "coding_problem", "practice"
-    url: str
+    type: str    # "official_docs", "coding_reference", "coding_problem", "practice", "diagnostic_micro_problem"
+    url: Optional[str] = None
+    related_practice_url: Optional[str] = None
     description: str
     why_recommended: str
     difficulty: Optional[str] = None
@@ -266,6 +300,10 @@ class CodingResourceItemOutput(BaseModel):
     diagnostic_state: ProviderDiagnosticState = ProviderDiagnosticState.SUCCESS
     exact_section: Optional[str] = None
     time_required_minutes: Optional[int] = None
+    source_provenance: str = SourceProvenance.CURATED_CANONICAL_MAPPING.value
+    delivery_provenance: str = DeliveryProvenance.FRESH_COMPUTE.value
+    provenance: str = SourceProvenance.CURATED_CANONICAL_MAPPING.value
+    resource_role: str = "STAGE_SPECIFIC_REFERENCE"
 
 
 class CodingResourcesResponseOutput(BaseModel):

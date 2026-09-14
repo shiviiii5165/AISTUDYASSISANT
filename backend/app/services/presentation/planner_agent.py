@@ -261,6 +261,8 @@ async def plan_presentation(
 
     if len(raw_slides) <= config.slide_count:
         expansion_reason = ""
+    elif not expansion_reason and len(raw_slides) > config.slide_count:
+        expansion_reason = f"Expanded to {len(raw_slides)} slides to provide complete coverage for {len(ontology.core_subtopics) if ontology else 0} core subtopics"
 
     # Renumber strictly 1..N
     for i, s in enumerate(raw_slides):

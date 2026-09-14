@@ -142,8 +142,11 @@ class ResourceVerificationEngine:
                 logger.info(f"[ConceptGate] REJECTED | '{candidate.title[:45]}' lacks Python/OOP programming context")
                 return False
 
-        # Check that candidate has meaningful semantic overlap with normalized topic or objectives
-        topic_tokens = [w for w in re.split(r"[\s,:;\-]+", context.normalized_topic.lower()) if len(w) > 3 and w not in ["with", "from", "that", "this", "stage", "overview", "lecture"]]
+        # Check that candidate has meaningful semantic overlap with normalized topic, original topic, objectives, or canonical concepts
+        target_text = f"{context.normalized_topic} {context.original_topic} {' '.join(context.learning_objectives)}".lower()
+        topic_tokens = [w for w in re.split(r"[\s,:;\-]+", target_text) if len(w) >= 3 and w not in ["with", "from", "that", "this", "stage", "overview", "lecture"]]
+        if "database" in target_text and "management" in target_text:
+            topic_tokens.append("dbms")
         topic_token_matches = sum(1 for tt in topic_tokens if tt in text)
 
         if topic_token_matches == 0 and not has_canonical_concept:

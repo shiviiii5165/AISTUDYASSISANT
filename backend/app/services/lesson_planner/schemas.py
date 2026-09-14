@@ -257,7 +257,8 @@ class UniversalResourceCard(BaseModel):
     score_breakdown: ResourceScoreBreakdown = Field(default_factory=ResourceScoreBreakdown)
     year: Optional[int] = None
     access_type: str = "open"  # open, subscription, paywall
-    url: str
+    url: Optional[str] = None
+    related_practice_url: Optional[str] = None
     is_preprint: bool = False
     has_retraction_notice: bool = False
     venue_label: Optional[str] = None
@@ -272,6 +273,10 @@ class UniversalResourceCard(BaseModel):
     course_metadata: Optional[Dict[str, Any]] = None
     paper_section: Optional[str] = None
     outcome_effectiveness: Optional[int] = None
+    source_provenance: Optional[str] = "LIVE_SEARCH_RESULT"
+    delivery_provenance: Optional[str] = "FRESH_COMPUTE"
+    provenance: Optional[str] = "LIVE_SEARCH_RESULT"
+    resource_role: Optional[str] = "STAGE_SPECIFIC_REFERENCE"
 
 
 class TeacherLockItem(BaseModel):
@@ -455,6 +460,7 @@ class RoadmapStage(BaseModel):
     is_locked: bool = False
     universal_resources: List[UniversalResourceCard] = Field(default_factory=list)
     canonical_concept_id: Optional[str] = None
+    canonical_concept_ids: List[str] = Field(default_factory=list)
     
     next_best_action: NextBestAction = NextBestAction.TEACH
     version: int = 1

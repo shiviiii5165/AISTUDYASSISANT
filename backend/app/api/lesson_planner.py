@@ -11,7 +11,7 @@ from app.services.lesson_planner.schemas import (
     LearningRoadmap, RoadmapStage, StageStatus, StageReadiness,
     NextBestAction, ResourceType, ResourceStatus, ResourceRecommendation,
     RoadmapStatus, ClassType, StageActivity, LearningObjective, BloomLevel,
-    StageAction
+    StageAction, StageArchetype
 )
 from app.services.lesson_planner.generator import RoadmapGenerator
 from app.services.lesson_planner.engine import (
@@ -221,6 +221,99 @@ def _ensure_dev_seed_roadmap():
     )
     _save_roadmap(rm, dev_user)
 
+    dp_rm_id = "roadmap_dynamic_programming"
+    if dp_rm_id not in _MEMORY_ROADMAPS:
+        dp_stages = [
+            RoadmapStage(
+                id="stage_1",
+                concept_id="dp_intuition",
+                title="The Power of Memoization: From Recursion to DP",
+                description="Introduction to top-down memoization and recursion pruning",
+                duration_minutes=15,
+                archetype=StageArchetype.EXPLANATION,
+                sequence=0,
+                status=StageStatus.AVAILABLE,
+                readiness=StageReadiness.READY,
+                objectives=[
+                    LearningObjective(id="dp_o1", description="Understand top-down memoization and recursion tree pruning", bloom_level=BloomLevel.UNDERSTAND)
+                ]
+            ),
+            RoadmapStage(
+                id="dp_properties",
+                concept_id="concept_2",
+                title="The Two Pillars: Optimal Substructure & State Definition",
+                description="Identifying independent subproblems and formulating state",
+                duration_minutes=20,
+                archetype=StageArchetype.EXPLANATION,
+                sequence=1,
+                status=StageStatus.IN_PROGRESS,
+                readiness=StageReadiness.READY,
+                objectives=[
+                    LearningObjective(id="dp_o2", description="Formulate DP state and prove subproblem independence", bloom_level=BloomLevel.ANALYZE)
+                ]
+            ),
+            RoadmapStage(
+                id="dp_tabulation",
+                concept_id="concept_3",
+                title="Bottom-Up Approach: Tabulation & Recurrence Relations",
+                description="Iterative DP tables, base-case initialization, and transitions",
+                duration_minutes=20,
+                archetype=StageArchetype.EXPLANATION,
+                sequence=2,
+                status=StageStatus.LOCKED,
+                readiness=StageReadiness.PREREQUISITE_REQUIRED,
+                objectives=[
+                    LearningObjective(id="dp_o3", description="Implement iterative bottom-up table filling and base cases", bloom_level=BloomLevel.APPLY)
+                ]
+            ),
+            RoadmapStage(
+                id="dp_2d",
+                concept_id="concept_4",
+                title="2D Dynamic Programming: Grids and Knapsack",
+                description="Multi-dimensional state tables, 0/1 knapsack, and grid paths",
+                duration_minutes=25,
+                archetype=StageArchetype.EXPLANATION,
+                sequence=3,
+                status=StageStatus.LOCKED,
+                readiness=StageReadiness.PREREQUISITE_REQUIRED,
+                objectives=[
+                    LearningObjective(id="dp_o4", description="Solve 2D grid and knapsack problems with multi-dimensional states", bloom_level=BloomLevel.APPLY)
+                ]
+            ),
+            RoadmapStage(
+                id="dp_synthesis",
+                concept_id="concept_5",
+                title="Synthesis & Common Pitfalls",
+                description="State-transition mistakes, space optimization, and edge cases",
+                duration_minutes=20,
+                archetype=StageArchetype.SUMMARY,
+                sequence=4,
+                status=StageStatus.LOCKED,
+                readiness=StageReadiness.PREREQUISITE_REQUIRED,
+                objectives=[
+                    LearningObjective(id="dp_o5", description="Identify state transition bugs and apply space optimization techniques", bloom_level=BloomLevel.EVALUATE)
+                ]
+            )
+        ]
+        dp_rm = LearningRoadmap(
+            id=dp_rm_id,
+            course_id="course-algorithms",
+            topic="Dynamic Programming",
+            title="Dynamic Programming: Memoization and Tabulation",
+            description="Comprehensive mastery roadmap for Dynamic Programming covering Memoization, Optimal Substructure, Tabulation, 2D DP, and Synthesis.",
+            level="B.Tech",
+            language="english",
+            class_type=ClassType.INTERACTIVE_LECTURE,
+            target_duration_minutes=100,
+            status="published",
+            stages=dp_stages,
+            next_best_action=NextBestAction.PRACTICE,
+            overall_progress=20,
+            health_score=95,
+            version=1
+        )
+        _save_roadmap(dp_rm, dev_user)
+
 
 def _get_roadmap(roadmap_id: str, user_id: str) -> Optional[LearningRoadmap]:
     _ensure_dev_seed_roadmap()
@@ -340,6 +433,19 @@ async def get_roadmap(
     roadmap = _get_roadmap(roadmap_id, user_id)
     if not roadmap:
         raise HTTPException(status_code=404, detail="Roadmap not found")
+
+    from app.services.lesson_planner.vnext.canonical_concepts import CanonicalConceptResolver
+    for stage in roadmap.stages:
+        if not getattr(stage, "canonical_concept_ids", None):
+            resolved = CanonicalConceptResolver.resolve_stage_concepts(
+                topic=roadmap.topic or stage.title,
+                stage_title=stage.title,
+                stage_description=stage.description,
+                stage_objectives=getattr(stage, "learning_objectives", []),
+                stage_concept_id=stage.concept_id
+            )
+            stage.canonical_concept_ids = resolved
+
     return roadmap
 
 
@@ -710,7 +816,9 @@ async def get_stage_youtube_recommendations(
         stage=stage,
         learner_level=roadmap.level,
         language=roadmap.language,
-        refresh=refresh
+        refresh=refresh,
+        roadmap_id=roadmap.id,
+        plan_version=getattr(roadmap, "version", 1)
     )
     return res
 
@@ -740,7 +848,9 @@ async def get_stage_learning_materials(
         stage=stage,
         learner_level=roadmap.level,
         language=roadmap.language,
-        refresh=refresh
+        refresh=refresh,
+        roadmap_id=roadmap.id,
+        plan_version=getattr(roadmap, "version", 1)
     )
     return res
 
@@ -764,11 +874,25 @@ async def get_stage_coding_resources(
     if not stage:
         raise HTTPException(status_code=404, detail="Stage not found")
 
+    # Populate canonical_concept_ids if empty
+    if not getattr(stage, "canonical_concept_ids", None):
+        from app.services.lesson_planner.vnext.canonical_concepts import CanonicalConceptResolver
+        resolved = CanonicalConceptResolver.resolve_stage_concepts(
+            topic=roadmap.topic or stage.title,
+            stage_title=stage.title,
+            stage_description=stage.description,
+            stage_objectives=getattr(stage, "learning_objectives", []),
+            stage_concept_id=stage.concept_id
+        )
+        stage.canonical_concept_ids = resolved
+
     res = await StageResourceIntelligenceService.get_coding_resources(
         topic=roadmap.topic or stage.title,
         stage=stage,
         learner_level=roadmap.level,
-        refresh=refresh
+        refresh=refresh,
+        roadmap_id=roadmap.id,
+        plan_version=getattr(roadmap, "version", 1)
     )
     return res
 

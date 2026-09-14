@@ -33,8 +33,8 @@ _MEM_CACHE: Dict[str, Dict[str, Any]] = {}
 _IN_FLIGHT_REQUESTS: Dict[str, asyncio.Future] = {}
 _DEDUP_LOCK = asyncio.Lock()
 
-PROVIDER_POLICY_VERSION = "2.1.0"
-RESOURCE_SCHEMA_VERSION = "2.0.0"
+PROVIDER_POLICY_VERSION = "2.4.0"
+RESOURCE_SCHEMA_VERSION = "2.1.0"
 
 # Configurable TTLs by resource type
 SOURCE_TYPE_TTL = {
@@ -49,29 +49,101 @@ SOURCE_TYPE_TTL = {
 }
 
 
-def compute_cache_key(profile: ResourceIntentProfile, resource_type: str) -> str:
+def compute_cache_key(profile: ResourceIntentProfile, resource_type: str = "all", provider: Optional[str] = None) -> str:
     """
-    Computes deterministic SHA-256 identity based on semantic resource context:
+    Computes deterministic SHA-256 identity based on stage-specific semantic resource context:
+    - roadmap_id
+    - plan_version
+    - stage_id
     - normalized_topic
+    - normalized_stage_title
+    - stage_archetype
+    - stage_learning_objectives
     - canonical_concept_ids
+    - fallback_concept_id
     - domain
+    - specialization
     - learner_level
+    - primary_intent
+    - instructional_mode
     - resource_type
     - provider_policy_version
     - resource_schema_version
     """
-    concept_ids = sorted(profile.canonical_concept_ids or [c.strip().lower() for c in profile.concept_names])
+    import re
+    res_type = (provider or resource_type or "all").strip().lower()
+
+    # Canonical concept IDs (sanitize generic concept_N)
+    raw_concepts = profile.canonical_concept_ids or []
+    cleaned_concepts = []
+    for c in raw_concepts:
+        c_str = str(c).strip()
+        if re.match(r"^concept_\d+$", c_str, re.IGNORECASE):
+            continue
+        cleaned_concepts.append(c_str.lower())
+    canonical_concept_ids = sorted(list(set(cleaned_concepts)))
+
+    # Fallback concept ID: if provided, sanitize it too
+    fallback_id = getattr(profile, "fallback_concept_id", None)
+    if not fallback_id and getattr(profile, "concept_ids", None):
+        fallback_id = profile.concept_ids[0] if profile.concept_ids else None
+    if fallback_id and re.match(r"^concept_\d+$", str(fallback_id).strip(), re.IGNORECASE):
+        fallback_id = "UNRESOLVED_CANONICAL_CONCEPT"
+    elif fallback_id:
+        fallback_id = str(fallback_id).strip().lower()
+
+    # Stage archetype
+    stage_archetype = getattr(profile, "stage_archetype", None)
+    if not stage_archetype and profile.context:
+        stage_archetype = getattr(profile.context, "stage_type", None)
+    stage_archetype = (stage_archetype or "concept_intro").strip().lower()
+
+    # Plan version
+    plan_ver = getattr(profile, "plan_version", 1)
+    if not plan_ver and profile.context:
+        plan_ver = getattr(profile.context, "plan_version", 1)
+    try:
+        if isinstance(plan_ver, str) and plan_ver.isdigit():
+            plan_ver = int(plan_ver)
+    except Exception:
+        pass
+
+    # Learning objectives
+    stage_learning_objectives = [
+        obj.strip().lower() for obj in (profile.learning_objectives or [])
+    ]
+
+    # Normalized stage title and topic
+    norm_stage_title = (profile.stage_title or "").strip().lower()
+    norm_topic = (profile.canonical_topic or "").strip().lower()
+
+    # Primary intent
+    stage_intent = profile.stage_intent
+    primary_intent = stage_intent.value if hasattr(stage_intent, "value") else str(stage_intent or "CONCEPT_LEARNING")
+    primary_intent = primary_intent.strip().lower()
+
     payload = {
-        "normalized_topic": profile.canonical_topic.strip().lower(),
-        "canonical_concept_ids": concept_ids,
-        "domain": profile.domain.strip().lower(),
-        "learner_level": profile.learner_level.strip().lower(),
-        "resource_type": resource_type.strip().lower(),
+        "roadmap_id": (profile.roadmap_id or "").strip().lower(),
+        "plan_version": plan_ver,
+        "stage_id": (profile.stage_id or "").strip().lower(),
+        "normalized_topic": norm_topic,
+        "normalized_stage_title": norm_stage_title,
+        "stage_archetype": stage_archetype,
+        "stage_learning_objectives": stage_learning_objectives,
+        "canonical_concept_ids": canonical_concept_ids,
+        "fallback_concept_id": fallback_id,
+        "domain": (profile.domain or "general").strip().lower(),
+        "specialization": (profile.specialization or "").strip().lower() if profile.specialization else None,
+        "learner_level": (profile.learner_level or "b.tech").strip().lower(),
+        "primary_intent": primary_intent,
+        "instructional_mode": (profile.instructional_mode or "direct_instruction").strip().lower(),
+        "resource_type": res_type,
         "provider_policy_version": PROVIDER_POLICY_VERSION,
         "resource_schema_version": RESOURCE_SCHEMA_VERSION
     }
     raw = json.dumps(payload, sort_keys=True)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
 
 
 class DurableResourceCache:

@@ -79,8 +79,14 @@ class CodingResourceEngine:
         "python_oop": "https://www.geeksforgeeks.org/object-oriented-programming-in-python/",
         "binary_search_tree": "https://www.geeksforgeeks.org/binary-search-tree-data-structure/",
         "dynamic_programming": "https://www.geeksforgeeks.org/dynamic-programming/",
+        "dp_memoization": "https://www.geeksforgeeks.org/memoization-1d-2d-and-3d/",
+        "dp_optimal_substructure": "https://www.geeksforgeeks.org/optimal-substructure-property-in-dynamic-programming-dp-2/",
+        "dp_tabulation": "https://www.geeksforgeeks.org/tabulation-vs-memoization/",
+        "dp_2d_knapsack": "https://www.geeksforgeeks.org/0-1-knapsack-problem-dp-10/",
+        "dp_synthesis_pitfalls": "https://www.geeksforgeeks.org/space-optimization-using-dynamic-programming/",
         "binary_tree_traversal": "https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/",
-        "react_server_components": "https://www.geeksforgeeks.org/reactjs-server-components/"
+        "react_server_components": "https://www.geeksforgeeks.org/reactjs-server-components/",
+        "transformer_architecture": "https://www.geeksforgeeks.org/transformer-neural-network-in-deep-learning/"
     }
 
     CANONICAL_OFFICIAL_DOCS = {
@@ -107,6 +113,22 @@ class CodingResourceEngine:
             ("Medium", "Insert into a Binary Search Tree", "https://leetcode.com/problems/insert-into-a-binary-search-tree/"),
             ("Medium", "Delete Node in a BST", "https://leetcode.com/problems/delete-node-in-a-bst/")
         ],
+        "dp_memoization": [
+            ("Easy", "Climbing Stairs", "https://leetcode.com/problems/climbing-stairs/"),
+            ("Easy", "Min Cost Climbing Stairs", "https://leetcode.com/problems/min-cost-climbing-stairs/")
+        ],
+        "dp_tabulation": [
+            ("Medium", "Coin Change", "https://leetcode.com/problems/coin-change/"),
+            ("Medium", "House Robber", "https://leetcode.com/problems/house-robber/")
+        ],
+        "dp_2d": [
+            ("Medium", "0/1 Knapsack / Target Sum", "https://leetcode.com/problems/target-sum/"),
+            ("Medium", "Unique Paths", "https://leetcode.com/problems/unique-paths/"),
+            ("Medium", "Partition Equal Subset Sum", "https://leetcode.com/problems/partition-equal-subset-sum/")
+        ],
+        "dp_synthesis": [
+            ("Medium", "Longest Increasing Subsequence", "https://leetcode.com/problems/longest-increasing-subsequence/")
+        ],
         "dp": [
             ("Easy", "Climbing Stairs", "https://leetcode.com/problems/climbing-stairs/"),
             ("Medium", "Coin Change", "https://leetcode.com/problems/coin-change/"),
@@ -123,8 +145,70 @@ class CodingResourceEngine:
     last_provider_diagnostics: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
-    def is_algorithmic_objective(cls, topic: str, stage: RoadmapStage) -> bool:
+    def _matches_bst(cls, text: str, context: Optional[ResourceQueryContext] = None) -> bool:
+        """
+        Token-aware / regex boundary matching for Binary Search Tree.
+        Matches:
+        - "bst", "BST", "binary search tree", "binary-search-tree"
+        Does NOT match:
+        - "substructure", "obstacle", "abstract", "substitution", etc.
+        """
+        if context and context.canonical_concept_ids:
+            for cid in context.canonical_concept_ids:
+                tokens = re.split(r"[\._\-]", cid.lower())
+                if "bst" in tokens or "binary_search_tree" in cid.lower():
+                    return True
+        return bool(re.search(r"\b(bst|binary[\s-]search[\s-]tree)\b", text, re.IGNORECASE))
+
+    @classmethod
+    def _detect_dp_stage_type(
+        cls,
+        stage_text: str,
+        context: Optional[ResourceQueryContext] = None,
+        stage: Optional[RoadmapStage] = None
+    ) -> Optional[str]:
+        concepts = (context.canonical_concept_ids if context else []) or []
+        stage_title_desc = f"{stage.title} {stage.description}".lower() if stage else stage_text.lower()
+
+        # 1. Check canonical concepts first (highest precision)
+        if any(c in concepts for c in ["cs.algo.dp.two_dimensional", "cs.algo.dp.grid", "cs.algo.dp.knapsack"]):
+            return "dp_2d"
+        if any(c in concepts for c in ["cs.algo.dp.state_design", "cs.algo.dp.transition_errors", "cs.algo.dp.complexity", "cs.algo.dp.debugging"]):
+            return "dp_synthesis"
+        if any(c in concepts for c in ["cs.algo.dp.optimal_substructure", "cs.algo.dp.state_definition"]):
+            return "dp_optimal_substructure"
+        if any(c in concepts for c in ["cs.algo.dp.memoization", "cs.algo.dp.top_down"]):
+            return "dp_memoization"
+        if any(c in concepts for c in ["cs.algo.dp.tabulation", "cs.algo.dp.bottom_up", "cs.algo.dp.recurrence"]):
+            return "dp_tabulation"
+
+        # 2. Stage title & description keywords (isolated from broad roadmap topic)
+        if any(k in stage_title_desc for k in ["2d", "knapsack", "grid", "unique paths", "subset sum", "target sum", "two dimensional"]):
+            return "dp_2d"
+        if any(k in stage_title_desc for k in ["synthesis", "pitfall", "pitfalls", "mistake", "debugging", "complexity", "space optimization", "transition error"]):
+            return "dp_synthesis"
+        if any(k in stage_title_desc for k in ["optimal substructure", "substructure", "state definition", "two pillars"]):
+            return "dp_optimal_substructure"
+        if any(k in stage_title_desc for k in ["memoization", "top-down", "top down", "recursion to dp", "power of memoization"]):
+            return "dp_memoization"
+        if any(k in stage_title_desc for k in ["tabulation", "bottom-up", "bottom up", "recurrence relation", "iterative dp"]):
+            return "dp_tabulation"
+
+        # 3. Fallback to general DP
+        combined = f"{stage_text} {' '.join(concepts)}".lower()
+        if bool(re.search(r"\b(dp|dynamic[\s-]programming)\b", combined, re.IGNORECASE)):
+            return "dp"
+
+        return None
+
+    @classmethod
+    def is_algorithmic_objective(cls, topic: str, stage: RoadmapStage, domain: Optional[str] = None) -> bool:
         """Determines if this stage specifically teaches algorithmic / DSA problem solving."""
+        topic_lower = topic.lower()
+        if domain and any(d in domain.lower() for d in ["electrical", "telecom", "wireless", "communication", "electron", "physics", "biology", "history"]):
+            return False
+        if any(k in topic_lower for k in ["mimo", "beamforming", "pulse shaping", "nyquist", "react", "transformer", "photosynthesis", "french revolution"]):
+            return False
         text = f"{topic} {stage.title} {stage.description}".lower()
         tokens = set(re.findall(r"\w+", text))
         return bool(tokens.intersection(cls.ALGORITHMIC_DSA_KEYWORDS))
@@ -163,7 +247,25 @@ class CodingResourceEngine:
         start_time = time.time()
         topic_lower = topic.lower()
         stage_text = f"{topic} {stage.title} {stage.description}".lower()
-        is_algo = cls.is_algorithmic_objective(topic, stage)
+
+        # Determine explicit domain and specialization
+        detected_domain = (context.domain if context and context.domain else "").lower()
+        if not detected_domain:
+            if any(k in topic_lower for k in ["mimo", "beamforming", "nyquist", "pulse shaping", "wireless", "telecom", "antenna"]):
+                detected_domain = "electrical_engineering"
+            elif any(k in topic_lower for k in ["react"]):
+                detected_domain = "software_engineering"
+            elif any(k in topic_lower for k in ["python", "tree", "bst", "dynamic programming", "transformer"]):
+                detected_domain = "computer_science"
+            else:
+                detected_domain = "general"
+
+        is_non_cs_domain = any(d in detected_domain for d in [
+            "electrical", "telecom", "wireless", "communication", "electron",
+            "physics", "chemistry", "biology", "mechanical", "civil", "history"
+        ]) or any(k in topic_lower for k in ["mimo", "beamforming", "pulse shaping", "nyquist", "antenna", "photosynthesis", "french revolution"])
+
+        is_algo = cls.is_algorithmic_objective(topic, stage, detected_domain)
 
         cards: List[UniversalResourceCard] = []
         diagnostics: Dict[str, Dict[str, Any]] = {}
@@ -197,7 +299,10 @@ class CodingResourceEngine:
                 score_breakdown=ResourceScoreBreakdown(concept_match=98, level_fit=95, authority=99, freshness=98, evidence_quality=98, accessibility=100),
                 url=doc_url,
                 access_type="open",
-                confidence=0.98
+                confidence=0.98,
+                source_provenance="CURATED_CANONICAL_MAPPING",
+                delivery_provenance="FRESH_COMPUTE",
+                provenance="CURATED_CANONICAL_MAPPING"
             )
             cards.append(doc_card)
             docs_lat = (time.time() - docs_start) * 1000
@@ -227,7 +332,10 @@ class CodingResourceEngine:
                 score_breakdown=ResourceScoreBreakdown(concept_match=98, level_fit=95, authority=99, freshness=98, evidence_quality=98, accessibility=100),
                 url="https://react.dev/reference/rsc/server-components",
                 access_type="open",
-                confidence=0.98
+                confidence=0.98,
+                source_provenance="CURATED_CANONICAL_MAPPING",
+                delivery_provenance="FRESH_COMPUTE",
+                provenance="CURATED_CANONICAL_MAPPING"
             )
             cards.append(doc_card)
             docs_lat = (time.time() - docs_start) * 1000
@@ -261,73 +369,168 @@ class CodingResourceEngine:
         gfg_url = None
         gfg_title = f"GeeksforGeeks: {topic} Implementation & Complexity Guide"
 
-        # Resolve verified canonical GFG URL
-        if is_python and any(k in stage_text for k in ["class", "object", "oop"]):
-            gfg_url = cls.CANONICAL_GFG_URLS["python_classes_objects"]
-            gfg_title = "GeeksforGeeks: Python Classes and Objects"
-        elif any(k in stage_text for k in ["binary search tree", "bst"]):
-            gfg_url = cls.CANONICAL_GFG_URLS["binary_search_tree"]
-            gfg_title = "GeeksforGeeks: Binary Search Tree Data Structure"
-        elif any(k in stage_text for k in ["dynamic programming", "dp"]):
-            gfg_url = cls.CANONICAL_GFG_URLS["dynamic_programming"]
-            gfg_title = "GeeksforGeeks: Dynamic Programming Overview & Practice"
-        elif any(k in stage_text for k in ["traversal", "inorder"]):
-            gfg_url = cls.CANONICAL_GFG_URLS["binary_tree_traversal"]
-            gfg_title = "GeeksforGeeks: Binary Tree Traversals (Inorder, Preorder, Postorder)"
-        elif is_react and "server" in stage_text:
-            gfg_url = cls.CANONICAL_GFG_URLS["react_server_components"]
-            gfg_title = "GeeksforGeeks: React Server Components Architecture"
-        else:
-            slug = topic.lower().replace(" ", "-").replace("_", "-")
-            gfg_url = f"https://www.geeksforgeeks.org/{slug}/"
-
-        if gfg_url:
-            gfg_card = UniversalResourceCard(
-                id=f"gfg_{abs(hash(gfg_url)) % 100000}",
-                title=gfg_title,
-                type="coding_reference",
-                why_recommended="Canonical implementation reference with code snippets and time/space complexity analysis.",
-                what_it_covers=f"Step-by-step implementation, syntax conventions, and edge-case handling for {topic}.",
-                learner_level=stage.differentiation.core or "All Levels",
-                use_during="worked_example",
-                exact_section="Implementation & Complexity Analysis",
-                source_authority="GeeksforGeeks Verified Reference",
-                quality_score=92,
-                score_breakdown=ResourceScoreBreakdown(concept_match=95, level_fit=90, authority=90, freshness=88, evidence_quality=92, accessibility=100),
-                url=gfg_url,
-                access_type="open",
-                confidence=0.92
-            )
-            cards.append(gfg_card)
+        if is_non_cs_domain:
+            # Policy requirement: GFG is strictly restricted to CS, programming, DSA, and software engineering.
             gfg_lat = (time.time() - gfg_start) * 1000
             diagnostics["geeksforgeeks"] = {
-                "state": ProviderDiagnosticState.SUCCESS.value,
+                "state": ProviderDiagnosticState.DISABLED_BY_POLICY.value,
                 "query": f"GeeksforGeeks {topic}",
-                "http_status": 200,
-                "latency_ms": gfg_lat,
-                "raw_count": 1,
-                "post_filter_count": 1,
-                "final_count": 1,
-                "failure_reason": None
-            }
-            log_provider_call("geeksforgeeks", f"GeeksforGeeks {topic}", 200, gfg_lat, 1, 1, 1)
-        else:
-            diagnostics["geeksforgeeks"] = {
-                "state": ProviderDiagnosticState.NO_RELEVANT_RESULTS.value,
-                "query": topic,
                 "http_status": None,
-                "latency_ms": 0.0,
+                "latency_ms": gfg_lat,
                 "raw_count": 0,
                 "post_filter_count": 0,
                 "final_count": 0,
-                "failure_reason": "No relevant GeeksforGeeks candidate found."
+                "failure_reason": f"GeeksforGeeks provider disabled by policy for domain '{detected_domain}'. Only eligible for CS, programming, DSA, and software engineering topics."
             }
+            log_provider_call("geeksforgeeks", f"GeeksforGeeks {topic}", None, gfg_lat, 0, 0, 0, f"Domain {detected_domain} disabled by policy")
+        else:
+            # Resolve verified canonical GFG URL
+            dp_stage_type = cls._detect_dp_stage_type(stage_text, context, stage=stage)
+            gfg_role = "STAGE_SPECIFIC_REFERENCE"
+            gfg_desc = f"Canonical implementation reference with code snippets and time/space complexity analysis for {topic}."
+
+            if is_python and any(k in stage_text for k in ["class", "object", "oop"]):
+                gfg_url = cls.CANONICAL_GFG_URLS["python_classes_objects"]
+                gfg_title = "GeeksforGeeks: Python Classes and Objects"
+                gfg_desc = "Step-by-step implementation of classes, __init__ constructor, methods, and instance state."
+            elif cls._matches_bst(stage_text, context):
+                gfg_url = cls.CANONICAL_GFG_URLS["binary_search_tree"]
+                gfg_title = "GeeksforGeeks: Binary Search Tree Data Structure"
+                gfg_desc = "BST invariant, node insertion, search, deletion, and tree traversals with complexity."
+            elif dp_stage_type == "dp_memoization":
+                gfg_url = cls.CANONICAL_GFG_URLS["dp_memoization"]
+                gfg_title = "GeeksforGeeks: Memoization (1D, 2D and 3D) in Dynamic Programming"
+                gfg_desc = "Top-down memoization pattern, recursive call tree pruning, and lookup table caching."
+            elif dp_stage_type == "dp_optimal_substructure":
+                gfg_url = cls.CANONICAL_GFG_URLS["dp_optimal_substructure"]
+                gfg_title = "GeeksforGeeks: Optimal Substructure Property in Dynamic Programming"
+                gfg_desc = "Principle of optimality, subproblem independence, and mathematical state definitions."
+            elif dp_stage_type == "dp_tabulation":
+                gfg_url = cls.CANONICAL_GFG_URLS["dp_tabulation"]
+                gfg_title = "GeeksforGeeks: Tabulation vs Memoization in Dynamic Programming"
+                gfg_desc = "Iterative bottom-up table filling, base-case initialization, and state transition loops."
+            elif dp_stage_type == "dp_2d":
+                gfg_url = cls.CANONICAL_GFG_URLS["dp_2d_knapsack"]
+                gfg_title = "GeeksforGeeks: 0/1 Knapsack Problem — Dynamic Programming"
+                gfg_desc = "2D state table construction, inclusion/exclusion transitions, and grid boundary conditions."
+            elif dp_stage_type == "dp_synthesis":
+                gfg_url = cls.CANONICAL_GFG_URLS["dp_synthesis_pitfalls"]
+                gfg_title = "GeeksforGeeks: Space Optimization using Dynamic Programming"
+                gfg_desc = "Techniques for reducing DP space complexity from O(N^2) or O(N) to O(1) or sliding state arrays."
+            elif dp_stage_type == "dp":
+                gfg_url = cls.CANONICAL_GFG_URLS["dynamic_programming"]
+                gfg_title = "GeeksforGeeks: Dynamic Programming Overview & Practice"
+                gfg_role = "SHARED_REFERENCE"
+            elif any(k in stage_text for k in ["traversal", "inorder"]):
+                gfg_url = cls.CANONICAL_GFG_URLS["binary_tree_traversal"]
+                gfg_title = "GeeksforGeeks: Binary Tree Traversals (Inorder, Preorder, Postorder)"
+            elif is_react:
+                if "server" in stage_text:
+                    gfg_url = cls.CANONICAL_GFG_URLS["react_server_components"]
+                    gfg_title = "GeeksforGeeks: React Server Components Architecture"
+                else:
+                    gfg_url = "https://www.geeksforgeeks.org/reactjs-hooks/"
+                    gfg_title = f"GeeksforGeeks: {topic} and State Management Guide"
+            elif "transformer" in stage_text:
+                gfg_url = cls.CANONICAL_GFG_URLS["transformer_architecture"]
+                gfg_title = "GeeksforGeeks: Transformer Neural Network Architecture Guide"
+            elif any(k in stage_text for k in ["code", "programming", "algorithm", "data structure", "syntax", "implementation"]):
+                slug = topic.lower().replace(" ", "-").replace("_", "-")
+                gfg_url = f"https://www.geeksforgeeks.org/{slug}/"
+
+            if gfg_url:
+                gfg_card = UniversalResourceCard(
+                    id=f"gfg_{abs(hash(gfg_url)) % 100000}",
+                    title=gfg_title,
+                    type="coding_reference",
+                    why_recommended="Canonical implementation reference with code snippets and time/space complexity analysis.",
+                    what_it_covers=gfg_desc,
+                    learner_level=stage.differentiation.core or "All Levels",
+                    use_during="worked_example",
+                    exact_section="Implementation & Complexity Analysis",
+                    source_authority="GeeksforGeeks Verified Reference",
+                    quality_score=92,
+                    score_breakdown=ResourceScoreBreakdown(concept_match=95, level_fit=90, authority=90, freshness=88, evidence_quality=92, accessibility=100),
+                    url=gfg_url,
+                    access_type="open",
+                    confidence=0.92,
+                    source_provenance="CURATED_CANONICAL_MAPPING",
+                    delivery_provenance="FRESH_COMPUTE",
+                    provenance="CURATED_CANONICAL_MAPPING",
+                    resource_role=gfg_role
+                )
+                cards.append(gfg_card)
+                gfg_lat = (time.time() - gfg_start) * 1000
+                diagnostics["geeksforgeeks"] = {
+                    "state": ProviderDiagnosticState.SUCCESS.value,
+                    "query": f"GeeksforGeeks {topic}",
+                    "http_status": 200,
+                    "latency_ms": gfg_lat,
+                    "raw_count": 1,
+                    "post_filter_count": 1,
+                    "final_count": 1,
+                    "failure_reason": None
+                }
+                log_provider_call("geeksforgeeks", f"GeeksforGeeks {topic}", 200, gfg_lat, 1, 1, 1)
+            else:
+                diagnostics["geeksforgeeks"] = {
+                    "state": ProviderDiagnosticState.NO_RELEVANT_RESULTS.value,
+                    "query": topic,
+                    "http_status": None,
+                    "latency_ms": 0.0,
+                    "raw_count": 0,
+                    "post_filter_count": 0,
+                    "final_count": 0,
+                    "failure_reason": "No relevant GeeksforGeeks candidate found."
+                }
 
         # ============================================================
         # 3. LEETCODE PROVIDER ADAPTER
         # ============================================================
         lc_start = time.time()
-        if not is_algo:
+        if is_non_cs_domain:
+            # Policy requirement: LeetCode is strictly restricted to CS / DSA / algorithmic practice.
+            lc_lat = (time.time() - lc_start) * 1000
+            diagnostics["leetcode"] = {
+                "state": ProviderDiagnosticState.DISABLED_BY_POLICY.value,
+                "query": f"LeetCode {topic}",
+                "http_status": None,
+                "latency_ms": lc_lat,
+                "raw_count": 0,
+                "post_filter_count": 0,
+                "final_count": 0,
+                "failure_reason": f"LeetCode provider disabled by policy for non-CS domain '{detected_domain}'. LeetCode is restricted to algorithms and data structures."
+            }
+            log_provider_call("leetcode", topic, None, lc_lat, 0, 0, 0, f"Non-CS domain {detected_domain} disabled by policy")
+        elif is_react:
+            # React components / web frameworks: LeetCode absent!
+            lc_lat = (time.time() - lc_start) * 1000
+            diagnostics["leetcode"] = {
+                "state": ProviderDiagnosticState.DISABLED_BY_POLICY.value,
+                "query": topic,
+                "http_status": None,
+                "latency_ms": lc_lat,
+                "raw_count": 0,
+                "post_filter_count": 0,
+                "final_count": 0,
+                "failure_reason": "React framework / architecture stages do not force LeetCode algorithmic progression."
+            }
+            log_provider_call("leetcode", topic, None, lc_lat, 0, 0, 0, "React stage disabled by policy")
+        elif "transformer" in topic_lower:
+            # Transformer Architecture: LeetCode absent!
+            lc_lat = (time.time() - lc_start) * 1000
+            diagnostics["leetcode"] = {
+                "state": ProviderDiagnosticState.DISABLED_BY_POLICY.value,
+                "query": topic,
+                "http_status": None,
+                "latency_ms": lc_lat,
+                "raw_count": 0,
+                "post_filter_count": 0,
+                "final_count": 0,
+                "failure_reason": "Transformer architecture stages do not force LeetCode algorithmic progression."
+            }
+            log_provider_call("leetcode", topic, None, lc_lat, 0, 0, 0, "Transformer stage disabled by policy")
+        elif not is_algo:
             # Policy requirement: Conceptual programming stages do NOT force LeetCode!
             lc_lat = (time.time() - lc_start) * 1000
             diagnostics["leetcode"] = {
@@ -338,7 +541,7 @@ class CodingResourceEngine:
                 "raw_count": 0,
                 "post_filter_count": 0,
                 "final_count": 0,
-                "failure_reason": "Stage teaches conceptual OOP; LeetCode algorithmic progression disabled by policy."
+                "failure_reason": "Stage teaches conceptual OOP syntax; LeetCode algorithmic progression disabled by policy."
             }
             log_provider_call("leetcode", topic, None, lc_lat, 0, 0, 0, "Stage is conceptual OOP; disabled by policy")
         else:
@@ -348,7 +551,7 @@ class CodingResourceEngine:
             if has_misconception:
                 cards.append(UniversalResourceCard(
                     id=f"diag_{abs(hash(topic)) % 100000}",
-                    title=f"Diagnostic Micro-Problem: {topic} Precondition Check",
+                    title=f"TeachGenie Diagnostic Check: {topic} Precondition Invariant",
                     type="diagnostic_micro_problem",
                     why_recommended="Targeted micro-problem to clear detected misconception before full problem sets.",
                     what_it_covers=f"Verifies base condition and invariant validation for {topic}.",
@@ -358,16 +561,77 @@ class CodingResourceEngine:
                     source_authority="TeachGenie Diagnostic Engine",
                     quality_score=95,
                     score_breakdown=ResourceScoreBreakdown(concept_match=98, level_fit=95, authority=90, freshness=95, evidence_quality=98, accessibility=100),
-                    url=f"https://leetcode.com/problemset/all/?search={encoded_topic}",
+                    url=None,
+                    related_practice_url=f"https://leetcode.com/problemset/all/?search={encoded_topic}",
                     access_type="open",
-                    confidence=0.95
+                    confidence=0.95,
+                    source_provenance="INTERNAL_GENERATED",
+                    delivery_provenance="FRESH_COMPUTE",
+                    provenance="INTERNAL_GENERATED",
+                    resource_role="STAGE_SPECIFIC_DIAGNOSTIC"
                 ))
 
             # Check known canonical problems first
             matched_problems = []
-            if any(k in stage_text for k in ["bst", "binary search tree"]):
+            is_diag_only = False
+
+            if cls._matches_bst(stage_text, context):
                 matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("bst", [])
-            elif any(k in stage_text for k in ["dynamic programming", "dp"]):
+            elif dp_stage_type == "dp_memoization":
+                matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("dp_memoization", [])
+            elif dp_stage_type == "dp_optimal_substructure":
+                # Optimal Substructure / State Definition:
+                # Conceptual explanation + minimal diagnostic practice without forcing 3 generic LeetCode problems
+                is_diag_only = True
+                cards.append(UniversalResourceCard(
+                    id=f"diag_opt_sub_{abs(hash(stage.title)) % 100000}",
+                    title="TeachGenie Diagnostic Check: Optimal Substructure & State Invariant",
+                    type="diagnostic_micro_problem",
+                    why_recommended="Targeted conceptual check verifying correct state formulation without prematurely jumping to full problem sets.",
+                    what_it_covers="Verifies subproblem independence and state completeness before recurrence formulation.",
+                    learner_level="Diagnostic Checkpoint",
+                    use_during="diagnostic_check",
+                    time_required_minutes=5,
+                    source_authority="TeachGenie Diagnostic Engine",
+                    quality_score=96,
+                    score_breakdown=ResourceScoreBreakdown(concept_match=98, level_fit=95, authority=95, freshness=95, evidence_quality=98, accessibility=100),
+                    url=None,
+                    related_practice_url="https://leetcode.com/problemset/all/?search=dynamic+programming+optimal+substructure",
+                    access_type="open",
+                    confidence=0.96,
+                    source_provenance="INTERNAL_GENERATED",
+                    delivery_provenance="FRESH_COMPUTE",
+                    provenance="INTERNAL_GENERATED",
+                    resource_role="STAGE_SPECIFIC_DIAGNOSTIC"
+                ))
+            elif dp_stage_type == "dp_tabulation":
+                matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("dp_tabulation", [])
+            elif dp_stage_type == "dp_2d":
+                matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("dp_2d", [])
+            elif dp_stage_type == "dp_synthesis":
+                cards.append(UniversalResourceCard(
+                    id=f"diag_dp_synth_{abs(hash(stage.title)) % 100000}",
+                    title="TeachGenie Diagnostic Exercise: DP State-Transition & Space Optimization Debugging",
+                    type="diagnostic_micro_problem",
+                    why_recommended="Diagnostic exercise for mastering edge cases and identifying state recurrence flaws.",
+                    what_it_covers="Detecting off-by-one table errors and optimizing 2D state transitions to 1D sliding rows.",
+                    learner_level="Intermediate / Advanced",
+                    use_during="diagnostic_check",
+                    time_required_minutes=10,
+                    source_authority="TeachGenie Diagnostic Engine",
+                    quality_score=95,
+                    score_breakdown=ResourceScoreBreakdown(concept_match=96, level_fit=94, authority=95, freshness=92, evidence_quality=96, accessibility=100),
+                    url=None,
+                    related_practice_url="https://leetcode.com/problemset/all/?search=dynamic+programming+optimization",
+                    access_type="open",
+                    confidence=0.95,
+                    source_provenance="INTERNAL_GENERATED",
+                    delivery_provenance="FRESH_COMPUTE",
+                    provenance="INTERNAL_GENERATED",
+                    resource_role="STAGE_SPECIFIC_DIAGNOSTIC"
+                ))
+                matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("dp_synthesis", [])
+            elif dp_stage_type == "dp":
                 matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("dp", [])
             elif any(k in stage_text for k in ["binary tree", "tree traversal", "inorder"]):
                 matched_problems = cls.CANONICAL_LEETCODE_PROBLEMS.get("binary_tree", [])
@@ -378,7 +642,7 @@ class CodingResourceEngine:
                         id=f"lc_{diff_level.lower()}_{abs(hash(prob_url)) % 10000}",
                         title=f"LeetCode {diff_level}: {prob_title}",
                         type="coding_problem",
-                        why_recommended=f"Curated {diff_level} problem verifying algorithmic pattern mastery for {topic}.",
+                        why_recommended=f"Curated {diff_level} problem verifying algorithmic pattern mastery for {stage.title}.",
                         what_it_covers=f"Pattern mastery problem practicing {prob_title} under standard interview constraints.",
                         learner_level=f"{diff_level} Difficulty",
                         use_during="guided_practice" if diff_level == "Easy" else "independent_practice",
@@ -388,9 +652,13 @@ class CodingResourceEngine:
                         score_breakdown=ResourceScoreBreakdown(concept_match=95, level_fit=92, authority=95, freshness=90, evidence_quality=95, accessibility=100),
                         url=prob_url,
                         access_type="open",
-                        confidence=0.94
+                        confidence=0.94,
+                        source_provenance="CURATED_CANONICAL_MAPPING",
+                        delivery_provenance="FRESH_COMPUTE",
+                        provenance="CURATED_CANONICAL_MAPPING",
+                        resource_role="STAGE_SPECIFIC_PRACTICE"
                     ))
-            else:
+            elif not is_diag_only:
                 distribution = cls.DIFFICULTY_DISTRIBUTIONS.get(learner_proficiency.lower(), cls.DIFFICULTY_DISTRIBUTIONS["developing"])
                 for diff_level, num in distribution:
                     lc_url = f"https://leetcode.com/problemset/all/?search={encoded_topic}&difficulty={diff_level.upper()}"
@@ -408,10 +676,14 @@ class CodingResourceEngine:
                         score_breakdown=ResourceScoreBreakdown(concept_match=92, level_fit=90, authority=95, freshness=90, evidence_quality=95, accessibility=100),
                         url=lc_url,
                         access_type="open",
-                        confidence=0.92
+                        confidence=0.92,
+                        source_provenance="CURATED_CANONICAL_MAPPING",
+                        delivery_provenance="FRESH_COMPUTE",
+                        provenance="CURATED_CANONICAL_MAPPING",
+                        resource_role="STAGE_SPECIFIC_PRACTICE"
                     ))
 
-            lc_cards = [c for c in cards if c.type == "coding_problem"]
+            lc_cards = [c for c in cards if c.type in ("coding_problem", "diagnostic_micro_problem")]
             lc_lat = (time.time() - lc_start) * 1000
             diagnostics["leetcode"] = {
                 "state": ProviderDiagnosticState.SUCCESS.value,

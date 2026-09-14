@@ -127,44 +127,68 @@ def test_e2e_unified_user_journey():
     assert is_owner_b is False
 
     # 4. First Teaching Step
-    turn_1 = asyncio.run(teach_current_concept(
-        session_id=session_id,
-        user_id=user_a
-    ))
-    print(f"✓ Teacher Turn 1 Explanation: {turn_1['explanation'][:120]}...")
-    assert turn_1["explanation"]
-    assert turn_1["checkpoint"] is not None
+    try:
+        turn_1 = asyncio.run(teach_current_concept(
+            session_id=session_id,
+            user_id=user_a
+        ))
+        print(f"✓ Teacher Turn 1 Explanation: {turn_1['explanation'][:120]}...")
+        assert turn_1["explanation"]
+        assert turn_1["checkpoint"] is not None
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["429", "402", "quota", "circuit breaker", "rate limit", "timeout", "exhausted", "payment"]):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during teaching: {err_str[:200]}")
+        raise
 
     # 5. Answer Checkpoint Incorrectly -> Must trigger Misconception & Adaptation
-    ans_wrong = asyncio.run(evaluate_student_answer(
-        session_id=session_id,
-        student_answer="ACK is sent first before SYN in the handshake.",
-        user_id=user_a,
-    ))
-    wrong_eval = ans_wrong.get("evaluation", {})
-    print(f"✓ Wrong Answer Assessment: Correctness={wrong_eval.get('correctness')} | Misconception={wrong_eval.get('misconception')} | NextAction={ans_wrong.get('recommended_action')}")
-    assert wrong_eval.get("correctness") in ["incorrect", "partial"]
+    try:
+        ans_wrong = asyncio.run(evaluate_student_answer(
+            session_id=session_id,
+            student_answer="ACK is sent first before SYN in the handshake.",
+            user_id=user_a,
+        ))
+        wrong_eval = ans_wrong.get("evaluation", {})
+        print(f"✓ Wrong Answer Assessment: Correctness={wrong_eval.get('correctness')} | Misconception={wrong_eval.get('misconception')} | NextAction={ans_wrong.get('recommended_action')}")
+        assert wrong_eval.get("correctness") in ["incorrect", "partial"]
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["429", "402", "quota", "circuit breaker", "rate limit", "timeout", "exhausted", "payment"]):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during assessment evaluation: {err_str[:200]}")
+        raise
 
     # 6. Test 'Explain Again' / 'Make Simpler' with Strategy Rotation
-    turn_simpler = asyncio.run(handle_quick_command(
-        session_id=session_id,
-        command="make_simpler",
-        user_id=user_a
-    ))
-    print(f"✓ Simpler Explanation Action: {turn_simpler['action']}")
-    assert turn_simpler["action"] == "strategy_switched"
+    try:
+        turn_simpler = asyncio.run(handle_quick_command(
+            session_id=session_id,
+            command="make_simpler",
+            user_id=user_a
+        ))
+        print(f"✓ Simpler Explanation Action: {turn_simpler['action']}")
+        assert turn_simpler["action"] == "strategy_switched"
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["429", "402", "quota", "circuit breaker", "rate limit", "timeout", "exhausted", "payment"]):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during quick command: {err_str[:200]}")
+        raise
 
     # 7. Answer Correctly on Second Attempt -> Mastery & Confidence increase
-    ans_correct = asyncio.run(evaluate_student_answer(
-        session_id=session_id,
-        student_answer="In TCP 3-way handshake, Step 1: Client sends SYN (seq=x). Step 2: Server replies with SYN-ACK (seq=y, ack=x+1). Step 3: Client sends final ACK (seq=x+1, ack=y+1) completing full-duplex connection establishment.",
-        user_id=user_a,
-    ))
-    correct_eval = ans_correct.get("evaluation", {})
-    if correct_eval.get("correctness") not in ["correct", "partial"] and ("quota" in str(correct_eval).lower() or "429" in str(correct_eval).lower() or "timeout" in str(correct_eval).lower() or ans_correct.get("status") == "error"):
-        pytest.skip(f"Live LLM provider rate limit/quota hit during assessment evaluation: {correct_eval}")
-    assert correct_eval.get("correctness") in ["correct", "partial"]
-    assert ans_correct.get("new_mastery_score", 0.0) >= 0.0
+    try:
+        ans_correct = asyncio.run(evaluate_student_answer(
+            session_id=session_id,
+            student_answer="In TCP 3-way handshake, Step 1: Client sends SYN (seq=x). Step 2: Server replies with SYN-ACK (seq=y, ack=x+1). Step 3: Client sends final ACK (seq=x+1, ack=y+1) completing full-duplex connection establishment.",
+            user_id=user_a,
+        ))
+        correct_eval = ans_correct.get("evaluation", {})
+        if correct_eval.get("correctness") not in ["correct", "partial"] and ("quota" in str(correct_eval).lower() or "429" in str(correct_eval).lower() or "timeout" in str(correct_eval).lower() or ans_correct.get("status") == "error"):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during assessment evaluation: {correct_eval}")
+        assert correct_eval.get("correctness") in ["correct", "partial"]
+        assert ans_correct.get("new_mastery_score", 0.0) >= 0.0
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["429", "402", "quota", "circuit breaker", "rate limit", "timeout", "exhausted", "payment"]):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during assessment evaluation: {err_str[:200]}")
+        raise
 
     # 8. Command Matrix Testing (Go Deeper, Give Example, Explain It Back)
     commands_to_test = ["go_deeper", "give_example", "show_visual", "exam_points", "explain_it_back"]
@@ -186,42 +210,54 @@ def test_e2e_unified_user_journey():
     print("STAGE 2: TEACH ME -> PRESENTATION ENGINE EXPORT (0 Redundant LLM Calls)")
     print("================================================================================")
 
-    ppt_export = asyncio.run(export_lesson_to_pptx(
-        session_id=session_id,
-        user_id=user_a,
-        slide_count=12,
-        design="academic",
-        theme="blue_professional",
-    ))
-    print(f"✓ Generated PPT from Teach Me: Deck ID={ppt_export['deck_id']} | Slides={ppt_export['slide_count']} | Title='{ppt_export['deck_title']}'")
-    assert ppt_export["slide_count"] == 12
-    assert ppt_export["deck_title"] is not None
+    try:
+        ppt_export = asyncio.run(export_lesson_to_pptx(
+            session_id=session_id,
+            user_id=user_a,
+            slide_count=12,
+            design="academic",
+            theme="blue_professional",
+        ))
+        print(f"✓ Generated PPT from Teach Me: Deck ID={ppt_export['deck_id']} | Slides={ppt_export['slide_count']} | Title='{ppt_export['deck_title']}'")
+        assert ppt_export["slide_count"] == 12
+        assert ppt_export["deck_title"] is not None
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["429", "402", "quota", "circuit breaker", "rate limit", "timeout", "payment"]):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during PPT export: {err_str[:200]}")
+        raise
 
     print("\n================================================================================")
     print("STAGE 3: TEACH ME -> VIDEO COMPILER EXPORT (0 Redundant LLM Calls)")
     print("================================================================================")
 
-    vid_export = asyncio.run(export_lesson_to_video(
-        session_id=session_id,
-        user_id=user_a,
-        duration=300,  # 5 minutes
-        quality="standard",
-        style="technical",
-    ))
-    print(f"✓ Generated Video from Teach Me: Project ID={vid_export['project_id']} | Status={vid_export['status']} | Scenes={vid_export['scene_count']} | Duration={vid_export['total_duration_seconds']}s")
-    assert vid_export["status"] == "ready"
-    assert vid_export["scene_count"] >= 3
-    assert vid_export["total_duration_seconds"] == 300
+    try:
+        vid_export = asyncio.run(export_lesson_to_video(
+            session_id=session_id,
+            user_id=user_a,
+            duration=300,  # 5 minutes
+            quality="standard",
+            style="technical",
+        ))
+        print(f"✓ Generated Video from Teach Me: Project ID={vid_export['project_id']} | Status={vid_export['status']} | Scenes={vid_export['scene_count']} | Duration={vid_export['total_duration_seconds']}s")
+        assert vid_export["status"] == "ready"
+        assert vid_export["scene_count"] >= 3
+        assert vid_export["total_duration_seconds"] == 300
 
-    # Test Granular Single-Scene Regeneration
-    re_scene_id = "scene_01"
-    updated_vid = asyncio.run(regenerate_single_scene(
-        project_id=vid_export["project_id"],
-        scene_id=re_scene_id,
-        user_id=user_a,
-    ))
-    print(f"✓ Granular Scene Regeneration for {re_scene_id} Completed -> Video Updated: {updated_vid.updated_at}")
-    assert updated_vid.status == "ready"
+        # Test Granular Single-Scene Regeneration
+        re_scene_id = "scene_01"
+        updated_vid = asyncio.run(regenerate_single_scene(
+            project_id=vid_export["project_id"],
+            scene_id=re_scene_id,
+            user_id=user_a,
+        ))
+        print(f"✓ Granular Scene Regeneration for {re_scene_id} Completed -> Video Updated: {updated_vid.updated_at}")
+        assert updated_vid.status == "ready"
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["429", "402", "quota", "circuit breaker", "rate limit", "timeout", "payment"]):
+            pytest.skip(f"Live LLM provider rate limit/quota hit during Video export: {err_str[:200]}")
+        raise
 
     print("\n================================================================================")
     print("STAGE 4: CITATION PROVENANCE TRACEABILITY & CONFLICT RESOLUTION")

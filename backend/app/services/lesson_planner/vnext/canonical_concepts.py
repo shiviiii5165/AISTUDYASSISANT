@@ -36,7 +36,37 @@ SEED_CANONICAL_CONCEPTS: List[CanonicalConcept] = [
         domain=CanonicalDomain.COMPUTER_SCIENCE,
         domain_family="engineering",
         specialization="algorithms",
-        aliases=["dp memoization", "memoization table", "top-down dp", "recursive memoization", "memoization technique", "memoization"],
+        aliases=["dp memoization", "memoization table", "top-down dp", "recursive memoization", "memoization technique", "memoization", "power of memoization", "from recursion to dp"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.top_down",
+        display_name="Top-Down Dynamic Programming",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["top-down", "top down", "top down dp", "top-down dynamic programming", "recursive call tree pruning"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.optimal_substructure",
+        display_name="DP Optimal Substructure",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["optimal substructure", "principle of optimality", "subproblem independence", "two pillars"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.state_definition",
+        display_name="DP State Definition & Design",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["state definition", "state design", "state formulation", "state representation", "dp state"],
         namespace="core",
         version="1.0"
     ),
@@ -46,7 +76,97 @@ SEED_CANONICAL_CONCEPTS: List[CanonicalConcept] = [
         domain=CanonicalDomain.COMPUTER_SCIENCE,
         domain_family="engineering",
         specialization="algorithms",
-        aliases=["dp tabulation", "bottom-up dp", "iterative dp", "tabulation technique", "tabulation"],
+        aliases=["dp tabulation", "bottom-up dp", "iterative dp", "tabulation technique", "tabulation", "bottom up approach"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.bottom_up",
+        display_name="Bottom-Up Dynamic Programming",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["bottom up", "bottom-up", "iterative bottom up", "bottom up tabulation"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.recurrence",
+        display_name="Recurrence Relations in DP",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["recurrence relations", "recurrence relation", "recurrence", "state transition equation", "bellman equation"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.two_dimensional",
+        display_name="2D Dynamic Programming",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["2d dynamic programming", "2d dp", "multidimensional dp", "2d state table", "grid dp"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.grid",
+        display_name="DP Grid & Matrix Traversal",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["grid state", "grid dp", "grids", "grid", "unique paths", "matrix traversal dp"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.knapsack",
+        display_name="0/1 Knapsack & Subset State",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["knapsack", "0/1 knapsack", "knapsack problem", "subset sum", "target sum", "bounded knapsack"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.state_design",
+        display_name="DP State Design & Invariants",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["state design", "state formulation", "state representation", "dp invariant"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.transition_errors",
+        display_name="DP State Transition Mistakes",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["transition errors", "state-transition mistakes", "common pitfalls", "pitfalls", "state transition error", "off-by-one errors"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.complexity",
+        display_name="DP Time & Space Complexity",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["time/space complexity comparison", "space optimization", "complexity", "time and space complexity", "o(1) space optimization"],
+        namespace="core",
+        version="1.0"
+    ),
+    CanonicalConcept(
+        canonical_id="cs.algo.dp.debugging",
+        display_name="DP Debugging & Synthesis",
+        domain=CanonicalDomain.COMPUTER_SCIENCE,
+        domain_family="engineering",
+        specialization="algorithms",
+        aliases=["debugging exercises", "debugging", "dp debugging", "troubleshooting dp", "synthesis & common pitfalls"],
         namespace="core",
         version="1.0"
     ),
@@ -220,3 +340,59 @@ class CanonicalConceptResolver:
         cls._registry[canonical_id] = new_concept
         cls._alias_index[norm] = canonical_id
         return new_concept
+
+    @classmethod
+    def resolve_stage_concepts(
+        cls,
+        topic: str,
+        stage_title: str,
+        stage_description: str = "",
+        stage_objectives: Optional[List[str]] = None,
+        stage_concept_id: Optional[str] = None
+    ) -> List[str]:
+        """
+        Resolves stable, canonical concept identities for a stage before resource retrieval.
+        Never persists or returns generic IDs like concept_2, concept_3, concept_4.
+        """
+        cls._build_alias_index()
+        objectives_text = " ".join(stage_objectives or [])
+        combined = f"{stage_title} {stage_description} {objectives_text}".lower()
+        topic_lower = topic.lower()
+
+        # Dynamic Programming Stage Detection
+        is_dp = bool(re.search(r"\b(dp|dynamic[\s-]programming)\b", f"{topic_lower} {combined}", re.IGNORECASE))
+        if is_dp:
+            # 1. 2D DP / Knapsack
+            if any(k in combined for k in ["2d", "knapsack", "grid", "unique paths", "subset sum", "target sum", "two dimensional"]):
+                return ["cs.algo.dp.two_dimensional", "cs.algo.dp.grid", "cs.algo.dp.knapsack"]
+
+            # 2. Synthesis & Pitfalls / Debugging
+            if any(k in combined for k in ["synthesis", "pitfall", "pitfalls", "mistake", "debugging", "complexity", "space optimization", "transition error"]):
+                return ["cs.algo.dp.state_design", "cs.algo.dp.transition_errors", "cs.algo.dp.complexity", "cs.algo.dp.debugging"]
+
+            # 3. Tabulation / Bottom-Up
+            if any(k in combined for k in ["tabulation", "bottom-up", "bottom up", "recurrence relation", "recurrence"]):
+                return ["cs.algo.dp.tabulation", "cs.algo.dp.bottom_up", "cs.algo.dp.recurrence"]
+
+            # 4. Optimal Substructure / State Definition
+            if any(k in combined for k in ["optimal substructure", "substructure", "state definition", "two pillars"]):
+                return ["cs.algo.dp.optimal_substructure", "cs.algo.dp.state_definition"]
+
+            # 5. Memoization / Top-Down
+            if any(k in combined for k in ["memoization", "top-down", "top down", "from recursion to dp", "power of memoization"]):
+                return ["cs.algo.dp.memoization", "cs.algo.dp.top_down"]
+
+        # Check if stage_concept_id is an explicit canonical ID already
+        if stage_concept_id and not re.match(r"^(concept_\d+|stage_\d+.*|c_default)$", stage_concept_id, re.IGNORECASE):
+            resolved = cls.resolve(stage_concept_id)
+            if resolved:
+                return [resolved.canonical_id]
+
+        # Check stage title against alias index
+        resolved_title = cls.resolve(stage_title)
+        if resolved_title:
+            return [resolved_title.canonical_id]
+
+        # Fallback: if unresolvable, do NOT pretend generic concept_N is canonical
+        return ["UNRESOLVED_CANONICAL_CONCEPT"]
+
