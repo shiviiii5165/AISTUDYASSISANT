@@ -2,24 +2,39 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.db.supabase_client import supabase
 
+import os
+from app.core.config import settings
+
 security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
-    if token == "dev-admin-token":
-        class DevAdminUser:
-            id = "00000000-0000-0000-0000-000000000099"
-            email = "admin@teachgenie.com"
-            app_metadata = {"role": "admin"}
-            user_metadata = {"full_name": "Admin User", "role": "admin"}
-        return DevAdminUser()
-    if token in ("dev-host-token", "mock-dev-token"):
-        class DevMockUser:
-            id = "00000000-0000-0000-0000-000000000001"
-            email = "teacher@teachgenie.com"
-            app_metadata = {"role": "authenticated"}
-            user_metadata = {"full_name": "Teacher Jane"}
-        return DevMockUser()
+
+    # Developer bypass tokens (mock-dev-token, dev-admin-token) are strictly disabled
+    # in cloud / canary / production environments. Allowed only when explicitly configured
+    # in local development/test environments.
+    is_cloud_or_prod = (
+        getattr(settings, "TEACHGENIE_MODE", "PRODUCTION").upper() == "PRODUCTION"
+        or os.environ.get("RENDER") is not None
+        or os.environ.get("VERCEL") is not None
+    )
+    allow_dev_auth = os.environ.get("TEACHGENIE_ALLOW_DEV_AUTH", "").lower() in ("true", "1") and not is_cloud_or_prod
+
+    if allow_dev_auth:
+        if token == "dev-admin-token":
+            class DevAdminUser:
+                id = "00000000-0000-0000-0000-000000000099"
+                email = "admin@teachgenie.com"
+                app_metadata = {"role": "admin"}
+                user_metadata = {"full_name": "Admin User", "role": "admin"}
+            return DevAdminUser()
+        if token in ("dev-host-token", "mock-dev-token"):
+            class DevMockUser:
+                id = "00000000-0000-0000-0000-000000000001"
+                email = "teacher@teachgenie.com"
+                app_metadata = {"role": "authenticated"}
+                user_metadata = {"full_name": "Teacher Jane"}
+            return DevMockUser()
     try:
         # Verify JWT with Supabase
         res = supabase.auth.get_user(token)

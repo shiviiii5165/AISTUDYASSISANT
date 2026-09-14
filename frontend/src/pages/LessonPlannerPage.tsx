@@ -951,7 +951,6 @@ interface LessonHealthReport {
     setAdaptationAlert(null);
     try {
       let data: LearningRoadmap;
-      try {
         const v2Response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/plan`, {
           method: 'POST',
           headers: {
@@ -968,32 +967,12 @@ interface LessonHealthReport {
             custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
           })
         });
-        if (v2Response.ok) {
-          data = await v2Response.json();
-        } else {
-          throw new Error("V2 fallback");
+        if (!v2Response.ok) {
+          const errData = await v2Response.json().catch(() => ({}));
+          const errMsg = errData?.detail?.message || errData?.detail?.error_code || `HTTP ${v2Response.status}`;
+          throw new Error(`CANARY_RUNTIME_UNAVAILABLE: ${errMsg}`);
         }
-      } catch {
-        // Safe backward-compatible fallback to V1
-        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/generate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
-          },
-          body: JSON.stringify({
-            topic: parsedConfig.topic || "DBMS Normalization",
-            level: parsedConfig.level,
-            language: parsedConfig.language,
-            class_type: parsedConfig.class_type,
-            target_duration_minutes: parsedConfig.duration_minutes,
-            custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
-          })
-        });
-
-        if (!response.ok) throw new Error("Failed to generate roadmap.");
-        data = await response.json();
-      }
+        data = await v2Response.json();
 
       setRoadmap(data);
       if (data.stages.length > 0) {
