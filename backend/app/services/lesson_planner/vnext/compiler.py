@@ -14,11 +14,12 @@ import uuid
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 
+import re
 from ..schemas import (
     LearningRoadmap, RoadmapStage, StageStatus, StageReadiness,
     NextBestAction, ClassType, RoadmapStatus, ProductMode,
     CanonicalDomain, TeachingIntent, TopicVolatility, BloomLevel,
-    PrerequisiteMasteryState
+    PrerequisiteMasteryState, LearningObjective
 )
 from .classifiers import IntentClassifier, DomainClassifier, TopicVolatilityClassifier
 from .knowledge_pack import KnowledgePackService
@@ -29,6 +30,7 @@ from .canonical_concepts import CanonicalConceptResolver
 from .shared_context import LearnerStateRepository
 
 logger = logging.getLogger("teachgenie.lesson_planner.compiler")
+COMPILER_SEMANTIC_VERSION = "2.2.0"
 
 
 class LessonCompiler:
@@ -93,15 +95,104 @@ class LessonCompiler:
 
         # 6. Compile Stage Objects with Canonical Concept Identity & Learner Awareness
         stages: List[RoadmapStage] = []
+        is_dp = bool(re.search(r"\b(dp|dynamic[\s-]programming)\b", topic, re.IGNORECASE))
+        dp_stage_definitions = [
+            {
+                "title": "Foundations & Motivation: Overlapping Subproblems & Memoization",
+                "focus": "Overlapping subproblems, recursion tree call explosion, and memoization motivation",
+                "objectives": [
+                    LearningObjective(
+                        id="obj_dp_overlap",
+                        description="Identify overlapping subproblems in recurrence call trees and formulate top-down memoization",
+                        bloom_level=BloomLevel.UNDERSTAND,
+                        is_mandatory=True
+                    )
+                ]
+            },
+            {
+                "title": "Mental Model: Optimal Substructure & State Definition",
+                "focus": "Optimal substructure, state formulation, and subproblem independence",
+                "objectives": [
+                    LearningObjective(
+                        id="obj_dp_substruct",
+                        description="Define state representation and verify optimal substructure across subproblems",
+                        bloom_level=BloomLevel.ANALYZE,
+                        is_mandatory=True
+                    )
+                ]
+            },
+            {
+                "title": "Demonstration: Tabulation, Bottom-Up & Recurrences",
+                "focus": "Bottom-up tabulation, iterative table construction, and recurrence relations",
+                "objectives": [
+                    LearningObjective(
+                        id="obj_dp_tab",
+                        description="Formulate recurrence relations and construct iterative bottom-up lookup tables",
+                        bloom_level=BloomLevel.APPLY,
+                        is_mandatory=True
+                    )
+                ]
+            },
+            {
+                "title": "Guided Practice: 2D DP, Grid Traversal & Knapsack",
+                "focus": "Multi-dimensional DP, grid traversal, and 0/1 knapsack state transitions",
+                "objectives": [
+                    LearningObjective(
+                        id="obj_dp_knapsack",
+                        description="Apply 2D dynamic programming to grid and 0/1 knapsack state transition problems",
+                        bloom_level=BloomLevel.APPLY,
+                        is_mandatory=True
+                    )
+                ]
+            },
+            {
+                "title": "Diagnostic Check: State Invariants, Pitfalls, Complexity & Debugging",
+                "focus": "State invariants, state transition mistakes, time/space complexity analysis, and debugging",
+                "objectives": [
+                    LearningObjective(
+                        id="obj_dp_diag",
+                        description="Diagnose state transition mistakes, off-by-one boundary errors, and evaluate space optimization",
+                        bloom_level=BloomLevel.EVALUATE,
+                        is_mandatory=True
+                    )
+                ]
+            }
+        ]
+
+        pack_concepts = getattr(pack, "concepts", []) or []
+
         for i, (template, dur) in enumerate(zip(stage_templates, durations)):
             stage_id = f"stage_{i+1}_{uuid.uuid4().hex[:6]}"
             
-            # Resolve stable canonical concept ID (never ephemeral ad-hoc IDs)
-            canonical_concept = CanonicalConceptResolver.resolve_or_create(
-                concept_name=f"{topic} {template.archetype.value.replace('_', ' ')}",
+            # Determine content semantics (WHAT is taught), decoupled from archetype (HOW it is taught)
+            if is_dp:
+                dp_def = dp_stage_definitions[i % len(dp_stage_definitions)]
+                semantic_stage_title = dp_def["title"]
+                stage_focus = dp_def["focus"]
+                stage_objectives = dp_def["objectives"]
+            elif pack_concepts:
+                c_item = pack_concepts[i % len(pack_concepts)]
+                c_title = c_item.get("title", "") if isinstance(c_item, dict) else getattr(c_item, "title", "")
+                c_desc = c_item.get("description", "") if isinstance(c_item, dict) else getattr(c_item, "description", "")
+                semantic_stage_title = f"{c_title}: {topic}" if c_title else f"{topic} Part {i+1}"
+                stage_focus = f"{c_title} — {c_desc}"
+                stage_objectives = curriculum_res.objectives[i:i+1] if i < len(curriculum_res.objectives) else curriculum_res.objectives[:1]
+            else:
+                semantic_stage_title = f"{topic}: Core Principles"
+                stage_focus = f"{topic} core conceptual foundation"
+                stage_objectives = curriculum_res.objectives[:2]
+
+            # Request semantic concept resolution following the 6-tier priority ladder
+            resolved_concepts = CanonicalConceptResolver.resolve_stage_semantics(
+                topic=topic,
+                knowledge_pack=pack,
+                objectives=stage_objectives,
+                stage_title=semantic_stage_title,
+                stage_focus=stage_focus,
+                prerequisite_graph=getattr(pack, "concept_dependencies", None),
                 domain=domain
             )
-            canonical_id = canonical_concept.canonical_id
+            primary_concept_id = resolved_concepts[0] if resolved_concepts else "UNRESOLVED_CANONICAL_CONCEPT"
             
             # Prerequisite chaining
             prereqs = [stages[i-1].concept_id] if i > 0 else []
@@ -109,7 +200,7 @@ class LessonCompiler:
             # Check learner state if student_id is provided
             mastery_state = PrerequisiteMasteryState.UNKNOWN
             if student_id:
-                state_entry = LearnerStateRepository.get_state(student_id, canonical_id)
+                state_entry = LearnerStateRepository.get_state(student_id, primary_concept_id)
                 mastery_state = state_entry.mastery_state
 
             # Readiness and status derivation
@@ -132,9 +223,10 @@ class LessonCompiler:
 
             stage = RoadmapStage(
                 id=stage_id,
-                concept_id=canonical_id,
-                canonical_concept_id=canonical_id,
-                title=f"{template.archetype.value.replace('_', ' ').title()}: {topic}",
+                concept_id=primary_concept_id,
+                canonical_concept_id=primary_concept_id,
+                canonical_concept_ids=resolved_concepts,
+                title=semantic_stage_title,
                 description=template.pedagogy_goal,
                 sequence=i,
                 duration_minutes=dur,
@@ -153,8 +245,8 @@ class LessonCompiler:
                 assessment_requirement="Formative diagnostic check" if template.archetype.value == "diagnostic_check" else "",
                 checkpoint_questions=[pack.assessment_targets[0]] if pack.assessment_targets else [f"Explain how {topic} applies in this scenario"],
                 expected_misconceptions=[m.get("title", "") for m in pack.common_misconceptions[:2]],
-                objectives=curriculum_res.objectives[:2] if i == 0 else curriculum_res.objectives[2:4] or curriculum_res.objectives[:1],
-                objective_ids=[o.id for o in curriculum_res.objectives[:2]],
+                objectives=stage_objectives,
+                objective_ids=[getattr(o, "id", f"obj_{i}") for o in stage_objectives],
                 prerequisite_ids=prereqs,
                 next_best_action=NextBestAction.TEACH
             )
@@ -183,6 +275,7 @@ class LessonCompiler:
             overall_progress=0,
             health_score=100,
             version=1,
+            semantic_version=COMPILER_SEMANTIC_VERSION,
             created_at=datetime.now(timezone.utc)
         )
 

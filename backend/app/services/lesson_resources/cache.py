@@ -34,7 +34,7 @@ _IN_FLIGHT_REQUESTS: Dict[str, asyncio.Future] = {}
 _DEDUP_LOCK = asyncio.Lock()
 
 PROVIDER_POLICY_VERSION = "2.4.0"
-RESOURCE_SCHEMA_VERSION = "2.1.0"
+RESOURCE_SCHEMA_VERSION = "2.2.0"
 
 # Configurable TTLs by resource type
 SOURCE_TYPE_TTL = {

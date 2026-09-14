@@ -10,6 +10,7 @@ Provides:
 
 import hashlib
 import logging
+import re
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
@@ -67,16 +68,40 @@ class LessonContextProvider:
                 "is_locked": stage.is_locked
             })
 
-            # Canonical concept resolution
-            concept_entry = CanonicalConceptResolver.resolve_or_create(
-                concept_name=stage.title,
-                domain=roadmap.domain
-            )
-            canonical_concepts.append({
-                "canonical_id": concept_entry.canonical_id,
-                "display_name": concept_entry.display_name,
-                "stage_id": stage.id
-            })
+            # Canonical concept resolution: preserve authoritative domain IDs
+            if stage.canonical_concept_ids:
+                for cid in stage.canonical_concept_ids:
+                    canonical_concepts.append({
+                        "canonical_id": cid,
+                        "display_name": stage.title,
+                        "stage_id": stage.id
+                    })
+                primary_cid = stage.canonical_concept_ids[0]
+            elif stage.canonical_concept_id and not re.match(r"^(concept_\d+|unresolved_canonical_concept)$", stage.canonical_concept_id, re.IGNORECASE):
+                primary_cid = stage.canonical_concept_id
+                canonical_concepts.append({
+                    "canonical_id": primary_cid,
+                    "display_name": stage.title,
+                    "stage_id": stage.id
+                })
+            elif stage.concept_id and not re.match(r"^(concept_\d+|unresolved_canonical_concept)$", stage.concept_id, re.IGNORECASE):
+                primary_cid = stage.concept_id
+                canonical_concepts.append({
+                    "canonical_id": primary_cid,
+                    "display_name": stage.title,
+                    "stage_id": stage.id
+                })
+            else:
+                concept_entry = CanonicalConceptResolver.resolve_or_create(
+                    concept_name=stage.title,
+                    domain=roadmap.domain
+                )
+                primary_cid = concept_entry.canonical_id
+                canonical_concepts.append({
+                    "canonical_id": primary_cid,
+                    "display_name": concept_entry.display_name,
+                    "stage_id": stage.id
+                })
 
             for obj in stage.objectives:
                 objectives.append({
@@ -88,7 +113,7 @@ class LessonContextProvider:
 
             for misc in stage.expected_misconceptions:
                 misconceptions.append({
-                    "concept_id": concept_entry.canonical_id,
+                    "concept_id": primary_cid,
                     "stage_id": stage.id,
                     "misconception": misc
                 })

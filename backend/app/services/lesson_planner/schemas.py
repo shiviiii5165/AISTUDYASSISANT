@@ -538,6 +538,7 @@ class LearningRoadmap(BaseModel):
     course_coverage: Optional[CourseCoverage] = None
     version: int = 1
     current_version: int = 1
+    semantic_version: str = "2.2.0"
     
     # VNext Roadmap Extensions
     mode: ProductMode = ProductMode.TEACHER_CLASSROOM

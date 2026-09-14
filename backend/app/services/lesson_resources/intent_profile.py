@@ -7,8 +7,11 @@ stage intent, programming detection, and negative terms.
 """
 
 import re
-from typing import List, Dict, Any, Optional
+import logging
+from typing import List, Dict, Any, Optional, Tuple
 from .schemas import ResourceIntentProfile, StageIntent, ResourceType, ResourceQueryContext
+
+logger = logging.getLogger("teachgenie.lesson_resources.intent_profile")
 
 # Regex to strip pedagogical packaging phrases from stage titles
 CLEAN_PREFIX_REGEX = re.compile(
@@ -459,10 +462,39 @@ class IntentProfileBuilder:
             if matched_profile:
                 break
 
-        # Resolve stage-level canonical concepts to guarantee stage-specific identity
+        # Defense-in-depth: Validate canonical concepts from upstream compiler
+        # Requirement 9: Reject archetype-derived, concept_N, unresolved, or invalid namespace concepts.
+        # Emit structured diagnostic and record INVALID_CANONICAL_CONCEPT_INPUT without silent sanitization.
         valid_provided_concepts = []
-        if canonical_concept_ids:
-            valid_provided_concepts = [c for c in canonical_concept_ids if not re.match(r"^concept_\d+$", str(c), re.IGNORECASE)]
+        invalid_concept_inputs = []
+
+        raw_candidates = list(canonical_concept_ids or [])
+        for candidate_cid in raw_candidates:
+            cid_str = str(candidate_cid).strip()
+            # 1. Check UNRESOLVED_CANONICAL_CONCEPT
+            if cid_str.upper() == "UNRESOLVED_CANONICAL_CONCEPT":
+                invalid_concept_inputs.append({"concept_id": cid_str, "reason": "UNRESOLVED_CANONICAL_CONCEPT"})
+            # 2. Check generic concept_N
+            elif re.match(r"^concept_\d+$", cid_str, re.IGNORECASE):
+                invalid_concept_inputs.append({"concept_id": cid_str, "reason": "GENERIC_CONCEPT_N"})
+            # 3. Check archetype-derived concepts (e.g. cs.algo.dynamic_programming_hook)
+            elif any(cid_str.lower().endswith(f"_{arch}") or f"_{arch}_" in cid_str.lower() for arch in [
+                "hook", "mental_model", "demonstration", "guided_practice", "diagnostic_check",
+                "concept_intro", "worked_example", "overview", "explanation"
+            ]):
+                invalid_concept_inputs.append({"concept_id": cid_str, "reason": "ARCHETYPE_DERIVED_CONCEPT"})
+            # 4. Check invalid namespace
+            elif "." not in cid_str:
+                invalid_concept_inputs.append({"concept_id": cid_str, "reason": "INVALID_NAMESPACE"})
+            else:
+                valid_provided_concepts.append(cid_str)
+
+        if invalid_concept_inputs:
+            logger.warning(
+                f"[IntentProfileBuilder] INVALID_CANONICAL_CONCEPT_INPUT: "
+                f"Rejected {len(invalid_concept_inputs)} invalid concept IDs {invalid_concept_inputs} "
+                f"for stage '{stage_title}' on topic '{topic}'"
+            )
 
         resolved_stage_concepts = CanonicalConceptResolver.resolve_stage_concepts(
             topic=topic,

@@ -40,7 +40,7 @@ def generate_pack_hash(
     language: str = "english",
     difficulty: str = "intermediate",
     source_hash: Optional[str] = "",
-    schema_version: str = "2.0"
+    schema_version: str = "2.2.0"
 ) -> str:
     """
     Computes a deterministic hash identifying this curriculum knowledge request across all
@@ -261,7 +261,7 @@ class KnowledgePackService:
         language: str = "english",
         difficulty: str = "intermediate",
         source_hash: Optional[str] = "",
-        schema_version: str = "2.0",
+        schema_version: str = "2.2.0",
         custom_context: Optional[str] = None
     ) -> KnowledgePack:
         """

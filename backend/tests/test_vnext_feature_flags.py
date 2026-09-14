@@ -1,5 +1,5 @@
 import pytest
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.services.lesson_planner.vnext.adaptive import AdaptiveLessonEngine
 from fastapi.testclient import TestClient
 from app.main import app
@@ -9,16 +9,17 @@ client = TestClient(app)
 
 def test_production_safe_feature_flag_defaults():
     """All 10 VNext capability flags must default to False in production config."""
-    assert settings.LESSON_VNEXT_ENABLED is False
-    assert settings.LESSON_RESOURCE_INTELLIGENCE_ENABLED is False
-    assert settings.LESSON_YOUTUBE_SEGMENTS_ENABLED is False
-    assert settings.LESSON_ACADEMIC_ENGINE_ENABLED is False
-    assert settings.LESSON_CODING_RESOURCES_ENABLED is False
-    assert settings.LESSON_ADAPTIVE_ENGINE_ENABLED is False
-    assert settings.LESSON_AUTO_STUDENT_ADAPTATION_ENABLED is False
-    assert settings.LESSON_CLASS_ADAPTATION_ENABLED is False
-    assert settings.LESSON_CROSS_FEATURE_CONTEXT_ENABLED is False
-    assert settings.LESSON_OUTCOME_RANKING_ENABLED is False
+    fields = Settings.model_fields
+    assert fields["LESSON_VNEXT_ENABLED"].default is False
+    assert fields["LESSON_RESOURCE_INTELLIGENCE_ENABLED"].default is False
+    assert fields["LESSON_YOUTUBE_SEGMENTS_ENABLED"].default is False
+    assert fields["LESSON_ACADEMIC_ENGINE_ENABLED"].default is False
+    assert fields["LESSON_CODING_RESOURCES_ENABLED"].default is False
+    assert fields["LESSON_ADAPTIVE_ENGINE_ENABLED"].default is False
+    assert fields["LESSON_AUTO_STUDENT_ADAPTATION_ENABLED"].default is False
+    assert fields["LESSON_CLASS_ADAPTATION_ENABLED"].default is False
+    assert fields["LESSON_CROSS_FEATURE_CONTEXT_ENABLED"].default is False
+    assert fields["LESSON_OUTCOME_RANKING_ENABLED"].default is False
 
 
 def test_vnext_disabled_returns_503_feature_not_enabled(monkeypatch):

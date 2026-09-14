@@ -357,29 +357,34 @@ def test_centralized_failure_taxonomy_and_student_safety():
 
 def test_protected_admin_readiness_endpoint():
     """Verify /admin/readiness-dashboard requires admin role and returns windowed metrics (Decisions #11 & #12)."""
-    # 1. Normal authenticated student is rejected with 403 Forbidden
-    res_student = client.get(
-        "/api/lessons/admin/readiness-dashboard",
-        headers={"Authorization": "Bearer dev-host-token"}
-    )
-    assert res_student.status_code == 403
-    assert "Insufficient permissions" in res_student.json()["detail"]
+    from app.core.dependencies import get_current_user
+    class MockUser:
+        def __init__(self, role):
+            self.user_metadata = {"role": role}
+            self.app_metadata = {"role": role}
 
-    # 2. Admin access succeeds with 200 OK
-    res_admin = client.get(
-        "/api/lessons/admin/readiness-dashboard?window=24h",
-        headers={"Authorization": "Bearer dev-admin-token"}
-    )
-    assert res_admin.status_code == 200
-    data = res_admin.json()
-    assert data["measurement_window"] == "24h"
-    assert "sample_count" in data
-    assert "first_explanation_resolution_rate" in data
-    assert "external_help_escape_rate" in data
-    # Ensure zero stack traces or secret keys in response
-    assert "traceback" not in str(data).lower()
-    assert "secret" not in str(data).lower()
-    print("Protected admin readiness dashboard test passed!")
+    # 1. Normal authenticated student is rejected with 403 Forbidden
+    app.dependency_overrides[get_current_user] = lambda: MockUser("student")
+    try:
+        res_student = client.get("/api/lessons/admin/readiness-dashboard")
+        assert res_student.status_code == 403
+        assert "Insufficient permissions" in res_student.json()["detail"]
+
+        # 2. Admin access succeeds with 200 OK
+        app.dependency_overrides[get_current_user] = lambda: MockUser("admin")
+        res_admin = client.get("/api/lessons/admin/readiness-dashboard?window=24h")
+        assert res_admin.status_code == 200
+        data = res_admin.json()
+        assert data["measurement_window"] == "24h"
+        assert "sample_count" in data
+        assert "first_explanation_resolution_rate" in data
+        assert "external_help_escape_rate" in data
+        # Ensure zero stack traces or secret keys in response
+        assert "traceback" not in str(data).lower()
+        assert "secret" not in str(data).lower()
+        print("Protected admin readiness dashboard test passed!")
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
