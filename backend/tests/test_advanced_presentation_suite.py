@@ -33,7 +33,7 @@ from app.services.presentation.schemas import (
 )
 from app.services.presentation.engine.builder import build_presentation_spec
 from app.services.presentation.cache import compute_presentation_hash
-from app.services.presentation.qa_agent import auto_heal_slide_python, inspect_slide_structure
+from app.services.presentation.qa_agent import auto_heal_slide_python, inspect_slide_structure, fit_title_semantic
 
 
 def make_test_spec(count: int, design: str = "academic") -> PresentationSpec:
@@ -289,6 +289,52 @@ def test_qa_overflow_and_auto_healing():
     print(">>> Python QA overflow & auto-healing PASSED.")
 
 
+def test_semantic_title_fitting_technical():
+    """Test that long technical titles are compressed without breaking technical terminology."""
+    long_tech = "Architectural Patterns for Distributed Microservices and Event-Driven Cloud Systems"
+    fitted = fit_title_semantic(long_tech, max_chars=60)
+    assert len(fitted) <= 60, f"Exceeded budget: {len(fitted)} > 60"
+    assert "Distributed Microservices" in fitted, "Central technical concept lost"
+    assert not fitted.endswith((".", ",", ":", ";", "-", "—")), "Dangling punctuation"
+
+
+def test_semantic_title_fitting_humanities():
+    """Test that long humanities titles preserve historical context and proper entities."""
+    long_humanities = "The Socioeconomic Impact of the Industrial Revolution on European Labor Movements"
+    fitted = fit_title_semantic(long_humanities, max_chars=60)
+    assert len(fitted) <= 60, f"Exceeded budget: {len(fitted)} > 60"
+    assert "Industrial Revolution" in fitted, "Historical entity lost"
+    assert not fitted.endswith((".", ",", ":", ";", "-", "—")), "Dangling punctuation"
+
+
+def test_semantic_title_fitting_mathematical():
+    """Test that long mathematical titles preserve equation delimiters and formulas intact."""
+    long_math = "Photoelectric Equation: $E_k = h\\nu - \\Phi$ for Bound Atomic Electrons"
+    fitted = fit_title_semantic(long_math, max_chars=60)
+    assert len(fitted) <= 60, f"Exceeded budget: {len(fitted)} > 60"
+    assert "$E_k = h\\nu - \\Phi$" in fitted, "Mathematical formula was broken or corrupted"
+    assert fitted.count("$") % 2 == 0, "Unbalanced LaTeX dollar delimiters"
+    assert not fitted.endswith((".", ",", ":", ";", "-", "—")), "Dangling punctuation"
+
+
+def test_semantic_title_fitting_acronym_entity():
+    """Test that titles containing acronyms and named entities do not slice entities mid-name."""
+    long_entity = "Implementation of CPython GIL Lock Mitigation in Modern Python Runtimes"
+    fitted = fit_title_semantic(long_entity, max_chars=60)
+    assert len(fitted) <= 60, f"Exceeded budget: {len(fitted)} > 60"
+    assert "CPython" in fitted, "Named entity CPython was cut mid-word"
+    assert "GIL" in fitted, "Acronym GIL was cut"
+    assert not fitted.endswith((".", ",", ":", ";", "-", "—")), "Dangling punctuation"
+
+
+def test_semantic_title_fitting_valid_short():
+    """Test that an already-valid short title is preserved unchanged."""
+    short_title = "Cloud Architecture & Scalability"
+    fitted = fit_title_semantic(short_title, max_chars=60)
+    assert fitted == short_title, "Already-valid title was unnecessarily altered"
+    assert len(fitted) <= 60
+
+
 def test_cache_hashing():
     """Test deterministic hash generation for request caching."""
     print("\n--- TEST 5: Semantic Cache Hashing ---")
@@ -313,6 +359,11 @@ if __name__ == "__main__":
     test_all_design_systems()
     test_diagram_rendering()
     test_qa_overflow_and_auto_healing()
+    test_semantic_title_fitting_technical()
+    test_semantic_title_fitting_humanities()
+    test_semantic_title_fitting_mathematical()
+    test_semantic_title_fitting_acronym_entity()
+    test_semantic_title_fitting_valid_short()
     test_cache_hashing()
     print("\n=======================================================")
     print("ALL TEST SUITE CHECKS COMPLETED SUCCESSFULLY!")

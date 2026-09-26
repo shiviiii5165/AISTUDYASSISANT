@@ -16,6 +16,7 @@ import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import SEO from '../components/SEO';
 import { ILLUSTRATIONS } from '../lib/assets';
 import { useAuthStore } from '../store/useAuthStore';
+import { supabase } from '../lib/supabase';
 
 // Types mapping to Backend schemas
 type StageStatus = 'locked' | 'available' | 'in_progress' | 'material_ready' | 'taught' | 'assessment_pending' | 'mastered' | 'needs_review' | 'blocked';
@@ -950,29 +951,50 @@ interface LessonHealthReport {
     setErrorNotification(null);
     setAdaptationAlert(null);
     try {
-      let data: LearningRoadmap;
-        const v2Response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/plan`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useAuthStore.getState().session?.access_token}`
-          },
-          body: JSON.stringify({
-            topic: parsedConfig.topic || "DBMS Normalization",
-            level: parsedConfig.level,
-            language: parsedConfig.language,
-            class_type: parsedConfig.class_type,
-            target_duration_minutes: parsedConfig.duration_minutes,
-            mode: selectedMode,
-            custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
-          })
-        });
-        if (!v2Response.ok) {
-          const errData = await v2Response.json().catch(() => ({}));
-          const errMsg = errData?.detail?.message || errData?.detail?.error_code || `HTTP ${v2Response.status}`;
-          throw new Error(`CANARY_RUNTIME_UNAVAILABLE: ${errMsg}`);
+      let token = useAuthStore.getState().session?.access_token;
+      if (!token) {
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token;
+        if (session) {
+          useAuthStore.getState().setSession(session);
         }
-        data = await v2Response.json();
+      }
+
+      if (!token) {
+        setErrorNotification('You must be signed in to generate a lesson plan. Please log in and try again.');
+        setIsGenerating(false);
+        return;
+      }
+
+      const activeTopic = parsedConfig.topic?.trim() || promptInput.trim() || "DBMS Normalization";
+
+      let data: LearningRoadmap;
+      const v2Response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lesson-planner/v2/plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          topic: activeTopic,
+          level: parsedConfig.level,
+          language: parsedConfig.language,
+          class_type: parsedConfig.class_type,
+          target_duration_minutes: parsedConfig.duration_minutes,
+          mode: selectedMode,
+          custom_context: `Sources used: ${selectedSources.join(', ')}. Goal: ${parsedConfig.goal}`
+        })
+      });
+
+      if (!v2Response.ok) {
+        const errData = await v2Response.json().catch(() => ({}));
+        if (v2Response.status === 401) {
+          throw new Error('Your session has expired or is invalid. Please refresh the page or log in again.');
+        }
+        const errMsg = errData?.detail?.message || errData?.detail?.error_code || (typeof errData?.detail === 'string' ? errData.detail : null) || `Server error (HTTP ${v2Response.status})`;
+        throw new Error(errMsg);
+      }
+      data = await v2Response.json();
 
       setRoadmap(data);
       if (data.stages.length > 0) {
@@ -981,9 +1003,10 @@ interface LessonHealthReport {
       fetchHealth(data.id);
       // add to history top
       setHistoryItems(prev => [{ id: data.id, title: data.topic, date: new Date().toISOString() }, ...prev]);
-    } catch (err) {
-      console.error(err);
-      setErrorNotification('Could not generate the roadmap. Please check your connection and try again.');
+    } catch (err: any) {
+      console.error('generateRoadmap error:', err);
+      const msg = err?.message || 'Could not generate the roadmap. Please check your connection and try again.';
+      setErrorNotification(msg);
     } finally {
       setIsGenerating(false);
     }

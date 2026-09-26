@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     # Centralized Production Model Identifiers
     GROQ_PRIMARY_MODEL: str = "openai/gpt-oss-120b"
     GROQ_FALLBACK_MODELS: str = "qwen/qwen3.8-27b,openai/gpt-oss-20b,qwen/qwen3.6-27b"
-    GEMINI_PRIMARY_MODEL: str = "gemini-3.8-flash"
-    GEMINI_FALLBACK_MODEL: str = "gemini-3.6-flash"
+    GEMINI_PRIMARY_MODEL: str = "gemini-3.6-flash"
+    GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash"
     OPENROUTER_PRIMARY_MODEL: str = "openai/gpt-4o"
     
     # Stock Photo API Keys (single-key legacy fields)
@@ -81,6 +81,51 @@ class Settings(BaseSettings):
     LESSON_CLASS_ADAPTATION_ENABLED: bool = False
     LESSON_CROSS_FEATURE_CONTEXT_ENABLED: bool = False
     LESSON_OUTCOME_RANKING_ENABLED: bool = False
+
+    ENVIRONMENT: str = "development"
+
+    # Presentation Composition Renderer Feature Flag (Phase 3.2E - Default False)
+    PRESENTATION_COMPOSITION_RENDERER_ENABLED: bool = False
+
+    # Presentation Native Chart & Diagram Intelligence Flag (Phase 3.3 - Default False, strictly opt-in)
+    PRESENTATION_CHART_DIAGRAM_INTELLIGENCE_ENABLED: bool = False
+
+    # Presentation Image Intelligence Flag (Phase 3.4 - Default False, strictly opt-in)
+    # Requires PRESENTATION_COMPOSITION_RENDERER_ENABLED=True to be active.
+    PRESENTATION_IMAGE_INTELLIGENCE_ENABLED: bool = False
+
+    # Presentation Rendered Visual QA & Targeted Repair Flag (Phase 3.5 - Default False, strictly opt-in)
+    # Requires PRESENTATION_COMPOSITION_RENDERER_ENABLED=True to be active.
+    PRESENTATION_RENDERED_VISUAL_QA_ENABLED: bool = False
+
+    # Source Reading MVP Feature Flags (Default False — strictly opt-in)
+    LIBRARIAN_SOURCE_EXTRACTION_ENABLED: bool = False
+    LIBRARIAN_SOURCE_EXTRACTION_CANARY_USERS: str = ""  # Comma-separated user IDs or test accounts
+    LIBRARIAN_SOURCE_EXTRACTION_CANARY_ENVIRONMENTS: str = "staging,internal,canary"
+
+    # Live Quiz VNext Scale & Free-Tier Optimization Flag (§18)
+    LIVE_QUIZ_FREE_TIER_MODE: bool = True
+
+
+    def is_source_extraction_canary_active(self, user_id: str | None = None) -> bool:
+        """
+        Determines whether source extraction is active for this request.
+        Stays False by default. Enables only if:
+        1. Globally enabled (LIBRARIAN_SOURCE_EXTRACTION_ENABLED = True), OR
+        2. user_id is explicitly listed in LIBRARIAN_SOURCE_EXTRACTION_CANARY_USERS, OR
+        3. ENVIRONMENT is in LIBRARIAN_SOURCE_EXTRACTION_CANARY_ENVIRONMENTS.
+        """
+        if self.LIBRARIAN_SOURCE_EXTRACTION_ENABLED:
+            return True
+        if user_id and self.LIBRARIAN_SOURCE_EXTRACTION_CANARY_USERS:
+            allowed_users = {u.strip().lower() for u in self.LIBRARIAN_SOURCE_EXTRACTION_CANARY_USERS.split(",") if u.strip()}
+            if str(user_id).strip().lower() in allowed_users:
+                return True
+        if self.ENVIRONMENT and self.LIBRARIAN_SOURCE_EXTRACTION_CANARY_ENVIRONMENTS:
+            allowed_envs = {e.strip().lower() for e in self.LIBRARIAN_SOURCE_EXTRACTION_CANARY_ENVIRONMENTS.split(",") if e.strip()}
+            if self.ENVIRONMENT.strip().lower() in allowed_envs and user_id is not None:
+                return True
+        return False
 
     @property
     def lesson_planner_youtube_enabled(self) -> bool:

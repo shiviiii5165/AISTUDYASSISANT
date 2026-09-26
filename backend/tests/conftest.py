@@ -116,7 +116,9 @@ def live_quiz_persistence_controller(request):
             "test_live_quiz_intervention",
             "test_live_quiz_load",
             "test_live_quiz_rls",
+            "test_live_quiz_vnext",
         ])
+
         if is_synthetic_unit_test and "test_live_quiz_write_failure" not in module_name:
             repo.set_persistence_enabled(False)
         else:

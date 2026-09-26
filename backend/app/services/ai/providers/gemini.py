@@ -68,8 +68,8 @@ _logger = logging.getLogger("teachgenie.ai.gemini")
 
 
 class GeminiProvider(AIProvider):
-    DEFAULT_MODEL = getattr(settings, "GEMINI_PRIMARY_MODEL", "gemini-3.8-flash")
-    FALLBACK_MODELS = [getattr(settings, "GEMINI_FALLBACK_MODEL", "gemini-3.6-flash")]
+    DEFAULT_MODEL = getattr(settings, "GEMINI_PRIMARY_MODEL", "gemini-3.6-flash")
+    FALLBACK_MODELS = ["gemini-flash-latest"]
     EMBEDDING_MODEL = "gemini-embedding-001"
 
     def __init__(self, api_key: Optional[str] = None, image_api_key: Optional[str] = None):

@@ -45,7 +45,13 @@ def render_illustrated_icon_grid(
 
     items = []
     # Infer or extract cards
-    if content.body_bullets:
+    if content.columns and len(content.columns) >= 2:
+        for col in content.columns[:4]:
+            lbl = col.heading or "Component"
+            detail = " ".join(col.points) if col.points else lbl
+            icon_guess = "network-graph" if "network" in lbl.lower() or "loop" in lbl.lower() else ("database-cylinder" if "data" in lbl.lower() or "memory" in lbl.lower() or "heap" in lbl.lower() else "plate-stack")
+            items.append((lbl, detail, icon_guess))
+    elif content.body_bullets:
         for b in content.body_bullets[:4]:
             icon_guess = "plate-stack"
             lb = b.lower()
@@ -65,8 +71,21 @@ def render_illustrated_icon_grid(
             if ":" in b:
                 parts = b.split(":", 1)
                 items.append((parts[0].strip(), parts[1].strip(), icon_guess))
+            elif " - " in b:
+                parts = b.split(" - ", 1)
+                items.append((parts[0].strip(), parts[1].strip(), icon_guess))
+            elif " — " in b:
+                parts = b.split(" — ", 1)
+                items.append((parts[0].strip(), parts[1].strip(), icon_guess))
             else:
-                items.append((b.strip()[:20], b.strip(), icon_guess))
+                words = b.strip().split()
+                if len(words) >= 4:
+                    lbl = " ".join(words[:3])
+                    detail = b.strip()
+                else:
+                    lbl = b.strip()
+                    detail = b.strip()
+                items.append((lbl, detail, icon_guess))
     else:
         items = [
             ("Stack (LIFO)", "Push and pop elements strictly at the top.", "plate-stack"),

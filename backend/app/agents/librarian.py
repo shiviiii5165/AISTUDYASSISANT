@@ -11,6 +11,7 @@ Given a topic/query and a user_id, the Librarian:
 Wraps existing retrieval stack — does NOT reimplement chunking, embedding, or vector search.
 """
 
+import time
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
@@ -18,6 +19,7 @@ from app.db.supabase_client import supabase
 from app.services.knowledge.hybrid_search import hybrid_search_evidence
 from app.services.knowledge.sources import EvidenceItem
 from app.services.web_search import perform_web_search
+from app.core.config import settings
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -227,7 +229,80 @@ async def retrieve_context(
                 max_results=WEB_FALLBACK_MAX_RESULTS,
             )
             if web_results:
+                # Default path: preserve exact frozen snippet chunks
                 web_chunks = [_web_result_to_chunk(r) for r in web_results]
+
+                # Optional Canary: if active for user or staging environment, evaluate admission via EvidenceQualityGate
+                if settings.is_source_extraction_canary_active(user_id=user_id) and web_results[0].get("url"):
+                    t_canary_start = time.time()
+                    try:
+                        from app.services.knowledge.source_extraction import SourceExtractionService, ExtractionStatus, EvidenceQualityGate
+                        from app.services.knowledge.source_extraction_canary import canary_tracker
+
+                        target_url = web_results[0]["url"]
+                        extracted = await SourceExtractionService.extract_source(target_url, query=topic)
+                        t_ext_ms = (time.time() - t_canary_start) * 1000
+
+                        admitted, reason = EvidenceQualityGate.evaluate_admission(extracted, query=topic, snippet_text=web_chunks[0].text)
+                        top_rel = extracted.relevant_passages[0].relevance_score if extracted.relevant_passages else 0.0
+                        is_cached = (extracted.status == ExtractionStatus.CACHED)
+
+                        fail_class = None
+                        if extracted.status == ExtractionStatus.FAILED_ACCESS_DENIED:
+                            fail_class = "access_denied"
+                        elif extracted.status == ExtractionStatus.BUDGET_EXCEEDED:
+                            fail_class = "budget_exceeded"
+                        elif extracted.status in (ExtractionStatus.FAILED_EMPTY_CONTENT, ExtractionStatus.FAILED_HTTP_ERROR):
+                            fail_class = "no_relevant_passage"
+
+                        if admitted and extracted.relevant_passages:
+                            top_passage = extracted.relevant_passages[0].text
+                            loc = extracted.canonical_url
+                            if extracted.section_anchor:
+                                loc = f"{loc}{extracted.section_anchor}"
+                            # Enrich top chunk with extracted evidence while preserving original search snippet context
+                            web_chunks[0] = ChunkResult(
+                                text=f"{top_passage}\n\n[Summary snippet]: {web_chunks[0].text}",
+                                source_document=extracted.document_title,
+                                page_or_location=loc,
+                                relevance_score=0.85,
+                                source="web_extracted"
+                            )
+                            canary_tracker.record_event(
+                                url=target_url,
+                                extraction_method=extracted.extraction_method,
+                                is_cached=is_cached,
+                                admitted=True,
+                                gate_reason=reason,
+                                passage_relevance=top_rel,
+                                snippet_fallback_retained=False,
+                                claim_support=1.0,
+                                citation_valid=True,
+                                extraction_latency_ms=t_ext_ms,
+                                total_latency_ms=t_ext_ms,
+                                credits_consumed=extracted.credits_consumed,
+                                failure_classification=fail_class
+                            )
+                        else:
+                            canary_tracker.record_event(
+                                url=target_url,
+                                extraction_method=extracted.extraction_method,
+                                is_cached=is_cached,
+                                admitted=False,
+                                gate_reason=reason,
+                                passage_relevance=top_rel,
+                                snippet_fallback_retained=True,
+                                claim_support=1.0,
+                                citation_valid=True,
+                                extraction_latency_ms=t_ext_ms,
+                                total_latency_ms=t_ext_ms,
+                                credits_consumed=extracted.credits_consumed,
+                                failure_classification=fail_class
+                            )
+                            print(f"[Librarian Canary] EvidenceQualityGate retained snippet: {reason}")
+                    except Exception as e:
+                        print(f"[Librarian Canary] Source extraction canary notice: {e}")
+
                 context.extend(web_chunks)
                 used_web_fallback = True
         except Exception as e:

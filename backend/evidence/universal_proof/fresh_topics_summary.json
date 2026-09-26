@@ -1,0 +1,436 @@
+[
+  {
+    "topic": "Quantum Entanglement",
+    "discipline": "Physics",
+    "status": "PASS",
+    "elapsed_seconds": 1.03,
+    "file_path": "E:\\AISTUDYASSISANT-main\\AISTUDYASSISANT-main\\backend\\evidence\\universal_proof\\quantum_entanglement.pptx",
+    "pptx_bytes": 165311,
+    "slide_count": 10,
+    "intents": [
+      "hero",
+      "definition",
+      "process_flow",
+      "concept",
+      "example",
+      "example",
+      "common_mistakes",
+      "comparison",
+      "comparison",
+      "summary"
+    ],
+    "unique_intents": [
+      "hero",
+      "definition",
+      "process_flow",
+      "concept",
+      "example",
+      "common_mistakes",
+      "comparison",
+      "summary"
+    ],
+    "slides_detail": [
+      {
+        "slide_no": 1,
+        "type": "hero",
+        "title": "Quantum Entanglement: Core Mechanism and Architecture",
+        "key_message": "Entanglement links particles instantaneously, enabling quantum teleportation and secure communication.",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 105
+      },
+      {
+        "slide_no": 2,
+        "type": "definition",
+        "title": "Quantum Entanglement Defined",
+        "key_message": "Entanglement creates inseparable correlations between particles, enabling secure cryptography and powerful quantum computing.",
+        "bullets_count": 5,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 104
+      },
+      {
+        "slide_no": 3,
+        "type": "process_flow",
+        "title": "SPDC generates entangled photons by splitting a pump photon",
+        "key_message": "SPDC generates entangled photons by splitting a pump photon inside a nonlinear crystal",
+        "bullets_count": 3,
+        "steps_count": 4,
+        "columns_count": 0,
+        "notes_word_count": 167
+      },
+      {
+        "slide_no": 4,
+        "type": "concept",
+        "title": "Bell Inequality Reveals Quantum Non\u2011Local Correlations",
+        "key_message": "Measured CHSH parameter exceeds classical limit, confirming quantum non\u2011locality.",
+        "bullets_count": 5,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 110
+      },
+      {
+        "slide_no": 5,
+        "type": "example",
+        "title": "A CHSH test with entangled photons yields S=2.7",
+        "key_message": "Photon pairs from Type\u2011II SPDC used in QKD experiments drives the practical application of Monogamy of Entanglement within Quantum Entanglement.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 150
+      },
+      {
+        "slide_no": 6,
+        "type": "example",
+        "title": "Entangled photons secure QKD by guaranteeing eavesdropper",
+        "key_message": "Entangled trapped\u2011ion chains at NIST for quantum simulation drives the practical application of CHSH Inequality within Quantum Entanglement.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 159
+      },
+      {
+        "slide_no": 7,
+        "type": "common_mistakes",
+        "title": "Entanglement does not transmit information faster than light",
+        "key_message": "Entanglement does not transmit information faster than light",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 114
+      },
+      {
+        "slide_no": 8,
+        "type": "comparison",
+        "title": "High entanglement fidelity demands low decoherence",
+        "key_message": "High entanglement fidelity demands low decoherence, limiting scalability",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 127
+      },
+      {
+        "slide_no": 9,
+        "type": "comparison",
+        "title": "Photonic entanglement offers high speed",
+        "key_message": "Foundational principles govern photonic entanglement offers high speed, while trapped ions provide long coherence times.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 148
+      },
+      {
+        "slide_no": 10,
+        "type": "summary",
+        "title": "Entanglement reshapes information",
+        "key_message": "Synthesizing Quantum Entanglement requires integrating Bell State with systemic operational safeguards.",
+        "bullets_count": 3,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 84
+      }
+    ]
+  },
+  {
+    "topic": "Human Kidney Function",
+    "discipline": "Physiology",
+    "status": "PASS",
+    "elapsed_seconds": 63.32,
+    "file_path": "E:\\AISTUDYASSISANT-main\\AISTUDYASSISANT-main\\backend\\evidence\\universal_proof\\human_kidney_function.pptx",
+    "pptx_bytes": 145971,
+    "slide_count": 10,
+    "intents": [
+      "hero",
+      "definition",
+      "process_flow",
+      "concept",
+      "concept",
+      "example",
+      "common_mistakes",
+      "comparison",
+      "comparison",
+      "summary"
+    ],
+    "unique_intents": [
+      "hero",
+      "definition",
+      "process_flow",
+      "concept",
+      "example",
+      "common_mistakes",
+      "comparison",
+      "summary"
+    ],
+    "slides_detail": [
+      {
+        "slide_no": 1,
+        "type": "hero",
+        "title": "Human Kidney Function",
+        "key_message": "Explore the kidney\u2019s anatomy and its essential filtration roles.",
+        "bullets_count": 5,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 100
+      },
+      {
+        "slide_no": 2,
+        "type": "definition",
+        "title": "Defining renal clearance as a quantitative metric",
+        "key_message": "Renal artery stenosis leads to Reduced RPF \u2192 activation of RAAS \u2192 hypertension",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 126
+      },
+      {
+        "slide_no": 3,
+        "type": "process_flow",
+        "title": "Glomerular filtration as the initial selective barrier",
+        "key_message": "Glomerular filtration operates as the initial selective barrier.",
+        "bullets_count": 4,
+        "steps_count": 4,
+        "columns_count": 0,
+        "notes_word_count": 126
+      },
+      {
+        "slide_no": 4,
+        "type": "concept",
+        "title": "Tubular Reabsorption: Recovering Essential Solutes",
+        "key_message": "Tubular reabsorption actively recovers 99% of filtered solutes to maintain homeostasis",
+        "bullets_count": 3,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 111
+      },
+      {
+        "slide_no": 5,
+        "type": "concept",
+        "title": "Countercurrent multiplication creates the medullary gradient",
+        "key_message": "Increased plasma oncotic pressure leads to Decreased GFR",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 104
+      },
+      {
+        "slide_no": 6,
+        "type": "example",
+        "title": "Calculating GFR with Inulin Clearance",
+        "key_message": "Step\u2011by\u2011step example shows how to calculate GFR using inulin clearance.",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 108
+      },
+      {
+        "slide_no": 7,
+        "type": "common_mistakes",
+        "title": "Kidneys: Beyond Waste Removal",
+        "key_message": "Kidneys balance water, electrolytes, and hormones, not just filter waste.",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 103
+      },
+      {
+        "slide_no": 8,
+        "type": "comparison",
+        "title": "Balancing water retention against sodium excretion",
+        "key_message": "Foundational principles govern balancing water retention against sodium excretion.",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 95
+      },
+      {
+        "slide_no": 9,
+        "type": "comparison",
+        "title": "Cortical vs. juxtamedullary nephron specialization",
+        "key_message": "Foundational principles govern cortical vs. juxtamedullary nephron specialization.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 127
+      },
+      {
+        "slide_no": 10,
+        "type": "summary",
+        "title": "Integrating filtration, reabsorption, and secretion",
+        "key_message": "Synthesizing Human Kidney Function requires integrating Glomerular filtration rate (GFR) with systemic operational safeguards.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 92
+      }
+    ]
+  },
+  {
+    "topic": "Binary Search Trees",
+    "discipline": "Computer Science",
+    "status": "PASS",
+    "elapsed_seconds": 0.62,
+    "file_path": "E:\\AISTUDYASSISANT-main\\AISTUDYASSISANT-main\\backend\\evidence\\universal_proof\\binary_search_trees.pptx",
+    "pptx_bytes": 145841,
+    "slide_count": 10,
+    "intents": [
+      "hero",
+      "definition",
+      "process_flow",
+      "concept",
+      "example",
+      "example",
+      "common_mistakes",
+      "comparison",
+      "comparison",
+      "summary"
+    ],
+    "unique_intents": [
+      "hero",
+      "definition",
+      "process_flow",
+      "concept",
+      "example",
+      "common_mistakes",
+      "comparison",
+      "summary"
+    ],
+    "slides_detail": [
+      {
+        "slide_no": 1,
+        "type": "hero",
+        "title": "Binary Search Trees",
+        "key_message": "A foundational examination of Binary Search Trees.",
+        "bullets_count": 0,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 34
+      },
+      {
+        "slide_no": 2,
+        "type": "definition",
+        "title": "Left children stay smaller while right children stay larger",
+        "key_message": "Red\u2011Black property violation (e.g., two consecutive red nodes) leads to Recoloring and/or rotations are applied to fix the violation",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 115
+      },
+      {
+        "slide_no": 3,
+        "type": "process_flow",
+        "title": "Comparisons guide downward traversal to find or insert keys",
+        "key_message": "Binary Search Trees relies on a structured sequence of 4 stages.",
+        "bullets_count": 4,
+        "steps_count": 4,
+        "columns_count": 0,
+        "notes_word_count": 109
+      },
+      {
+        "slide_no": 4,
+        "type": "concept",
+        "title": "Deleting nodes requires replacing two-child nodes",
+        "key_message": "Balance factor of a node becomes \u00b12 in an AVL tree leads to A rotation (single or double) is performed to restore balance",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 151
+      },
+      {
+        "slide_no": 5,
+        "type": "example",
+        "title": "Tracing a complex deletion preserves ordering",
+        "key_message": "C++ std::map implementation (Red\u2011Black tree) drives the practical application of Red\u2011Black Tree within Binary Search Trees.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 137
+      },
+      {
+        "slide_no": 6,
+        "type": "example",
+        "title": "Standard library map structures rely",
+        "key_message": "Java TreeMap (Red\u2011Black tree) drives the practical application of Height within Binary Search Trees.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 152
+      },
+      {
+        "slide_no": 7,
+        "type": "common_mistakes",
+        "title": "Sorted insertions degrade unbalanced trees into linear",
+        "key_message": "It is a misconception that all binary search trees are balanced; actually, a bst can become completely unbalanced (height\u202f=\u202fn) with certain insertion orders.",
+        "bullets_count": 3,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 119
+      },
+      {
+        "slide_no": 8,
+        "type": "comparison",
+        "title": "Tree balancing incurs re-alignment overhead to guarantee",
+        "key_message": "Foundational principles govern tree balancing incurs re-alignment overhead to guarantee speed.",
+        "bullets_count": 4,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 106
+      },
+      {
+        "slide_no": 9,
+        "type": "comparison",
+        "title": "Trees enable ordered range queries",
+        "key_message": "Foundational principles govern trees enable ordered range queries where hash tables fall short.",
+        "bullets_count": 2,
+        "steps_count": 0,
+        "columns_count": 2,
+        "notes_word_count": 107
+      },
+      {
+        "slide_no": 10,
+        "type": "summary",
+        "title": "Optimal dynamic search requires balancing tree structure",
+        "key_message": "Synthesizing Binary Search Trees requires integrating Binary Search Tree with systemic operational safeguards.",
+        "bullets_count": 3,
+        "steps_count": 0,
+        "columns_count": 0,
+        "notes_word_count": 86
+      }
+    ]
+  },
+  {
+    "topic": "Ancient Egyptian Civilization",
+    "discipline": "History",
+    "status": "FAIL",
+    "elapsed_seconds": 55.98,
+    "error": "Export blocked by Content Completeness Gate: Slide 6: CONTENT_INSUFFICIENT: Process slide has zero process steps"
+  },
+  {
+    "topic": "Break-Even Analysis",
+    "discipline": "Business / Finance",
+    "status": "FAIL",
+    "elapsed_seconds": 1.63,
+    "error": "Export blocked by Content Completeness Gate: Slide 3: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 4: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 5: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 6: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 7: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 9: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points"
+  },
+  {
+    "topic": "Conditional Probability",
+    "discipline": "Mathematics",
+    "status": "FAIL",
+    "elapsed_seconds": 1.43,
+    "error": "Export blocked by Content Completeness Gate: Slide 3: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 4: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 6: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 7: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 9: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points"
+  },
+  {
+    "topic": "Principles of Contract Law",
+    "discipline": "Law",
+    "status": "FAIL",
+    "elapsed_seconds": 2.65,
+    "error": "Export blocked by Content Completeness Gate: Slide 3: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 4: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 5: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 9: CONTENT_INSUFFICIENT: Comparison targets contain generic placeholder names: ['Principles Of Contract Law', 'Alternative Approach']"
+  },
+  {
+    "topic": "Soil Erosion",
+    "discipline": "Environmental Science",
+    "status": "FAIL",
+    "elapsed_seconds": 2.34,
+    "error": "Export blocked by Content Completeness Gate: Slide 3: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 4: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 5: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 6: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 7: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points; Slide 9: CONTENT_INSUFFICIENT: Slide must contain at least 2 complete, meaningful points"
+  }
+]

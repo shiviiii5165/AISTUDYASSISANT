@@ -84,5 +84,7 @@ class ProviderHealthManager:
     def record_terminal_failure(self, provider_name: str, cooldown_seconds: int = 3600):
         self.get_breaker(provider_name).record_terminal_failure(cooldown_seconds)
 
-# Global health manager
+# Global circuit breaker and health manager
+circuit_breaker = CircuitBreaker()
 health_manager = ProviderHealthManager()
+

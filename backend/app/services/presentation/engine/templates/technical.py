@@ -82,6 +82,13 @@ def render_technical_slide(
     # Standard Light Canvas with Technical Top Border
     slide.background.fill.solid()
     slide.background.fill.fore_color.rgb = theme.background
+    
+    # Pedagogical Dispatch
+    from .dispatch import dispatch_pedagogical_component
+    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
+        return
+
+    # Thin gradient line at the very top edge
     add_gradient_bar(slide, Inches(0), Inches(0), Inches(13.333), Inches(0.06),
                      theme.primary, theme.accent)
 
@@ -101,10 +108,6 @@ def render_technical_slide(
 
     content_top = Inches(1.8)
     content_h = Inches(4.8)
-
-    from .dispatch import dispatch_pedagogical_component
-    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
-        return
 
     diagram_spec = visual.get("diagram_spec")
     img_bytes = visual.get("image_bytes")

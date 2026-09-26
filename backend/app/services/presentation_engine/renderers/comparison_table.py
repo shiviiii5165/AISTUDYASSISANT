@@ -48,29 +48,17 @@ def render_comparison_table(
     rows_data = []
 
     if content.columns and len(content.columns) >= 2:
-        headers = [col.heading or f"Option {i+1}" for i, col in enumerate(content.columns[:4])]
-        max_rows = max(len(col.points) for col in content.columns[:4])
-        for r_idx in range(max_rows):
-            row = []
-            for col in content.columns[:4]:
-                pt = col.points[r_idx] if r_idx < len(col.points) else ""
-                row.append(pt)
-            rows_data.append(row)
-    elif content.body_bullets:
-        headers = ["Criterion", "Attribute / Analysis"]
-        for b in content.body_bullets[:6]:
-            if ":" in b:
-                parts = b.split(":", 1)
-                rows_data.append([parts[0].strip(), parts[1].strip()])
-            else:
-                rows_data.append(["Key Point", b.strip()])
-    else:
-        headers = ["Dimension", "Concept A", "Concept B"]
-        rows_data = [
-            ["Primary Goal", "Throughput optimization", "Latency minimization"],
-            ["Complexity", "O(1) amortized", "O(log n) worst-case"],
-            ["Memory Footprint", "Compact sequential array", "Pointers per node"]
-        ]
+        col_points_max = max((len(col.points) for col in content.columns[:4]), default=0)
+        if col_points_max > 0:
+            headers = [col.heading or f"Option {i+1}" for i, col in enumerate(content.columns[:4])]
+            for r_idx in range(col_points_max):
+                row = []
+                for col in content.columns[:4]:
+                    pt = col.points[r_idx] if r_idx < len(col.points) else ""
+                    row.append(pt)
+                rows_data.append(row)
+    if not rows_data:
+        raise ValueError("Comparison table requires at least one data row; automatic fabrication from unrelated bullets is disallowed")
 
     num_cols = len(headers)
     num_rows = len(rows_data) + 1  # header + data rows

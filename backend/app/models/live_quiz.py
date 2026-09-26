@@ -1,6 +1,6 @@
 """
-Pydantic Request & Response Wire Models for Live Classroom Quiz API
-===================================================================
+Pydantic Request & Response Wire Models for Live Classroom Quiz API (VNext)
+============================================================================
 Contracts for the /api/live-quizzes/* endpoints.
 """
 from typing import List, Dict, Any, Optional, Literal
@@ -26,6 +26,17 @@ class SubmitLiveResponseRequest(BaseModel):
     question_id: str
     selected_option_id: Optional[str] = None
     idempotency_key: Optional[str] = None
+    progression_token: Optional[str] = None
+    response_time_ms: Optional[int] = 0
+
+
+class BanParticipantRequest(BaseModel):
+    reason: Optional[str] = "Removed by teacher"
+
+
+class ActivitySignalRequest(BaseModel):
+    signal_type: str
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class InterventionRequest(BaseModel):

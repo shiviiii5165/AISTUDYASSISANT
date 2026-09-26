@@ -257,15 +257,19 @@ async def run_reviewer_critic(
     }
 
     try:
-        critic_res = await router.generate_json(
-            task="qa",
-            messages=[
-                {"role": "system", "content": REVIEWER_CRITIC_SYSTEM_PROMPT},
-                {"role": "user", "content": f"Review this generated presentation against the TeachGenie Master Standard:\n{json.dumps(critic_prompt, indent=2)}"},
-            ],
-            temperature=0.2,
-            max_tokens=2048,
-        )
+        from app.services.ai.circuit_breaker import circuit_breaker
+        if not circuit_breaker.can_execute():
+            critic_res = {"overall_rating": 4, "needs_revision": False, "flagged_slides": []}
+        else:
+            critic_res = await router.generate_json(
+                task="qa",
+                messages=[
+                    {"role": "system", "content": REVIEWER_CRITIC_SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Review this generated presentation against the TeachGenie Master Standard:\n{json.dumps(critic_prompt, indent=2)}"},
+                ],
+                temperature=0.2,
+                max_tokens=2048,
+            )
     except Exception as e:
         logger.warning(f"[ReviewerAgent] Critic LLM call failed (proceeding with pre-check repairs): {e}")
         critic_res = {"overall_rating": 4, "needs_revision": False, "flagged_slides": []}
@@ -296,6 +300,10 @@ async def run_reviewer_critic(
 
     # 4. Execute Targeted Repairs (Strictly capped at 1 pass)
     if repair_queue:
+        from ..ai.circuit_breaker import circuit_breaker
+        if not circuit_breaker.can_execute():
+            logger.info("[ReviewerAgent] Circuit breaker open; bypassing LLM targeted repair pass.")
+            return slides
         logger.info(f"[ReviewerAgent] Triggering targeted repairs for {len(repair_queue)} slide(s): {list(repair_queue.keys())}")
         repaired_slides = []
         for s in slides:

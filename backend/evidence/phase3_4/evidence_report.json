@@ -1,0 +1,179 @@
+[
+  {
+    "case": "1. Biology \u2014 Chloroplast Scientific Illustration",
+    "outcome": "image_required",
+    "search_query": "Chloroplast internal structure showing thylakoid membranes chloroplast thylakoid stroma chloroplast thylakoid membrane labeled educational illustration Chloroplast Structure",
+    "image_type": "photograph",
+    "candidate_count": 1,
+    "best_candidate": "chloroplast",
+    "best_score": 0.7328571428571429,
+    "rejection_reasons": [],
+    "expected_outcome": "image_required",
+    "PASS": true
+  },
+  {
+    "case": "2. Computer Science \u2014 Diagram Preferred",
+    "outcome": "diagram_preferred",
+    "rationale": "Visual intent 'show_system_architecture' with structured relationship data prefers editable diagram",
+    "expected_outcome": "diagram_preferred",
+    "PASS": true
+  },
+  {
+    "case": "3. Humanities \u2014 Historical Documentary Image",
+    "outcome": "image_required",
+    "search_query": "Historical documentary photograph of Indian independence movement independence partition 1947 historical documentary photograph partition independence Indian Independence Movement",
+    "image_type": "historical_image",
+    "candidate_count": 1,
+    "best_candidate": "historical",
+    "expected_outcome": "image_required",
+    "PASS": true
+  },
+  {
+    "case": "4. Mathematics \u2014 No Unnecessary Image",
+    "outcome": "image_unnecessary",
+    "rationale": "No image candidates and no strong visual intent requiring photography",
+    "expected_outcome": "image_unnecessary",
+    "PASS": true
+  },
+  {
+    "case": "5. Environmental Science \u2014 Ecosystem Photograph",
+    "outcome": "image_required",
+    "search_query": "Tropical rainforest canopy biodiversity ecosystem rainforest canopy biodiversity tropical rainforest canopy ecosystem biodiversity Tropical Rainforest Ecosystem",
+    "candidate_count": 1,
+    "best_candidate": "ecosystem",
+    "expected_outcome": "image_required",
+    "PASS": true
+  },
+  {
+    "case": "6. Negative \u2014 No Reliable Image Available",
+    "candidate_count": 0,
+    "best_candidate": null,
+    "expected": "No candidates found",
+    "PASS": true
+  },
+  {
+    "case": "7. Negative \u2014 Rights Metadata Missing",
+    "valid": false,
+    "defects": [
+      "IMAGE_RIGHTS_UNVERIFIED"
+    ],
+    "expected_defect": "IMAGE_RIGHTS_UNVERIFIED",
+    "PASS": true
+  },
+  {
+    "case": "8. Negative \u2014 Corrupt Image",
+    "valid": false,
+    "defects": [
+      "IMAGE_FORMAT_UNSUPPORTED",
+      "IMAGE_FILE_CORRUPT",
+      "IMAGE_RESOLUTION_INSUFFICIENT"
+    ],
+    "expected_defects": [
+      "IMAGE_FORMAT_UNSUPPORTED",
+      "IMAGE_FILE_CORRUPT"
+    ],
+    "PASS": true
+  },
+  {
+    "case": "9. Negative \u2014 Chart Semantically Preferred",
+    "outcome": "chart_preferred",
+    "rationale": "Visual intent 'show_data_pattern' is best served by a native chart",
+    "expected_outcome": "chart_preferred",
+    "PASS": true
+  },
+  {
+    "case": "10. Provider Registry Capabilities",
+    "providers": [
+      {
+        "provider": "pexels",
+        "enabled": true,
+        "configured": true,
+        "health": "HEALTHY",
+        "priority": 1
+      },
+      {
+        "provider": "pixabay",
+        "enabled": true,
+        "configured": true,
+        "health": "HEALTHY",
+        "priority": 2
+      },
+      {
+        "provider": "unsplash",
+        "enabled": true,
+        "configured": true,
+        "health": "HEALTHY",
+        "priority": 3
+      },
+      {
+        "provider": "wikimedia",
+        "enabled": true,
+        "configured": true,
+        "health": "HEALTHY",
+        "priority": 4
+      }
+    ],
+    "total_providers": 4,
+    "wikimedia_always_available": true,
+    "PASS": true
+  },
+  {
+    "case": "SUPP: Crop Geometry Verification",
+    "contain": {
+      "left": 914400,
+      "top": 1628775,
+      "width": 6400800,
+      "height": 3600450
+    },
+    "cover": {
+      "left": 914400,
+      "top": 1371600,
+      "width": 6400800,
+      "height": 4114800
+    },
+    "PASS": true
+  },
+  {
+    "case": "SUPP: Alt Text Generation",
+    "scientific_alt": "Detailed chloroplast illustration showing thylakoid membrane",
+    "decorative_alt": "",
+    "decorative_is_empty": true,
+    "PASS": true
+  },
+  {
+    "case": "SUPP: URL Security Validation",
+    "tests": [
+      {
+        "url": "https://api.pexels.com/image.jpg",
+        "safe": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "url": "http://insecure.com/image.jpg",
+        "safe": false,
+        "expected": false,
+        "pass": true
+      },
+      {
+        "url": "https://127.0.0.1/evil.jpg",
+        "safe": false,
+        "expected": false,
+        "pass": true
+      },
+      {
+        "url": "https://192.168.1.1/internal.jpg",
+        "safe": false,
+        "expected": false,
+        "pass": true
+      }
+    ],
+    "PASS": true
+  },
+  {
+    "case": "SUPP: Deduplication Check",
+    "is_duplicate": true,
+    "not_duplicate": true,
+    "PASS": true
+  }
+]

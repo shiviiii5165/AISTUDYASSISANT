@@ -151,6 +151,13 @@ def render_academic_slide(
         return
 
     # ═══════════════════════════════════════════════════════════════════════
+    # PEDAGOGICAL DISPATCH — Handles entire slide if pattern matched
+    # ═══════════════════════════════════════════════════════════════════════
+    from .dispatch import dispatch_pedagogical_component
+    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
+        return
+
+    # ═══════════════════════════════════════════════════════════════════════
     # STANDARD CONTENT SLIDE — Header Zone
     # ═══════════════════════════════════════════════════════════════════════
     # Thin gradient accent at top
@@ -191,12 +198,8 @@ def render_academic_slide(
         content_h = Inches(5.00)
 
     # ═══════════════════════════════════════════════════════════════════════
-    # CONTENT ZONE — Pedagogical dispatch first
+    # CONTENT ZONE
     # ═══════════════════════════════════════════════════════════════════════
-    from .dispatch import dispatch_pedagogical_component
-    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
-        return
-
     diagram_spec = visual.get("diagram_spec")
     img_bytes = visual.get("image_bytes")
 

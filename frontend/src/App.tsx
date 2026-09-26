@@ -16,10 +16,13 @@ import LessonPlannerPage from './pages/LessonPlannerPage';
 import QuizGeneratorPage from './pages/QuizGeneratorPage';
 import QuizPage from './pages/QuizPage';
 import JoinLiveQuizPage from './pages/JoinLiveQuizPage';
-import LiveQuizHostPage from './pages/LiveQuizHostPage';
-import LiveQuizParticipantPage from './pages/LiveQuizParticipantPage';
-import LiveQuizReportPage from './pages/LiveQuizReportPage';
 import NotesGeneratorPage from './pages/NotesGeneratorPage';
+
+// Lazy-loaded Live Quiz routes for strict code-splitting (§14)
+const LiveQuizHostPage = React.lazy(() => import('./pages/LiveQuizHostPage'));
+const LiveQuizParticipantPage = React.lazy(() => import('./pages/LiveQuizParticipantPage'));
+const LiveQuizReportPage = React.lazy(() => import('./pages/LiveQuizReportPage'));
+
 
 import { useAuthStore } from './store/useAuthStore';
 import CookieConsent from './components/CookieConsent';
@@ -194,12 +197,28 @@ function App() {
             path="/quiz/:quizId/live" 
             element={
               <ProtectedRoute>
-                <LiveQuizHostPage />
+                <React.Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--accent-royal)] border-t-transparent rounded-full animate-spin" /></div>}>
+                  <LiveQuizHostPage />
+                </React.Suspense>
               </ProtectedRoute>
             } 
           />
-          <Route path="/live/:sessionId" element={<LiveQuizParticipantPage />} />
-          <Route path="/live/:sessionId/report" element={<LiveQuizReportPage />} />
+          <Route 
+            path="/live/:sessionId" 
+            element={
+              <React.Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--accent-royal)] border-t-transparent rounded-full animate-spin" /></div>}>
+                <LiveQuizParticipantPage />
+              </React.Suspense>
+            } 
+          />
+          <Route 
+            path="/live/:sessionId/report" 
+            element={
+              <React.Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--accent-royal)] border-t-transparent rounded-full animate-spin" /></div>}>
+                <LiveQuizReportPage />
+              </React.Suspense>
+            } 
+          />
           <Route 
             path="/video" 
             element={

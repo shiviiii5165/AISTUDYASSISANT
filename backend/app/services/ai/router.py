@@ -28,7 +28,6 @@ class ModelRouter:
         # Task -> Preferred Provider & Model Mapping (Adheres strictly to user specification)
         self.task_policies = {
             "planning": [
-                ("gemini", "gemini-3.8-flash"),
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "openai/gpt-oss-120b"),
                 ("groq", "qwen/qwen3.8-27b"),
@@ -36,40 +35,34 @@ class ModelRouter:
             ],
             "doubt_tutor": [
                 ("groq", "openai/gpt-oss-120b"),
-                ("gemini", "gemini-3.8-flash"),
-                ("groq", "qwen/qwen3.8-27b"),
                 ("gemini", "gemini-3.6-flash"),
+                ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
             ],
             "semantic_qa": [
                 ("groq", "openai/gpt-oss-120b"),
-                ("gemini", "gemini-3.8-flash"),
-                ("groq", "qwen/qwen3.8-27b"),
                 ("gemini", "gemini-3.6-flash"),
+                ("groq", "qwen/qwen3.8-27b"),
             ],
             "content_generation": [
-                ("gemini", "gemini-3.8-flash"),
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "openai/gpt-oss-120b"),
                 ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
             ],
             "technical_content": [
-                ("gemini", "gemini-3.8-flash"),
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "openai/gpt-oss-120b"),
                 ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
             ],
             "repair": [
-                ("gemini", "gemini-3.8-flash"),
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "openai/gpt-oss-120b"),
                 ("groq", "qwen/qwen3.8-27b"),
                 ("openrouter", "openai/gpt-4o"),
             ],
             "qa": [
-                ("gemini", "gemini-3.8-flash"),
                 ("gemini", "gemini-3.6-flash"),
                 ("groq", "openai/gpt-oss-120b"),
                 ("groq", "qwen/qwen3.8-27b"),
@@ -79,7 +72,7 @@ class ModelRouter:
                 ("gemini", "gemini-embedding-001"),
             ],
             "image": [
-                ("gemini", "gemini-3.8-flash"),
+                ("gemini", "gemini-3.6-flash"),
             ]
         }
         self.last_routed_calls: Dict[str, Dict[str, Any]] = {}

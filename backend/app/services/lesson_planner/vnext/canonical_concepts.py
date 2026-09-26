@@ -535,8 +535,9 @@ class CanonicalConceptResolver:
 
         title_clean = (stage_title or "").strip()
         focus_clean = (stage_focus or "").strip()
+        topic_clean = (topic or "").strip()
         stage_content_combined = f"{title_clean} {focus_clean} {' '.join(objectives_texts)}".lower()
-        topic_lower = (topic or "").lower().strip()
+        topic_lower = topic_clean.lower()
         all_context = f"{topic_lower} {stage_content_combined}"
 
         # -------------------------------------------------------------------------

@@ -42,15 +42,54 @@ COMPONENT_RENDERERS = {
 }
 
 def to_slide_content(slide_spec: dict) -> SlideContent:
-    """Convert dict slide_spec into SlideContent model for renderers."""
+    """Convert dict slide_spec into SlideContent model for renderers with robust field binding."""
+    # Resolve steps
+    raw_steps = slide_spec.get("steps", [])
+    if not raw_steps and isinstance(slide_spec.get("content"), dict):
+        raw_steps = slide_spec["content"].get("process_steps", [])
+        if raw_steps and isinstance(raw_steps[0], str):
+            raw_steps = [{"title": f"Step {i+1}", "detail": s} for i, s in enumerate(raw_steps)]
+
     steps = [
-        ProcessStep(number=i+1, title=s.get("title", ""), detail=s.get("detail", s.get("description", "")))
-        for i, s in enumerate(slide_spec.get("steps", []))
+        ProcessStep(
+            number=s.get("number", s.get("step", i+1)),
+            title=s.get("title") or s.get("name") or f"Step {i+1}",
+            detail=s.get("detail") or s.get("description") or s.get("text") or ""
+        )
+        for i, s in enumerate(raw_steps) if isinstance(s, dict)
     ]
-    columns = [
-        ComparisonColumn(heading=c.get("heading", c.get("title", "")), points=c.get("points", c.get("bullets", [])))
-        for c in slide_spec.get("columns", [])
-    ]
+
+    # Resolve columns
+    raw_cols = slide_spec.get("columns", [])
+    if not raw_cols and isinstance(slide_spec.get("content"), dict):
+        c_dict = slide_spec["content"]
+        comp_rows = c_dict.get("comparison_rows", [])
+        if comp_rows:
+            target_a = c_dict.get("comparison_target_a") or "Approach A"
+            target_b = c_dict.get("comparison_target_b") or "Approach B"
+            points_a = []
+            points_b = []
+            for r in comp_rows:
+                dim = r.get("dimension", "") if isinstance(r, dict) else getattr(r, "dimension", "")
+                val_a = r.get("target_a_value", "") if isinstance(r, dict) else getattr(r, "target_a_value", "")
+                val_b = r.get("target_b_value", "") if isinstance(r, dict) else getattr(r, "target_b_value", "")
+                prefix = f"{dim}: " if dim else ""
+                points_a.append(f"{prefix}{val_a}")
+                points_b.append(f"{prefix}{val_b}")
+            raw_cols = [
+                {"heading": target_a, "points": points_a},
+                {"heading": target_b, "points": points_b},
+            ]
+
+    columns = []
+    for c in raw_cols:
+        if isinstance(c, dict):
+            heading = c.get("heading") or c.get("header") or c.get("title") or ""
+            points = c.get("points") or c.get("items") or c.get("bullets") or []
+            if isinstance(points, str):
+                points = [points]
+            columns.append(ComparisonColumn(heading=heading, points=points))
+
     visual = slide_spec.get("visual") or slide_spec.get("visual_spec") or {}
 
     return SlideContent(

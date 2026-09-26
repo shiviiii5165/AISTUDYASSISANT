@@ -55,6 +55,12 @@ class LessonCompiler:
         """
         Main compilation pipeline for Lesson Planner VNext.
         """
+        if isinstance(mode, str):
+            try:
+                mode = ProductMode(mode)
+            except Exception:
+                mode = ProductMode.TEACHER_CLASSROOM
+
         logger.info(f"[LessonCompiler] Compiling VNext Plan for '{topic}' ({grade}, {duration_minutes}m, mode={mode.value})")
 
         # 1. Classify Intent, Domain, and Volatility

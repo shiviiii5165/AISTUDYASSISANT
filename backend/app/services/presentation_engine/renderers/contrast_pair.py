@@ -55,18 +55,34 @@ def render_contrast_pair(
     right_x = MARGIN_LEFT + card_w + Inches(0.4)
 
     # Split bullets or columns into Left (Trap) vs Right (Discipline)
+    left_title = "THE TRAP / PITFALL"
+    right_title = "THE DISCIPLINE / BEST PRACTICE"
     left_bullets = []
     right_bullets = []
+
     if content.columns and len(content.columns) >= 2:
-        left_bullets = content.columns[0].points or [content.columns[0].heading]
-        right_bullets = content.columns[1].points or [content.columns[1].heading]
-    elif content.body_bullets:
-        mid = (len(content.body_bullets) + 1) // 2
-        left_bullets = content.body_bullets[:mid]
-        right_bullets = content.body_bullets[mid:]
-    else:
+        left_col = content.columns[0]
+        right_col = content.columns[1]
+        if left_col.heading and len(left_col.heading) > 2:
+            left_title = left_col.heading.upper()
+        if right_col.heading and len(right_col.heading) > 2:
+            right_title = right_col.heading.upper()
+        left_bullets = left_col.points if left_col.points else ([left_col.heading] if left_col.heading else [])
+        right_bullets = right_col.points if right_col.points else ([right_col.heading] if right_col.heading else [])
+
+    if not left_bullets and content.body_bullets:
+        if len(content.body_bullets) == 1:
+            left_bullets = content.body_bullets
+            right_bullets = [content.key_insight] if content.key_insight else ["Follow verified architectural principles."]
+        else:
+            mid = (len(content.body_bullets) + 1) // 2
+            left_bullets = content.body_bullets[:mid]
+            right_bullets = content.body_bullets[mid:]
+
+    if not left_bullets:
         left_bullets = ["Common misconception or naive assumption without formal invariants."]
-        right_bullets = ["Rigorous, structured approach enforcing correct constraints."]
+    if not right_bullets:
+        right_bullets = [content.key_insight] if content.key_insight else ["Rigorous, structured approach enforcing correct constraints."]
 
     # Dynamic height calculation
     lh = estimate_text_height("\n".join(left_bullets), Typography.BULLET, card_w - Inches(0.6))
@@ -78,7 +94,7 @@ def render_contrast_pair(
              fill_color=theme.surface, border_color=CORAL)
     render_bundled_icon(slide, "warning-trap", left_x + Inches(0.3), content_top + Inches(0.2), Inches(0.5), Inches(0.5))
     add_text_box(
-        slide, "THE TRAP / PITFALL",
+        slide, left_title,
         left_x + Inches(0.9), content_top + Inches(0.25),
         card_w - Inches(1.2), Inches(0.4),
         token=Typography.BADGE, color=CORAL
@@ -95,7 +111,7 @@ def render_contrast_pair(
              fill_color=theme.surface, border_color=TEAL)
     render_bundled_icon(slide, "check-badge", right_x + Inches(0.3), content_top + Inches(0.2), Inches(0.5), Inches(0.5))
     add_text_box(
-        slide, "THE DISCIPLINE / BEST PRACTICE",
+        slide, right_title,
         right_x + Inches(0.9), content_top + Inches(0.25),
         card_w - Inches(1.2), Inches(0.4),
         token=Typography.BADGE, color=TEAL

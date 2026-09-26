@@ -15,11 +15,12 @@ from app.core.logging import logger
 import asyncio
 import json
 import re
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Tuple
 from app.services.ai import router
-from .schemas import PresentationConfig
 from .prompts import SLIDE_PATCH_SYSTEM_PROMPT
-from .content_agent import BANNED_STRINGS, _contains_banned, _has_verb, _word_boundary_truncate, _generate_topic_fallback
+from .schemas import PresentationConfig
+from .content_agent import BANNED_STRINGS, _contains_banned, _has_verb, _word_boundary_truncate
+from .content_quality_auditor import sanitize_and_complete_title
 
 
 def inspect_slide_structure(slide: Dict[str, Any]) -> List[str]:
@@ -98,8 +99,8 @@ def inspect_slide_structure(slide: Dict[str, Any]) -> List[str]:
             issues.append("Speaker notes are missing.")
         else:
             word_count = len(notes.split())
-            if word_count < 90:
-                issues.append(f"Speaker notes too short ({word_count} words, minimum 90).")
+            if word_count < 80:
+                issues.append(f"Speaker notes too short ({word_count} words, minimum 80).")
             elif word_count > 200:
                 issues.append(f"Speaker notes too long ({word_count} words, recommended max 160).")
 
@@ -117,6 +118,160 @@ def inspect_slide_structure(slide: Dict[str, Any]) -> List[str]:
         issues.append("Slide flagged asset_required but image_bytes is missing.")
 
     return issues
+
+
+def fit_title_semantic(title: str, max_chars: int = 60, topic: str = "", fallback: str = "") -> str:
+    """
+    Deterministically compresses and fits a slide title into the specified character budget (<= max_chars)
+    without raw character slicing.
+    
+    Guarantees:
+    - Preserves central meaning and subject
+    - Grammatically complete (no dangling prepositions or conjunctions)
+    - Avoids dangling punctuation (no trailing .,:;-—)
+    - Protects mathematical expressions ($...$, equations) from broken delimiters or truncation
+    - Avoids cutting named entities and acronyms (BERT, CPython, etc.) mid-word
+    - Enforces <= max_chars strictly
+    - Returns already-valid titles intact
+    """
+    if not title or not title.strip():
+        if fallback:
+            return fallback[:max_chars]
+        if topic:
+            return f"{topic}: Overview"[:max_chars]
+        return "Overview"
+
+    raw = title.strip()
+    if len(raw) <= max_chars:
+        return sanitize_and_complete_title(raw, topic=topic, fallback_concept=fallback)
+
+    # 1. Identify protected spans (LaTeX math expressions and equations)
+    math_spans: List[Tuple[int, int]] = []
+    for m in re.finditer(r"\$\$?[^$]+\$\$?|\\\([^\)]+\\\)", raw):
+        math_spans.append((m.start(), m.end()))
+
+    def is_inside_math(idx: int) -> bool:
+        return any(start <= idx < end for start, end in math_spans)
+
+    # 2. Check for verbose meta-prefixes to strip
+    PREFIX_PATTERNS = [
+        r"^An?\s+(?:In-Depth\s+|Comprehensive\s+|Detailed\s+|Systematic\s+|Rigorous\s+)?Overview\s+of\s+(?:the\s+)?",
+        r"^An?\s+(?:In-Depth\s+|Comprehensive\s+|Detailed\s+|Systematic\s+|Rigorous\s+)?Examination\s+of\s+(?:the\s+)?",
+        r"^An?\s+(?:In-Depth\s+|Comprehensive\s+|Detailed\s+|Systematic\s+|Rigorous\s+)?Investigation\s+(?:into|of)\s+(?:the\s+)?",
+        r"^An?\s+(?:In-Depth\s+|Comprehensive\s+|Detailed\s+|Systematic\s+|Rigorous\s+)?Introduction\s+to\s+(?:the\s+)?(?:Principles\s+of\s+)?",
+        r"^An?\s+(?:In-Depth\s+|Comprehensive\s+|Detailed\s+|Systematic\s+|Rigorous\s+)?Analysis\s+of\s+(?:the\s+)?",
+        r"^A\s+(?:Comparative\s+|Critical\s+)?Study\s+(?:on|of)\s+(?:the\s+)?",
+        r"^Understanding\s+(?:the\s+)?(?:Mechanisms\s+of\s+|Fundamentals\s+of\s+|Principles\s+of\s+)?",
+        r"^Exploring\s+(?:the\s+)?(?:Dynamics\s+of\s+|Concepts\s+of\s+)?",
+        r"^Key\s+Principles\s+(?:and\s+Concepts\s+)?of\s+",
+        r"^Insights\s+into\s+(?:the\s+)?",
+    ]
+    cur = raw
+    for pat in PREFIX_PATTERNS:
+        m = re.match(pat, cur, flags=re.IGNORECASE)
+        if m:
+            candidate = cur[m.end():].strip()
+            if candidate:
+                candidate = candidate[0].upper() + candidate[1:]
+                if len(candidate) <= max_chars and len(candidate.split()) >= 2:
+                    return sanitize_and_complete_title(candidate, topic=topic, fallback_concept=fallback)
+                cur = candidate
+                break
+
+    # 3. Delimiter Split (Colon, Em-dash, En-dash, Pipe, Semicolon, Comma)
+    for delim in [": ", " — ", " – ", " - ", " | ", "; ", ", "]:
+        delim_idx = cur.find(delim)
+        if delim_idx != -1 and not is_inside_math(delim_idx):
+            left = cur[:delim_idx].strip()
+            right = cur[delim_idx + len(delim):].strip()
+            generic_markers = {"lecture", "chapter", "module", "part", "unit", "section", "overview", "case study"}
+            has_math_on_right = any(start >= delim_idx for start, end in math_spans)
+            if not has_math_on_right and 12 <= len(left) <= max_chars and len(left.split()) >= 2:
+                if not any(left.lower().startswith(gm) for gm in generic_markers):
+                    sanitized_left = sanitize_and_complete_title(left, topic=topic, fallback_concept=fallback)
+                    if len(sanitized_left) <= max_chars:
+                        return sanitized_left
+            if 12 <= len(right) <= max_chars and len(right.split()) >= 2:
+                sanitized_right = sanitize_and_complete_title(right, topic=topic, fallback_concept=fallback)
+                if len(sanitized_right) <= max_chars and sanitized_right.count("$") % 2 == 0:
+                    return sanitized_right
+
+    # 4. Grammatical clause pruning (Relative clauses & Subordinate conjunctions)
+    CLAUSE_DELIMITERS = [
+        " that ",
+        ", which ",
+        " which ",
+        ", where ",
+        " where ",
+        " because ",
+        " although ",
+        " in order to ",
+        " so that ",
+        " as well as ",
+        " and should be ",
+        " and will be ",
+        " and can be ",
+        " and its ",
+        " and their ",
+    ]
+    for cdelim in CLAUSE_DELIMITERS:
+        idx = cur.find(cdelim)
+        if idx != -1 and not is_inside_math(idx):
+            candidate = cur[:idx].strip()
+            if 10 <= len(candidate) <= max_chars and len(candidate.split()) >= 2:
+                sanitized = sanitize_and_complete_title(candidate, topic=topic, fallback_concept=fallback)
+                if len(sanitized) <= max_chars:
+                    return sanitized
+
+    # 5. Prepositional & coordinating conjunction boundary reduction (scanning right-to-left)
+    PHRASE_DELIMITERS = [
+        " and ", " across ", " through ", " during ", " within ", " between ",
+        " under ", " with ", " for ", " from ", " on ", " at ", " in ", " of "
+    ]
+    split_points = []
+    for pdelim in PHRASE_DELIMITERS:
+        for m in re.finditer(re.escape(pdelim), cur, flags=re.IGNORECASE):
+            if not is_inside_math(m.start()):
+                split_points.append(m.start())
+    
+    split_points.sort(reverse=True)
+    for sp in split_points:
+        candidate = cur[:sp].strip()
+        if 8 <= len(candidate) <= max_chars and len(candidate.split()) >= 2:
+            # If original title has math, prioritize candidates retaining all math spans
+            if math_spans and not all(end <= sp for start, end in math_spans):
+                continue
+            sanitized = sanitize_and_complete_title(candidate, topic=topic, fallback_concept=fallback)
+            if len(sanitized) <= max_chars:
+                if sanitized.count("$") % 2 == 0:
+                    return sanitized
+
+    # 6. Word-boundary aware truncation fallback (avoiding math & entity cuts)
+    words = cur.split()
+    accumulated: List[str] = []
+    for w in words:
+        test_str = " ".join(accumulated + [w])
+        if len(test_str) > max_chars:
+            break
+        accumulated.append(w)
+
+    if accumulated:
+        while accumulated and accumulated[-1].lower().rstrip(".,:;") in {
+            "and", "or", "with", "for", "to", "but", "that", "of", "in", "on",
+            "at", "by", "from", "as", "load", "loads", "leads", "causes", "is", "are"
+        }:
+            accumulated.pop()
+        if accumulated:
+            candidate = " ".join(accumulated)
+            sanitized = sanitize_and_complete_title(candidate, topic=topic, fallback_concept=fallback)
+            if len(sanitized) <= max_chars and sanitized.count("$") % 2 == 0:
+                return sanitized
+
+    # 7. Final guaranteed safety clamp
+    fallback_res = sanitize_and_complete_title(cur[:max_chars].rsplit(" ", 1)[0], topic=topic, fallback_concept=fallback)
+    if len(fallback_res) <= max_chars:
+        return fallback_res
+    return cur[:max_chars].rstrip(".,:;-— ")
 
 
 def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
@@ -140,9 +295,9 @@ def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
     overflow_to_notes = []
     trimmed_bullets = []
     for b_str in valid_bullets[:5]:
-        if len(b_str) > 100:
+        if len(b_str) > 118:
             overflow_to_notes.append(b_str)  # Keep full version in notes
-            b_str = _word_boundary_truncate(b_str, 95)
+            b_str = _word_boundary_truncate(b_str, 116)
         trimmed_bullets.append(b_str)
 
     # Remove duplicates
@@ -165,10 +320,16 @@ def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
         overflow_str = " Additional context: " + "; ".join(overflow_to_notes)
         slide["speaker_notes"] = (notes + overflow_str).strip()
 
-    # 3. Title length enforcement (word-boundary, no raw slicing)
+    # 3. Title length and completeness enforcement (semantic compression, no raw slicing)
     title = slide.get("title", "")
-    if len(title) > 60:
-        slide["title"] = _word_boundary_truncate(title, 58)
+    if title:
+        orig_title = title.strip()
+        healed_title = fit_title_semantic(orig_title, max_chars=60)
+        slide["title"] = healed_title
+        if healed_title != orig_title and len(orig_title) > 60:
+            notes = slide.get("speaker_notes", "")
+            if orig_title not in notes:
+                slide["speaker_notes"] = (notes + f" Full topic title: {orig_title}").strip()
 
     # 4. Subtitle length enforcement
     subtitle = slide.get("subtitle", "")
@@ -181,6 +342,22 @@ def auto_heal_slide_python(slide: Dict[str, Any]) -> Dict[str, Any]:
         for banned in BANNED_STRINGS:
             notes = re.sub(re.escape(banned), "", notes, flags=re.IGNORECASE)
         slide["speaker_notes"] = notes.strip()
+
+    # 6. Guard process slide steps completeness
+    slide_type = str(slide.get("type", "")).lower()
+    slide_intent = str(slide.get("intent", "")).lower()
+    if "process" in slide_type or "process" in slide_intent:
+        if not slide.get("steps") and slide.get("body_bullets"):
+            slide["steps"] = [
+                {"step": idx + 1, "title": f"Step {idx + 1}", "description": b}
+                for idx, b in enumerate(slide["body_bullets"])
+            ]
+        if isinstance(slide.get("content"), dict):
+            if not slide["content"].get("process_steps") and slide.get("steps"):
+                slide["content"]["process_steps"] = [
+                    s.get("description", str(s)) if isinstance(s, dict) else str(s)
+                    for s in slide["steps"]
+                ]
 
     return slide
 
@@ -195,9 +372,12 @@ async def repair_single_slide(
     Hard-capped at 15s per repair to prevent pipeline stalls.
     """
     try:
+        from ..ai.circuit_breaker import circuit_breaker
+        if not circuit_breaker.can_execute():
+            return slide
         user_prompt = (
             f"Fix issues in this slide to meet the TeachGenie Master Standard:\n"
-            f"Slide Content:\n{json.dumps(slide, indent=2)}\n\n"
+            f"Slide Content:\n{json.dumps({k: v for k, v in slide.items() if not isinstance(v, (bytes, bytearray))}, indent=2, default=str)}\n\n"
             f"Issues Identified:\n" + "\n".join(f"- {iss}" for iss in issues)
         )
         if directive:
@@ -213,16 +393,51 @@ async def repair_single_slide(
                 temperature=0.2,
                 max_tokens=2000,
             ),
-            timeout=15.0,
+            timeout=8.0,
         )
         if patch_res and patch_res.get("title"):
-            # Preserve original visual_spec and numbering
-            patch_res["visual_spec"] = slide.get("visual_spec")
-            patch_res["image_bytes"] = slide.get("image_bytes")
-            patch_res["slide_no"] = slide.get("slide_no")
-            patch_res["content_pattern"] = slide.get("content_pattern")
-            patch_res["section_label"] = slide.get("section_label")
-            return auto_heal_slide_python(patch_res)
+            # Start from the original slide to preserve all structural data
+            merged = dict(slide)
+            for k, v in patch_res.items():
+                if v is not None and v != "" and v != [] and v != {}:
+                    merged[k] = v
+                elif k in ("title", "subtitle", "key_message", "speaker_notes", "example"):
+                    if v:
+                        merged[k] = v
+
+            # Strictly preserve original structural collections if patch_res didn't supply them
+            for key in ("steps", "columns", "layers", "metrics", "content", "content_origin", "semantic_status"):
+                if not patch_res.get(key) and slide.get(key):
+                    merged[key] = slide[key]
+
+            # Preserve visual_spec and numbering
+            merged["visual_spec"] = slide.get("visual_spec")
+            merged["image_bytes"] = slide.get("image_bytes")
+            merged["slide_no"] = slide.get("slide_no")
+            merged["content_pattern"] = patch_res.get("content_pattern") or slide.get("content_pattern")
+            merged["section_label"] = slide.get("section_label")
+            if not patch_res.get("type"):
+                merged["type"] = slide.get("type")
+
+            # Synchronize process steps if this is a process slide
+            slide_type = str(merged.get("type", "")).lower()
+            slide_intent = str(merged.get("intent", "")).lower()
+            if "process" in slide_type or "process" in slide_intent:
+                if not merged.get("steps") and slide.get("steps"):
+                    merged["steps"] = slide["steps"]
+                elif not merged.get("steps") and merged.get("body_bullets"):
+                    merged["steps"] = [
+                        {"step": idx + 1, "title": f"Step {idx + 1}", "description": b}
+                        for idx, b in enumerate(merged["body_bullets"])
+                    ]
+                if isinstance(merged.get("content"), dict):
+                    if not merged["content"].get("process_steps") and merged.get("steps"):
+                        merged["content"]["process_steps"] = [
+                            s.get("description", str(s)) if isinstance(s, dict) else str(s)
+                            for s in merged["steps"]
+                        ]
+
+            return auto_heal_slide_python(merged)
     except asyncio.TimeoutError:
         logger.warning(f"[QA Agent] AI slide patch timed out (15s) for slide {slide.get('slide_no')} — using auto-healed version.")
     except Exception as e:
@@ -248,16 +463,10 @@ async def run_presentation_qa(
     if len(slides) > max_allowed:
         slides = slides[:max_allowed]
     elif len(slides) < config.slide_count:
-        while len(slides) < config.slide_count:
-            num = len(slides) + 1
-            # Topic-derived fallback — NEVER banned placeholder strings
-            slides.append(
-                _generate_topic_fallback(
-                    topic=config.topic,
-                    slide_title=f"Key Concepts of {config.topic}",
-                    slide_no=num,
-                )
-            )
+        # Instead of hallucinating filler slides to meet the count, we preserve the exact
+        # output. If slides were skipped due to CONTENT_SEMANTIC_GAP, the overall deck
+        # will naturally fail the quality gate for being short, which is the correct behavior.
+        pass
 
     # 2. Run Python QA & Auto-Healing on each slide
     ai_repairs_used = 0

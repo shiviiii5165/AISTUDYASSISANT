@@ -1,0 +1,243 @@
+{
+  "phase": "3.5",
+  "generated_at": "2026-09-18T03:48:45Z",
+  "rendering_backend_primary": "PowerPointCOM 16.0 (Reference)",
+  "rendering_backend_secondary": "PowerPointPDFium 16.0 (Comparative)",
+  "benchmark_decks": [
+    {
+      "domain": "computer_science",
+      "title": "Asynchronous Consensus & Fault-Tolerant Distributed Architectures",
+      "slide_count": 10,
+      "pptx_path": "benchmark_computer_science.pptx",
+      "rendered_slide_count": 10,
+      "render_latency_ms": 3609.81,
+      "deck_valid": true,
+      "consistency_score": 100.0,
+      "total_defects": 0,
+      "total_fatal_defects": 0,
+      "outcome": "RENDERED_QA_PASS"
+    },
+    {
+      "domain": "biology",
+      "title": "Cellular Respiration & Mitochondrial Electron Transport",
+      "slide_count": 10,
+      "pptx_path": "benchmark_biology.pptx",
+      "rendered_slide_count": 10,
+      "render_latency_ms": 3948.03,
+      "deck_valid": true,
+      "consistency_score": 100.0,
+      "total_defects": 0,
+      "total_fatal_defects": 0,
+      "outcome": "RENDERED_QA_PASS"
+    },
+    {
+      "domain": "mathematics",
+      "title": "Differential Equations & Dynamic Systems Modeling",
+      "slide_count": 10,
+      "pptx_path": "benchmark_mathematics.pptx",
+      "rendered_slide_count": 10,
+      "render_latency_ms": 3884.0,
+      "deck_valid": true,
+      "consistency_score": 100.0,
+      "total_defects": 0,
+      "total_fatal_defects": 0,
+      "outcome": "RENDERED_QA_PASS"
+    },
+    {
+      "domain": "humanities",
+      "title": "Renaissance Art History & Architectural Innovations",
+      "slide_count": 10,
+      "pptx_path": "benchmark_humanities.pptx",
+      "rendered_slide_count": 10,
+      "render_latency_ms": 3976.2,
+      "deck_valid": true,
+      "consistency_score": 100.0,
+      "total_defects": 0,
+      "total_fatal_defects": 0,
+      "outcome": "RENDERED_QA_PASS"
+    },
+    {
+      "domain": "economics",
+      "title": "Monetary Policy Transmission & Macroeconomic Equilibrium",
+      "slide_count": 10,
+      "pptx_path": "benchmark_economics.pptx",
+      "rendered_slide_count": 10,
+      "render_latency_ms": 4085.96,
+      "deck_valid": true,
+      "consistency_score": 100.0,
+      "total_defects": 0,
+      "total_fatal_defects": 0,
+      "outcome": "RENDERED_QA_PASS"
+    },
+    {
+      "domain": "environmental_science",
+      "title": "Atmospheric Carbon Cycles & Climate Feedback Loops",
+      "slide_count": 10,
+      "pptx_path": "benchmark_environmental_science.pptx",
+      "rendered_slide_count": 10,
+      "render_latency_ms": 4289.41,
+      "deck_valid": true,
+      "consistency_score": 100.0,
+      "total_defects": 0,
+      "total_fatal_defects": 0,
+      "outcome": "RENDERED_QA_PASS"
+    }
+  ],
+  "seeded_defect_results": [
+    {
+      "defect_id": 1,
+      "defect_name": "clipped_title",
+      "detected": true,
+      "detected_codes": [
+        "TITLE_CLIPPED"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "ROLLED_BACK",
+      "resolved": false,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 2,
+      "defect_name": "clipped_final_text_line",
+      "detected": false,
+      "detected_codes": [],
+      "repair_attempted": false,
+      "repair_commit_status": "SKIPPED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 3,
+      "defect_name": "font_substitution_overflow",
+      "detected": true,
+      "detected_codes": [
+        "TEXT_RENDER_OVERFLOW"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "COMMITTED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 4,
+      "defect_name": "overlapping_chart_labels",
+      "detected": true,
+      "detected_codes": [
+        "CHART_LABEL_COLLISION",
+        "CHART_LEGEND_COLLISION"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "ROLLED_BACK",
+      "resolved": false,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 5,
+      "defect_name": "chart_legend_overflow",
+      "detected": true,
+      "detected_codes": [
+        "CHART_LEGEND_COLLISION"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "ROLLED_BACK",
+      "resolved": false,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 6,
+      "defect_name": "obscured_diagram_arrowhead",
+      "detected": true,
+      "detected_codes": [
+        "DIAGRAM_NODE_COLLISION"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "COMMITTED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 7,
+      "defect_name": "diagram_node_label_clipping",
+      "detected": true,
+      "detected_codes": [
+        "DIAGRAM_NODE_COLLISION"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "COMMITTED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 8,
+      "defect_name": "stretched_picture",
+      "detected": true,
+      "detected_codes": [
+        "IMAGE_STRETCHED"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "ROLLED_BACK",
+      "resolved": false,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 9,
+      "defect_name": "unsafe_image_crop",
+      "detected": false,
+      "detected_codes": [],
+      "repair_attempted": false,
+      "repair_commit_status": "SKIPPED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 10,
+      "defect_name": "unreadable_citation",
+      "detected": true,
+      "detected_codes": [
+        "UNINTENDED_EMPTY_REGION"
+      ],
+      "repair_attempted": false,
+      "repair_commit_status": "SKIPPED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 11,
+      "defect_name": "insufficient_text_contrast",
+      "detected": false,
+      "detected_codes": [],
+      "repair_attempted": false,
+      "repair_commit_status": "SKIPPED",
+      "resolved": true,
+      "semantic_mutation": false
+    },
+    {
+      "defect_id": 12,
+      "defect_name": "unexpected_content_overlap",
+      "detected": true,
+      "detected_codes": [
+        "TITLE_BODY_VISUAL_COLLISION",
+        "VISUAL_OBJECT_OVERLAP"
+      ],
+      "repair_attempted": true,
+      "repair_commit_status": "COMMITTED",
+      "resolved": true,
+      "semantic_mutation": false
+    }
+  ],
+  "false_positive_results": [],
+  "performance_metrics": {
+    "total_slides_rendered": 85,
+    "total_execution_time_ms": 190468.28,
+    "average_render_time_per_slide_ms": 396.56,
+    "average_audit_time_per_slide_ms": 530.62,
+    "repair_passes_average": 1.1
+  },
+  "certification_verdict": "PHASE_3_5_FROZEN",
+  "false_positive_summary": {
+    "clean_controls_tested": 12,
+    "false_alarms": 0,
+    "false_positive_rate": 0.0,
+    "confirmed_detection_rate": 0.75
+  }
+}

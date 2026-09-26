@@ -1,0 +1,256 @@
+{
+  "manifest_summary": {
+    "total_images": 3,
+    "total_image_bytes": 164946,
+    "provider_usage": {
+      "teachgenie_scientific_media": 1,
+      "teachgenie_archival_mock": 1,
+      "teachgenie_environmental_media": 1
+    },
+    "used_content_hashes": [
+      "d87ac45ea14e26edabda16cf6b4cc2d2d12c278088e8e3552ee7e4405d10c0d0",
+      "8da4874ff0c371856ba72dd58b844f91660d52075614f3649b393867a16952c1",
+      "eaa16df628210170169cf0226d88b8ca523f096406b2641d28cdde3a7e7eff15"
+    ],
+    "used_asset_ids": [
+      "ASSET_SCIENTIFIC_ILLUSTRATION",
+      "ASSET_HISTORICAL_CONTEXTUAL_MOCKED",
+      "ASSET_ENVIRONMENTAL_PHOTOGRAPH"
+    ]
+  },
+  "examples": [
+    {
+      "scenario": "scientific_illustration",
+      "pptx_file": "evidence\\phase3_4\\real_image_examples\\01_scientific_illustration_chloroplast.pptx",
+      "source_asset_identity": "ASSET_SCIENTIFIC_ILLUSTRATION",
+      "creator": "TeachGenie Scientific Media Laboratory",
+      "permission_record": "educational, academic",
+      "is_mocked_candidate": false,
+      "source_asset_sha256": "d87ac45ea14e26edabda16cf6b4cc2d2d12c278088e8e3552ee7e4405d10c0d0",
+      "embedded_image_sha256": "d87ac45ea14e26edabda16cf6b4cc2d2d12c278088e8e3552ee7e4405d10c0d0",
+      "sha256_match": true,
+      "image_width_px": 1200,
+      "image_height_px": 900,
+      "crop_mode": "contain",
+      "render_success": true,
+      "image_shape_count": 1,
+      "region_to_shape_ids": {
+        "R_VISUAL": [
+          2
+        ],
+        "R_TITLE": [
+          3
+        ],
+        "R_BODY": [
+          4
+        ]
+      },
+      "media_entries_count": 1,
+      "media_entries": [
+        {
+          "entry_name": "ppt/media/image1.png",
+          "size_bytes": 25511,
+          "sha256": "d87ac45ea14e26edabda16cf6b4cc2d2d12c278088e8e3552ee7e4405d10c0d0"
+        }
+      ],
+      "reloaded_shapes_count": 3,
+      "reloaded_shapes": [
+        {
+          "id": 2,
+          "name": "TG:S1:RR_VISUAL:img",
+          "left_in": 6.05,
+          "top_in": 2.1,
+          "width_in": 6.4,
+          "height_in": 4.8,
+          "type": "PICTURE"
+        },
+        {
+          "id": 3,
+          "name": "TG:S1:RR_TITLE:text",
+          "left_in": 0.8,
+          "top_in": 0.8,
+          "width_in": 11.7,
+          "height_in": 1.1,
+          "type": "TEXT_FRAME"
+        },
+        {
+          "id": 4,
+          "name": "TG:S1:RR_BODY:text",
+          "left_in": 0.8,
+          "top_in": 2.1,
+          "width_in": 4.8,
+          "height_in": 4.8,
+          "type": "TEXT_FRAME"
+        }
+      ],
+      "picture_shape_survived": true,
+      "attribution_required": false,
+      "attribution_caption_survived": true,
+      "editable_text_preserved": true,
+      "whole_slide_rasterization_detected": false,
+      "diagram_or_chart_replaced": false
+    },
+    {
+      "scenario": "historical_contextual_mocked",
+      "pptx_file": "evidence\\phase3_4\\real_image_examples\\02_historical_mocked_archive_curie.pptx",
+      "source_asset_identity": "ASSET_HISTORICAL_CONTEXTUAL_MOCKED",
+      "creator": "TeachGenie Historical Archive Simulator (Mocked Archive Fixture)",
+      "permission_record": "all, educational, public_domain",
+      "is_mocked_candidate": true,
+      "source_asset_sha256": "8da4874ff0c371856ba72dd58b844f91660d52075614f3649b393867a16952c1",
+      "embedded_image_sha256": "8da4874ff0c371856ba72dd58b844f91660d52075614f3649b393867a16952c1",
+      "sha256_match": true,
+      "image_width_px": 1024,
+      "image_height_px": 768,
+      "crop_mode": "contain",
+      "render_success": true,
+      "image_shape_count": 1,
+      "region_to_shape_ids": {
+        "R_VISUAL": [
+          2,
+          3
+        ],
+        "R_TITLE": [
+          4
+        ],
+        "R_BODY": [
+          5
+        ]
+      },
+      "media_entries_count": 1,
+      "media_entries": [
+        {
+          "entry_name": "ppt/media/image1.png",
+          "size_bytes": 27405,
+          "sha256": "8da4874ff0c371856ba72dd58b844f91660d52075614f3649b393867a16952c1"
+        }
+      ],
+      "reloaded_shapes_count": 4,
+      "reloaded_shapes": [
+        {
+          "id": 2,
+          "name": "TG:S1:RR_VISUAL:img",
+          "left_in": 6.05,
+          "top_in": 2.1,
+          "width_in": 6.4,
+          "height_in": 4.8,
+          "type": "PICTURE"
+        },
+        {
+          "id": 3,
+          "name": "TG:S1:RR_VISUAL:caption",
+          "left_in": 6.05,
+          "top_in": 6.94,
+          "width_in": 6.4,
+          "height_in": 0.25,
+          "type": "TEXT_FRAME"
+        },
+        {
+          "id": 4,
+          "name": "TG:S1:RR_TITLE:text",
+          "left_in": 0.8,
+          "top_in": 0.8,
+          "width_in": 11.7,
+          "height_in": 1.1,
+          "type": "TEXT_FRAME"
+        },
+        {
+          "id": 5,
+          "name": "TG:S1:RR_BODY:text",
+          "left_in": 0.8,
+          "top_in": 2.1,
+          "width_in": 4.8,
+          "height_in": 4.8,
+          "type": "TEXT_FRAME"
+        }
+      ],
+      "picture_shape_survived": true,
+      "attribution_required": true,
+      "attribution_caption_survived": true,
+      "editable_text_preserved": true,
+      "whole_slide_rasterization_detected": false,
+      "diagram_or_chart_replaced": false
+    },
+    {
+      "scenario": "environmental_photograph",
+      "pptx_file": "evidence\\phase3_4\\real_image_examples\\03_environmental_photo_rainforest.pptx",
+      "source_asset_identity": "ASSET_ENVIRONMENTAL_PHOTOGRAPH",
+      "creator": "TeachGenie Environmental Photography Unit",
+      "permission_record": "all, educational",
+      "is_mocked_candidate": false,
+      "source_asset_sha256": "eaa16df628210170169cf0226d88b8ca523f096406b2641d28cdde3a7e7eff15",
+      "embedded_image_sha256": "eaa16df628210170169cf0226d88b8ca523f096406b2641d28cdde3a7e7eff15",
+      "sha256_match": true,
+      "image_width_px": 1920,
+      "image_height_px": 1080,
+      "crop_mode": "cover",
+      "render_success": true,
+      "image_shape_count": 1,
+      "region_to_shape_ids": {
+        "R_VISUAL": [
+          2,
+          3
+        ],
+        "R_TITLE": [
+          4
+        ],
+        "R_BODY": [
+          5
+        ]
+      },
+      "media_entries_count": 1,
+      "media_entries": [
+        {
+          "entry_name": "ppt/media/image1.jpg",
+          "size_bytes": 112030,
+          "sha256": "eaa16df628210170169cf0226d88b8ca523f096406b2641d28cdde3a7e7eff15"
+        }
+      ],
+      "reloaded_shapes_count": 4,
+      "reloaded_shapes": [
+        {
+          "id": 2,
+          "name": "TG:S1:RR_VISUAL:img",
+          "left_in": 6.0,
+          "top_in": 2.1,
+          "width_in": 6.5,
+          "height_in": 4.8,
+          "type": "PICTURE"
+        },
+        {
+          "id": 3,
+          "name": "TG:S1:RR_VISUAL:caption",
+          "left_in": 6.0,
+          "top_in": 6.94,
+          "width_in": 6.5,
+          "height_in": 0.25,
+          "type": "TEXT_FRAME"
+        },
+        {
+          "id": 4,
+          "name": "TG:S1:RR_TITLE:text",
+          "left_in": 0.8,
+          "top_in": 0.8,
+          "width_in": 11.7,
+          "height_in": 1.1,
+          "type": "TEXT_FRAME"
+        },
+        {
+          "id": 5,
+          "name": "TG:S1:RR_BODY:text",
+          "left_in": 0.8,
+          "top_in": 2.1,
+          "width_in": 4.8,
+          "height_in": 4.8,
+          "type": "TEXT_FRAME"
+        }
+      ],
+      "picture_shape_survived": true,
+      "attribution_required": true,
+      "attribution_caption_survived": true,
+      "editable_text_preserved": true,
+      "whole_slide_rasterization_detected": false,
+      "diagram_or_chart_replaced": false
+    }
+  ]
+}

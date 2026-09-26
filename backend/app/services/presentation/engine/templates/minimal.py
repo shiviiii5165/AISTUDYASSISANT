@@ -73,6 +73,11 @@ def render_minimal_slide(
         add_speaker_notes(slide, notes)
         return
 
+    # Pedagogical Dispatch
+    from .dispatch import dispatch_pedagogical_component
+    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
+        return
+
     # Eyebrow tag (section label) above title — when present
     section_label = slide_spec.get("section_label") or ""
     title_top = Inches(0.8)
@@ -88,10 +93,6 @@ def render_minimal_slide(
 
     content_top = Inches(2.0) if not section_label else Inches(2.1)
     content_h = Inches(4.6)
-
-    from .dispatch import dispatch_pedagogical_component
-    if dispatch_pedagogical_component(slide, slide_spec, theme, slide_number, total_slides, deck_title):
-        return
 
     diagram_spec = visual.get("diagram_spec")
     img_bytes = visual.get("image_bytes")

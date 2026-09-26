@@ -1,14 +1,25 @@
 """
-Live Quiz Engine — Core Domain Schemas & Contracts
-==================================================
-Strict domain models mirroring migration 014_live_quiz.sql.
-Includes zero-leakage student sanitizers and event contracts.
+Live Quiz Engine — Core Domain Schemas & Contracts (VNext Scale & Security)
+==========================================================================
+Strict domain models mirroring migrations 014_live_quiz.sql and 015_live_quiz_vnext.sql.
+Includes zero-leakage student sanitizers, opaque progression tokens, and monitoring models.
 """
 from __future__ import annotations
+import hmac
+import hashlib
+import json
+import base64
 from enum import Enum
 from typing import List, Dict, Any, Optional, Union
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field
+
+from app.core.config import settings
+
+_PROGRESSION_SECRET = (
+    getattr(settings, "SUPABASE_JWT_SECRET", "")
+    or "teachgenie-progression-token-secret-2026"
+)
 
 
 class LiveSessionStatus(str, Enum):
@@ -47,6 +58,30 @@ class LiveParticipantStatus(str, Enum):
     LEFT = "left"
 
 
+class ConnectionState(str, Enum):
+    ACTIVE = "active"
+    DISCONNECTED = "disconnected"
+    RECONNECTING = "reconnecting"
+    IDLE = "idle"
+
+
+class RiskLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class AdminActionType(str, Enum):
+    BAN = "BAN"
+    UNBAN = "UNBAN"
+    PAUSE = "PAUSE"
+    RESUME = "RESUME"
+    REVEAL = "REVEAL"
+    SKIP = "SKIP"
+    END = "END"
+    SETTINGS_UPDATE = "SETTINGS_UPDATE"
+
+
 class LiveEventType(str, Enum):
     SESSION_CREATED = "SESSION_CREATED"
     PARTICIPANT_JOINED = "PARTICIPANT_JOINED"
@@ -60,6 +95,20 @@ class LiveEventType(str, Enum):
     SESSION_RESUMED = "SESSION_RESUMED"
     INTERVENTION_TRIGGERED = "INTERVENTION_TRIGGERED"
     SESSION_ENDED = "SESSION_ENDED"
+    # VNEXT scale & risk events
+    QUESTION_OPENED = "QUESTION_OPENED"
+    ANSWER_SUBMITTED = "ANSWER_SUBMITTED"
+    TAB_HIDDEN = "TAB_HIDDEN"
+    TAB_RETURNED = "TAB_RETURNED"
+    COPY_ATTEMPT = "COPY_ATTEMPT"
+    PASTE_ATTEMPT = "PASTE_ATTEMPT"
+    RECONNECTED = "RECONNECTED"
+    MULTI_SESSION_CONFLICT = "MULTI_SESSION_CONFLICT"
+    UNUSUALLY_FAST_RESPONSE = "UNUSUALLY_FAST_RESPONSE"
+    FINAL_SUBMIT = "FINAL_SUBMIT"
+    PARTICIPANT_BANNED = "PARTICIPANT_BANNED"
+    PARTICIPANT_UNBANNED = "PARTICIPANT_UNBANNED"
+    AGGREGATED_RESPONSES = "AGGREGATED_RESPONSES"
 
 
 class LiveTimerConfig(BaseModel):
@@ -89,6 +138,18 @@ class LiveParticipant(BaseModel):
     answered_count: int = 0
     streak: int = 0
 
+    # VNEXT live snapshot fields
+    current_question_index: int = 0
+    average_response_ms: int = 0
+    last_seen_at: Optional[datetime] = None
+    connection_state: ConnectionState = ConnectionState.ACTIVE
+    risk_score: int = 0
+    risk_level: RiskLevel = RiskLevel.LOW
+    is_banned: bool = False
+    banned_at: Optional[datetime] = None
+    ban_reason: Optional[str] = None
+    state_version: int = 1
+
 
 class LiveResponse(BaseModel):
     id: Optional[str] = None
@@ -104,6 +165,29 @@ class LiveResponse(BaseModel):
     concept_id: Optional[str] = None
     objective_id: Optional[str] = None
     idempotency_key: Optional[str] = None
+
+
+class LiveQuizQuestionStats(BaseModel):
+    id: Optional[str] = None
+    session_id: str
+    question_id: str
+    answered_count: int = 0
+    correct_count: int = 0
+    option_counts: Dict[str, int] = Field(default_factory=dict)
+    average_response_ms: int = 0
+    updated_at: Optional[datetime] = None
+
+
+class LiveQuizAdminAction(BaseModel):
+    id: Optional[str] = None
+    admin_user_id: str
+    session_id: str
+    participant_id: Optional[str] = None
+    action: AdminActionType
+    reason: Optional[str] = None
+    previous_state: Dict[str, Any] = Field(default_factory=dict)
+    new_state: Dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[datetime] = None
 
 
 class LiveQuizSession(BaseModel):
@@ -130,10 +214,89 @@ class LiveQuizSession(BaseModel):
     updated_at: Optional[datetime] = None
 
 
-def to_student_question_dict(q_dict: Dict[str, Any]) -> Dict[str, Any]:
+# ─── Opaque Question Progression Token ────────────────────────────────────────
+
+def create_progression_token(
+    session_id: str,
+    question_index: int,
+    question_id: str,
+    deadline_iso: Optional[str] = None,
+) -> str:
     """
-    Zero-Leakage Invariant:
-    Pre-reveal payload sent to students strictly omits correct_answer and explanation.
+    Issue an opaque, HMAC-SHA256 signed progression token for the current question.
+    Prevents students from enumerating or guessing future questions.
+    """
+    payload = {
+        "sid": session_id,
+        "qix": question_index,
+        "qid": question_id,
+        "dl": deadline_iso,
+        "iat": int(datetime.now(timezone.utc).timestamp()),
+    }
+    raw_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    signature = hmac.new(
+        _PROGRESSION_SECRET.encode("utf-8"),
+        raw_payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    encoded = base64.urlsafe_b64encode(raw_payload.encode("utf-8")).decode("utf-8")
+    return f"{encoded}.{signature}"
+
+
+def verify_progression_token(
+    token: str,
+    session_id: str,
+    expected_question_index: int,
+) -> Dict[str, Any]:
+    """
+    Validate that the token signature matches and refers to the active question.
+    Raises ValueError on tampering, mismatched session, or future question attempts.
+    """
+    if not token or "." not in token:
+        raise ValueError("Invalid progression token format")
+
+    parts = token.split(".", 1)
+    try:
+        raw_payload = base64.urlsafe_b64decode(parts[0].encode("utf-8")).decode("utf-8")
+        data = json.loads(raw_payload)
+    except Exception as e:
+        raise ValueError(f"Malformed progression token payload: {e}") from e
+
+    expected_sig = hmac.new(
+        _PROGRESSION_SECRET.encode("utf-8"),
+        raw_payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(expected_sig, parts[1]):
+        raise ValueError("Progression token signature verification failed")
+
+    if data.get("sid") != session_id:
+        raise ValueError("Progression token does not match active session")
+
+    token_qix = data.get("qix")
+    if token_qix != expected_question_index:
+        raise ValueError(
+            f"Progression token question index mismatch: token index {token_qix} != authorized current index {expected_question_index}"
+        )
+
+    return data
+
+
+def to_student_question_dict(
+    q_dict: Dict[str, Any],
+    progression_token: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Zero-Leakage Invariant (§2):
+    Pre-reveal payload sent to students strictly omits:
+      - correct_answer
+      - explanation
+      - future questions
+      - quiz snapshot
+      - teacher metadata
+      - internal scoring configuration
+    Includes opaque progression token.
     """
     return {
         "id": q_dict.get("id"),
@@ -143,4 +306,5 @@ def to_student_question_dict(q_dict: Dict[str, Any]) -> Dict[str, Any]:
         "difficulty": q_dict.get("difficulty", "medium"),
         "order_index": q_dict.get("order_index", 0),
         "concept_id": q_dict.get("concept_id"),
+        "progression_token": progression_token,
     }

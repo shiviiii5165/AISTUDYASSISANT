@@ -235,9 +235,9 @@ BENCHMARK_CURRICULUM_CATALOG: Dict[str, Dict[str, Any]] = {
             {
                 "id": "b2_light_reactions",
                 "name": "Light-Dependent Reactions (Thylakoids)",
-                "summary": "Chlorophyll pigments absorb photons, photolyze water to release O2, and energize electrons to generate ATP and NADPH.",
+                "summary": "Light-dependent reactions (thylakoids) photolyze water to release O2 and generate ATP/NADPH. The Calvin cycle (stroma) uses ATP/NADPH for carbon fixation.",
                 "prerequisites": ["Solar Energy Conversion Overview"],
-                "likely_misconceptions": ["Thinking sunlight is used directly to assemble carbon rings"],
+                "likely_misconceptions": ["Thinking sunlight is used directly to assemble carbon rings", "Confusing water-derived oxygen with CO2-derived oxygen"],
                 "recommended_visual_archetype": VisualStrategyArchetype.SCIENTIFIC_PROCESS,
                 "worked_example_hint": "Photosystem II splitting H2O -> 2H+ + 1/2 O2 + electrons"
             },
