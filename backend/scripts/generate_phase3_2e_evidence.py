@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2E Runtime Deck Evidence Generator
+LearnByGenie PPT vNext — Phase 3.2E Runtime Deck Evidence Generator
 ================================================================
 Generates real editable PowerPoint presentations across 5 canonical topics:
   1. Node.js Architecture (System Architecture / Split 40-60)
@@ -197,7 +197,7 @@ def _make_region_helper(
 
 def run_evidence():
     print("=" * 80)
-    print("TEACHGENIE PPT VNEXT — PHASE 3.2E COMPOSITION RENDERER RUNTIME EVIDENCE")
+    print("LEARNBYGENIE PPT VNEXT — PHASE 3.2E COMPOSITION RENDERER RUNTIME EVIDENCE")
     print("=" * 80)
 
     deck_specs = [

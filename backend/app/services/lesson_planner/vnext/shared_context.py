@@ -21,7 +21,7 @@ from ..schemas import (
 )
 from .canonical_concepts import CanonicalConceptResolver
 
-logger = logging.getLogger("teachgenie.lesson_planner.shared_context")
+logger = logging.getLogger("learnbygenie.lesson_planner.shared_context")
 
 
 class SharedLessonContext(BaseModel):

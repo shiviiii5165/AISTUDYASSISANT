@@ -36,7 +36,7 @@ from app.services.notes.certification import (
     StudentArtifactCertifier, DocumentQualityResult, CertifyArtifactRequest
 )
 
-logger = logging.getLogger("teachgenie.api.notes_generator")
+logger = logging.getLogger("learnbygenie.api.notes_generator")
 router = APIRouter()
 
 
@@ -81,7 +81,7 @@ async def analyze_notes_decision(
     """
     Step 2 Decision Engine Endpoint:
     Deterministically evaluates CanonicalNotesContext or raw context payload into
-    NotesGenerationPlan answering: 'Given what TeachGenie knows, what does this learner actually need in their notes?'
+    NotesGenerationPlan answering: 'Given what LearnByGenie knows, what does this learner actually need in their notes?'
     Strictly deterministic — does NOT invoke LLMs or generate notes.
     """
     user_id = str(getattr(current_user, 'id', 'anonymous'))
@@ -224,7 +224,7 @@ async def export_note_pdf(
         pdf_bytes = await PDFRenderer.render_document(doc)
 
         headers = {
-            "Content-Disposition": f'attachment; filename="teachgenie_notes_{note_id[:8]}.pdf"',
+            "Content-Disposition": f'attachment; filename="learnbygenie_notes_{note_id[:8]}.pdf"',
             "Content-Type": "application/pdf"
         }
 
@@ -234,6 +234,11 @@ async def export_note_pdf(
                 pdf_bytes=pdf_bytes,
                 html_content=html
             )
+            headers["X-LearnByGenie-Document-Hash"] = qa_result.document_hash
+            headers["X-LearnByGenie-PDF-Hash"] = qa_result.pdf_hash
+            headers["X-LearnByGenie-Certified"] = qa_result.artifact_status.value
+            headers["X-LearnByGenie-Defects"] = str(len(qa_result.artifact_certification.defects))
+            # Backward compatibility headers
             headers["X-TeachGenie-Document-Hash"] = qa_result.document_hash
             headers["X-TeachGenie-PDF-Hash"] = qa_result.pdf_hash
             headers["X-TeachGenie-Certified"] = qa_result.artifact_status.value
@@ -261,7 +266,7 @@ async def certify_note_artifact(
 ):
     """
     Certifies a rendered student artifact (or generates and certifies PDF)
-    against the TeachGenie Quality Gate.
+    against the LearnByGenie Quality Gate.
     """
     try:
         doc = NotesDocument(**payload.document)

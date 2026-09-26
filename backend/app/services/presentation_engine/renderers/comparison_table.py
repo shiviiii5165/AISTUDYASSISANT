@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Comparison Table Component
+LearnByGenie Renderer — Comparison Table Component
 ================================================
 Renders a genuine python-pptx Table shape with N rows and 2–4 columns.
 Features shaded header row, subtle alternating row fills, and formatted cell text.

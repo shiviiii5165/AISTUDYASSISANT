@@ -1,5 +1,5 @@
 """
-TeachGenie Presentation Engine — Content Completeness Gate
+LearnByGenie Presentation Engine — Content Completeness Gate
 ===========================================================
 Pre-export semantic and structural completeness validation.
 Validates slides against learning objectives and structural contracts

@@ -35,7 +35,7 @@ class OpenRouterProvider(AIProvider):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": "https://www.teachgenie.online",
-            "X-Title": "TeachGenie",
+            "X-Title": "LearnByGenie",
             "Content-Type": "application/json",
         }
         payload = {

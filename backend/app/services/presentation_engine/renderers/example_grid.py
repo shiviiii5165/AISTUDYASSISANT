@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Example Grid Component
+LearnByGenie Renderer — Example Grid Component
 ==============================================
 Renders a 2x2 or 4-across grid of application/example items.
 Each item: topic icon (from topic_icons) or small stock photo fallback

@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Resource Intent Profile Builder
+LearnByGenie Lesson Planner — Resource Intent Profile Builder
 ===========================================================
 Translates stage titles, archetypes, objectives, and learner weakness state
 into a clean, concept-dense ResourceIntentProfile with canonical concepts,

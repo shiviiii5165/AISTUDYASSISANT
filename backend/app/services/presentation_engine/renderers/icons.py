@@ -1,5 +1,5 @@
 """
-TeachGenie Presentation Engine — Bundled Thematic Icon Renderer
+LearnByGenie Presentation Engine — Bundled Thematic Icon Renderer
 ==============================================================
 Loads and renders bundled high-resolution static PNG icon assets for structural
 CS concepts and pedagogical badges. Zero runtime API dependencies, 100% deterministic layout.

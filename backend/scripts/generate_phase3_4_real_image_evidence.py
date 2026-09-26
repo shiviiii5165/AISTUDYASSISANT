@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.4 Real Image Insertion & Round-Trip Evidence Generator
+LearnByGenie PPT vNext — Phase 3.4 Real Image Insertion & Round-Trip Evidence Generator
 =====================================================================================
 Generates 3 actual PPTX files using locally created, explicitly permissioned test assets:
   1. Scientific Illustration: Chloroplast Ultra-Structure & Photosystem Anatomy
@@ -152,7 +152,7 @@ def create_historical_mocked_archive() -> Tuple[Path, bytes, str]:
     # Prominent MOCKED watermark and disclaimer banner
     draw.rectangle([70, 480, 950, 580], fill=(230, 215, 195), outline=(140, 90, 60), width=2)
     draw.text((90, 495), "[MOCKED HISTORICAL ARCHIVE — NOT DOCUMENTARY AUTHENTIC]", fill=(180, 40, 20))
-    draw.text((90, 530), "Simulated laboratory notebook for TeachGenie educational certification test fixtures.", fill=(80, 60, 40))
+    draw.text((90, 530), "Simulated laboratory notebook for LearnByGenie educational certification test fixtures.", fill=(80, 60, 40))
 
     # Archival stamp
     draw.ellipse([700, 590, 940, 700], outline=(140, 50, 50), width=3)
@@ -315,7 +315,7 @@ def build_pptx_example(
         slide_no=1,
         title=title_text,
         supporting_points=bullets_text,
-        speaker_notes="Educational lesson slide certified under TeachGenie Phase 3.4.",
+        speaker_notes="Educational lesson slide certified under LearnByGenie Phase 3.4.",
     )
 
     # Image decision
@@ -451,7 +451,7 @@ def build_pptx_example(
 
 def main():
     print("=" * 70)
-    print("TeachGenie PPT vNext — Generating Phase 3.4 Real Image Evidence")
+    print("LearnByGenie PPT vNext — Generating Phase 3.4 Real Image Evidence")
     print("=" * 70)
 
     manifest = DeckImageManifest(deck_topic="Biology, History, and Ecology Triple Certification")
@@ -461,7 +461,7 @@ def main():
     p1, b1, sha1 = create_scientific_illustration()
     rights1 = ImageRightsMetadata(
         provider="teachgenie_scientific_media",
-        creator="TeachGenie Scientific Media Laboratory",
+        creator="LearnByGenie Scientific Media Laboratory",
         license="Internal Educational Open Access",
         permitted_usage_scope="educational, academic",
         attribution_requirement=False,
@@ -493,11 +493,11 @@ def main():
     p2, b2, sha2 = create_historical_mocked_archive()
     rights2 = ImageRightsMetadata(
         provider="teachgenie_archival_mock",
-        creator="TeachGenie Historical Archive Simulator (Mocked Archive Fixture)",
+        creator="LearnByGenie Historical Archive Simulator (Mocked Archive Fixture)",
         license="CC0 1.0 Universal / Public Domain Dedication (Simulated Mock)",
         permitted_usage_scope="all, educational, public_domain",
         attribution_requirement=True,
-        attribution_text="Photo: TeachGenie Archival Reference Collection (Mocked Laboratory Record)",
+        attribution_text="Photo: LearnByGenie Archival Reference Collection (Mocked Laboratory Record)",
         rights_verified=True,
     )
     audit2 = build_pptx_example(
@@ -527,11 +527,11 @@ def main():
     p3, b3, sha3 = create_environmental_photograph()
     rights3 = ImageRightsMetadata(
         provider="teachgenie_environmental_media",
-        creator="TeachGenie Environmental Photography Unit",
+        creator="LearnByGenie Environmental Photography Unit",
         license="Educational Open Access License",
         permitted_usage_scope="all, educational",
         attribution_requirement=True,
-        attribution_text="Photo: TeachGenie Environmental Series (Educational Access)",
+        attribution_text="Photo: LearnByGenie Environmental Series (Educational Access)",
         rights_verified=True,
     )
     audit3 = build_pptx_example(

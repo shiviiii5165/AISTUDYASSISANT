@@ -165,7 +165,7 @@ const LibraryPage: React.FC = () => {
     <AppLayout title="My Library">
       <SEO
         title="My Library"
-        description="Upload and manage your PDF study materials and handwritten notes in TeachGenie."
+        description="Upload and manage your PDF study materials and handwritten notes in LearnByGenie."
       />
       <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6 lg:p-8">
 

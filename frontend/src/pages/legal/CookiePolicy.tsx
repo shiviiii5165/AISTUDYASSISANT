@@ -13,7 +13,7 @@ const CookiePolicy: React.FC = () => {
 
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            This Cookie Policy explains how TeachGenie uses cookies and similar technologies to recognize you when you visit our website. 
+            This Cookie Policy explains how LearnByGenie uses cookies and similar technologies to recognize you when you visit our website. 
             It explains what these technologies are and why we use them, as well as your rights to control our use of them.
           </p>
 
@@ -41,7 +41,7 @@ const CookiePolicy: React.FC = () => {
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">How can I control cookies?</h2>
           <p>
-            You have the right to decide whether to accept or reject cookies. You can exercise your cookie rights by setting your preferences in the Cookie Consent Manager that appears on your first visit to TeachGenie.
+            You have the right to decide whether to accept or reject cookies. You can exercise your cookie rights by setting your preferences in the Cookie Consent Manager that appears on your first visit to LearnByGenie.
           </p>
           <p className="mt-4">
             You can also set or amend your web browser controls to accept or refuse cookies. If you choose to reject cookies, you may still use our website though your access to some functionality and areas of our website may be restricted.

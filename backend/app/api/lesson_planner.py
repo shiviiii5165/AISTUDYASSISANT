@@ -26,7 +26,7 @@ from app.services.lesson_planner.youtube_recommendation import YouTubeRecommenda
 from app.services.lesson_planner.learning_materials import ExtraLearningMaterialsService
 from app.services.lesson_resources.service import StageResourceIntelligenceService
 
-logger = logging.getLogger("teachgenie.api.lesson_planner")
+logger = logging.getLogger("learnbygenie.api.lesson_planner")
 router = APIRouter()
 
 # In-memory store fallback for test suites and offline operation

@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.1 — Hybrid Teaching Quality Evaluator
+LearnByGenie AI Video Teacher V2.1 — Hybrid Teaching Quality Evaluator
 ====================================================================
 Evaluates pedagogical effectiveness, structural integrity, and cognitive clarity
 across 8 distinct dimensions (Total 100 points):

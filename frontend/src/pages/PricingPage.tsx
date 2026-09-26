@@ -18,7 +18,7 @@ const PricingPage: React.FC = () => {
     <>
       <SEO
         title="Pricing"
-        description="Simple, student-friendly pricing. Upgrade to TeachGenie Pro for unlimited AI chat, advanced modes, and predicted exam questions."
+        description="Simple, student-friendly pricing. Upgrade to LearnByGenie Pro for unlimited AI chat, advanced modes, and predicted exam questions."
       />
       <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-20">
         {/* Header */}

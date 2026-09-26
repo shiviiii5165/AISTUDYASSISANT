@@ -1,5 +1,5 @@
 """
-TeachGenie Student Artifact Certification — Schemas & Quality Contracts
+LearnByGenie Student Artifact Certification — Schemas & Quality Contracts
 ========================================================================
 Strict, explainable data models for two-layer certification:
 1. Content Certification: Syllabus coverage and instructional evidence.

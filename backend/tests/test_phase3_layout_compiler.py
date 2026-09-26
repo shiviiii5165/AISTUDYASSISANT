@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2C Parametric Layout Compiler & Reflow Engine Test Suite
+LearnByGenie PPT vNext — Phase 3.2C Parametric Layout Compiler & Reflow Engine Test Suite
 ======================================================================================
 Comprehensive test suite validating Phase 3.2C contracts:
   1. All 20 Phase3LayoutFamily compilers compile valid SlideCompositionPlans

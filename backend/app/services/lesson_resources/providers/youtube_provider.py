@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — YouTube Data API v3 Provider
+LearnByGenie Lesson Planner — YouTube Data API v3 Provider
 ========================================================
 Retrieves verified educational YouTube videos using official Data API v3.
 Features quota protection (single query first, secondary only if needed),

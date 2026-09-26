@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 3.1 — Visual Story Rhythm Planner
+LearnByGenie vNEXT Phase 3.1 — Visual Story Rhythm Planner
 =========================================================
 Generates DeckVisualRhythmPlan that orchestrates visual pacing across slides.
 

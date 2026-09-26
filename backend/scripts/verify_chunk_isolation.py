@@ -16,7 +16,7 @@ missing. Safe to wire into CI once the two test accounts exist.
 Config is read from backend/.env. NO credential value is ever printed.
 
 Required in backend/.env:
-  TEACHGENIE_API_BASE      Base URL of the running API (default http://localhost:8000)
+  LEARNBYGENIE_API_BASE      Base URL of the running API (default http://localhost:8000)
   TEST_USER_A_JWT          A valid Supabase access token (JWT) for test user A
   TEST_USER_B_JWT          A valid Supabase access token (JWT) for test user B
   TEST_PDF_ID_OWNED_BY_A   id of a PDF uploaded & fully processed under user A
@@ -52,7 +52,7 @@ def _fail_setup(missing: list[str]) -> None:
     print("  3. As user A, upload a PDF via POST /pdfs/upload and wait until its status is")
     print("     'ready' (chunks embedded). Note its pdf_id.")
     print("  4. Add these lines to backend/.env (values only, never commit real tokens):")
-    print("       TEACHGENIE_API_BASE=https://<your-api-host>   # or http://localhost:8000")
+    print("       LEARNBYGENIE_API_BASE=https://<your-api-host>   # or http://localhost:8000")
     print("       TEST_USER_A_JWT=<user A access token>")
     print("       TEST_USER_B_JWT=<user B access token>")
     print("       TEST_PDF_ID_OWNED_BY_A=<pdf_id owned by user A>")
@@ -61,7 +61,7 @@ def _fail_setup(missing: list[str]) -> None:
 
 def _load_config() -> dict:
     cfg = {
-        "base": os.environ.get("TEACHGENIE_API_BASE", "http://localhost:8000").rstrip("/"),
+        "base": (os.environ.get("LEARNBYGENIE_API_BASE") or os.environ.get("TEACHGENIE_API_BASE", "http://localhost:8000")).rstrip("/"),
         "jwt_a": os.environ.get("TEST_USER_A_JWT"),
         "jwt_b": os.environ.get("TEST_USER_B_JWT"),
         "pdf_id": os.environ.get("TEST_PDF_ID_OWNED_BY_A"),

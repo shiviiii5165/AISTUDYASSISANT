@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Deterministic Topic Analyzer
+LearnByGenie Notes Decision Engine — Deterministic Topic Analyzer
 ==============================================================
 Pure Python deterministic classifier categorizing topics based on
 structured curriculum metadata and deterministic pattern matching.

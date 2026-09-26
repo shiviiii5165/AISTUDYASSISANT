@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Validation Engine — Core Engine (Step 4)
+LearnByGenie Notes Validation Engine — Core Engine (Step 4)
 =========================================================
 Central quality gate coordinating deterministic checks, plan compliance audits,
 factual/formula verifications, curriculum alignment, and targeted AI semantic judging.
@@ -33,7 +33,7 @@ from .validators.practice_and_visual import PracticeAndVisualValidator
 from .validators.learning_flow import LearningFlowValidator
 from .judge import SemanticJudge
 
-logger = logging.getLogger("teachgenie.notes.validation.engine")
+logger = logging.getLogger("learnbygenie.notes.validation.engine")
 
 
 async def validate_notes(

@@ -13,7 +13,7 @@ const PrivacyPolicy: React.FC = () => {
 
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            Welcome to TeachGenie. We respect your privacy and are committed to protecting your personal data. 
+            Welcome to LearnByGenie. We respect your privacy and are committed to protecting your personal data. 
             This privacy policy will inform you as to how we look after your personal data when you visit our website 
             and tell you about your privacy rights.
           </p>

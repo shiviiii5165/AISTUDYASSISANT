@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Illustrated Icon Grid Component
+LearnByGenie Renderer — Illustrated Icon Grid Component
 =====================================================
 Renders a grid of 3–5 concept cards featuring bundled static PNG icons
 from `icons.py`, bold labels, and concise subtitles.

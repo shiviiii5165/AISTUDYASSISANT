@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Stage Resource Intelligence Service
+LearnByGenie Lesson Planner — Stage Resource Intelligence Service
 ===============================================================
 Master orchestrator unifying intent profiling, deterministic query planning,
 multi-provider retrieval (YouTube Data API, Semantic Scholar, Crossref, arXiv,

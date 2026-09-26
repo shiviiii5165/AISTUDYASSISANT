@@ -2809,7 +2809,7 @@ interface LessonHealthReport {
                             No sufficiently relevant verified resources were found for this stage.
                           </p>
                           <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
-                            TeachGenie enforces strict relevance filters to prevent off-topic recommendations.
+                            LearnByGenie enforces strict relevance filters to prevent off-topic recommendations.
                           </p>
                           <button
                             type="button"
@@ -3069,7 +3069,7 @@ interface LessonHealthReport {
                             No verified coding resources found matching this stage.
                           </p>
                           <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto">
-                            TeachGenie verifies all coding links against authoritative documentation and conceptual references.
+                            LearnByGenie verifies all coding links against authoritative documentation and conceptual references.
                           </p>
                           <button
                             type="button"

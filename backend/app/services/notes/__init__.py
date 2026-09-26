@@ -1,5 +1,5 @@
 """
-TeachGenie AI Notes Generation Subsystem
+LearnByGenie AI Notes Generation Subsystem
 ========================================
 Independent top-level notes generation engine for Class 3–12 learners.
 """

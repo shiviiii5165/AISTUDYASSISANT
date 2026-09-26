@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT — Domain & Purpose Classifier
+LearnByGenie vNEXT — Domain & Purpose Classifier
 ================================================
 Multi-signal classification using topic + audience + context + ontology evidence.
 

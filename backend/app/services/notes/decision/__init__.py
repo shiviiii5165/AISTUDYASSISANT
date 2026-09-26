@@ -1,9 +1,9 @@
 """
-TeachGenie Notes Decision Engine
+LearnByGenie Notes Decision Engine
 ================================
 STEP 2 ONLY of the Notes Intelligence architecture.
 Transforms CanonicalNotesContext into a deterministic NotesGenerationPlan.
-Answers: "Given what TeachGenie knows, what does this learner actually need in their notes?"
+Answers: "Given what LearnByGenie knows, what does this learner actually need in their notes?"
 """
 from .schemas import (
     NotesGenerationPlan,

@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Reconnect Mid-Question & Duplicate Scoring Guards
+LearnByGenie — Live Quiz Engine: Reconnect Mid-Question & Duplicate Scoring Guards
 ================================================================================
 Verifies that:
 1. Participant can disconnect mid-question and reconnect seamlessly with JWT token.

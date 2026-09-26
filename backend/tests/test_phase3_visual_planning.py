@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 3.1 — Visual Planning Test Suite
+LearnByGenie vNEXT Phase 3.1 — Visual Planning Test Suite
 ========================================================
 Covers:
   1. Visual schema construction & validation

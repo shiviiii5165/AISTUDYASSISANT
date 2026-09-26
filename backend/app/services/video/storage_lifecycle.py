@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.2 — Storage Lifecycle Manager
+LearnByGenie AI Video Teacher V2.2 — Storage Lifecycle Manager
 ============================================================
 Implements:
 1. Unique Job Directories (Decision #3)

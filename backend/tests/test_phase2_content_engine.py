@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 2 — Content Intelligence Engine Test Suite
+LearnByGenie vNEXT Phase 2 — Content Intelligence Engine Test Suite
 ==================================================================
 Comprehensive test suite verifying:
 1. Schemas & Data Contracts (SlideContent, ClaimEvidence, ContentQualityScores, etc.)

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.3 Visual Router & Structural Quality Auditor
+LearnByGenie PPT vNext — Phase 3.3 Visual Router & Structural Quality Auditor
 ============================================================================
 Implements typed visual routing decisions and structural quality auditing:
   - Dispatches between Native Charts, Editable Diagrams, Existing Visuals, Deferred Images,

@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 3.1 — Visual Semantic Interpreter
+LearnByGenie vNEXT Phase 3.1 — Visual Semantic Interpreter
 =========================================================
 Pure semantic interpreter that converts frozen Phase 1/2 outputs
 (SlideBlueprint + SlideContent) into rich VisualSemanticPacket metadata.

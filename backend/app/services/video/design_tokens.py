@@ -1,5 +1,5 @@
 """
-TeachGenie — Shared Design Tokens for PPT & Video
+LearnByGenie — Shared Design Tokens for PPT & Video
 =================================================
 Unifies typography, color palettes, spacing, border radiuses, and component
 styles across Presentations and Educational Videos for visual continuity.

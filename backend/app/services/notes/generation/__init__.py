@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Generation Engine Package (Step 3)
+LearnByGenie Notes Generation Engine Package (Step 3)
 ===================================================
 Produces structured, pedagogical NotesDocuments from CanonicalNotesContext
 and NotesGenerationPlan.

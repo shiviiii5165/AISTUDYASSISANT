@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNEXT — Target Deck Regeneration & Inspection
+LearnByGenie PPT vNEXT — Target Deck Regeneration & Inspection
 ===========================================================
 Deck: 0b8744a9-b129-44f8-a85f-71d1f3b87d72.pptx
 Topic: Node.js Architecture & Foundations

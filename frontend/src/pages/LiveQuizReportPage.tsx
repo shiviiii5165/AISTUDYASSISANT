@@ -77,7 +77,7 @@ const LiveQuizReportPage: React.FC = () => {
 
   return (
     <AppLayout title="Session Report">
-      <SEO title="Live Session Report | TeachGenie" description="Post-quiz learning analytics and concept mastery." />
+      <SEO title="Live Session Report | LearnByGenie" description="Post-quiz learning analytics and concept mastery." />
 
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 space-y-8">
         

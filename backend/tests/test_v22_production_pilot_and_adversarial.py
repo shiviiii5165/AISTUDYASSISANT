@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.2 — Production Validation, Pilot & Concurrency Suite
+LearnByGenie AI Video Teacher V2.2 — Production Validation, Pilot & Concurrency Suite
 ===================================================================================
 Rigorous verification for:
 1. Server-side bounded DoubtSessionMemory (Decision #1 & #8)

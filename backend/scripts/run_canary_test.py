@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Limited Classroom Canary Verification
+LearnByGenie — Live Quiz Limited Classroom Canary Verification
 ============================================================
 Runs progressive real-user canary validation across tiers:
   Tier 1: 25 participants (20–30 range)
@@ -343,7 +343,7 @@ def verify_hard_release_invariants(canary_results: List[Dict[str, Any]]) -> Dict
 
 async def main():
     print("=" * 80)
-    print("TEACHGENIE LIVE QUIZ — CANARY METRIC CLOSURE & PROGRESSIVE ROLLOUT")
+    print("LEARNBYGENIE LIVE QUIZ — CANARY METRIC CLOSURE & PROGRESSIVE ROLLOUT")
     print("=" * 80)
     
     canary_tiers = [25, 50, 100, 200]

@@ -1,5 +1,5 @@
 """
-TeachGenie Artifact Certification — Geometry & Pagination QA
+LearnByGenie Artifact Certification — Geometry & Pagination QA
 ============================================================
 Inspects physical page geometry and visual bounds using pdfplumber:
 - Bounding box audits against printable page bounds (detects CLIPPING and OVERFLOW)
@@ -14,7 +14,7 @@ from typing import List, Dict, Any, Tuple, Optional
 from .schemas import RenderingDefect, RenderingDefectType
 from ..schemas import NotesDocument
 
-logger = logging.getLogger("teachgenie.notes.certification.geometry")
+logger = logging.getLogger("learnbygenie.notes.certification.geometry")
 
 
 class GeometryQACertifier:

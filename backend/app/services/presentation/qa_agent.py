@@ -376,7 +376,7 @@ async def repair_single_slide(
         if not circuit_breaker.can_execute():
             return slide
         user_prompt = (
-            f"Fix issues in this slide to meet the TeachGenie Master Standard:\n"
+            f"Fix issues in this slide to meet the LearnByGenie Master Standard:\n"
             f"Slide Content:\n{json.dumps({k: v for k, v in slide.items() if not isinstance(v, (bytes, bytearray))}, indent=2, default=str)}\n\n"
             f"Issues Identified:\n" + "\n".join(f"- {iss}" for iss in issues)
         )

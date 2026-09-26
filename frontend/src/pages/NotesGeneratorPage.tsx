@@ -195,7 +195,7 @@ const NotesGeneratorPage: React.FC = () => {
   return (
     <AppLayout title="AI Study Notes">
       <SEO
-        title="AI Notes Generator — Structured Study Notes for Class 3–12 | TeachGenie"
+        title="AI Notes Generator — Structured Study Notes for Class 3–12 | LearnByGenie"
         description="Generate curriculum-aligned, high-yield revision notes, flowcharts, and worked examples tailored for Class 3–12 students."
       />
 

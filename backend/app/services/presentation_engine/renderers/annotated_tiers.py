@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Annotated Tiers Component
+LearnByGenie Renderer — Annotated Tiers Component
 =================================================
 Renders hierarchical concepts as annotated explanatory diagrams:
 

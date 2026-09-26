@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Activity Banner Component
+LearnByGenie Renderer — Activity Banner Component
 ===============================================
 Renders an interactive classroom exercise or discussion prompt slide
 with bold activity banner, clear task steps, and reflection prompts.

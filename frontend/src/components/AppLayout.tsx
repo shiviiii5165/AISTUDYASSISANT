@@ -10,6 +10,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import { pageTransition } from '../lib/motion';
 import ProfileDropdown from './ProfileDropdown';
+import { BRAND } from '../config/branding';
 
 /**
  * Shared app shell.
@@ -103,11 +104,11 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
         <div className={`flex items-center border-b border-[var(--border)] ${collapsed ? 'justify-center px-3 py-4' : 'px-5 py-4'}`}>
           <Link
             to="/dashboard"
-            aria-label="TeachGenie home"
+            aria-label={`${BRAND.name} home`}
             className="flex items-center gap-2.5 rounded-lg font-display text-lg font-bold text-[var(--text-primary)]"
           >
             <img src="/assets/genie-default.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
-            {!collapsed && <span>TeachGenie</span>}
+            {!collapsed && <span>{BRAND.name}</span>}
           </Link>
         </div>
 
@@ -173,10 +174,11 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
             <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
               <Link
                 to="/dashboard"
+                aria-label={`${BRAND.name} home`}
                 className="flex items-center gap-2 rounded-lg font-display text-lg font-bold text-[var(--text-primary)]"
               >
                 <img src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
-                TeachGenie
+                {BRAND.name}
               </Link>
               <button
                 type="button"

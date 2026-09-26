@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine
+LearnByGenie Notes Context Engine
 ===============================
 Independent context collection, normalization, deterministic prioritization,
 conflict preservation, completeness evaluation, and immutable snapshotting.

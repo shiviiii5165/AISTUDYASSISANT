@@ -29,7 +29,7 @@ from .contracts import (
 )
 from .source_health import SourceHealthTracker
 
-logger = logging.getLogger("teachgenie.lesson_planner.academic_engine")
+logger = logging.getLogger("learnbygenie.lesson_planner.academic_engine")
 
 # Known authoritative academic venues and rankings
 KNOWN_JOURNAL_QUARTILES: Dict[str, JournalQuartile] = {

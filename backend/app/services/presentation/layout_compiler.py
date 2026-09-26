@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2C Parametric Layout Compilers & Responsive Reflow Engine
+LearnByGenie PPT vNext — Phase 3.2C Parametric Layout Compilers & Responsive Reflow Engine
 =======================================================================================
 Spatial layout compiler layer that consumes:
   - SlideBlueprint (frozen semantic intent)

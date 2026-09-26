@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2D Quality Audit & Targeted Repair Evidence Generator
+LearnByGenie PPT vNext — Phase 3.2D Quality Audit & Targeted Repair Evidence Generator
 ===================================================================================
 Demonstrates concrete before/after runtime evidence of defect detection and
 transactional monotonic repair across 9 canonical scenarios:
@@ -158,7 +158,7 @@ def _make_plan(layout: Phase3LayoutFamily, regions: list) -> SlideCompositionPla
 def run_evidence():
     dna = _build_dna()
     print("=" * 80)
-    print("TEACHGENIE PPT VNEXT — PHASE 3.2D AUDITOR & REPAIR RUNTIME EVIDENCE")
+    print("LEARNBYGENIE PPT VNEXT — PHASE 3.2D AUDITOR & REPAIR RUNTIME EVIDENCE")
     print("=" * 80)
 
     scenarios = []

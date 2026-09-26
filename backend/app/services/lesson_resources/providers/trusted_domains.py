@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Trusted Domain Registry
+LearnByGenie Lesson Planner — Trusted Domain Registry
 ===================================================
 Maintains authoritative domains for Official Documentation, Coding Problems,
 and Academic References. Strictly ensures Wikipedia and GeeksforGeeks are NEVER

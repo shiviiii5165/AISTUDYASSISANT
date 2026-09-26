@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Durable Resource Cache & Request Deduplication
+LearnByGenie Lesson Planner — Durable Resource Cache & Request Deduplication
 ==========================================================================
 Multi-tier persistent caching system guaranteeing durability across process restarts.
 Uses SHA-256 semantic context hashing with configurable TTL expiration by source type:

@@ -15,6 +15,8 @@ import {
 } from '../lib/liveQuizJournal';
 import { supabase } from '../lib/supabase';
 import { soundFx } from '../lib/soundFx';
+import { getMigratedStorageItem } from '../lib/storageMigration';
+import { BRAND } from '../config/branding';
 
 const SHAPES = ['●', '▲', '■', '◆'];
 const COLORS = [
@@ -40,10 +42,14 @@ const LiveQuizParticipantPage: React.FC = () => {
 
   const questionStartTimeRef = useRef<number>(Date.now());
 
-  // 1. Load Stored Participant JWT
+  // 1. Load Stored Participant JWT with backward-compatible migration
   useEffect(() => {
     if (!sessionId) return;
-    const stored = sessionStorage.getItem(`teachgenie_live_participant_${sessionId}`);
+    const stored = getMigratedStorageItem(
+      `learnbygenie_live_participant_${sessionId}`,
+      `teachgenie_live_participant_${sessionId}`,
+      'session'
+    );
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -166,7 +172,7 @@ const LiveQuizParticipantPage: React.FC = () => {
       if (isCorrect) {
         soundFx.playCorrectSound();
       } else {
-        soundFx.playWrongSound();
+        soundFx.playIncorrectSound();
       }
     }
   }, [state?.is_revealed]);
@@ -181,7 +187,7 @@ const LiveQuizParticipantPage: React.FC = () => {
 
     setSelectedOption(option);
     setSubmitting(true);
-    soundFx.playClick();
+    soundFx.playTimerTick();
 
     // 1. Journal to IndexedDB FIRST (Durability guarantee)
     await recordPendingAnswer(sessionId, qid, option, responseTimeMs, progToken);
@@ -243,7 +249,7 @@ const LiveQuizParticipantPage: React.FC = () => {
   if (isBanned) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-red-950/20 px-4 text-center">
-        <SEO title="Access Revoked | TeachGenie" description="Participation revoked." />
+        <SEO title={`Access Revoked | ${BRAND.name}`} description="Participation revoked." />
         <div className="max-w-md rounded-3xl border border-red-500/40 bg-[var(--bg-card)] p-8 shadow-2xl">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
             <ShieldAlert className="h-9 w-9" />
@@ -272,7 +278,7 @@ const LiveQuizParticipantPage: React.FC = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <SEO title="Live Quiz Session | TeachGenie" description="Participating in live classroom quiz." />
+      <SEO title={`Live Quiz Session | ${BRAND.name}`} description="Participating in live classroom quiz." />
 
       {/* Top Participant Status Header */}
       <header className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 sm:px-6">

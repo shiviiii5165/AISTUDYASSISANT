@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { GENIE } from '../lib/assets';
+import { BRAND } from '../config/branding';
 
 interface GenieAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -241,7 +242,7 @@ const GenieAvatar: React.FC<GenieAvatarProps> = ({
       >
         <img
           src={imageSrc}
-          alt="TeachGenie, your AI teaching companion"
+          alt={`${BRAND.name}, your AI teaching companion`}
           style={{
             width: dims.img,
             height: dims.img,

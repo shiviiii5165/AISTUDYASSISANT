@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine Unit Test Suite
+LearnByGenie — Live Quiz Engine Unit Test Suite
 ============================================
 Deterministic testing of:
 1. Participant JWT issuance and cryptographic verification
@@ -258,7 +258,7 @@ def test_session_lifecycle_and_analytics():
 
 def run_all():
     print("================================================================================")
-    print("TEACHGENIE — LIVE QUIZ ENGINE UNIT TESTS")
+    print("LEARNBYGENIE — LIVE QUIZ ENGINE UNIT TESTS")
     print("================================================================================")
     test_participant_jwt()
     test_scoring_and_speed_bonus()

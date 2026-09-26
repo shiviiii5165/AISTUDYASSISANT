@@ -1,10 +1,10 @@
 """
-TeachGenie PPT vNext — Phase 3.5 Visual Repair Engine
+LearnByGenie PPT vNext — Phase 3.5 Visual Repair Engine
 ======================================================
 Applies bounded, transactional, localized visual repairs to resolved slide
 compositions to eliminate rendered defects without semantic mutation.
 
-Governed by TeachGenie PPT vNext Phase 3.5 specifications:
+Governed by LearnByGenie PPT vNext Phase 3.5 specifications:
   - Bounded local repairs (geometry expansion, font shrinking, padding, shift, legend relocation, crop mode)
   - Strict transactional lifecycle (clone -> repair -> re-render -> re-audit -> commit or rollback)
   - Zero semantic mutation invariant (SlideContent, hashes, chart data, diagram nodes, citations must never change)

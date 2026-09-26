@@ -1,5 +1,5 @@
 """
-TeachGenie — Layout Engine
+LearnByGenie — Layout Engine
 ===========================
 Maps SlidePurpose & ContentPattern → renderer function.
 Handles fallback layouts when content doesn't fit a specialized renderer.

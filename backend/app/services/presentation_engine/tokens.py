@@ -1,5 +1,5 @@
 """
-TeachGenie Presentation Design Engine — Design Tokens
+LearnByGenie Presentation Design Engine — Design Tokens
 =====================================================
 Central source of truth for ALL visual decisions:
   • 6 curated Theme Families

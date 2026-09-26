@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Generation Engine — Authoritative Curriculum Catalog
+LearnByGenie Notes Generation Engine — Authoritative Curriculum Catalog
 ======================================================================
 Provides authentic, syllabus-grounded, multi-subject pedagogical content
 for standard curricular topics (Chemistry, Physics, Mathematics, Biology, Computer Science).

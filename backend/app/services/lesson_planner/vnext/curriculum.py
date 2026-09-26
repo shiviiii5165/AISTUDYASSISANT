@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from app.db.supabase_client import supabase
 from ..schemas import LearningObjective, BloomLevel, KnowledgePack
 
-logger = logging.getLogger("teachgenie.lesson_planner.curriculum")
+logger = logging.getLogger("learnbygenie.lesson_planner.curriculum")
 
 
 class CurriculumResolutionResult(BaseModel):

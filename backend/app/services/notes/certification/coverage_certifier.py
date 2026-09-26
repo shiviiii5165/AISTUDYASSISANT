@@ -1,5 +1,5 @@
 """
-TeachGenie Artifact Certification — Coverage Certifier
+LearnByGenie Artifact Certification — Coverage Certifier
 ======================================================
 Evaluates syllabus coverage and substantive instructional evidence.
 Invariants:

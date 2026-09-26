@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Row Level Security (RLS) & DB Access Control Tests
+LearnByGenie — Live Quiz Engine: Row Level Security (RLS) & DB Access Control Tests
 ================================================================================
 Verifies that:
 1. DB RLS Policy on live_quiz_sessions enforces (auth.uid() = host_user_id).

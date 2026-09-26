@@ -61,7 +61,8 @@ def is_persistence_enabled() -> bool:
     """Check if Supabase persistence is active and configured."""
     return _PERSISTENCE_ENABLED and (supabase is not None)
 
-_JWT_SECRET = getattr(settings, "SUPABASE_JWT_SECRET", "") or "teachgenie-live-secret-key-default-2026"
+_JWT_SECRET = getattr(settings, "SUPABASE_JWT_SECRET", "") or getattr(settings, "LEARNBYGENIE_LIVE_SECRET_KEY", "") or "learnbygenie-live-secret-key-default-2026"
+_LEGACY_JWT_SECRET = "teachgenie-live-secret-key-default-2026"
 _JWT_ALGORITHM = "HS256"
 
 
@@ -87,8 +88,15 @@ def verify_participant_token(token: str) -> Dict[str, Any]:
         if payload.get("role") != "participant":
             raise ValueError("Invalid token role")
         return payload
-    except JWTError as e:
-        raise ValueError(f"Invalid participant token: {e}") from e
+    except JWTError:
+        # Backward compatibility: verify with legacy secret for active in-flight tokens
+        try:
+            payload = jwt.decode(token, _LEGACY_JWT_SECRET, algorithms=[_JWT_ALGORITHM])
+            if payload.get("role") != "participant":
+                raise ValueError("Invalid token role")
+            return payload
+        except JWTError as e:
+            raise ValueError(f"Invalid participant token: {e}") from e
 
 
 # ─── Session Persistence & Ownership ─────────────────────────────────────────

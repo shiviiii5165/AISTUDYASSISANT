@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Eyebrow Tag Component
+LearnByGenie Renderer — Eyebrow Tag Component
 =============================================
 Renders a small pill-shaped section label (e.g. "TYPE 1", "CHAPTER OVERVIEW",
 "TYPE 1 — APPLICATIONS") directly above a slide's title. Modeled on the Gamma

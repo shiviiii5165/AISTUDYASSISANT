@@ -25,7 +25,7 @@ from ..schemas import (
     KnowledgePack, LearningObjective, BloomLevel, DependencyEdge
 )
 
-logger = logging.getLogger("teachgenie.lesson_planner.knowledge_pack")
+logger = logging.getLogger("learnbygenie.lesson_planner.knowledge_pack")
 
 # In-memory L1 cache: source_hash -> KnowledgePack
 _KNOWLEDGE_PACK_MEMORY_CACHE: Dict[str, KnowledgePack] = {}

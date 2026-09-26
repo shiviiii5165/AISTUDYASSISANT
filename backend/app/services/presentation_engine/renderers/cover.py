@@ -56,7 +56,7 @@ def render_cover(slide: Slide, content: SlideContent, theme: ThemeColors, **kw) 
         SLIDE_WIDTH, Inches(0.8), theme.dark_surface
     )
     add_text_box(
-        slide, "TeachGenie AI",
+        slide, "LearnByGenie AI",
         MARGIN_LEFT, SLIDE_HEIGHT - Inches(0.65),
         Inches(3), Inches(0.4),
         token=Typography.CAPTION,

@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Concept Split Component
+LearnByGenie Renderer — Concept Split Component
 ===============================================
 Split-screen concept layout modeled on the Gamma reference:
   - One side (~40-45% width): themed image from stock-photo pipeline

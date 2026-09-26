@@ -25,7 +25,7 @@ from ..schemas import (
 from .time_budget import DynamicTimeBudgetEngine
 from .canonical_concepts import CanonicalConceptResolver
 
-logger = logging.getLogger("teachgenie.lesson_planner.adaptive")
+logger = logging.getLogger("learnbygenie.lesson_planner.adaptive")
 
 
 class VersionConflictException(Exception):

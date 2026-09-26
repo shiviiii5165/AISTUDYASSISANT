@@ -61,7 +61,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!session) {
-    if (import.meta.env.DEV && (typeof window !== 'undefined' && (window.location.search.includes('mock_auth=true') || localStorage.getItem('teachgenie_dev_auth') === 'true'))) {
+    if (
+      import.meta.env.DEV &&
+      typeof window !== 'undefined' &&
+      (window.location.search.includes('mock_auth=true') ||
+        localStorage.getItem('learnbygenie_dev_auth') === 'true' ||
+        localStorage.getItem('teachgenie_dev_auth') === 'true')
+    ) {
       return <>{children}</>;
     }
     return <Navigate to="/auth" replace />;

@@ -1,11 +1,14 @@
 /**
- * TeachGenie — Live Quiz IndexedDB Durability Journal (§3, §15)
- * ============================================================
+ * LearnByGenie — Live Quiz IndexedDB Durability Journal (§3, §15)
+ * =============================================================
  * Provides client-side durable buffering for live quiz answers.
  * When a student clicks an answer, it is recorded into IndexedDB FIRST,
  * immediately dispatched to the backend, and retained until server ACK.
  * If network fails or server returns 429/503, the unacknowledged answer
  * is preserved and retried safely with jittered exponential backoff.
+ *
+ * Backward-compatibility: Migrates any pending answers from legacy
+ * teachgenie_live_db without losing data.
  */
 
 export interface JournaledAnswer {
@@ -21,16 +24,55 @@ export interface JournaledAnswer {
   retries: number;
 }
 
-const DB_NAME = 'teachgenie_live_db';
+const PRIMARY_DB_NAME = 'learnbygenie_live_db';
+const LEGACY_DB_NAME = 'teachgenie_live_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'live_quiz_journal';
+
+let legacyMigrated = false;
+
+async function migrateLegacyDB(primaryDb: IDBDatabase): Promise<void> {
+  if (legacyMigrated || typeof window === 'undefined' || !window.indexedDB) return;
+  legacyMigrated = true;
+
+  try {
+    const legacyReq = window.indexedDB.open(LEGACY_DB_NAME, DB_VERSION);
+    legacyReq.onsuccess = () => {
+      const legacyDb = legacyReq.result;
+      if (!legacyDb.objectStoreNames.contains(STORE_NAME)) {
+        legacyDb.close();
+        return;
+      }
+      const tx = legacyDb.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const getAllReq = store.getAll();
+      getAllReq.onsuccess = () => {
+        const records: JournaledAnswer[] = getAllReq.result || [];
+        if (records.length > 0) {
+          const writeTx = primaryDb.transaction(STORE_NAME, 'readwrite');
+          const writeStore = writeTx.objectStore(STORE_NAME);
+          for (const item of records) {
+            writeStore.put(item);
+          }
+        }
+        legacyDb.close();
+      };
+      getAllReq.onerror = () => legacyDb.close();
+    };
+    legacyReq.onerror = () => {
+      // Legacy DB does not exist or cannot be opened — normal for new users
+    };
+  } catch {
+    // Graceful fallback
+  }
+}
 
 function openJournalDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !window.indexedDB) {
       return reject(new Error('IndexedDB not supported in this environment'));
     }
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+    const request = window.indexedDB.open(PRIMARY_DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (e: IDBVersionChangeEvent) => {
       const db = (e.target as IDBOpenDBRequest).result;
@@ -41,7 +83,11 @@ function openJournalDB(): Promise<IDBDatabase> {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = async () => {
+      const db = request.result;
+      await migrateLegacyDB(db);
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
   });
 }

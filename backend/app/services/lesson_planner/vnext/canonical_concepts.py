@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from pydantic import BaseModel, Field
 from ..schemas import CanonicalDomain
 
-logger = logging.getLogger("teachgenie.lesson_planner.canonical_concepts")
+logger = logging.getLogger("learnbygenie.lesson_planner.canonical_concepts")
 
 
 class CandidateOrigin(str, Enum):

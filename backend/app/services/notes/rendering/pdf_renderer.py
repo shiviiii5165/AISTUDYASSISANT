@@ -1,5 +1,5 @@
 """
-TeachGenie Document Renderer — Playwright Chromium PDF Engine
+LearnByGenie Document Renderer — Playwright Chromium PDF Engine
 =============================================================
 Renders high-fidelity, student-ready PDF artifacts using locked Playwright Chromium.
 Enforces deterministic rendering configuration:
@@ -17,7 +17,7 @@ from typing import Tuple, Optional
 from .html_builder import HTMLNoteBuilder
 from ..schemas import NotesDocument
 
-logger = logging.getLogger("teachgenie.notes.rendering.pdf")
+logger = logging.getLogger("learnbygenie.notes.rendering.pdf")
 
 
 class PDFNoteRenderer:
@@ -133,7 +133,7 @@ class PDFNoteRenderer:
     def _render_fallback_pdf(cls, html_content: str) -> Tuple[bytes, str]:
         """Minimal deterministic fallback creating valid PDF bytes."""
         # Simple valid PDF stream
-        content_stream = f"BT /F1 12 Tf 50 750 Td (TeachGenie Study Notes Document) Tj ET"
+        content_stream = f"BT /F1 12 Tf 50 750 Td (LearnByGenie Study Notes Document) Tj ET"
         stream_len = len(content_stream.encode('latin1'))
         pdf_template = (
             b"%PDF-1.4\n"

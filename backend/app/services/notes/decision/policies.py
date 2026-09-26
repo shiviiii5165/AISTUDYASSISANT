@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Configurable Pedagogical Policies
+LearnByGenie Notes Decision Engine — Configurable Pedagogical Policies
 ====================================================================
 Pure Python deterministic policy definitions for:
 - Student mastery thresholds (Low < 0.40, Medium 0.40–0.75, High >= 0.75)

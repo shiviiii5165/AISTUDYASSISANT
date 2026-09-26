@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.1 — Learner Mastery Tracker & Pedagogical Adaptation
+LearnByGenie AI Video Teacher V2.1 — Learner Mastery Tracker & Pedagogical Adaptation
 ===================================================================================
 Tracks concept-level learner state with strict evidence requirements (Decision #1):
 - Video playback: NOT_SEEN -> INTRODUCED -> PARTIALLY_UNDERSTOOD (NEVER UNDERSTOOD or MASTERED)

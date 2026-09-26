@@ -7,7 +7,7 @@ _root_dir = os.path.dirname(_backend_dir)
 _env_file = os.path.join(_root_dir, ".env")
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "TeachGenie API"
+    PROJECT_NAME: str = "LearnByGenie API"
     VERSION: str = "1.0.0"
     
     # Supabase config
@@ -60,15 +60,21 @@ class Settings(BaseSettings):
     
 
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://aistudyassisant.onrender.com"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://learnbygenie.com,https://www.learnbygenie.com,https://learnbygenie.online,https://www.learnbygenie.online,https://aistudyassisant.onrender.com"
 
     # Lesson Planner Feature Flags & Integrations
     LESSON_PLANNER_YOUTUBE_ENABLED: bool = True
     LESSON_PLANNER_MATERIALS_ENABLED: bool = True
     YOUTUBE_API_KEY: str = ""
     SEMANTIC_SCHOLAR_API_KEY: str = ""
-    CROSSREF_MAILTO: str = "contact@teachgenie.online"
+    CROSSREF_MAILTO: str = "contact@learnbygenie.com"
     TAVILY_API_KEY: str = ""
+
+    # Legacy & Dual-read Environment Variables
+    LEARNBYGENIE_MODE: str | None = None
+    TEACHGENIE_MODE: str = "PRODUCTION"
+    LEARNBYGENIE_ALLOW_DEV_AUTH: str | None = None
+    TEACHGENIE_ALLOW_DEV_AUTH: str = ""
 
     # Lesson Planner VNext Production-Safe Feature Flags (Default False)
     LESSON_VNEXT_ENABLED: bool = False

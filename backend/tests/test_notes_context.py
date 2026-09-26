@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Comprehensive Test Suite
+LearnByGenie Notes Context Engine — Comprehensive Test Suite
 ==========================================================
 Verifies all Step 1 architectural requirements:
 1. Topic Only (Minimum viable context)

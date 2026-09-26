@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Session Lifecycle & State Machine Transitions
+LearnByGenie — Live Quiz Engine: Session Lifecycle & State Machine Transitions
 =============================================================================
 Verifies:
 1. Cryptographic 6-digit numeric join codes.

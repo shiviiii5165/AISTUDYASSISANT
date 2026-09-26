@@ -11,10 +11,10 @@ const MCQGeneratorPage: React.FC = () => {
     "@type": "FAQPage",
     "mainEntity": [{
       "@type": "Question",
-      "name": "Can TeachGenie generate MCQs?",
+      "name": "Can LearnByGenie generate MCQs?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes! You can upload any PDF notes or textbook chapters, and TeachGenie will automatically generate multiple-choice questions (MCQs) to help you practice and test your knowledge."
+        "text": "Yes! You can upload any PDF notes or textbook chapters, and LearnByGenie will automatically generate multiple-choice questions (MCQs) to help you practice and test your knowledge."
       }
     }]
   };
@@ -22,16 +22,16 @@ const MCQGeneratorPage: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
-        title="MCQ Generator from PDF - TeachGenie"
-        description="Generate Multiple Choice Questions (MCQs) automatically from your PDF notes. Test your knowledge and prepare for exams with TeachGenie."
+        title="MCQ Generator from PDF - LearnByGenie"
+        description="Generate Multiple Choice Questions (MCQs) automatically from your PDF notes. Test your knowledge and prepare for exams with LearnByGenie."
         canonical="/mcq-generator"
         schema={faqSchema}
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -60,8 +60,8 @@ const MCQGeneratorPage: React.FC = () => {
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">FAQ</h2>
           <div>
-            <h3 className="font-bold text-lg mb-2">Can TeachGenie generate MCQs?</h3>
-            <p className="text-[var(--text-secondary)]">Yes! You can upload any PDF notes or textbook chapters, and TeachGenie will automatically generate multiple-choice questions (MCQs) to help you practice and test your knowledge.</p>
+            <h3 className="font-bold text-lg mb-2">Can LearnByGenie generate MCQs?</h3>
+            <p className="text-[var(--text-secondary)]">Yes! You can upload any PDF notes or textbook chapters, and LearnByGenie will automatically generate multiple-choice questions (MCQs) to help you practice and test your knowledge.</p>
           </div>
         </div>
         

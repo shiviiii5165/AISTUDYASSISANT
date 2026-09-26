@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Comprehensive Test Suite
+LearnByGenie Notes Decision Engine — Comprehensive Test Suite
 ===========================================================
 Tests all Step 2 requirements of the Notes Intelligence Layer:
 1. Topic Only Uses Neutral Defaults

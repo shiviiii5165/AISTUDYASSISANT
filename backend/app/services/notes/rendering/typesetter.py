@@ -1,5 +1,5 @@
 """
-TeachGenie Document Renderer — Semantic Math & Chemistry Typesetter
+LearnByGenie Document Renderer — Semantic Math & Chemistry Typesetter
 ===================================================================
 Converts raw mathematical equations, inline expressions, and chemical formulas
 into accessible, deterministic, print-ready HTML/CSS and Unicode representations.

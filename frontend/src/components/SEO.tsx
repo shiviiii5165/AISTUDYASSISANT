@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { BRAND } from '../config/branding';
 
 interface SEOProps {
   title: string;
@@ -16,7 +17,7 @@ const SEO: React.FC<SEOProps> = ({
   canonical,
   schema
 }) => {
-  const fullTitle = title.includes('TeachGenie') ? title : `${title} | TeachGenie`;
+  const fullTitle = title.includes(BRAND.name) ? title : `${title} | ${BRAND.name}`;
   
   return (
     <Helmet>

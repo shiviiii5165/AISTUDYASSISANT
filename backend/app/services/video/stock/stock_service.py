@@ -146,8 +146,8 @@ async def search_stock_media(
         duration=float(min_duration),
         width=1280,
         height=720,
-        creator="TeachGenie Media Library",
-        attribution_text="TeachGenie Curated Educational Visuals",
+        creator="LearnByGenie Media Library",
+        attribution_text="LearnByGenie Curated Educational Visuals",
     ).to_dict()
 
     STOCK_ASSET_CACHE[query_hash] = fallback_res

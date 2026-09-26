@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Dynamic Gate-Based Verdict Engine
+LearnByGenie Canary Infrastructure — Dynamic Gate-Based Verdict Engine
 ====================================================================
 Safeguard #6:
 - Never hardcodes CANARY READY.

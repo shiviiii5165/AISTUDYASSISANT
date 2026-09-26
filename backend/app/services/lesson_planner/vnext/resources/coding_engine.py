@@ -27,7 +27,7 @@ from ...schemas import (
 from .docs_engine import KNOWN_OFFICIAL_DOCS_DOMAINS
 from app.services.lesson_resources.schemas import ProviderDiagnosticState, ResourceQueryContext
 
-logger = logging.getLogger("teachgenie.lesson_planner.vnext.coding_engine")
+logger = logging.getLogger("learnbygenie.lesson_planner.vnext.coding_engine")
 
 
 def log_provider_call(
@@ -551,14 +551,14 @@ class CodingResourceEngine:
             if has_misconception:
                 cards.append(UniversalResourceCard(
                     id=f"diag_{abs(hash(topic)) % 100000}",
-                    title=f"TeachGenie Diagnostic Check: {topic} Precondition Invariant",
+                    title=f"LearnByGenie Diagnostic Check: {topic} Precondition Invariant",
                     type="diagnostic_micro_problem",
                     why_recommended="Targeted micro-problem to clear detected misconception before full problem sets.",
                     what_it_covers=f"Verifies base condition and invariant validation for {topic}.",
                     learner_level="Remedial / Checkpoint",
                     use_during="diagnostic_check",
                     time_required_minutes=3,
-                    source_authority="TeachGenie Diagnostic Engine",
+                    source_authority="LearnByGenie Diagnostic Engine",
                     quality_score=95,
                     score_breakdown=ResourceScoreBreakdown(concept_match=98, level_fit=95, authority=90, freshness=95, evidence_quality=98, accessibility=100),
                     url=None,
@@ -585,14 +585,14 @@ class CodingResourceEngine:
                 is_diag_only = True
                 cards.append(UniversalResourceCard(
                     id=f"diag_opt_sub_{abs(hash(stage.title)) % 100000}",
-                    title="TeachGenie Diagnostic Check: Optimal Substructure & State Invariant",
+                    title="LearnByGenie Diagnostic Check: Optimal Substructure & State Invariant",
                     type="diagnostic_micro_problem",
                     why_recommended="Targeted conceptual check verifying correct state formulation without prematurely jumping to full problem sets.",
                     what_it_covers="Verifies subproblem independence and state completeness before recurrence formulation.",
                     learner_level="Diagnostic Checkpoint",
                     use_during="diagnostic_check",
                     time_required_minutes=5,
-                    source_authority="TeachGenie Diagnostic Engine",
+                    source_authority="LearnByGenie Diagnostic Engine",
                     quality_score=96,
                     score_breakdown=ResourceScoreBreakdown(concept_match=98, level_fit=95, authority=95, freshness=95, evidence_quality=98, accessibility=100),
                     url=None,
@@ -611,14 +611,14 @@ class CodingResourceEngine:
             elif dp_stage_type == "dp_synthesis":
                 cards.append(UniversalResourceCard(
                     id=f"diag_dp_synth_{abs(hash(stage.title)) % 100000}",
-                    title="TeachGenie Diagnostic Exercise: DP State-Transition & Space Optimization Debugging",
+                    title="LearnByGenie Diagnostic Exercise: DP State-Transition & Space Optimization Debugging",
                     type="diagnostic_micro_problem",
                     why_recommended="Diagnostic exercise for mastering edge cases and identifying state recurrence flaws.",
                     what_it_covers="Detecting off-by-one table errors and optimizing 2D state transitions to 1D sliding rows.",
                     learner_level="Intermediate / Advanced",
                     use_during="diagnostic_check",
                     time_required_minutes=10,
-                    source_authority="TeachGenie Diagnostic Engine",
+                    source_authority="LearnByGenie Diagnostic Engine",
                     quality_score=95,
                     score_breakdown=ResourceScoreBreakdown(concept_match=96, level_fit=94, authority=95, freshness=92, evidence_quality=96, accessibility=100),
                     url=None,

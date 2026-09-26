@@ -2,7 +2,7 @@
 AI Notes Generation Engine — Deterministic Decision Engine
 ===========================================================
 Backward-compatibility bridge delegating to the unified Step 2 Decision Engine.
-Answers: "Given what TeachGenie knows, what does this learner actually need in their notes?"
+Answers: "Given what LearnByGenie knows, what does this learner actually need in their notes?"
 """
 from typing import List, Set
 

@@ -20,7 +20,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 def setup_logging():
-    logger = logging.getLogger("teachgenie")
+    logger = logging.getLogger("learnbygenie")
     logger.setLevel(logging.INFO)
     
     # Remove all handlers
@@ -31,6 +31,13 @@ def setup_logging():
     handler.setFormatter(JSONFormatter())
     logger.addHandler(handler)
     
+    # Backward compatibility: ensure legacy logger also routes cleanly
+    legacy_logger = logging.getLogger("teachgenie")
+    legacy_logger.setLevel(logging.INFO)
+    for h in legacy_logger.handlers[:]:
+        legacy_logger.removeHandler(h)
+    legacy_logger.addHandler(handler)
+
     return logger
 
 logger = setup_logging()

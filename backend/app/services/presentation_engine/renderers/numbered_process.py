@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Numbered Process Component
+LearnByGenie Renderer — Numbered Process Component
 ================================================
 Renders a sequential workflow with two visual variants:
 

@@ -1,5 +1,5 @@
 """
-TeachGenie Adaptive Learning Flow Intelligence — Comprehensive Test Suite
+LearnByGenie Adaptive Learning Flow Intelligence — Comprehensive Test Suite
 ==========================================================================
 Tests A through Q validating that:
 "SAME TOPIC != SAME LEARNING PATH"

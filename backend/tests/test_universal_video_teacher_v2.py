@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2 — Cross-Domain Benchmark Suite
+LearnByGenie AI Video Teacher V2 — Cross-Domain Benchmark Suite
 ============================================================
 Verifies all 15 architectural decisions across the 7 required benchmark topics:
 1. Linked List (Computer Science)

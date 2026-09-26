@@ -1,6 +1,6 @@
 /**
- * TeachGenie Motion System
- * ========================
+ * LearnByGenie Motion System
+ * ==========================
  * Shared Framer Motion variants for consistent animation across the app.
  *
  * Easing: cubic-bezier(0.16, 1, 0.3, 1) — expo out. Fast departure,

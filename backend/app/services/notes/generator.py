@@ -18,7 +18,7 @@ from .schemas import (
 )
 from .validator import NotesValidator
 
-logger = logging.getLogger("teachgenie.notes.generator")
+logger = logging.getLogger("learnbygenie.notes.generator")
 
 
 class NotesGenerator:

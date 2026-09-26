@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner VNext — Real Human Canary Infrastructure
+LearnByGenie Lesson Planner VNext — Real Human Canary Infrastructure
 ==================================================================
 Package providing privacy-safe, pseudonymous canary telemetry,
 managed encrypted identity vault, structured authorization, complete

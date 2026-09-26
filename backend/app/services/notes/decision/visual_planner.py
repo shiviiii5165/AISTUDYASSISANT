@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Deterministic Visual Planner
+LearnByGenie Notes Decision Engine — Deterministic Visual Planner
 ===============================================================
 Constructs VisualPlan blueprint specifying type, requirement, and focus
 without generating visual diagrams or prose. Zero LLM calls.

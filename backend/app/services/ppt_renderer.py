@@ -234,7 +234,7 @@ def add_title_slide(prs, title: str, audience: str, palette: Dict):
     )
     tf_footer = footer_box.text_frame
     p_footer = tf_footer.paragraphs[0]
-    p_footer.text = "Powered by TeachGenie AI"
+    p_footer.text = "Powered by LearnByGenie AI"
     _style_paragraph(p_footer, FONT_BODY, 12, palette["secondary"], italic=True, alignment=PP_ALIGN.CENTER)
     
     return slide
@@ -440,7 +440,7 @@ def add_closing_slide(prs, deck_data: Dict, palette: Dict):
     )
     tf_footer = footer_box.text_frame
     p_footer = tf_footer.paragraphs[0]
-    p_footer.text = "Generated with TeachGenie AI  •  teachgenie.online"
+    p_footer.text = "Generated with LearnByGenie AI  •  teachgenie.online"
     _style_paragraph(p_footer, FONT_BODY, 12, palette["secondary"], italic=True, alignment=PP_ALIGN.CENTER)
     
     return slide

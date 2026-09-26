@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Deterministic-Visual-First Remedial Intervention Tests
+LearnByGenie — Live Quiz Engine: Deterministic-Visual-First Remedial Intervention Tests
 =====================================================================================
 Verifies that:
 1. 'visual' intervention is 100% deterministic (0 token cost, ZERO LLM calls).

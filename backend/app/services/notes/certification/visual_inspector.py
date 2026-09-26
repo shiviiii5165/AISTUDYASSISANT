@@ -1,5 +1,5 @@
 """
-TeachGenie Artifact Certification — Rasterized Visual Inspector
+LearnByGenie Artifact Certification — Rasterized Visual Inspector
 ===============================================================
 Rasterizes PDF pages to high-resolution images using pypdfium2.
 Audits visual presentation:
@@ -15,7 +15,7 @@ import pypdfium2 as pdfium
 
 from .schemas import RenderingDefect, RenderingDefectType
 
-logger = logging.getLogger("teachgenie.notes.certification.visual")
+logger = logging.getLogger("learnbygenie.notes.certification.visual")
 
 
 class RasterizedVisualInspector:

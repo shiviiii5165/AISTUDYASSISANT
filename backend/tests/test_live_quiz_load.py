@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: High-Concurrency Load Simulation Tests
+LearnByGenie — Live Quiz Engine: High-Concurrency Load Simulation Tests
 =====================================================================
 Simulates concurrent participant rooms at tiers:
 - 10 simulated participants

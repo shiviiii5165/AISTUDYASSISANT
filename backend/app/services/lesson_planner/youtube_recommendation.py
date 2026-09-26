@@ -11,7 +11,7 @@ from .schemas import (
     YouTubeRecommendationResponse,
 )
 
-logger = logging.getLogger("teachgenie.lesson_planner.youtube")
+logger = logging.getLogger("learnbygenie.lesson_planner.youtube")
 
 YOUTUBE_ID_REGEX = re.compile(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*')
 

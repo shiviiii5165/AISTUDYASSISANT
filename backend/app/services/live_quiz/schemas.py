@@ -18,8 +18,10 @@ from app.core.config import settings
 
 _PROGRESSION_SECRET = (
     getattr(settings, "SUPABASE_JWT_SECRET", "")
-    or "teachgenie-progression-token-secret-2026"
+    or getattr(settings, "LEARNBYGENIE_PROGRESSION_SECRET", "")
+    or "learnbygenie-progression-token-secret-2026"
 )
+_LEGACY_PROGRESSION_SECRET = "teachgenie-progression-token-secret-2026"
 
 
 class LiveSessionStatus(str, Enum):
@@ -269,7 +271,13 @@ def verify_progression_token(
     ).hexdigest()
 
     if not hmac.compare_digest(expected_sig, parts[1]):
-        raise ValueError("Progression token signature verification failed")
+        legacy_sig = hmac.new(
+            _LEGACY_PROGRESSION_SECRET.encode("utf-8"),
+            raw_payload.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(legacy_sig, parts[1]):
+            raise ValueError("Progression token signature verification failed")
 
     if data.get("sid") != session_id:
         raise ValueError("Progression token does not match active session")

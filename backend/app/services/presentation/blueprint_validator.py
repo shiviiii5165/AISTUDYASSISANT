@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT — Blueprint Sequence Validator
+LearnByGenie vNEXT — Blueprint Sequence Validator
 =================================================
 Validates the complete SlideBlueprint sequence BEFORE content expansion.
 Deterministic checks only — no LLM call (spec §13).

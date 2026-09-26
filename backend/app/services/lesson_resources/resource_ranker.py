@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Resource Ranker & Pedagogical Scorer
+LearnByGenie Lesson Planner — Resource Ranker & Pedagogical Scorer
 ================================================================
 Two-phase ranker implementing:
 1. Hard Negative Filtering & Minimum Concept Relevance Rejection.

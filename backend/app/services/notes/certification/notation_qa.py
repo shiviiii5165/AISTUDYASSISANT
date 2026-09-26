@@ -1,5 +1,5 @@
 """
-TeachGenie Artifact Certification — Notation QA
+LearnByGenie Artifact Certification — Notation QA
 ================================================
 Audits mathematical and chemical notation in the rendered artifact.
 Triangulates between:

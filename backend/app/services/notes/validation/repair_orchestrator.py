@@ -25,7 +25,7 @@ from .schemas import (
 from .engine import validate_notes
 from app.services.ai.router import router as ai_router
 
-logger = logging.getLogger("teachgenie.notes.validation.orchestrator")
+logger = logging.getLogger("learnbygenie.notes.validation.orchestrator")
 
 
 async def validate_and_repair_notes(
@@ -95,7 +95,7 @@ async def validate_and_repair_notes(
 
     try:
         repair_raw = await ai_router.generate_json(
-            system_instruction="You are TeachGenie's targeted notes repair assistant. Return corrected components only in valid JSON.",
+            system_instruction="You are LearnByGenie's targeted notes repair assistant. Return corrected components only in valid JSON.",
             prompt=repair_prompt,
             model_name="gemini-2.5-flash",
             temperature=0.2

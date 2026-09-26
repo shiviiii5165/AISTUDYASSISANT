@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2A Grid Engine
+LearnByGenie PPT vNext — Phase 3.2A Grid Engine
 =============================================
 Deterministic 12-column horizontal grid and 30-module vertical baseline engine.
 Resolves exact physical dimensions, validates non-bleed safe margins, full-bleed

@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Resource Query Planner
+LearnByGenie Lesson Planner — Resource Query Planner
 ==================================================
 Deterministic, concept-dense query synthesis for search providers.
 Avoids noisy sentence queries and enforces staged broadening.

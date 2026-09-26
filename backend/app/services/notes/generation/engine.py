@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Generation Engine — Primary Engine
+LearnByGenie Notes Generation Engine — Primary Engine
 ===================================================
 Executes Step 3 of the Notes Intelligence Architecture.
 Transforms CanonicalNotesContext and NotesGenerationPlan into a structured,
@@ -34,7 +34,7 @@ from .output_parser import OutputParser
 from .structural_compliance import StructuralComplianceValidator
 from .curriculum_catalog import CurriculumCatalog
 
-logger = logging.getLogger("teachgenie.notes.generation.engine")
+logger = logging.getLogger("learnbygenie.notes.generation.engine")
 
 
 def ensure_generation_plan(plan_or_decision: Any, ctx: CanonicalNotesContext) -> NotesGenerationPlan:

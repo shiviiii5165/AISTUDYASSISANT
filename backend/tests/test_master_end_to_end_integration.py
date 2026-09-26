@@ -1,5 +1,5 @@
 """
-TeachGenie — Master End-to-End Integration, QA & Hardening Suite
+LearnByGenie — Master End-to-End Integration, QA & Hardening Suite
 ===============================================================
 Comprehensive verification across:
 1. Multi-Source Grounding (PDF, PPT, Notes, YouTube)

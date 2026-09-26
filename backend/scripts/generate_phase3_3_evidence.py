@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.3 Runtime Evidence Generator
+LearnByGenie PPT vNext — Phase 3.3 Runtime Evidence Generator
 ============================================================
 Generates real PowerPoint (.pptx) artifacts demonstrating:
   1. Node.js event-loop architecture diagram

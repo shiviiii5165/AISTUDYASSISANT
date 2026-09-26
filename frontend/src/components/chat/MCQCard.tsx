@@ -360,7 +360,7 @@ export default function MCQCard({ session, userId, onSessionComplete }: MCQCardP
     // This will trigger a new MCQ generation request in the parent chat
     const message = `I am weak in "${topic.replace(/-/g, " ")}". Please teach me this topic from basic to advanced so I can understand it fully. AFTER teaching, generate 5 MCQs on this topic so I can practice.`;
     // Dispatch to parent via custom event so ChatInterface can pick it up
-    window.dispatchEvent(new CustomEvent("teachgenie:practice-weak-topic", {
+    window.dispatchEvent(new CustomEvent("learnbygenie:practice-weak-topic", {
       detail: { topic, message },
     }));
   };

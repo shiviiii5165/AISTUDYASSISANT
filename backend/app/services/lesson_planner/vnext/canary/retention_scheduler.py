@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Idempotent Delayed Retention Scheduler
+LearnByGenie Canary Infrastructure — Idempotent Delayed Retention Scheduler
 ========================================================================
 Safeguard #4:
 - Ensures delayed retention scheduling is strictly idempotent.
@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger("teachgenie.canary.retention")
+logger = logging.getLogger("learnbygenie.canary.retention")
 
 
 class RetentionCheckStatus(str, Enum):

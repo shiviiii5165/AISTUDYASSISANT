@@ -1,9 +1,9 @@
 """
-TeachGenie Notes Context Engine — Main Context Analyzer
+LearnByGenie Notes Context Engine — Main Context Analyzer
 ======================================================
 Coordinates multi-source context collection, normalization, priority-based
 resolution, conflict tracking, completeness scoring, and snapshot generation.
-Answers: "What does TeachGenie currently know about this note-generation request?"
+Answers: "What does LearnByGenie currently know about this note-generation request?"
 STRICT BOUNDARY: Does NOT choose format, depth, difficulty, or pedagogy.
 """
 import logging
@@ -22,11 +22,11 @@ from .resolver import ContextResolver
 from .completeness import CompletenessEvaluator
 from .snapshot import ContextSnapshotManager
 
-logger = logging.getLogger("teachgenie.notes.context_analyzer")
+logger = logging.getLogger("learnbygenie.notes.context_analyzer")
 
 
 class NotesContextAnalyzer:
-    """Core Context Engine for the independent TeachGenie Notes Module."""
+    """Core Context Engine for the independent LearnByGenie Notes Module."""
 
     @classmethod
     async def analyze_context(

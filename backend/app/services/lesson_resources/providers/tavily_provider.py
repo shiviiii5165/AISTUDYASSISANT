@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Tavily Domain-Constrained Provider
+LearnByGenie Lesson Planner — Tavily Domain-Constrained Provider
 =============================================================
 Uses Tavily Search with aggressive domain restrictions for:
 - Programming practice (LeetCode, GeeksforGeeks, HackerRank)

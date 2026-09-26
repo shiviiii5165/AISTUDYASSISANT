@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Hub and Spoke Component
+LearnByGenie Renderer — Hub and Spoke Component
 =============================================
 Renders a central concept node connected via clean connectors to surrounding
 satellite concept cards, ideal for taxonomies, ecosystem overviews, and core principles.

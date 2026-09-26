@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Mastery Engine & Lesson Planner Roadmap Sync Tests
+LearnByGenie — Live Quiz Engine: Mastery Engine & Lesson Planner Roadmap Sync Tests
 =================================================================================
 Verifies that:
 1. sync_session_with_mastery_and_roadmap processes real class assessment outcomes.

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2A Composition Schemas
+LearnByGenie PPT vNext — Phase 3.2A Composition Schemas
 ===================================================
 Defines strongly typed composition models, 12-column grid and 30-module vertical
 baseline coordinates, typed ContentBinding, and immutable envelopes.
@@ -143,7 +143,7 @@ class FormulaRenderMode(str, Enum):
 class RendererCapability(str, Enum):
     """Accurate classification of python-pptx rendering capabilities."""
     NATIVE               = "native"                # Natively set via python-pptx API
-    APPLICATION_RESOLVED = "application_resolved"  # Resolved by TeachGenie application logic
+    APPLICATION_RESOLVED = "application_resolved"  # Resolved by LearnByGenie application logic
     XML_EXTENSION        = "xml_extension"         # Manipulated via python-pptx oxml elements
     APPROXIMATED         = "approximated"          # Mapped to nearest native capability (e.g. bold flag)
     DEFERRED             = "deferred"              # Preserved structurally; rendered in later Phase 3.x

@@ -1,5 +1,5 @@
 """
-TeachGenie — QA Engine
+LearnByGenie — QA Engine
 =======================
 Slide and deck-level quality assessment.
 Evaluates density, balance, contrast, and readability.

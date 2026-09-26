@@ -81,7 +81,7 @@ async def generate_outline_from_shared_context(
 
     return {
         "deck_title": topic,
-        "subtitle": "Generated from TeachGenie Lesson Planner Context",
+        "subtitle": "Generated from LearnByGenie Lesson Planner Context",
         "slides": slides,
         "reused_context": True,
         "knowledge_pack_id": getattr(shared_context, "knowledge_pack_id", None)

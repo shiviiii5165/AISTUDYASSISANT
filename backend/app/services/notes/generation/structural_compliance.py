@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Generation Engine — Structural Compliance Validator
+LearnByGenie Notes Generation Engine — Structural Compliance Validator
 =====================================================================
 Validates and enforces structural fidelity of the generated NotesDocument
 against the deterministic NotesGenerationPlan produced in Step 2.
@@ -13,7 +13,7 @@ from app.services.notes.context.schemas import CanonicalNotesContext
 from app.services.notes.decision.schemas import NotesGenerationPlan
 from .schemas import SemanticDeficit, GenerationMode
 
-logger = logging.getLogger("teachgenie.notes.generation.compliance")
+logger = logging.getLogger("learnbygenie.notes.generation.compliance")
 
 
 class StructuralComplianceValidator:

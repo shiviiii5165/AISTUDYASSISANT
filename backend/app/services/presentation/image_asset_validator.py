@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.4 Image Asset Validator
+LearnByGenie PPT vNext — Phase 3.4 Image Asset Validator
 ======================================================
 Validates image assets for rights, integrity, dimensions, aspect ratio,
 safe content, deduplication, and provenance before placement.
@@ -334,7 +334,7 @@ def secure_fetch_image_asset(
             close_client = False
 
         try:
-            resp = client.get(current_url, headers={"User-Agent": "TeachGenie-SecurityValidator/1.0"})
+            resp = client.get(current_url, headers={"User-Agent": "LearnByGenie-SecurityValidator/1.0"})
             res.status_code = resp.status_code
 
             # Handle Redirects

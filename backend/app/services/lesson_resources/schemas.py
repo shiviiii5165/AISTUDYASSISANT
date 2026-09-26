@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Resource Intelligence Schemas & Contracts
+LearnByGenie Lesson Planner — Resource Intelligence Schemas & Contracts
 =====================================================================
 Unified data contracts for Stage Resource Intelligence, query profiles,
 candidate ranking, action priority, and multi-provider normalized models.

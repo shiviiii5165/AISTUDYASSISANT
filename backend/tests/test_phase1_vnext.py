@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 1 — Comprehensive Tests
+LearnByGenie vNEXT Phase 1 — Comprehensive Tests
 =================================================
 Tests for the deterministic intelligence layer:
 - Domain classifier

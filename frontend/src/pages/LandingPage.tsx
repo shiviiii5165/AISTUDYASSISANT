@@ -71,20 +71,20 @@ const LandingPage: React.FC = () => {
         "@type": "WebSite",
         "@id": "https://teachgenie.online/#website",
         "url": "https://teachgenie.online",
-        "name": "TeachGenie",
+        "name": "LearnByGenie",
         "description": "AI Tutor for Students | Chat With PDFs, Notes & Generate MCQs",
         "publisher": { "@id": "https://teachgenie.online/#organization" },
       },
       {
         "@type": "Organization",
         "@id": "https://teachgenie.online/#organization",
-        "name": "TeachGenie",
+        "name": "LearnByGenie",
         "url": "https://teachgenie.online",
         "logo": { "@type": "ImageObject", "url": "https://teachgenie.online/logo.png" },
       },
       {
         "@type": "SoftwareApplication",
-        "name": "TeachGenie",
+        "name": "LearnByGenie",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "All",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
@@ -92,10 +92,10 @@ const LandingPage: React.FC = () => {
       {
         "@type": "FAQPage",
         "mainEntity": [
-          { "@type": "Question", "name": "What is TeachGenie?", "acceptedAnswer": { "@type": "Answer", "text": "TeachGenie is an AI study assistant for students. It acts as your personal AI tutor that can read your uploaded PDF notes and answer your doubts based on them." } },
-          { "@type": "Question", "name": "Can AI explain PDF notes?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, TeachGenie can read any PDF notes, textbooks, or coaching materials and explain complex topics from them in simple language." } },
-          { "@type": "Question", "name": "Can TeachGenie generate MCQs?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, TeachGenie can automatically generate multiple-choice questions (MCQs) from your uploaded PDFs to help you practice for exams." } },
-          { "@type": "Question", "name": "Is TeachGenie useful for CBSE students?", "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. CBSE students can upload NCERT PDFs or school notes and ask questions to prepare effectively for their board exams." } },
+          { "@type": "Question", "name": "What is LearnByGenie?", "acceptedAnswer": { "@type": "Answer", "text": "LearnByGenie is an AI study assistant for students. It acts as your personal AI tutor that can read your uploaded PDF notes and answer your doubts based on them." } },
+          { "@type": "Question", "name": "Can AI explain PDF notes?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, LearnByGenie can read any PDF notes, textbooks, or coaching materials and explain complex topics from them in simple language." } },
+          { "@type": "Question", "name": "Can LearnByGenie generate MCQs?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, LearnByGenie can automatically generate multiple-choice questions (MCQs) from your uploaded PDFs to help you practice for exams." } },
+          { "@type": "Question", "name": "Is LearnByGenie useful for CBSE students?", "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. CBSE students can upload NCERT PDFs or school notes and ask questions to prepare effectively for their board exams." } },
           { "@type": "Question", "name": "Can students use AI for exam preparation?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, AI is highly effective for exam preparation. It helps by summarizing notes, predicting exam questions, and solving doubts 24/7." } },
         ],
       },
@@ -103,10 +103,10 @@ const LandingPage: React.FC = () => {
   };
 
   const faqs = [
-    { q: 'What is TeachGenie?', a: 'TeachGenie is an AI study assistant for students. It acts as your personal AI tutor that can read your uploaded PDF notes and answer your doubts based on them.' },
-    { q: 'Can AI explain PDF notes?', a: 'Yes, TeachGenie can read any PDF notes, textbooks, or coaching materials and explain complex topics from them in simple language.' },
-    { q: 'Can TeachGenie generate MCQs?', a: 'Yes, TeachGenie can automatically generate multiple-choice questions (MCQs) from your uploaded PDFs to help you practice for exams.' },
-    { q: 'Is TeachGenie useful for CBSE students?', a: 'Absolutely. CBSE students can upload NCERT PDFs or school notes and ask questions to prepare effectively for their board exams.' },
+    { q: 'What is LearnByGenie?', a: 'LearnByGenie is an AI study assistant for students. It acts as your personal AI tutor that can read your uploaded PDF notes and answer your doubts based on them.' },
+    { q: 'Can AI explain PDF notes?', a: 'Yes, LearnByGenie can read any PDF notes, textbooks, or coaching materials and explain complex topics from them in simple language.' },
+    { q: 'Can LearnByGenie generate MCQs?', a: 'Yes, LearnByGenie can automatically generate multiple-choice questions (MCQs) from your uploaded PDFs to help you practice for exams.' },
+    { q: 'Is LearnByGenie useful for CBSE students?', a: 'Absolutely. CBSE students can upload NCERT PDFs or school notes and ask questions to prepare effectively for their board exams.' },
     { q: 'Can students use AI for exam preparation?', a: 'Yes, AI is highly effective for exam preparation. It helps by summarizing notes, predicting exam questions, and solving doubts 24/7.' },
   ];
 
@@ -146,8 +146,8 @@ const LandingPage: React.FC = () => {
   return (
     <div ref={wrapperRef} className="bg-[#FAFAF8]">
       <SEO
-        title="TeachGenie - AI Tutor for Students | Chat With PDFs, Notes & MCQs"
-        description="TeachGenie is an AI study assistant for students. Upload PDF notes, ask doubts, get simple explanations, generate MCQs, predicted exam questions and prepare smarter with your AI tutor."
+        title="LearnByGenie - AI Tutor for Students | Chat With PDFs, Notes & MCQs"
+        description="LearnByGenie is an AI study assistant for students. Upload PDF notes, ask doubts, get simple explanations, generate MCQs, predicted exam questions and prepare smarter with your AI tutor."
         schema={homepageSchema}
       />
 
@@ -163,13 +163,13 @@ const LandingPage: React.FC = () => {
           <Link
             to="/"
             className="flex shrink-0 items-center gap-2.5 rounded-lg"
-            aria-label="TeachGenie home"
+            aria-label="LearnByGenie home"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1B2CC1]">
               <img src="/assets/genie-default.png" alt="" width={20} height={20} className="h-5 w-5 object-contain brightness-0 invert" />
             </div>
             <span className="font-display text-base font-bold tracking-tight text-[#091540]">
-              TeachGenie
+              LearnByGenie
             </span>
           </Link>
 
@@ -288,14 +288,14 @@ const LandingPage: React.FC = () => {
                       <span className="h-3 w-3 rounded-full bg-[#FFBD2E]" />
                       <span className="h-3 w-3 rounded-full bg-[#28C840]" />
                       <div className="mx-auto h-6 w-48 rounded-md bg-[#F3F4F6] text-center text-[10px] leading-6 text-[#9CA3AF]">
-                        teachgenie.online/dashboard
+                        learnbygenie.com/dashboard
                       </div>
                     </div>
                     {/* Screenshot area */}
                     <div className="relative min-h-[320px] overflow-hidden rounded-b-2xl bg-[#FAFAF8]">
                       <img
                         src={LANDING.hero}
-                        alt="TeachGenie dashboard"
+                        alt="LearnByGenie dashboard"
                         className="w-full object-cover object-top"
                         onError={(e) => {
                           // Fallback: show a styled placeholder
@@ -597,7 +597,7 @@ const LandingPage: React.FC = () => {
                     <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#1B2CC1]">
                       <img src="/logo.png" alt="" width={16} height={16} className="h-4 w-4 object-contain brightness-0 invert" />
                     </div>
-                    <span className="font-display text-base font-bold text-[#091540]">TeachGenie</span>
+                    <span className="font-display text-base font-bold text-[#091540]">LearnByGenie</span>
                   </div>
                   <p className="max-w-[30ch] text-sm leading-relaxed text-[#6B7280]">
                     Study and teaching tools that work from the material you already have.
@@ -636,7 +636,7 @@ const LandingPage: React.FC = () => {
 
               <div className="mt-10 border-t border-[rgba(9,21,64,0.08)] pt-6">
                 <p className="text-sm text-[#9CA3AF]">
-                  © {new Date().getFullYear()} TeachGenie
+                  © {new Date().getFullYear()} LearnByGenie
                 </p>
               </div>
             </div>

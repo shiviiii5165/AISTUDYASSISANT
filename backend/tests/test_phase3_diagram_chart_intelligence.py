@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.3 Editable Diagram & Native Chart Intelligence Test Suite
+LearnByGenie PPT vNext — Phase 3.3 Editable Diagram & Native Chart Intelligence Test Suite
 ==========================================================================================
 Validates:
   1. Visual Routing: Deterministic routing across diagrams, charts, fallbacks, and deferred states

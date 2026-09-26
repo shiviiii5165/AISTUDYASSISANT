@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2B Typography & Text-Fitting Engine
+LearnByGenie PPT vNext — Phase 3.2B Typography & Text-Fitting Engine
 ==================================================================
 Geometry-aware typography resolution, hierarchical constraint validation,
 deterministic text measurement, and 7-stage ordered text fitting.

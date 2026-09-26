@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Context Resolver
+LearnByGenie Notes Context Engine — Context Resolver
 ==================================================
 Applies strict deterministic priority rankings (1 to 8) to resolve candidate
 values into an authoritative ResolvedContext with complete field provenance.

@@ -1,5 +1,5 @@
 """
-TeachGenie — Presentation Builder
+LearnByGenie — Presentation Builder
 ===================================
 Main entry point: takes a PresentationPlan + theme → produces PPTX bytes.
 Integrates: Layout Engine, QA Engine, Design Tokens.

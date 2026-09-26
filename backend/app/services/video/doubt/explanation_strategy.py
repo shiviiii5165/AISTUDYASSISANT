@@ -138,7 +138,7 @@ class ExplanationStrategyEngine:
                     if anchors_formatted:
                         anchors_str = "Active Referential Visual & Worked Anchors on Screen:\n" + "\n".join(anchors_formatted)
 
-                prompt_system = f"""You are TeachGenie's Expert Educational AI Video Tutor.
+                prompt_system = f"""You are LearnByGenie's Expert Educational AI Video Tutor.
 A learner is watching a video lesson and paused at timestamp {context.timestamp:.1f}s to ask a doubt.
 
 === PEDAGOGICAL GROUNDING CONTEXT ===

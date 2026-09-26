@@ -13,7 +13,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: ALLOWED_ORIGINS
-        value: http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://aistudyassisant.onrender.com
+        value: http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://learnbygenie.com,https://www.learnbygenie.com,https://learnbygenie.online,https://www.learnbygenie.online,https://aistudyassisant.onrender.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY

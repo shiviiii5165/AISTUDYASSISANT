@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Topic Descriptor
+LearnByGenie Notes Context Engine — Topic Descriptor
 ==================================================
 Provides generic, scalable, data-driven topic identity.
 Supports arbitrary educational topics without finite keyword restrictions or hard-coded Python routing.

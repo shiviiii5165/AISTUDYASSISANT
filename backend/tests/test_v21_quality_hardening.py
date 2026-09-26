@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.1 — Comprehensive Quality Hardening Suite
+LearnByGenie AI Video Teacher V2.1 — Comprehensive Quality Hardening Suite
 ========================================================================
 Validates all 14 mandatory decisions:
 1. Real-World Prompt Torture Suite (32 prompts across 12 domains, informal Hinglish, misspellings)

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2F End-to-End Composition Validation & Phase 3.2 Final Freeze
+LearnByGenie PPT vNext — Phase 3.2F End-to-End Composition Validation & Phase 3.2 Final Freeze
 =============================================================================================
 Primary certification test suite for Phase 3.2:
   1. Held-out deck validation across 20 distinct academic disciplines

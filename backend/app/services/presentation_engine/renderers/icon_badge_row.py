@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Icon Badge Row Component
+LearnByGenie Renderer — Icon Badge Row Component
 ==============================================
 Renders a row of 3–6 small badge chips with single letters or short tags.
 Crucially, all explanatory captions are placed strictly BENEATH badges

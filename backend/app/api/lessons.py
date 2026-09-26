@@ -181,7 +181,7 @@ async def create_lesson_video(
     current_user=Depends(check_daily_question_limit),
 ):
     """
-    Starts an asynchronous video generation job using the TeachGenie AI Video Teacher V2 Engine.
+    Starts an asynchronous video generation job using the LearnByGenie AI Video Teacher V2 Engine.
     """
     try:
         # Parse intent dynamically

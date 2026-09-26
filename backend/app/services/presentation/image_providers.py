@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.4 Image Provider Registry & Orchestration
+LearnByGenie PPT vNext — Phase 3.4 Image Provider Registry & Orchestration
 ========================================================================
 Implements a provider-capability registry and normalized search adapter layer
 that wraps the existing image_source_router.py providers (Pexels, Pixabay,

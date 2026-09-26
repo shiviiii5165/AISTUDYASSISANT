@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Wikipedia Academic Reference Provider
+LearnByGenie Lesson Planner — Wikipedia Academic Reference Provider
 ==================================================================
 Retrieves canonical encyclopedia articles using Wikipedia OpenSearch / REST API.
 STRICT RULE: Wikipedia is ALWAYS classified as Academic Reference, NEVER Official Documentation.
@@ -27,7 +27,7 @@ class WikipediaProvider:
         seen_urls = set()
 
         headers = {
-            "User-Agent": "TeachGenie-LessonPlanner/1.0 (contact@teachgenie.online)"
+            "User-Agent": "LearnByGenie-LessonPlanner/1.0 (contact@teachgenie.online)"
         }
 
         async with httpx.AsyncClient(timeout=6.0) as client:

@@ -22,11 +22,11 @@ const BlogPostPage: React.FC = () => {
     "description": post.description,
     "author": {
       "@type": "Organization",
-      "name": "TeachGenie"
+      "name": "LearnByGenie"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "TeachGenie",
+      "name": "LearnByGenie",
       "logo": {
         "@type": "ImageObject",
         "url": "https://teachgenie.online/logo.png"
@@ -45,9 +45,9 @@ const BlogPostPage: React.FC = () => {
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started

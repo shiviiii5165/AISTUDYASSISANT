@@ -335,7 +335,7 @@ const LiveQuizHostPage: React.FC = () => {
 
   return (
     <AppLayout title="Live Classroom Control Center">
-      <SEO title="Live Quiz Host | TeachGenie" description="Live classroom monitoring and moderation center." />
+      <SEO title="Live Quiz Host | LearnByGenie" description="Live classroom monitoring and moderation center." />
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
 

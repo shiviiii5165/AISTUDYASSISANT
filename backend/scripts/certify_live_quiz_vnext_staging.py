@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz VNEXT Real Staging Certification & Evidence Closure
+LearnByGenie — Live Quiz VNEXT Real Staging Certification & Evidence Closure
 ==========================================================================
 Executes complete automated validation across:
   1. Staging Migration & Schema Verification
@@ -725,7 +725,7 @@ def test_security_release_gate() -> Dict[str, Any]:
 
 async def run_full_staging_certification():
     print("=" * 80)
-    print("TEACHGENIE LIVE QUIZ VNEXT — REAL STAGING CERTIFICATION RUNNER")
+    print("LEARNBYGENIE LIVE QUIZ VNEXT — REAL STAGING CERTIFICATION RUNNER")
     print("=" * 80)
     
     print("\n[1/7] Verifying 015_live_quiz_vnext Schema Contracts on Real Supabase Staging...")

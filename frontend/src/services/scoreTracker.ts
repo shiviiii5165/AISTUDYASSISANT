@@ -41,7 +41,7 @@ export async function saveQuizScore(entry: QuizScoreEntry): Promise<void> {
   });
  
   if (error) {
-    console.error("[TeachGenie] Failed to save quiz score:", error.message);
+    console.error("[LearnByGenie] Failed to save quiz score:", error.message);
     // Fail silently — don't break the student's quiz experience
   }
 }
@@ -65,7 +65,7 @@ export async function getWeakTopicAnalysis(
   const { data, error } = await query;
  
   if (error || !data) {
-    console.error("[TeachGenie] Failed to fetch quiz scores:", error?.message);
+    console.error("[LearnByGenie] Failed to fetch quiz scores:", error?.message);
     return { weakTopics: [], strongTopics: [], overallAccuracy: 0, totalQuestionsAttempted: 0 };
   }
  

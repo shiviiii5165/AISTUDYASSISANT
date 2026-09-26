@@ -14,14 +14,14 @@ const ChatGPTAlternativePage: React.FC = () => {
       "name": "What is the best ChatGPT alternative for students?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "TeachGenie is widely considered the best ChatGPT alternative for students because it is specifically built for learning. It restricts answers to your uploaded notes, preventing hallucinations and keeping you focused on the actual syllabus."
+        "text": "LearnByGenie is widely considered the best ChatGPT alternative for students because it is specifically built for learning. It restricts answers to your uploaded notes, preventing hallucinations and keeping you focused on the actual syllabus."
       }
     }, {
       "@type": "Question",
       "name": "Why shouldn't I just use ChatGPT for studying?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "ChatGPT is a general-purpose AI and often gives generic or outside-the-syllabus answers. TeachGenie acts as a dedicated AI tutor that explains complex topics based purely on your NCERT or university PDFs."
+        "text": "ChatGPT is a general-purpose AI and often gives generic or outside-the-syllabus answers. LearnByGenie acts as a dedicated AI tutor that explains complex topics based purely on your NCERT or university PDFs."
       }
     }]
   };
@@ -29,16 +29,16 @@ const ChatGPTAlternativePage: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
-        title="Best ChatGPT Alternative for Students - TeachGenie"
-        description="Looking for a ChatGPT alternative for students? TeachGenie is a dedicated AI study assistant that answers questions from your own PDF notes without hallucinations."
+        title="Best ChatGPT Alternative for Students - LearnByGenie"
+        description="Looking for a ChatGPT alternative for students? LearnByGenie is a dedicated AI study assistant that answers questions from your own PDF notes without hallucinations."
         canonical="/chatgpt-alternative-for-students"
         schema={faqSchema}
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
-          <img src="/assets/genie-default.png" alt="TeachGenie Logo" className="w-8 h-8 object-contain" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+          <img src="/assets/genie-default.png" alt="LearnByGenie Logo" className="w-8 h-8 object-contain" />
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -50,7 +50,7 @@ const ChatGPTAlternativePage: React.FC = () => {
           The Best ChatGPT Alternative for Students
         </h1>
         <p className="text-lg text-[var(--text-secondary)] mb-12 text-center max-w-2xl mx-auto">
-          Don't rely on generic AI that invents facts. TeachGenie is an AI study assistant that strictly answers from your uploaded PDFs and notes.
+          Don't rely on generic AI that invents facts. LearnByGenie is an AI study assistant that strictly answers from your uploaded PDFs and notes.
         </p>
 
         <div className="grid md:grid-cols-3 gap-8 mb-16">
@@ -67,7 +67,7 @@ const ChatGPTAlternativePage: React.FC = () => {
           <div className="p-6 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)]">
             <Brain className="w-8 h-8 text-purple-600 mb-4" />
             <h3 className="text-xl font-bold mb-2">Built-in MCQs</h3>
-            <p className="text-[var(--text-secondary)]">Unlike ChatGPT, TeachGenie automatically tracks your weak topics with generated quizzes.</p>
+            <p className="text-[var(--text-secondary)]">Unlike ChatGPT, LearnByGenie automatically tracks your weak topics with generated quizzes.</p>
           </div>
         </div>
 
@@ -76,11 +76,11 @@ const ChatGPTAlternativePage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h3 className="font-bold text-lg mb-2">What is the best ChatGPT alternative for students?</h3>
-              <p className="text-[var(--text-secondary)]">TeachGenie is considered the best ChatGPT alternative for students because it focuses entirely on your uploaded syllabus and provides precise, non-hallucinated educational support.</p>
+              <p className="text-[var(--text-secondary)]">LearnByGenie is considered the best ChatGPT alternative for students because it focuses entirely on your uploaded syllabus and provides precise, non-hallucinated educational support.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg mb-2">Why shouldn't I just use ChatGPT for studying?</h3>
-              <p className="text-[var(--text-secondary)]">While ChatGPT is powerful, it lacks syllabus constraints. TeachGenie acts as an AI tutor that forces the AI to only use your PDF notes, ensuring accuracy.</p>
+              <p className="text-[var(--text-secondary)]">While ChatGPT is powerful, it lacks syllabus constraints. LearnByGenie acts as an AI tutor that forces the AI to only use your PDF notes, ensuring accuracy.</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 """
-TeachGenie Student Artifact Certification — Master Coordinator
+LearnByGenie Student Artifact Certification — Master Coordinator
 ==============================================================
 Orchestrates two-layer certification downstream of Step 4:
 1. Content Certification: Syllabus coverage & substantive evidence against authoritative plan.
@@ -27,7 +27,7 @@ from ..schemas import NotesDocument
 from ..context.schemas import CanonicalNotesContext
 from ..decision.schemas import NotesGenerationPlan
 
-logger = logging.getLogger("teachgenie.notes.certification.master")
+logger = logging.getLogger("learnbygenie.notes.certification.master")
 
 
 class StudentArtifactCertifier:

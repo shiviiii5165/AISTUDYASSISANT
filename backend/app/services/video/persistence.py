@@ -1,5 +1,5 @@
 """
-Durable Persistence Layer for TeachGenie Video Teacher
+Durable Persistence Layer for LearnByGenie Video Teacher
 ======================================================
 Provides atomic file-backed local persistence across server restarts
 combined with background Supabase table syncing when available.

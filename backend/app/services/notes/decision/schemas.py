@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Domain Schemas & Contracts
+LearnByGenie Notes Decision Engine — Domain Schemas & Contracts
 =============================================================
 Strict Pydantic contracts for Step 2 of the Notes Intelligence Layer.
 Transforms CanonicalNotesContext into a deterministic NotesGenerationPlan.
@@ -112,7 +112,7 @@ class DecisionTraceItem(BaseModel):
 class NotesGenerationPlan(BaseModel):
     """
     Step 2 Canonical Output: Deterministic generation plan answering:
-    'Given what TeachGenie knows, what does this learner actually need in their notes?'
+    'Given what LearnByGenie knows, what does this learner actually need in their notes?'
     """
     model_config = ConfigDict(populate_by_name=True)
 

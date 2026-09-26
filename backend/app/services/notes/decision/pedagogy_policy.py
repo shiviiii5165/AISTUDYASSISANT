@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Pedagogy Policy Engine
+LearnByGenie Notes Decision Engine — Pedagogy Policy Engine
 =========================================================
 Formulates teaching strategies (active, passive, balanced) and
 grade/curriculum-appropriate pedagogical tone instructions.

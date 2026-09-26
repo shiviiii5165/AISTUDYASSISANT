@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Case Study Block Component
+LearnByGenie Renderer — Case Study Block Component
 ================================================
 Renders a 3-tier pedagogical case study block:
 1. "The Problem" band across top

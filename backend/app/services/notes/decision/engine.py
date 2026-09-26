@@ -1,9 +1,9 @@
 """
-TeachGenie Notes Decision Engine — Primary Deterministic Decision Engine
+LearnByGenie Notes Decision Engine — Primary Deterministic Decision Engine
 ========================================================================
 STEP 2 ONLY of the Notes Intelligence architecture.
 Transforms CanonicalNotesContext into a strongly typed NotesGenerationPlan.
-Answers: "Given what TeachGenie knows, what does this learner actually need in their notes?"
+Answers: "Given what LearnByGenie knows, what does this learner actually need in their notes?"
 Zero LLM calls. Zero note generation. Deterministic and explainable.
 """
 from typing import List, Dict, Any, Optional

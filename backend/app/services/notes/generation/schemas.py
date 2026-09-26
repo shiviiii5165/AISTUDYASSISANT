@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Generation Engine — Domain Schemas & Contracts
+LearnByGenie Notes Generation Engine — Domain Schemas & Contracts
 ===============================================================
 Contracts for Step 3 of the Notes Intelligence Layer.
 Takes CanonicalNotesContext and NotesGenerationPlan to produce NotesDocument.

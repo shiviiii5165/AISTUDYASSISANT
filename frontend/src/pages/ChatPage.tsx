@@ -252,8 +252,8 @@ const ChatPage: React.FC = () => {
       const { message } = e.detail;
       handleSendRef.current(message);
     };
-    window.addEventListener("teachgenie:practice-weak-topic", handler as EventListener);
-    return () => window.removeEventListener("teachgenie:practice-weak-topic", handler as EventListener);
+    window.addEventListener("learnbygenie:practice-weak-topic", handler as EventListener);
+    return () => window.removeEventListener("learnbygenie:practice-weak-topic", handler as EventListener);
   }, []);
 
   function renderMessage(msg: DisplayMessage) {
@@ -362,7 +362,7 @@ const ChatPage: React.FC = () => {
   return (
     <AppLayout title="Study Assistant">
       <SEO
-        title="AI Chat | TeachGenie"
+        title="AI Chat | LearnByGenie"
         description="Chat directly with your documents. Get instant answers, summaries, and personalized learning support."
       />
       <div className="flex h-full w-full">
@@ -523,7 +523,7 @@ const ChatPage: React.FC = () => {
                             className="h-4 w-4 text-[var(--accent-royal)]"
                             aria-hidden="true"
                           />
-                          <span className="sr-only">TeachGenie</span>
+                          <span className="sr-only">LearnByGenie</span>
                         </span>
                       )}
                       <div

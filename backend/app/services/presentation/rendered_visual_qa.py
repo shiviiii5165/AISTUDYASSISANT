@@ -1,10 +1,10 @@
 """
-TeachGenie PPT vNext — Phase 3.5 Rendered Visual QA Models & Audit Contracts
+LearnByGenie PPT vNext — Phase 3.5 Rendered Visual QA Models & Audit Contracts
 =============================================================================
 Defines strongly typed models, enums, evidence contracts, and audit outcomes
 for rendered visual quality assurance of exported PowerPoint presentations.
 
-Governed by TeachGenie PPT vNext Phase 3.5 specifications:
+Governed by LearnByGenie PPT vNext Phase 3.5 specifications:
   - Strongly typed defect taxonomy (27 visual defect codes)
   - Pixel and structural evidence models with reproducible metrics
   - Transactional repair action provenance records

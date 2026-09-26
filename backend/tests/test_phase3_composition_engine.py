@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2A Composition Engine Test Suite
+LearnByGenie PPT vNext — Phase 3.2A Composition Engine Test Suite
 ===============================================================
 Validates Phase 3.2A contracts:
   1. Vertical grid consistency (30 modules * 0.25 in = 7.50 in)
@@ -435,7 +435,7 @@ def test_renderer_capability_classification():
     assert RENDERER_OPERATION_CAPABILITIES["font_size_assignment"] == RendererCapability.NATIVE
     assert RENDERER_OPERATION_CAPABILITIES["font_color_assignment"] == RendererCapability.NATIVE
 
-    # Font fallback selection is APPLICATION_RESOLVED by TeachGenie
+    # Font fallback selection is APPLICATION_RESOLVED by LearnByGenie
     assert RENDERER_OPERATION_CAPABILITIES["fallback_font_selection"] == RendererCapability.APPLICATION_RESOLVED
 
     # Shape alt text and description manipulation is XML_EXTENSION

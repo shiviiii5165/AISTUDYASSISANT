@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 3.1 — Design DNA Engine
+LearnByGenie vNEXT Phase 3.1 — Design DNA Engine
 ================================================
 Generates deck-level visual design grammar (DesignDNA) from PresentationBrief.
 

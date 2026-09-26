@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT Phase 3.1 — Visual Planning Schemas
+LearnByGenie vNEXT Phase 3.1 — Visual Planning Schemas
 =====================================================
 Typed models governing visual semantic interpretation, design grammar,
 and visual rhythm orchestration.

@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Crossref DOI Verification Provider
+LearnByGenie Lesson Planner — Crossref DOI Verification Provider
 =============================================================
 Validates DOIs and enriches paper metadata using Crossref REST API.
 Adheres to polite User-Agent conventions with CROSSREF_MAILTO.
@@ -27,7 +27,7 @@ class CrossrefProvider:
     def get_headers(cls) -> Dict[str, str]:
         mailto = getattr(settings, "CROSSREF_MAILTO", "contact@teachgenie.online")
         return {
-            "User-Agent": f"TeachGenie-LessonPlanner/1.0 (mailto:{mailto})"
+            "User-Agent": f"LearnByGenie-LessonPlanner/1.0 (mailto:{mailto})"
         }
 
     @classmethod

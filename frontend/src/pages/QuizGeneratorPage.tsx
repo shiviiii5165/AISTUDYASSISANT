@@ -157,7 +157,7 @@ const QuizGeneratorPage: React.FC = () => {
   return (
     <AppLayout title="Quiz Generator">
       <SEO
-        title="AI Quiz Generator | TeachGenie"
+        title="AI Quiz Generator | LearnByGenie"
         description="Generate structured quizzes with explanations from your documents or any topic."
       />
 

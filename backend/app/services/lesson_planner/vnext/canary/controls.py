@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Emergency Kill Switches & Rollback Engine
+LearnByGenie Canary Infrastructure — Emergency Kill Switches & Rollback Engine
 =============================================================================
 Phase 4 & Phase 5:
 1. Operator-Controlled Emergency Kill Switches:
@@ -30,7 +30,7 @@ from app.services.lesson_planner.vnext.canary.pseudonyms import (
 )
 from app.core.config import settings
 
-logger = logging.getLogger("teachgenie.canary.controls")
+logger = logging.getLogger("learnbygenie.canary.controls")
 
 
 class KillSwitchName:

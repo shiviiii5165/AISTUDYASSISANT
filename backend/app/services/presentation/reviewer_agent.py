@@ -265,7 +265,7 @@ async def run_reviewer_critic(
                 task="qa",
                 messages=[
                     {"role": "system", "content": REVIEWER_CRITIC_SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Review this generated presentation against the TeachGenie Master Standard:\n{json.dumps(critic_prompt, indent=2)}"},
+                    {"role": "user", "content": f"Review this generated presentation against the LearnByGenie Master Standard:\n{json.dumps(critic_prompt, indent=2)}"},
                 ],
                 temperature=0.2,
                 max_tokens=2048,

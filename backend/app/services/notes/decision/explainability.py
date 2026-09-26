@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Explainability & Traceability Engine
+LearnByGenie Notes Decision Engine — Explainability & Traceability Engine
 ======================================================================
 Produces deterministic decision explanations, aggregated evidence summaries,
 competing candidate traces with winning precedence, and decision confidence.

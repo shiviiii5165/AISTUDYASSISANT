@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Adaptive Learning Flow Schemas
+LearnByGenie Notes Decision Engine — Adaptive Learning Flow Schemas
 ==================================================================
 Provides machine-readable, strongly-typed domain contracts for
 determining HOW a learner should learn a specific topic.
@@ -89,7 +89,7 @@ class LearningStageItem(BaseModel):
 class LearningCheckpoint(BaseModel):
     """
     Diagnostic gating checkpoint:
-    Answers 'What evidence would tell TeachGenie whether to proceed, reteach, or increase difficulty?'
+    Answers 'What evidence would tell LearnByGenie whether to proceed, reteach, or increase difficulty?'
     """
     model_config = ConfigDict(populate_by_name=True)
 

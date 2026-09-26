@@ -616,15 +616,15 @@ const VideoGeneratorPage: React.FC = () => {
   const currentScene = storyboard?.scenes[activeSceneIndex];
 
   return (
-    <AppLayout title="TeachGenie AI Video Teacher">
+    <AppLayout title="LearnByGenie AI Video Teacher">
       <SEO
-        title="TeachGenie AI Video Teacher | Interactive Pedagogical Learning"
+        title="LearnByGenie AI Video Teacher | Interactive Pedagogical Learning"
         description="Create dynamic concept videos with animated visualizers and ask context-aware doubts directly while watching."
       />
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         <GreetingHeader
-          title="TeachGenie AI Video Teacher"
+          title="LearnByGenie AI Video Teacher"
           subtitle="Enter any topic. Get a pedagogically structured animated video lesson with integrated timestamp-aware doubt resolution."
         />
 
@@ -702,7 +702,7 @@ const VideoGeneratorPage: React.FC = () => {
         {generating && (
           <div className="mt-8 flex items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] py-12 shadow-bento">
             <Loader
-              title="TeachGenie is planning your lesson"
+              title="LearnByGenie is planning your lesson"
               subtitle="Constructing dynamic concept graph, rendering domain animations, and recording natural multilingual narration..."
               size="md"
             />
@@ -882,7 +882,7 @@ const VideoGeneratorPage: React.FC = () => {
                       <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                         {/* Timestamp Chip */}
                         <span className="mb-1 text-[10px] text-[var(--text-muted)]">
-                          {msg.sender === 'user' ? 'You' : 'TeachGenie Tutor'} • At {formatTimestamp(msg.timestamp)}
+                          {msg.sender === 'user' ? 'You' : 'LearnByGenie Tutor'} • At {formatTimestamp(msg.timestamp)}
                         </span>
 
                         {/* Message Box */}

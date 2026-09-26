@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Cross-Tenant Security & Host Isolation Tests
+LearnByGenie — Live Quiz Engine: Cross-Tenant Security & Host Isolation Tests
 ===========================================================================
 Verifies that:
 1. User B cannot control, mutate, or advance User A's live session.

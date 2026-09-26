@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Stage Action Recommender
+LearnByGenie Lesson Planner — Stage Action Recommender
 ===================================================
 Determines pedagogical prioritization for the 5 Stage Resource actions:
 1. PowerPoint (ppt)

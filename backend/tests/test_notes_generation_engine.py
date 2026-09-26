@@ -1,5 +1,5 @@
 """
-Unit & Integration Tests for TeachGenie Notes Generation Engine (Step 3 Hardened)
+Unit & Integration Tests for LearnByGenie Notes Generation Engine (Step 3 Hardened)
 ==================================================================================
 Comprehensive test suite covering all 20 required hardening specifications,
 Golden Tests A-D, security injection defenses, bounded repair, plan authority,

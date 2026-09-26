@@ -10,15 +10,15 @@ const BlogIndexPage: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
-        title="TeachGenie Blog - Study Tips & AI Learning"
+        title="LearnByGenie Blog - Study Tips & AI Learning"
         description="Read the latest articles on how to use AI for exam preparation, study smarter, and get the most out of your AI tutor."
         canonical="/blog"
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -27,7 +27,7 @@ const BlogIndexPage: React.FC = () => {
 
       <main className="max-w-4xl mx-auto px-6 py-16">
         <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-6 text-center">
-          The TeachGenie Blog
+          The LearnByGenie Blog
         </h1>
         <p className="text-lg text-[var(--text-secondary)] mb-16 text-center max-w-2xl mx-auto">
           Tips, guides, and insights on using AI to study smarter and score higher.

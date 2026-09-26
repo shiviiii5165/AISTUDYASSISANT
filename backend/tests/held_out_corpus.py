@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2F Held-Out Validation Corpus
+LearnByGenie PPT vNext — Phase 3.2F Held-Out Validation Corpus
 ============================================================
 Dedicated held-out validation corpus across 20 distinct academic topics:
   - Computer Science: OS Scheduling, Database Isolation, TCP Congestion

@@ -9,7 +9,11 @@ from app.api import auth, pdfs, chat, notes, predict
 from app.core.config import settings
 from app.core.logging import logger
 
-app = FastAPI(title="TeachGenie API", version="1.0.0")
+app = FastAPI(
+    title="LearnByGenie API",
+    description="LearnByGenie AI Education Platform API",
+    version="1.0.0"
+)
 
 # Parse allowed origins from settings
 origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
@@ -59,7 +63,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 def read_root():
     from app.db.supabase_client import supabase
     return {
-        "message": "Welcome to TeachGenie API", 
+        "message": "Welcome to LearnByGenie API", 
         "supabase": "connected" if supabase else "failed",
         "gemini": "configured" if settings.GEMINI_API_KEY else "missing"
     }

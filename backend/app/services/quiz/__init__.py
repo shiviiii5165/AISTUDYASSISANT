@@ -1,7 +1,7 @@
 """
 Quiz Engine Service Package
 ===========================
-Canonical quiz generation, validation, and server-side scoring for TeachGenie.
+Canonical quiz generation, validation, and server-side scoring for LearnByGenie.
 
 ONE canonical Quiz model (§1): `mode` + context fields distinguish teacher vs.
 student quizzes — there is no separate engine. Retrieval reuses the existing

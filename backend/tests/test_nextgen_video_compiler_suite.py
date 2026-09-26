@@ -1,5 +1,5 @@
 """
-TeachGenie — Next-Gen AI Educational Video Compiler Test Suite
+LearnByGenie — Next-Gen AI Educational Video Compiler Test Suite
 ==============================================================
 Tests:
 1. Canonical Scene Graph & AI-Video Necessity Score (0.0 to 1.0)

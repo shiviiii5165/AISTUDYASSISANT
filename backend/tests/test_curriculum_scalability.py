@@ -1,7 +1,7 @@
 """
 Test Suite: Curriculum Catalog Scalability & Topic-Agnostic Architecture
 ==========================================================================
-Verifies that TeachGenie is fully topic-agnostic and scalable to arbitrary
+Verifies that LearnByGenie is fully topic-agnostic and scalable to arbitrary
 educational topics without requiring hard-coded Python if/elif dispatch.
 
 Tests all 13 Required Verification Criteria:

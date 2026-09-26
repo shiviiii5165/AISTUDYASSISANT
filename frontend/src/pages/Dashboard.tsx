@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
     <AppLayout title="Dashboard">
       <SEO
         title="Dashboard"
-        description="View your learning progress, recent uploads, and AI study sessions on TeachGenie."
+        description="View your learning progress, recent uploads, and AI study sessions on LearnByGenie."
       />
       <div className="mx-auto max-w-5xl space-y-8 p-4 md:p-6 lg:p-8">
 

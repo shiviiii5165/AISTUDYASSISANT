@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Strict Domain Schemas & Contracts
+LearnByGenie Notes Context Engine — Strict Domain Schemas & Contracts
 ===================================================================
 CanonicalNotesContext contract for Step 1 of the Notes Intelligence Layer.
 Provides lossless provenance tracking, structured conflict metadata,

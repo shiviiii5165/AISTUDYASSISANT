@@ -20,13 +20,13 @@ from .schemas import (
 )
 from app.services.ai.router import router as ai_router
 
-logger = logging.getLogger("teachgenie.notes.validation.judge")
+logger = logging.getLogger("learnbygenie.notes.validation.judge")
 
 
 class SemanticJudge:
     """Evaluates semantic claims and pedagogical quality under strict prompt injection defense."""
 
-    SYSTEM_INSTRUCTIONS = """You are TeachGenie's Senior Educational Quality and Fact-Checking Auditor.
+    SYSTEM_INSTRUCTIONS = """You are LearnByGenie's Senior Educational Quality and Fact-Checking Auditor.
 Your job is to objectively evaluate a generated educational notes document against a trusted pedagogical plan.
 
 CRITICAL SECURITY RULES:

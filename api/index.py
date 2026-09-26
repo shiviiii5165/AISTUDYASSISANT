@@ -29,7 +29,7 @@ except Exception as e:
         logger.error("FATAL STARTUP ERROR: %s", startup_traceback)
     except Exception:
         import logging
-        logging.getLogger("teachgenie").error("FATAL STARTUP ERROR: %s", startup_traceback)
+        logging.getLogger("learnbygenie").error("FATAL STARTUP ERROR: %s", startup_traceback)
 
     @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     async def catch_all(path_name: str):

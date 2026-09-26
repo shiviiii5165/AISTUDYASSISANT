@@ -1,5 +1,5 @@
 """
-TeachGenie Artifact Certification — Raw LaTeX Scanner
+LearnByGenie Artifact Certification — Raw LaTeX Scanner
 =====================================================
 Audits final rendered text (from PDF text extraction and DOM content) to detect
 actual visible source markup leakage. Categorizes defects:

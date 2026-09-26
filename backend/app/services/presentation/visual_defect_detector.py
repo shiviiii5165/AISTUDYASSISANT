@@ -1,10 +1,10 @@
 """
-TeachGenie PPT vNext — Phase 3.5 Visual Defect Detector
+LearnByGenie PPT vNext — Phase 3.5 Visual Defect Detector
 =========================================================
 Inspects actual rendered PowerPoint slide images and associated structural PPTX
 elements to detect visible defects according to the 27-code taxonomy.
 
-Governed by TeachGenie PPT vNext Phase 3.5 specifications:
+Governed by LearnByGenie PPT vNext Phase 3.5 specifications:
   - Genuine pixel inspection combined with PPTX structural mapping
   - Authoritative shape-to-region identity mapping via TG:S:R:{role}
   - WCAG-compliant relative luminance contrast measurement

@@ -18,7 +18,7 @@ import urllib.parse
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger("teachgenie.source_reading.canary")
+logger = logging.getLogger("learnbygenie.source_reading.canary")
 
 
 class CanaryTelemetryEvent(BaseModel):

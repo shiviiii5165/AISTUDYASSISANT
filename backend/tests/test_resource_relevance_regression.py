@@ -928,8 +928,8 @@ async def test_dynamic_programming_stage_aware_coding_regression():
     s2_diags = [it for it in s2_items if it.type == "diagnostic_micro_problem"]
     assert len(s2_diags) == 1, f"Stage 2 must contain exactly 1 diagnostic check: {[it.title for it in s2_items]}"
     assert s2_diags[0].source_provenance == "INTERNAL_GENERATED", f"Stage 2 diagnostic must have INTERNAL_GENERATED provenance: {s2_diags[0].source_provenance}"
-    assert s2_diags[0].source == "TeachGenie Diagnostic Engine"
-    assert "TeachGenie Diagnostic" in s2_diags[0].title
+    assert s2_diags[0].source == "LearnByGenie Diagnostic Engine"
+    assert "LearnByGenie Diagnostic" in s2_diags[0].title
     assert not s2_diags[0].title.startswith("LeetCode"), f"Diagnostic must not be represented as LeetCode problem: {s2_diags[0].title}"
     assert s2_diags[0].url is None, f"INTERNAL_GENERATED diagnostic must not use external search page as primary url: {s2_diags[0].url}"
     assert s2_diags[0].related_practice_url and "leetcode.com" in s2_diags[0].related_practice_url
@@ -939,8 +939,8 @@ async def test_dynamic_programming_stage_aware_coding_regression():
     s5_diags = [it for it in s5_items if it.type == "diagnostic_micro_problem"]
     assert len(s5_diags) == 1, f"Stage 5 must contain exactly 1 diagnostic exercise: {[it.title for it in s5_items]}"
     assert s5_diags[0].source_provenance == "INTERNAL_GENERATED", f"Stage 5 diagnostic must have INTERNAL_GENERATED provenance: {s5_diags[0].source_provenance}"
-    assert s5_diags[0].source == "TeachGenie Diagnostic Engine"
-    assert "TeachGenie Diagnostic" in s5_diags[0].title
+    assert s5_diags[0].source == "LearnByGenie Diagnostic Engine"
+    assert "LearnByGenie Diagnostic" in s5_diags[0].title
     assert not s5_diags[0].title.startswith("LeetCode"), f"Diagnostic must not be represented as LeetCode problem: {s5_diags[0].title}"
     assert s5_diags[0].url is None, f"INTERNAL_GENERATED diagnostic must not use external search page as primary url: {s5_diags[0].url}"
     assert s5_diags[0].related_practice_url and "leetcode.com" in s5_diags[0].related_practice_url

@@ -248,7 +248,7 @@ const QuizPage: React.FC = () => {
   if (quiz.status === 'draft') {
     return (
       <AppLayout title="Edit Quiz">
-        <SEO title="Edit Quiz | TeachGenie" description="Review and edit your generated quiz." />
+        <SEO title="Edit Quiz | LearnByGenie" description="Review and edit your generated quiz." />
         <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
@@ -391,7 +391,7 @@ const QuizPage: React.FC = () => {
   if (quiz.status === 'published' && !attempt && !results) {
     return (
       <AppLayout title="Quiz">
-        <SEO title="Take Quiz | TeachGenie" description="Test your knowledge." />
+        <SEO title="Take Quiz | LearnByGenie" description="Test your knowledge." />
         <div className="mx-auto mt-12 max-w-lg text-center">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--accent-green-light)]">
             <HelpCircle className="h-10 w-10 text-[var(--accent-green-text)]" />
@@ -510,7 +510,7 @@ const QuizPage: React.FC = () => {
     
     return (
       <AppLayout title="Quiz Results">
-        <SEO title="Quiz Results | TeachGenie" description="Review your quiz performance." />
+        <SEO title="Quiz Results | LearnByGenie" description="Review your quiz performance." />
         <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
           
           <div className="mb-10 flex flex-col items-center rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-8 text-center shadow-sm">

@@ -33,7 +33,7 @@ const SupportPage: React.FC = () => {
     <>
       <SEO
         title="Support & Help Center"
-        description="Get help with TeachGenie, report issues, and find answers to common questions."
+        description="Get help with LearnByGenie, report issues, and find answers to common questions."
       />
       <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-16">
         {/* Header */}

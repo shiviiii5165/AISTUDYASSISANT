@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2B Typography, Spacing & Text-Fitting Test Suite
+LearnByGenie PPT vNext — Phase 3.2B Typography, Spacing & Text-Fitting Test Suite
 =================================================================================
 Validates Phase 3.2B contracts:
   1. Authoritative DesignDNA typography consumption and density adaptation

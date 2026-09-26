@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNEXT — Cross-Domain Deck Regression Suite
+LearnByGenie PPT vNEXT — Cross-Domain Deck Regression Suite
 =========================================================
 Tests representative 10-slide decks across 4 distinct domains:
 1. Cell Division (Biology)

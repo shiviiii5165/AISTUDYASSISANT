@@ -1,5 +1,5 @@
 """
-TeachGenie Document Renderer — HTML Print Builder
+LearnByGenie Document Renderer — HTML Print Builder
 =================================================
 Builds a complete, print-optimized, student-friendly HTML document from a NotesDocument.
 Enforces explicit modular wrappers to prevent orphaned headings, split formulas,

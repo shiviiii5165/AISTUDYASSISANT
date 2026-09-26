@@ -1,5 +1,5 @@
 """
-TeachGenie — Text Fitter
+LearnByGenie — Text Fitter
 =========================
 Calculates text measurements to prevent overflow, clipping, and collisions.
 Since python-pptx doesn't have a layout engine, we estimate it here.

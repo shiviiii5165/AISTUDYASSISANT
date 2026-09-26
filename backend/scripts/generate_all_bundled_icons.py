@@ -1,5 +1,5 @@
 """
-Master Bundled Icon Generator for TeachGenie
+Master Bundled Icon Generator for LearnByGenie
 ============================================
 Generates and normalizes all 10 pedagogical bundled icon assets:
 1. plate-stack.png       (Stack / LIFO)

@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Generation Engine — Structured Response Parser
+LearnByGenie Notes Generation Engine — Structured Response Parser
 ===============================================================
 Parses raw LLM JSON responses into strongly typed NotesDocument instances,
 extracting sections, visual specifications, practice items, and metadata.
@@ -20,7 +20,7 @@ from app.services.notes.context.schemas import CanonicalNotesContext
 from app.services.notes.decision.schemas import NotesGenerationPlan
 from .schemas import GroundedSources, GenerationMode
 
-logger = logging.getLogger("teachgenie.notes.generation.parser")
+logger = logging.getLogger("learnbygenie.notes.generation.parser")
 
 
 class OutputParser:

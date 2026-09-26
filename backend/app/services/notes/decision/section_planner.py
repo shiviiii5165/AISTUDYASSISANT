@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Deterministic Section Planner
+LearnByGenie Notes Decision Engine — Deterministic Section Planner
 ================================================================
 Constructs an ordered section blueprint (SectionPlanItem) specifying
 required sections and their specific pedagogical targets.

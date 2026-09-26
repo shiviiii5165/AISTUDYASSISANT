@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2E Composition Renderer Test Suite
+LearnByGenie PPT vNext — Phase 3.2E Composition Renderer Test Suite
 ================================================================
 Comprehensive verification of the native editable PowerPoint composition renderer:
   1. Native text and shape editability (no slide rasterization)

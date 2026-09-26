@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT — Story Grammar System
+LearnByGenie vNEXT — Story Grammar System
 =========================================
 9 story grammars with priority-ordered narrative beats:
   CONCEPT_TEACHING, TECHNICAL_SYSTEM, PROCESS, COMPARISON,

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2F End-to-End Composition Validation & Phase 3.2 Final Freeze
+LearnByGenie PPT vNext — Phase 3.2F End-to-End Composition Validation & Phase 3.2 Final Freeze
 =============================================================================================
 Evidence Generator:
   1. Full-deck generation across 20 held-out academic topics (200 slides total)
@@ -74,7 +74,7 @@ ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
 def run_phase3_2f_validation():
     print("=" * 80)
-    print("TEACHGENIE PPT VNEXT — PHASE 3.2F END-TO-END COMPOSITION VALIDATION")
+    print("LEARNBYGENIE PPT VNEXT — PHASE 3.2F END-TO-END COMPOSITION VALIDATION")
     print("=" * 80)
     print()
 

@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Version-Freeze Isolation Tests
+LearnByGenie — Live Quiz Engine: Version-Freeze Isolation Tests
 ============================================================
 Verifies that:
 1. Live session stores an immutable questions_snapshot at initialization.

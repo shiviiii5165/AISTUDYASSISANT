@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Centralized Hard Canary Release Gates
+LearnByGenie Canary Infrastructure — Centralized Hard Canary Release Gates
 ========================================================================
 Phase 3: Centralized release-gate evaluator (CanaryReleaseGate).
 Evaluates 13 release dimensions and assigns structured statuses:
@@ -29,7 +29,7 @@ from app.services.lesson_planner.vnext.resources.outcome_engine import (
     ResourceOutcomeEngine
 )
 
-logger = logging.getLogger("teachgenie.canary.gates")
+logger = logging.getLogger("learnbygenie.canary.gates")
 
 
 class GateDecision(str, Enum):
@@ -58,7 +58,7 @@ class CanaryReleaseGateReport(BaseModel):
 
 class CanaryReleaseGate:
     """
-    Centralized release gate evaluator for TeachGenie Lesson Planner VNext.
+    Centralized release gate evaluator for LearnByGenie Lesson Planner VNext.
     Guarantees that no real teachers can be enrolled if any blocking condition exists.
     """
 

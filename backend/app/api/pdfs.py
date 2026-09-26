@@ -22,7 +22,7 @@ async def upload_pdf(
     
     try:
         # Save file temporarily in the OS temp directory (works on Vercel)
-        temp_dir = os.path.join(tempfile.gettempdir(), "teachgenie_temp")
+        temp_dir = os.path.join(tempfile.gettempdir(), "learnbygenie_temp")
         os.makedirs(temp_dir, exist_ok=True)
         temp_path = os.path.join(temp_dir, f"{pdf_id}.pdf")
         file_bytes = await file.read()

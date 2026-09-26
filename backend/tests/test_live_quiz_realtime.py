@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz Engine: Realtime Broadcast Payload Zero-Leakage Tests
+LearnByGenie — Live Quiz Engine: Realtime Broadcast Payload Zero-Leakage Tests
 =============================================================================
 Verifies that:
 1. question:started broadcast payloads strictly omit correct_answer & explanation.

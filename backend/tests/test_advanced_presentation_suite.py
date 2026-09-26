@@ -1,5 +1,5 @@
 """
-TeachGenie Advanced Presentation Engine — Comprehensive Test Suite
+LearnByGenie Advanced Presentation Engine — Comprehensive Test Suite
 ===================================================================
 Tests:
 1. Exact slide counts (10, 11, 12, 13, 14, 15)

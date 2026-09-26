@@ -23,7 +23,7 @@ Traditional coaching and textbooks often leave students with unresolved doubts. 
 
 ## How an AI Study Assistant Helps
 
-An AI study assistant like TeachGenie acts as your personal 24/7 tutor. Here is why it is becoming essential:
+An AI study assistant like LearnByGenie acts as your personal 24/7 tutor. Here is why it is becoming essential:
 
 ### 1. Learning in Your Native Language
 Sometimes, a concept makes perfect sense when explained in Hindi or a mix of English and Hindi (Hinglish). The best AI tools understand this context and can explain "Newton's laws" just as easily as "Newton ke niyam".
@@ -34,9 +34,9 @@ Unlike generic search engines that give you random articles, a specialized AI st
 ### 3. Instant Doubt Resolution
 No more waiting for the next day's class to ask a question. Simply type your doubt into the chat, and the AI breaks it down into simple, easy-to-understand steps.
 
-## Why TeachGenie is the Top Choice
+## Why LearnByGenie is the Top Choice
 
-TeachGenie is specifically designed for the needs of Indian students. It focuses on accuracy by citing the exact page number from your uploaded PDF where the answer was found, eliminating the risk of AI "hallucinations" or wrong information.
+LearnByGenie is specifically designed for the needs of Indian students. It focuses on accuracy by citing the exact page number from your uploaded PDF where the answer was found, eliminating the risk of AI "hallucinations" or wrong information.
 
 Embrace the future of education and make studying smarter, not harder, with your own AI tutor.
     `
@@ -53,7 +53,7 @@ Reading a 100-page PDF textbook chapter can be exhausting. What if you could sim
 
 ## The Magic of PDF Chat AI
 
-When you upload a document to a tool like TeachGenie, the AI processes the text and understands the context. It essentially "reads" the book for you. From that point on, you can treat the PDF like an expert teacher who knows the material inside out.
+When you upload a document to a tool like LearnByGenie, the AI processes the text and understands the context. It essentially "reads" the book for you. From that point on, you can treat the PDF like an expert teacher who knows the material inside out.
 
 ## Steps to Chat With Your Notes
 
@@ -96,7 +96,7 @@ By interacting with an AI tutor, you can quickly find out which concepts you are
 
 While AI won't write the exam for you, it can help structure your study plan. By breaking down a large syllabus into manageable daily tasks, AI tools ensure you cover all necessary topics before exam day.
 
-Using an AI exam preparation tool like TeachGenie is like having a personal coach who knows exactly what you need to study and how to explain it best.
+Using an AI exam preparation tool like LearnByGenie is like having a personal coach who knows exactly what you need to study and how to explain it best.
     `
   },
   {
@@ -121,7 +121,7 @@ When preparing for competitive exams like NEET, JEE, or even school boards, you 
 
 ## What Makes a Great MCQ Tool?
 
-The best tools don't just generate random questions. They ensure the questions are directly relevant to your uploaded material. TeachGenie, for instance, allows you to upload your specific coaching notes and generates questions strictly based on that content, ensuring you aren't tested on out-of-syllabus topics.
+The best tools don't just generate random questions. They ensure the questions are directly relevant to your uploaded material. LearnByGenie, for instance, allows you to upload your specific coaching notes and generates questions strictly based on that content, ensuring you aren't tested on out-of-syllabus topics.
 
 Start generating your own practice tests today and walk into your exam room with confidence!
     `
@@ -142,7 +142,7 @@ Reading a textbook and highlighting important sentences feels productive, but st
 
 ## The "Smart" AI Study Framework
 
-Here is a step-by-step framework to use an AI tutor like TeachGenie for maximum results:
+Here is a step-by-step framework to use an AI tutor like LearnByGenie for maximum results:
 
 ### Step 1: Upload and Summarize
 Before diving deep into a new chapter, upload it to your AI assistant and ask for a high-level summary. Understanding the "big picture" first makes it easier for your brain to organize the details later.
@@ -176,7 +176,7 @@ An AI tutor for students adapts to your speed. If you need a concept explained f
 Late-night study sessions are common before exams. When your teachers are asleep, an [AI study assistant](/ai-tutor-for-students) is wide awake, ready to solve your doubts instantly.
 
 ## Learning from YOUR Syllabus
-The biggest advantage of platforms like TeachGenie is that you can [upload your PDF notes](/pdf-chat-ai). The AI doesn't just teach you general concepts; it teaches you *your* specific syllabus, ensuring you stay completely focused on your exams.
+The biggest advantage of platforms like LearnByGenie is that you can [upload your PDF notes](/pdf-chat-ai). The AI doesn't just teach you general concepts; it teaches you *your* specific syllabus, ensuring you stay completely focused on your exams.
     `
   },
   {
@@ -233,7 +233,7 @@ ChatGPT is a powerful tool, but when it comes to studying for a specific exam, i
 If you ask a general AI a specific question about your syllabus, it might give you an answer suited for a college level when you are in high school, confusing you further.
 
 ## The Solution: PDF-Grounded AI
-This is why TeachGenie is considered the [best ChatGPT alternative for students](/chatgpt-alternative-for-students). By requiring you to upload your notes first, it forces the AI to only extract answers from *that specific document*.
+This is why LearnByGenie is considered the [best ChatGPT alternative for students](/chatgpt-alternative-for-students). By requiring you to upload your notes first, it forces the AI to only extract answers from *that specific document*.
 
 This ensures 100% accuracy, strict adherence to your syllabus, and page citations so you can verify the information yourself. Always [chat with your PDF notes](/pdf-chat-ai) rather than searching the open web when studying for crucial exams.
     `

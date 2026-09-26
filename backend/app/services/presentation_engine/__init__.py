@@ -1,5 +1,5 @@
 """
-TeachGenie Presentation Design Engine — Pydantic Schemas
+LearnByGenie Presentation Design Engine — Pydantic Schemas
 =========================================================
 Strict type contracts between LLM output and the rendering engine.
 The LLM determines SEMANTICS. The design system determines VISUALS.

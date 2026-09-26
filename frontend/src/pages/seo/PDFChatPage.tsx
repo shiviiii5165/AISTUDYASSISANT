@@ -14,7 +14,7 @@ const PDFChatPage: React.FC = () => {
       "name": "Can AI explain PDF notes?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes, TeachGenie's AI can analyze your PDF notes and explain complex concepts from them in simple language."
+        "text": "Yes, LearnByGenie's AI can analyze your PDF notes and explain complex concepts from them in simple language."
       }
     }]
   };
@@ -23,15 +23,15 @@ const PDFChatPage: React.FC = () => {
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
         title="Chat With Your PDF Notes Using AI"
-        description="Upload your PDF notes and textbooks to TeachGenie and chat with them using AI. Ask questions, get summaries, and study smarter."
+        description="Upload your PDF notes and textbooks to LearnByGenie and chat with them using AI. Ask questions, get summaries, and study smarter."
         canonical="/pdf-chat-ai"
         schema={faqSchema}
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -43,7 +43,7 @@ const PDFChatPage: React.FC = () => {
           Chat With PDF Notes Using AI
         </h1>
         <p className="text-lg text-[var(--text-secondary)] mb-12 text-center max-w-2xl mx-auto">
-          Don't just read your PDFs. Interact with them. TeachGenie allows you to chat directly with your notes, textbooks, and study materials.
+          Don't just read your PDFs. Interact with them. LearnByGenie allows you to chat directly with your notes, textbooks, and study materials.
         </p>
 
         <div className="bg-[var(--bg-secondary)] p-8 rounded-3xl border border-[var(--border)] mb-16 text-center">
@@ -63,7 +63,7 @@ const PDFChatPage: React.FC = () => {
           <h2 className="text-2xl font-bold mb-6">FAQ</h2>
           <div>
             <h3 className="font-bold text-lg mb-2">Can AI explain PDF notes?</h3>
-            <p className="text-[var(--text-secondary)]">Yes, TeachGenie's AI can analyze your PDF notes and explain complex concepts from them in simple language.</p>
+            <p className="text-[var(--text-secondary)]">Yes, LearnByGenie's AI can analyze your PDF notes and explain complex concepts from them in simple language.</p>
           </div>
         </div>
         

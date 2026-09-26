@@ -1,5 +1,5 @@
 """
-TeachGenie Teach Me Engine — Comprehensive Automated Test Suite
+LearnByGenie Teach Me Engine — Comprehensive Automated Test Suite
 ================================================================
 Tests:
 1. Topic-only lesson planning and initial concept setup

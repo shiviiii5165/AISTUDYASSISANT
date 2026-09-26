@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2D Layout Quality Auditor & Targeted Repair Suite
+LearnByGenie PPT vNext — Phase 3.2D Layout Quality Auditor & Targeted Repair Suite
 ================================================================================
 Comprehensive verification suite for Phase 3.2D:
   1. Complete Defect Taxonomy coverage (31+ DefectCodes, severities, repairability)

@@ -1,5 +1,5 @@
 """
-TeachGenie Presentation Design Engine — Presets
+LearnByGenie Presentation Design Engine — Presets
 ================================================
 Presentation personality presets that control prompt engineering,
 section templates, slide purpose allocation, and visual strategy.

@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Completeness Evaluator
+LearnByGenie Notes Context Engine — Completeness Evaluator
 ========================================================
 Calculates deterministic, rule-based completeness scores, lists missing fields,
 and emits actionable diagnostic warnings. Never invokes LLMs.

@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Contrast Pair Component
+LearnByGenie Renderer — Contrast Pair Component
 =============================================
 Renders two side-by-side contrasting cards:
 - Left card: "The Trap" / "Common Misconception" (coral/red border, warning icon)

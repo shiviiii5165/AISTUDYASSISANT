@@ -3,7 +3,7 @@ AI Notes Generation Engine — Context Analyzer & Normalization Layer
 ====================================================================
 Normalizes disparate educational sources (Roadmaps, Stages, TeachMe Sessions,
 Quizzes, PPT Decks, and Hybrid Vector Search Evidence) into a canonical internal
-NotesContext following the strict TeachGenie Input Priority:
+NotesContext following the strict LearnByGenie Input Priority:
 
 1. Explicit user instruction
 2. Current lesson/stage context
@@ -25,7 +25,7 @@ from .schemas import (
     NoteDepth, NoteFormat
 )
 
-logger = logging.getLogger("teachgenie.notes.context_extractor")
+logger = logging.getLogger("learnbygenie.notes.context_extractor")
 
 
 class NotesContextExtractor:

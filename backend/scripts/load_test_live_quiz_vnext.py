@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz VNEXT Synthetic Load Test Harness (§19)
+LearnByGenie — Live Quiz VNEXT Synthetic Load Test Harness (§19)
 ==============================================================
 Simulates 100, 500, 1000, 2500, 5000, and 10000 concurrent participants
 submitting answers under bounded micro-batching, realtime aggregation,
@@ -198,7 +198,7 @@ async def run_tier_load_test(
 async def main():
     tiers = [100, 500, 1000, 2500, 5000, 10000]
     print("=" * 80)
-    print("TEACHGENIE LIVE QUIZ VNEXT — SYNTHETIC LOAD BENCHMARK (100 -> 10,000)")
+    print("LEARNBYGENIE LIVE QUIZ VNEXT — SYNTHETIC LOAD BENCHMARK (100 -> 10,000)")
     print("=" * 80)
 
     results = []

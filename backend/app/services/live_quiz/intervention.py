@@ -2,7 +2,7 @@
 Live Quiz Engine — AI Learning Intelligence & Remedial Interventions
 =====================================================================
 Triggered ONLY on explicit teacher action when concept accuracy drops.
-Visual intervention utilizes TeachGenie's deterministic SVG comparison cards first
+Visual intervention utilizes LearnByGenie's deterministic SVG comparison cards first
 (0 token cost); explanatory paths make one scoped LLM call.
 """
 from __future__ import annotations

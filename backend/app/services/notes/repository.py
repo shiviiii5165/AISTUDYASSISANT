@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from app.db.supabase_client import supabase
 from .schemas import NotesDocument
 
-logger = logging.getLogger("teachgenie.notes.repository")
+logger = logging.getLogger("learnbygenie.notes.repository")
 
 # Thread-safe in-memory cache for test suites and offline environments
 _MEMORY_NOTES: Dict[str, NotesDocument] = {}

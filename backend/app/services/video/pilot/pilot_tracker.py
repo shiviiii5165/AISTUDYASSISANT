@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.2 — Real Learner Pilot Tracker & Transfer Question Engine
+LearnByGenie AI Video Teacher V2.2 — Real Learner Pilot Tracker & Transfer Question Engine
 =======================================================================================
 Implements:
 1. Normalized Gain Edge Cases (Decision #5):

@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Complete Data Lifecycle Engine
+LearnByGenie Canary Infrastructure — Complete Data Lifecycle Engine
 ==================================================================
 Implements:
 1. Data Minimization:
@@ -38,7 +38,7 @@ from app.services.lesson_planner.vnext.canary.retention_scheduler import (
     IdempotentRetentionScheduler
 )
 
-logger = logging.getLogger("teachgenie.canary.lifecycle")
+logger = logging.getLogger("learnbygenie.canary.lifecycle")
 
 
 class AuthorizationRevokedError(Exception):
@@ -132,7 +132,7 @@ BACKUP_SNAPSHOT_TTL_DAYS = 30
 
 class DataRetentionPolicy(BaseModel):
     """
-    Formal specification of TeachGenie Canary Data Retention Lifecycle.
+    Formal specification of LearnByGenie Canary Data Retention Lifecycle.
     """
     active_session_telemetry_ttl_days: int = ACTIVE_SESSION_TTL_DAYS
     aggregated_metrics_ttl_days: int = AGGREGATED_METRICS_TTL_DAYS

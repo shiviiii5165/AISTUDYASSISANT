@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.4 Image Intelligence Engine
+LearnByGenie PPT vNext — Phase 3.4 Image Intelligence Engine
 ===========================================================
 Implements typed image-need assessment, semantic query construction,
 candidate relevance ranking, asset decision routing, and fallback orchestration.

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.3 Editable Diagram Intelligence
+LearnByGenie PPT vNext — Phase 3.3 Editable Diagram Intelligence
 =============================================================
 Implements native, editable PowerPoint diagram construction using shared primitives:
   - 22 semantic diagram archetypes covering processes, architectures, hierarchies, cycles,

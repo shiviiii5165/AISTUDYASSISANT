@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNEXT — Content Delivery Regression Tests
+LearnByGenie PPT vNEXT — Content Delivery Regression Tests
 ======================================================
 Tests:
 1. Empty comparison table rejection

@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.2 — Server-Side Doubt Session Memory & Referential Anchors
+LearnByGenie AI Video Teacher V2.2 — Server-Side Doubt Session Memory & Referential Anchors
 ========================================================================================
 Implements:
 1. Bounded server-side conversation state (Decision #1 & #8)

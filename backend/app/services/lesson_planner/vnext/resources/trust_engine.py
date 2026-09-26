@@ -29,7 +29,7 @@ from .contracts import (
     ResourceProvenance, ResourceQualityScore, ResourceSegment
 )
 
-logger = logging.getLogger("teachgenie.lesson_planner.trust_engine")
+logger = logging.getLogger("learnbygenie.lesson_planner.trust_engine")
 
 
 class ResourceTrustEngine:

@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Context Snapshot Manager
+LearnByGenie Notes Context Engine — Context Snapshot Manager
 ==========================================================
 Creates, persists, and retrieves immutable snapshots of CanonicalNotesContext.
 Guarantees historical explainability and reproducibility: subsequent changes
@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import Dict, Optional, Any
 from .schemas import CanonicalNotesContext, ContextSnapshot
 
-logger = logging.getLogger("teachgenie.notes.context_snapshot")
+logger = logging.getLogger("learnbygenie.notes.context_snapshot")
 
 
 class ContextSnapshotManager:

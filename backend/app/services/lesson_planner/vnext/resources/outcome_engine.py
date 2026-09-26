@@ -19,7 +19,7 @@ from ...schemas import UniversalResourceCard
 
 from app.core.config import settings
 
-logger = logging.getLogger("teachgenie.lesson_planner.outcome_engine")
+logger = logging.getLogger("learnbygenie.lesson_planner.outcome_engine")
 
 
 class ResourceOutcomeEngine:

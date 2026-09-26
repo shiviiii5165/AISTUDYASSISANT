@@ -307,7 +307,7 @@ const TopicDeckPage: React.FC = () => {
   return (
     <AppLayout title="PPT Generator">
       <SEO 
-        title="AI PowerPoint Generator | TeachGenie"
+        title="AI PowerPoint Generator | LearnByGenie"
         description="Convert syllabus topics and notes into fully styled PowerPoint presentations."
       />
       <div className="flex h-full w-full">

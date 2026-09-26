@@ -788,7 +788,7 @@ const TeachMePage: React.FC = () => {
   return (
     <AppLayout title="Teach Me">
       <SEO
-        title="Teach Me, Interactive Adaptive AI Teacher | TeachGenie"
+        title="Teach Me, Interactive Adaptive AI Teacher | LearnByGenie"
         description="Experience an interactive university tutor that explains concepts, asks checkpoint questions, diagnoses misconceptions, adapts strategies, and tracks mastery."
       />
 

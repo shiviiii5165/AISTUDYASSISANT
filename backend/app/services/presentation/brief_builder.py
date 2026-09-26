@@ -1,5 +1,5 @@
 """
-TeachGenie vNEXT — PresentationBrief Builder
+LearnByGenie vNEXT — PresentationBrief Builder
 ==============================================
 Transforms PresentationConfig (frontend API contract) into PresentationBrief
 (internal intelligence representation) without requiring any frontend changes.

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.5 Rendered Visual Quality Audit & Evidence Generator
+LearnByGenie PPT vNext — Phase 3.5 Rendered Visual Quality Audit & Evidence Generator
 =====================================================================================
 Generates authoritative benchmark evidence across 6 academic disciplines:
   1. Computer Science: Asynchronous Consensus & Fault-Tolerant Distributed Architectures
@@ -190,7 +190,7 @@ def create_discipline_deck(topic: Dict[str, Any], output_path: Path) -> Tuple[Pr
         # Slide Content
         s_title = f"{topic['title']} — Part {s_idx}"
         s_body = f"Key theoretical framework and empirical observations for lecture unit {s_idx}."
-        s_cite = f"TeachGenie Academic Reference Library (2026), Vol. {s_idx}, pp. 100-115."
+        s_cite = f"LearnByGenie Academic Reference Library (2026), Vol. {s_idx}, pp. 100-115."
         content = SlideContent(
             title=s_title,
             primary_takeaway=s_body,
@@ -461,7 +461,7 @@ def generate_seeded_defect_slide(defect_idx: int, output_pptx: Path) -> Tuple[Sl
 
 def run_phase_3_5_evidence_generation() -> Dict[str, Any]:
     print("=" * 70)
-    print("TEACHGENIE PPT VNEXT — PHASE 3.5 VISUAL QA EVIDENCE GENERATOR")
+    print("LEARNBYGENIE PPT VNEXT — PHASE 3.5 VISUAL QA EVIDENCE GENERATOR")
     print("=" * 70)
 
     t_global_start = time.perf_counter()

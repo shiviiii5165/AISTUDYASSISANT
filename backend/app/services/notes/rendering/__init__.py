@@ -1,5 +1,5 @@
 """
-TeachGenie Document Rendering Engine
+LearnByGenie Document Rendering Engine
 ====================================
 Transforms structured NotesDocument models into print-accurate,
 student-ready HTML and PDF artifacts with semantic mathematical and chemical typesetting.

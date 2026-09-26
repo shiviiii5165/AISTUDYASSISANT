@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.1 — Claim-Aware Source Grounding QA
+LearnByGenie AI Video Teacher V2.1 — Claim-Aware Source Grounding QA
 ==================================================================
 Enforces Decision #7 (Source Grounding Must Be Claim-Aware):
 - Tracks factual claims per scene for lessons grounded in uploaded PDFs, PPTs, or notes.

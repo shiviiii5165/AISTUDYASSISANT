@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Mastery Policy Engine
+LearnByGenie Notes Decision Engine — Mastery Policy Engine
 ========================================================
 Translates student mastery scores into deterministic difficulty,
 scaffolding, practice, and remediation requirements.

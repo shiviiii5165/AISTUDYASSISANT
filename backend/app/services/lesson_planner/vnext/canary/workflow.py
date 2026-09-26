@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Real Teacher Canary Workflow & Production Observability
+LearnByGenie Canary Infrastructure — Real Teacher Canary Workflow & Production Observability
 ========================================================================================
 Implements:
 1. Teacher Canary Workflow (5-10 Teachers Max):
@@ -49,7 +49,7 @@ from app.services.lesson_planner.vnext.canary.gates import (
     CanaryReleaseGate, GateDecision
 )
 
-logger = logging.getLogger("teachgenie.canary.workflow")
+logger = logging.getLogger("learnbygenie.canary.workflow")
 
 MAX_TEACHER_COHORT_SIZE = 10
 

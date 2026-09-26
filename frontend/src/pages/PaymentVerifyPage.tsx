@@ -44,7 +44,7 @@ const PaymentVerifyPage: React.FC = () => {
 
   return (
     <AppLayout title="Verifying Payment">
-      <SEO title="Verifying Payment" description="Verifying your payment for TeachGenie Pro." />
+      <SEO title="Verifying Payment" description="Verifying your payment for LearnByGenie Pro." />
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <div className="bg-white p-8 md:p-12 rounded-2xl shadow-xl max-w-md w-full text-center border border-[var(--border)]">
           {status === 'verifying' && (

@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Lesson Resources Package
+LearnByGenie Lesson Planner — Lesson Resources Package
 ====================================================
 """
 

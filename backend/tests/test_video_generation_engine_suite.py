@@ -1,5 +1,5 @@
 """
-TeachGenie — Video Generation Engine Automated Test Suite
+LearnByGenie — Video Generation Engine Automated Test Suite
 =========================================================
 Tests:
 1. Storyboard Planning & Exact Python Duration Math

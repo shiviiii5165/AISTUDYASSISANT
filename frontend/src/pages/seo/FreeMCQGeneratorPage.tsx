@@ -14,14 +14,14 @@ const FreeMCQGeneratorPage: React.FC = () => {
       "name": "Is there a free MCQ generator for students?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes, TeachGenie offers an AI-powered MCQ generator that extracts questions directly from your uploaded PDF notes to help you practice."
+        "text": "Yes, LearnByGenie offers an AI-powered MCQ generator that extracts questions directly from your uploaded PDF notes to help you practice."
       }
     }, {
       "@type": "Question",
       "name": "How does the AI MCQ generator work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Simply upload your chapter notes or textbook PDF. TeachGenie reads the document and automatically creates multiple-choice questions testing your knowledge on that specific material."
+        "text": "Simply upload your chapter notes or textbook PDF. LearnByGenie reads the document and automatically creates multiple-choice questions testing your knowledge on that specific material."
       }
     }]
   };
@@ -29,16 +29,16 @@ const FreeMCQGeneratorPage: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
-        title="Free MCQ Generator from PDF - TeachGenie"
-        description="Generate unlimited MCQs from your PDF notes automatically. TeachGenie's free AI MCQ generator helps you practice and prepare for exams faster."
+        title="Free MCQ Generator from PDF - LearnByGenie"
+        description="Generate unlimited MCQs from your PDF notes automatically. LearnByGenie's free AI MCQ generator helps you practice and prepare for exams faster."
         canonical="/free-mcq-generator"
         schema={faqSchema}
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
-          <img src="/assets/genie-default.png" alt="TeachGenie Logo" className="w-8 h-8 object-contain" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+          <img src="/assets/genie-default.png" alt="LearnByGenie Logo" className="w-8 h-8 object-contain" />
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -76,7 +76,7 @@ const FreeMCQGeneratorPage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h3 className="font-bold text-lg mb-2">Is there a free MCQ generator for students?</h3>
-              <p className="text-[var(--text-secondary)]">Yes, TeachGenie offers a powerful MCQ generator feature. Once you upload your notes, the AI acts as an exam setter to test your knowledge.</p>
+              <p className="text-[var(--text-secondary)]">Yes, LearnByGenie offers a powerful MCQ generator feature. Once you upload your notes, the AI acts as an exam setter to test your knowledge.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg mb-2">How does the AI MCQ generator work?</h3>

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2B Spacing Engine
+LearnByGenie PPT vNext — Phase 3.2B Spacing Engine
 ================================================
 Consumes frozen Phase 3.1 DesignDNA spacing tokens to resolve semantic spacing
 purposes (margins, card padding, paragraph gaps, title-to-content spacing).

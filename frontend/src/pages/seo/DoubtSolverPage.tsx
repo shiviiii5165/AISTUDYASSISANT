@@ -10,14 +10,14 @@ const DoubtSolverPage: React.FC = () => {
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
         title="AI Doubt Solver App - Clear Your Concepts Instantly"
-        description="Got a question? The TeachGenie AI doubt solver app provides instant, accurate answers and explanations based on your own study materials."
+        description="Got a question? The LearnByGenie AI doubt solver app provides instant, accurate answers and explanations based on your own study materials."
         canonical="/doubt-solver"
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
           <BookOpen className="w-6 h-6 text-[var(--accent-green)]" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -36,7 +36,7 @@ const DoubtSolverPage: React.FC = () => {
           <HelpCircle className="w-16 h-16 text-[var(--accent-green)] mx-auto mb-6" />
           <h2 className="text-2xl font-bold mb-4">Clear Doubts 24/7</h2>
           <p className="text-[var(--text-secondary)] mb-6 max-w-lg mx-auto">
-            Stuck late at night? TeachGenie is always awake. Ask questions in English or Hindi/Hinglish, and get easy-to-understand explanations with page citations from your PDFs.
+            Stuck late at night? LearnByGenie is always awake. Ask questions in English or Hindi/Hinglish, and get easy-to-understand explanations with page citations from your PDFs.
           </p>
           <button onClick={() => navigate('/auth')} className="bg-[var(--accent-green)] text-white px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2 hover:bg-[var(--accent-green-hover)] transition-colors">
             Ask a Doubt Now <ArrowRight className="w-5 h-5" />

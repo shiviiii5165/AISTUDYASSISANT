@@ -6,13 +6,15 @@
  * full mute toggling. Every sound has visual parity for silent mode.
  */
 
+import { getMigratedStorageItem, setMigratedStorageItem } from './storageMigration';
+
 class SoundEffectsManager {
   private ctx: AudioContext | null = null;
   private muted: boolean = false;
 
   constructor() {
     // Check localStorage preference
-    const saved = localStorage.getItem('teachgenie_sound_muted');
+    const saved = getMigratedStorageItem('learnbygenie_sound_muted', 'teachgenie_sound_muted');
     if (saved !== null) {
       this.muted = saved === 'true';
     }
@@ -36,13 +38,13 @@ class SoundEffectsManager {
 
   public toggleMute(): boolean {
     this.muted = !this.muted;
-    localStorage.setItem('teachgenie_sound_muted', String(this.muted));
+    setMigratedStorageItem('learnbygenie_sound_muted', 'teachgenie_sound_muted', String(this.muted));
     return this.muted;
   }
 
   public setMuted(muted: boolean) {
     this.muted = muted;
-    localStorage.setItem('teachgenie_sound_muted', String(muted));
+    setMigratedStorageItem('learnbygenie_sound_muted', 'teachgenie_sound_muted', String(muted));
   }
 
   /**
@@ -191,6 +193,14 @@ class SoundEffectsManager {
         osc.stop(now + idx * 0.08 + 0.6);
       });
     } catch {}
+  }
+
+  public playWrongSound() {
+    this.playIncorrectSound();
+  }
+
+  public playClick() {
+    this.playTimerTick();
   }
 }
 

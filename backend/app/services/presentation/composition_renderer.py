@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2E Editable PPTX Composition Renderer
+LearnByGenie PPT vNext — Phase 3.2E Editable PPTX Composition Renderer
 ===================================================================
 Translates audited Phase 3.2C/3.2D SlideCompositionPlan instances into native,
 fully editable PowerPoint (.pptx) objects.

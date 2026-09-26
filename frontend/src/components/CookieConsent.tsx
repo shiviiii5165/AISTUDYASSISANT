@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getMigratedStorageItem, setMigratedStorageItem } from '../lib/storageMigration';
 
 const CookieConsent: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -9,7 +10,7 @@ const CookieConsent: React.FC = () => {
   });
 
   useEffect(() => {
-    const consent = localStorage.getItem('teachgenie_cookie_consent');
+    const consent = getMigratedStorageItem('learnbygenie_cookie_consent', 'teachgenie_cookie_consent');
     if (!consent) {
       // Slight delay so it doesn't flash on load
       const timer = setTimeout(() => setIsVisible(true), 1000);
@@ -27,7 +28,7 @@ const CookieConsent: React.FC = () => {
 
   const saveConsent = (analyticsAllowed: boolean) => {
     const newPreferences = { essential: true, analytics: analyticsAllowed };
-    localStorage.setItem('teachgenie_cookie_consent', JSON.stringify(newPreferences));
+    setMigratedStorageItem('learnbygenie_cookie_consent', 'teachgenie_cookie_consent', JSON.stringify(newPreferences));
     setPreferences(newPreferences);
     setIsVisible(false);
     setShowPreferences(false);

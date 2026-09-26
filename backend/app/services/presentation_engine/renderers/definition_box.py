@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Definition Box Component
+LearnByGenie Renderer — Definition Box Component
 ==============================================
 Renders an academic definition box:
 - Colored header bar ("DEFINITION" or term) + clean definition body text.

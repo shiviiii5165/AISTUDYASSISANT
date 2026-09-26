@@ -1,3 +1,3 @@
 """
-TeachGenie AI Video Teacher V2.2 — Pilot Evaluation Subsystem
+LearnByGenie AI Video Teacher V2.2 — Pilot Evaluation Subsystem
 """

@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Worked Example Table Component
+LearnByGenie Renderer — Worked Example Table Component
 ====================================================
 Renders a compact 2-column table mapping computational steps / code lines
 to their mathematical interpretation, variable state, or pedagogical meaning.

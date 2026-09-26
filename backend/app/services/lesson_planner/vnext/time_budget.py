@@ -16,7 +16,7 @@ from ..schemas import (
 )
 from .pedagogy import StageTemplate
 
-logger = logging.getLogger("teachgenie.lesson_planner.time_budget")
+logger = logging.getLogger("learnbygenie.lesson_planner.time_budget")
 
 
 class DynamicTimeBudgetEngine:

@@ -1,5 +1,5 @@
 """
-Unit & Integration Tests for TeachGenie Notes Validation Engine (Step 4)
+Unit & Integration Tests for LearnByGenie Notes Validation Engine (Step 4)
 ========================================================================
 Covers all 30 required specifications, Golden Tests A-D, security defense,
 non-mutation invariants, bounded repair loops, and explicit status gating.

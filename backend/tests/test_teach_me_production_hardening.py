@@ -1,5 +1,5 @@
 """
-TeachGenie — Teach Me Production Hardening & Quality Evaluation Suite
+LearnByGenie — Teach Me Production Hardening & Quality Evaluation Suite
 ======================================================================
 Tests:
 1. Multi-Factor Mastery & Asymptotic Confidence Model (Bayesian-inspired)

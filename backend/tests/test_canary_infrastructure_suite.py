@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Comprehensive Safeguards Test Suite
+LearnByGenie Canary Infrastructure — Comprehensive Safeguards Test Suite
 ======================================================================
 Tests:
 1. Pseudonymous ID generation & isolated identity registry.

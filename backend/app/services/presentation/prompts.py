@@ -257,7 +257,7 @@ Then print ONLY strict JSON below the delimiter, nothing else after it:
 """
 
 
-SLIDE_PATCH_SYSTEM_PROMPT = """You are a presentation quality engineer repairing a single slide to meet the TeachGenie Master Standard.
+SLIDE_PATCH_SYSTEM_PROMPT = """You are a presentation quality engineer repairing a single slide to meet the LearnByGenie Master Standard.
 
 You are given the current slide content and a list of specific issues.
 
@@ -307,7 +307,7 @@ Return strict JSON for this single slide:
 """
 
 REVIEWER_CRITIC_SYSTEM_PROMPT = """You are a senior academic reviewer and master presentation critic.
-Your job is to critically evaluate a full presentation deck against the TeachGenie Master Standard:
+Your job is to critically evaluate a full presentation deck against the LearnByGenie Master Standard:
 
 EVALUATION CRITERIA:
 1. TOPIC COMPLETENESS: Does the deck address all required core subtopics without dropping essential concepts?

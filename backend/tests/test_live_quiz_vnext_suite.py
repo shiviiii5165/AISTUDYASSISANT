@@ -1,5 +1,5 @@
 """
-TeachGenie — Live Quiz VNEXT Scale, Monitoring & Security Deterministic Test Suite (§20)
+LearnByGenie — Live Quiz VNEXT Scale, Monitoring & Security Deterministic Test Suite (§20)
 =======================================================================================
 Deterministic verification testing covering:
   1. Current-question-only delivery & progression tokens

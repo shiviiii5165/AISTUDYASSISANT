@@ -13,13 +13,13 @@ const TermsOfService: React.FC = () => {
 
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            Welcome to TeachGenie. By accessing or using our website and AI study assistant platform, you agree to be bound by these Terms of Service.
+            Welcome to LearnByGenie. By accessing or using our website and AI study assistant platform, you agree to be bound by these Terms of Service.
             If you disagree with any part of the terms, then you may not access the service.
           </p>
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">1. Description of Service</h2>
           <p>
-            TeachGenie provides an AI-powered study assistant for students. Our services include but are not limited to interacting with uploaded PDFs, generating MCQs, solving doubts, and providing study planning tools. 
+            LearnByGenie provides an AI-powered study assistant for students. Our services include but are not limited to interacting with uploaded PDFs, generating MCQs, solving doubts, and providing study planning tools. 
             The AI responses are generated based on the content you provide and general AI training data.
           </p>
 
@@ -43,9 +43,9 @@ const TermsOfService: React.FC = () => {
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">4. Limitation of Liability</h2>
           <p>
-            While TeachGenie strives for high accuracy, AI can occasionally produce incorrect or hallucinatory responses. 
-            TeachGenie is a supplemental study tool and should not be used as the absolute sole source of truth for critical exams or life decisions. 
-            In no event shall TeachGenie, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages.
+            While LearnByGenie strives for high accuracy, AI can occasionally produce incorrect or hallucinatory responses. 
+            LearnByGenie is a supplemental study tool and should not be used as the absolute sole source of truth for critical exams or life decisions. 
+            In no event shall LearnByGenie, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages.
           </p>
         </div>
       </div>

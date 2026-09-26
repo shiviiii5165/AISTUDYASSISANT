@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Anonymized Export & Privacy Verification Engine
+LearnByGenie Canary Infrastructure — Anonymized Export & Privacy Verification Engine
 ==================================================================================
 Safeguard #1 & Validation:
 - Exports canary telemetry and learner session evidence into anonymized CSV / JSON formats.
@@ -15,7 +15,7 @@ from typing import List, Dict, Any, Tuple, Optional
 from pathlib import Path
 from .pseudonyms import IsolatedIdentityRegistry, EMAIL_REGEX, PHONE_REGEX, IPV4_REGEX
 
-logger = logging.getLogger("teachgenie.canary.exports")
+logger = logging.getLogger("learnbygenie.canary.exports")
 
 
 class CanaryDatasetExporter:

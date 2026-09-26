@@ -1,5 +1,5 @@
 """
-TeachGenie Lesson Planner — Semantic Scholar Provider
+LearnByGenie Lesson Planner — Semantic Scholar Provider
 =====================================================
 Retrieves peer-reviewed scholarly papers and authoritative preprints
 using the Semantic Scholar Graph API. Includes global rate limiting,
@@ -95,7 +95,7 @@ class SemanticScholarProvider:
         api_key = cls.get_api_key()
         
         headers = {
-            "User-Agent": "TeachGenie-LessonPlanner/1.0 (contact@teachgenie.online)"
+            "User-Agent": "LearnByGenie-LessonPlanner/1.0 (contact@teachgenie.online)"
         }
         if api_key:
             headers["x-api-key"] = api_key

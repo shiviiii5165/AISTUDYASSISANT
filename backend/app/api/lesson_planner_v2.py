@@ -28,7 +28,7 @@ from app.services.lesson_planner.vnext.explainability import ExplainabilityEngin
 from app.services.lesson_planner.vnext.shared_context import LearningEvidenceService, LessonContextProvider
 from app.api.lesson_planner import _MEMORY_ROADMAPS, _MEMORY_ROADMAP_OWNERS, _save_roadmap, _get_roadmap
 
-logger = logging.getLogger("teachgenie.api.lesson_planner_v2")
+logger = logging.getLogger("learnbygenie.api.lesson_planner_v2")
 
 
 def check_vnext_enabled():

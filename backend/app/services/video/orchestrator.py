@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2 — Pipeline Orchestrator
+LearnByGenie AI Video Teacher V2 — Pipeline Orchestrator
 ======================================================
 Coordinates end-to-end execution across:
 1. Topic Intent & Domain Intelligence
@@ -62,7 +62,7 @@ async def generate_video_pipeline(
     project_id: Optional[str] = None,
 ) -> VideoProject:
     """
-    Public entrypoint for the TeachGenie AI Video Teacher compilation pipeline.
+    Public entrypoint for the LearnByGenie AI Video Teacher compilation pipeline.
     Ensures safe error recording and zero corrupt/silent failures (Decision #12).
     Critical failure marks status = FAILED; recoverable failure logs warning.
     """

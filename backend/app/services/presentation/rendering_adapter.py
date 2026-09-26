@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.5 Rendering Adapter
+LearnByGenie PPT vNext — Phase 3.5 Rendering Adapter
 ===================================================
 Provides robust multi-backend slide rendering from actual PowerPoint presentations:
   1. PowerPointCOMRenderer: Native Microsoft PowerPoint (v16.0+) COM automation on Windows.

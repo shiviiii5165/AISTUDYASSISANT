@@ -1,5 +1,5 @@
 /**
- * TeachGenie Asset Manifest
+ * LearnByGenie Asset Manifest
  * =========================
  * Single source of truth for all image/illustration paths.
  * All paths are relative to /public — served statically by Vite.
@@ -81,7 +81,7 @@ export const GENIE_PROMPTS: Record<keyof typeof GENIE, string> = {
 
 // ── Feature illustrations ───────────────────────────────────────────────────
 // Supporting illustrations for empty states, feature intros, and section art.
-// Style: flat illustration, consistent with TeachGenie palette, no photos.
+// Style: flat illustration, consistent with LearnByGenie palette, no photos.
 // All transparent PNGs unless noted.
 
 export const ILLUSTRATIONS = {

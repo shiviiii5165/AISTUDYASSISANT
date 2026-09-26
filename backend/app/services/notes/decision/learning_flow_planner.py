@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Adaptive Learning Flow Planner
+LearnByGenie Notes Decision Engine — Adaptive Learning Flow Planner
 ==================================================================
 Synthesizes the authoritative LearningFlowPlan for Step 2.
 Determines HOW this specific learner should learn this topic.

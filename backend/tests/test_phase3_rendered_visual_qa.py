@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.5 Rendered Visual QA Test Suite
+LearnByGenie PPT vNext — Phase 3.5 Rendered Visual QA Test Suite
 ===============================================================
 Comprehensive test suite covering:
   - Actual renderer integration (PowerPoint COM, PDFium, Mock)

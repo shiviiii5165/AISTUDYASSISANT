@@ -14,14 +14,14 @@ const AIToolsForStudentsPage: React.FC = () => {
       "name": "What are the best AI tools for students?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The best AI tools for students focus on learning efficiency. TeachGenie is a top choice as it combines an AI tutor, a PDF chat tool, and an MCQ generator into one platform."
+        "text": "The best AI tools for students focus on learning efficiency. LearnByGenie is a top choice as it combines an AI tutor, a PDF chat tool, and an MCQ generator into one platform."
       }
     }, {
       "@type": "Question",
       "name": "How do AI tools help students in India?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "AI tools like TeachGenie help Indian students by explaining complex CBSE, JEE, or NEET topics in simple language, testing them with mock MCQs, and acting as a 24/7 doubt solver."
+        "text": "AI tools like LearnByGenie help Indian students by explaining complex CBSE, JEE, or NEET topics in simple language, testing them with mock MCQs, and acting as a 24/7 doubt solver."
       }
     }]
   };
@@ -29,16 +29,16 @@ const AIToolsForStudentsPage: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <SEO 
-        title="Best AI Tools For Students | TeachGenie"
-        description="Discover why TeachGenie is among the top AI tools for students. Enhance your study sessions with our AI study assistant, PDF reader, and MCQ generator."
+        title="Best AI Tools For Students | LearnByGenie"
+        description="Discover why LearnByGenie is among the top AI tools for students. Enhance your study sessions with our AI study assistant, PDF reader, and MCQ generator."
         canonical="/ai-tools-for-students"
         schema={faqSchema}
       />
       
       <nav className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between border-b border-[var(--border)]">
-        <button type="button" aria-label="TeachGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
-          <img src="/assets/genie-default.png" alt="TeachGenie Logo" className="w-8 h-8 object-contain" />
-          <span className="text-xl font-bold text-[var(--text-primary)]">TeachGenie</span>
+        <button type="button" aria-label="LearnByGenie home" className="flex items-center gap-2" onClick={() => navigate('/')}>
+          <img src="/assets/genie-default.png" alt="LearnByGenie Logo" className="w-8 h-8 object-contain" />
+          <span className="text-xl font-bold text-[var(--text-primary)]">LearnByGenie</span>
         </button>
         <button onClick={() => navigate('/auth')} className="text-sm font-semibold bg-[var(--accent-green)] text-white px-5 py-2.5 rounded-xl hover:bg-[var(--accent-green-hover)] transition-colors">
           Get Started
@@ -50,7 +50,7 @@ const AIToolsForStudentsPage: React.FC = () => {
           Top AI Tools For Students
         </h1>
         <p className="text-lg text-[var(--text-secondary)] mb-12 text-center max-w-2xl mx-auto">
-          Supercharge your academic performance. TeachGenie combines the most powerful AI study tools into one single platform.
+          Supercharge your academic performance. LearnByGenie combines the most powerful AI study tools into one single platform.
         </p>
 
         <div className="grid md:grid-cols-3 gap-8 mb-16">
@@ -76,7 +76,7 @@ const AIToolsForStudentsPage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h3 className="font-bold text-lg mb-2">What are the best AI tools for students?</h3>
-              <p className="text-[var(--text-secondary)]">The best AI tools are those built specifically for education. TeachGenie ranks highly because it acts as a dedicated AI tutor, keeping students focused on their notes.</p>
+              <p className="text-[var(--text-secondary)]">The best AI tools are those built specifically for education. LearnByGenie ranks highly because it acts as a dedicated AI tutor, keeping students focused on their notes.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg mb-2">How do AI tools help students in India?</h3>

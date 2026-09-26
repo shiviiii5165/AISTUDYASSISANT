@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Decision Engine — Deterministic Purpose Selector
+LearnByGenie Notes Decision Engine — Deterministic Purpose Selector
 =================================================================
 Selects primary and secondary purposes for notes generation based on
 strict decision precedence. Zero LLM calls.

@@ -1,5 +1,5 @@
 """
-TeachGenie Renderer — Base Drawing Primitives
+LearnByGenie Renderer — Base Drawing Primitives
 ===============================================
 All renderers build slides using ONLY these primitives.
 No renderer may scatter raw pptx calls with arbitrary values.
@@ -452,7 +452,7 @@ def add_footer(
 
     # Brand mark (center)
     add_text_box(
-        slide, "TeachGenie AI",
+        slide, "LearnByGenie AI",
         Inches(5.5), ZONE_FOOTER_TOP,
         Inches(2.5), ZONE_FOOTER_HEIGHT,
         token=Typography.FOOTNOTE,

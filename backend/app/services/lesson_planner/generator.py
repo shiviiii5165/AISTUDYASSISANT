@@ -13,7 +13,7 @@ from .engine import (
 )
 from app.services.ai.router import router as ai_router
 
-logger = logging.getLogger("teachgenie.lesson_planner.generator")
+logger = logging.getLogger("learnbygenie.lesson_planner.generator")
 
 
 class RoadmapGenerator:

@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.2D Layout Quality Auditor & Targeted Repair Engine
+LearnByGenie PPT vNext — Phase 3.2D Layout Quality Auditor & Targeted Repair Engine
 ================================================================================
 Deterministic quality audit and transactional monotonic repair engine operating on
 Phase 3.2C SlideCompositionPlan objects.

@@ -1,0 +1,35 @@
+{
+  "old_brand": "TeachGenie",
+  "new_brand": "LearnByGenie",
+  "files_scanned": 836,
+  "user_facing_occurrences_replaced": 264,
+  "internal_occurrences_replaced": 134,
+  "legacy_compatibility_occurrences": 182,
+  "historical_occurrences": 10,
+  "external_deployment_identifiers": 52,
+  "archived_evidence_occurrences": 213,
+  "manual_platform_actions": [
+    "Render Web Service name: rename display name from teachgenie-backend to learnbygenie-backend in Render dashboard after updating custom domains",
+    "Vercel Project name: update project name and domains in Vercel dashboard to learnbygenie.com once DNS is configured",
+    "Domain DNS mapping: configure learnbygenie.com and www.learnbygenie.com DNS records pointing to Vercel/Render",
+    "Supabase Project Display: update project display name in Supabase settings dashboard",
+    "Visual assets: regenerate brand logo / favicon art assets with official LearnByGenie typography when final SVG artwork is approved"
+  ],
+  "tests_run": {
+    "frontend_typecheck_and_build": "PASS (Vite 6.4.1 Production Build)",
+    "branding_integrity_suite": "PASS (8 passed in 10.93s)",
+    "live_quiz_vnext_security_suite": "PASS (13 passed in 9.60s)",
+    "resource_relevance_regression": "PASS (18 passed)",
+    "notes_generator_decision_engine": "PASS (18 passed)"
+  },
+  "build_status": "PASS",
+  "remaining_legacy_occurrences": {
+    "total": 457,
+    "breakdown": {
+      "LEGACY_COMPATIBILITY": 182,
+      "EXTERNAL_DEPLOYMENT_IDENTIFIER": 52,
+      "HISTORICAL_MIGRATION": 10,
+      "ARCHIVED_EVIDENCE": 213
+    }
+  }
+}

@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.2 — Centralized Failure Taxonomy
+LearnByGenie AI Video Teacher V2.2 — Centralized Failure Taxonomy
 ==============================================================
 Implements Decision #13:
 - Structured failure codes across LLM, TTS, Visualizer, FFmpeg, Storage, DB, QA.

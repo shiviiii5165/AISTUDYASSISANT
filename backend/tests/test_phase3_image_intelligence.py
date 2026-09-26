@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.4 Image Intelligence & Visual Asset Orchestration Test Suite
+LearnByGenie PPT vNext — Phase 3.4 Image Intelligence & Visual Asset Orchestration Test Suite
 =============================================================================================
 Validates:
   1. Feature Flag Matrix & Gating:

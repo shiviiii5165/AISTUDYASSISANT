@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2 — Canonical Schemas & Universal Contracts
+LearnByGenie AI Video Teacher V2 — Canonical Schemas & Universal Contracts
 ========================================================================
 Defines strict Pydantic contracts for:
 1. Domain Intelligence & Universal Archetypes
@@ -246,7 +246,7 @@ class AssetSpec(BaseModel):
     asset_id: str
     provider: str
     media_url: Optional[str] = None
-    creator: str = "TeachGenie"
+    creator: str = "LearnByGenie"
     license: str = "Educational Fair Use / CC0"
     attribution_text: str = ""
     duration_seconds: float = 0.0

@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Production-Appropriate Managed Encrypted Identity Store
+LearnByGenie Canary Infrastructure — Production-Appropriate Managed Encrypted Identity Store
 ========================================================================================
 Production Security Architecture:
 1. Real Service Authorization:
@@ -34,8 +34,8 @@ from typing import Dict, List, Optional, Tuple, Any, Set
 from pydantic import BaseModel, Field
 from cryptography.fernet import Fernet
 
-logger = logging.getLogger("teachgenie.canary.vault")
-audit_logger = logging.getLogger("teachgenie.canary.vault_audit")
+logger = logging.getLogger("learnbygenie.canary.vault")
+audit_logger = logging.getLogger("learnbygenie.canary.vault_audit")
 
 # =====================================================================
 # FAIL-CLOSED CRYPTOGRAPHIC KEY ARCHITECTURE & DOMAIN SEPARATION (KDF)
@@ -58,7 +58,7 @@ def get_canary_vault_master_key() -> str:
     if not key or not key.strip():
         raise RuntimeError(
             "CRITICAL SECURITY CONFIGURATION ERROR: 'CANARY_VAULT_MASTER_KEY' environment variable is missing or empty. "
-            "TeachGenie canary identity vault must fail closed. "
+            "LearnByGenie canary identity vault must fail closed. "
             "Fallback keys, hardcoded secrets, and default salts are strictly prohibited."
         )
     return key.strip()

@@ -99,7 +99,7 @@ const AuthPage: React.FC = () => {
     <div className="min-h-[100dvh] flex items-center justify-center bg-[#FAFAF8] p-4 relative overflow-hidden">
       <SEO
         title={isLogin ? 'Log In' : 'Sign Up'}
-        description="Log in or sign up to TeachGenie to access your AI study assistant and chat with your notes."
+        description="Log in or sign up to LearnByGenie to access your AI study assistant and chat with your notes."
       />
       {/* Background blobs — brand palette */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
@@ -114,14 +114,14 @@ const AuthPage: React.FC = () => {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1B2CC1]">
             <img src="/assets/genie-default.png" alt="" className="h-5 w-5 object-contain brightness-0 invert" />
           </div>
-          <span className="font-display text-lg font-bold text-[#091540]">TeachGenie</span>
+          <span className="font-display text-lg font-bold text-[#091540]">LearnByGenie</span>
         </div>
 
         <h2 className="font-display text-xl font-bold text-[#091540] mb-1 text-center">
           {isLogin ? 'Welcome back' : 'Create your account'}
         </h2>
         <p className="text-[var(--text-secondary)] text-center mb-6 text-sm">
-          {isLogin ? 'Log in to continue learning' : 'Join TeachGenie and study smarter'}
+          {isLogin ? 'Log in to continue learning' : 'Join LearnByGenie and study smarter'}
         </p>
 
         {/* Alerts — icon-only, no emoji */}

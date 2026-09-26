@@ -34,13 +34,20 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initializeAuth: async () => {
     try {
-      if (import.meta.env.DEV && (typeof window !== 'undefined' && (window.location.search.includes('mock_auth=true') || localStorage.getItem('teachgenie_dev_auth') === 'true'))) {
+      const isDevAuth =
+        typeof window !== 'undefined' &&
+        (window.location.search.includes('mock_auth=true') ||
+          localStorage.getItem('learnbygenie_dev_auth') === 'true' ||
+          localStorage.getItem('teachgenie_dev_auth') === 'true');
+
+      if (import.meta.env.DEV && isDevAuth) {
         if (window.location.search.includes('mock_auth=true')) {
+          localStorage.setItem('learnbygenie_dev_auth', 'true');
           localStorage.setItem('teachgenie_dev_auth', 'true');
         }
         const devUser: UserProfile = {
           id: '00000000-0000-0000-0000-000000000001',
-          email: 'teacher@teachgenie.com',
+          email: 'teacher@learnbygenie.com',
           full_name: 'Teacher Jane',
           plan: 'pro'
         };

@@ -29,7 +29,7 @@ from .time_budget import DynamicTimeBudgetEngine
 from .canonical_concepts import CanonicalConceptResolver
 from .shared_context import LearnerStateRepository
 
-logger = logging.getLogger("teachgenie.lesson_planner.compiler")
+logger = logging.getLogger("learnbygenie.lesson_planner.compiler")
 COMPILER_SEMANTIC_VERSION = "2.2.0"
 
 

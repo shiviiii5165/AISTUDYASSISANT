@@ -41,7 +41,7 @@ from .contracts import (
 )
 from .source_health import SourceHealthTracker
 
-logger = logging.getLogger("teachgenie.lesson_planner.youtube_precision")
+logger = logging.getLogger("learnbygenie.lesson_planner.youtube_precision")
 
 # Patterns for sponsor, call-to-action, or intro/outro fluff
 SPONSOR_INTRO_PATTERNS = [

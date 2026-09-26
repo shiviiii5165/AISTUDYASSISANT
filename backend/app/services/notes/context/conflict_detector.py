@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Conflict Detector
+LearnByGenie Notes Context Engine — Conflict Detector
 ===================================================
 Detects and records contradictions across multiple educational context sources.
 Preserves complete conflicting evidence in metadata rather than silently overwriting.

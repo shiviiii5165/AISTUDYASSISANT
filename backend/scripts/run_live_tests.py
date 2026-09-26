@@ -1,5 +1,5 @@
 """
-Live testing + security verification for TeachGenie.
+Live testing + security verification for LearnByGenie.
 Covers Parts 1, 3, 4, 5, 6 of the test plan (Parts 2 require UI).
 Run from repo root: python backend/scripts/run_live_tests.py
 """

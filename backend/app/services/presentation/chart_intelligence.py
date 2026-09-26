@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.3 Native Chart & Data Visualization Intelligence
+LearnByGenie PPT vNext — Phase 3.3 Native Chart & Data Visualization Intelligence
 ================================================================================
 Implements native, editable PowerPoint chart generation using python-pptx:
   - Supported types: Column, Bar, Line, Scatter, Pie, Doughnut, Stacked Column, Stacked Bar, Area

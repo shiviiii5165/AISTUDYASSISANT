@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Context Engine — Context Normalizer
+LearnByGenie Notes Context Engine — Context Normalizer
 ===================================================
 Normalizes equivalent educational representations deterministically
 without distorting or changing their underlying semantic meaning.

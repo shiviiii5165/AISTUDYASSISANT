@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Validation Engine — Core Schemas (Step 4)
+LearnByGenie Notes Validation Engine — Core Schemas (Step 4)
 =========================================================
 Strict, immutable, and explainable contracts for validating generated NotesDocuments
 against canonical learner context, grounded sources, and trusted NotesGenerationPlans.

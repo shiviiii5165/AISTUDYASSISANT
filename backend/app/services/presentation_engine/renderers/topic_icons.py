@@ -1,5 +1,5 @@
 """
-TeachGenie — Topic-Agnostic Icon Library
+LearnByGenie — Topic-Agnostic Icon Library
 ==========================================
 Provides cross-domain icon resolution for real-world examples that span
 beyond the CS-specific icon set. Maps keyword tags to bundled PNG icons

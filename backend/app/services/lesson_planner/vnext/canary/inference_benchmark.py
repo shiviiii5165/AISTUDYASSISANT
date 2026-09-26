@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Live Inference & Deterministic Quality Benchmark
+LearnByGenie Canary Infrastructure — Live Inference & Deterministic Quality Benchmark
 ====================================================================================
 Safeguards #2 & #3 (Reconciled Truth in Benchmarking):
 - Reconciled Truth Labels:
@@ -18,7 +18,7 @@ import logging
 from typing import Dict, Any, Optional, List, Tuple
 from app.core.config import settings
 
-logger = logging.getLogger("teachgenie.canary.inference")
+logger = logging.getLogger("learnbygenie.canary.inference")
 
 
 class InferenceBenchmarkService:

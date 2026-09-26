@@ -13,7 +13,7 @@ from .schemas import (
     ExtraLearningMaterialsResponse,
 )
 
-logger = logging.getLogger("teachgenie.lesson_planner.materials")
+logger = logging.getLogger("learnbygenie.lesson_planner.materials")
 
 # Backward compatibility aliases
 AcademicReferenceItem = ExtraLearningMaterialItem
@@ -106,7 +106,7 @@ class ExtraLearningMaterialsService:
         items: List[ExtraLearningMaterialItem] = []
         try:
             # 1. Wikipedia OpenSearch API
-            headers = {"User-Agent": "TeachGenieApp/1.0 (contact@teachgenie.com)"}
+            headers = {"User-Agent": "LearnByGenieApp/1.0 (contact@teachgenie.com)"}
             encoded_query = urllib.parse.quote(concept)
             wiki_url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={encoded_query}&limit=2&namespace=0&format=json"
 

@@ -1,5 +1,5 @@
 """
-TeachGenie Notes Validation Engine Package (Step 4)
+LearnByGenie Notes Validation Engine Package (Step 4)
 ===================================================
 Exports validation pipeline, schemas, statuses, violations, and bounded repair.
 """

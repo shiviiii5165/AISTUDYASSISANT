@@ -1,5 +1,5 @@
 """
-TeachGenie Learning Flow Validator (Step 4)
+LearnByGenie Learning Flow Validator (Step 4)
 ===========================================
 Audits adaptive learning flow compliance:
 1. Stage execution compliance: Verifies planned stages exist in the document.

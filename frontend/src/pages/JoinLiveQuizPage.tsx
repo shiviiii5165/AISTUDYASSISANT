@@ -5,6 +5,8 @@ import { Sparkles, ArrowRight, Loader2, AlertCircle, Volume2, VolumeX, User } fr
 import { joinLiveSession } from '../lib/liveQuizApi';
 import { soundFx } from '../lib/soundFx';
 import SEO from '../components/SEO';
+import { setMigratedStorageItem } from '../lib/storageMigration';
+import { BRAND } from '../config/branding';
 
 const AVATARS = ['🦊', '🦉', '🦁', '🐼', '🚀', '⚡', '🌟', '🎨', '🎯', '💡'];
 
@@ -46,8 +48,13 @@ const JoinLiveQuizPage: React.FC = () => {
       const res = await joinLiveSession(cleanCode, displayName.trim(), selectedAvatar);
       soundFx.playJoinSound();
 
-      // Store identity in sessionStorage for reconnect
-      sessionStorage.setItem(`teachgenie_live_participant_${res.session_id}`, JSON.stringify(res));
+      // Store identity in sessionStorage for reconnect with backward compatibility
+      setMigratedStorageItem(
+        `learnbygenie_live_participant_${res.session_id}`,
+        `teachgenie_live_participant_${res.session_id}`,
+        JSON.stringify(res),
+        'session'
+      );
 
       navigate(`/live/${res.session_id}`);
     } catch (err: any) {
@@ -68,7 +75,7 @@ const JoinLiveQuizPage: React.FC = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-primary)] px-4 py-8">
-      <SEO title="Join Live Quiz | TeachGenie" description="Enter your 6-digit code to join your classroom live quiz." />
+      <SEO title={`Join Live Quiz | ${BRAND.name}`} description="Enter your 6-digit code to join your classroom live quiz." />
 
       {/* Audio Mute Toggle */}
       <div className="absolute right-4 top-4">
@@ -205,7 +212,7 @@ const JoinLiveQuizPage: React.FC = () => {
       </motion.div>
 
       <p className="mt-6 text-center text-xs text-[var(--text-muted)]">
-        TeachGenie Real-Time Live Classroom Assessment Engine
+        LearnByGenie Real-Time Live Classroom Assessment Engine
       </p>
     </div>
   );

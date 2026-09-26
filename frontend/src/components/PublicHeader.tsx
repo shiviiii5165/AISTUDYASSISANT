@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { BRAND } from '../config/branding';
 
 export default function PublicHeader() {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ export default function PublicHeader() {
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2.5 font-display text-lg font-bold text-[var(--text-primary)]">
           <img src="/assets/genie-default.png" alt="" className="h-8 w-8 object-contain" />
-          TeachGenie
+          {BRAND.name}
         </Link>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => navigate('/auth')} className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">

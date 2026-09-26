@@ -1,5 +1,5 @@
 """
-TeachGenie PPT vNext — Phase 3.4 Image Composition & PPTX Rendering
+LearnByGenie PPT vNext — Phase 3.4 Image Composition & PPTX Rendering
 ====================================================================
 Implements image-region placement, contain/cover crop decisions, focal-region
 preservation, image-to-region mapping, and native PPTX picture insertion.

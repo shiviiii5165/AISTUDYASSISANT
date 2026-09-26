@@ -1,7 +1,7 @@
 """
 Live Quiz Engine — Mastery Engine & Lesson Planner Sync
 ========================================================
-Synchronizes aggregated live assessment outcomes with TeachGenie's
+Synchronizes aggregated live assessment outcomes with LearnByGenie's
 existing Bayesian Mastery Engine and Lesson Planner roadmap stages.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ from app.services.teach.tools import update_mastery_profile
 async def sync_session_with_mastery_and_roadmap(session_id: str) -> Dict[str, Any]:
     """
     Called upon session completion to synchronize real class evidence into:
-    1. TeachGenie Mastery Engine profiles.
+    1. LearnByGenie Mastery Engine profiles.
     2. Lesson Planner RoadmapStage (if quiz was derived from a stage).
     """
     sess = repo.get_live_session(session_id)

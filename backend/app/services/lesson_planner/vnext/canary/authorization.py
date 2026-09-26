@@ -1,5 +1,5 @@
 """
-TeachGenie Canary Infrastructure — Structured Authorization & Consent Engine
+LearnByGenie Canary Infrastructure — Structured Authorization & Consent Engine
 ============================================================================
 Safeguard #2:
 - Replaces loose boolean consent states with structured authorization records.

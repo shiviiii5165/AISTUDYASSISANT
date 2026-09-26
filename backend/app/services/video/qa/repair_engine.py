@@ -1,5 +1,5 @@
 """
-TeachGenie AI Video Teacher V2.1 — Surgical Lesson Repair Engine
+LearnByGenie AI Video Teacher V2.1 — Surgical Lesson Repair Engine
 ================================================================
 Performs targeted, surgical repairs only on failed dimensions (Decision #5):
 - poor visual relevance -> reroute affected scenes only
