@@ -273,15 +273,18 @@ def extract_distinct_temporal_tokens(text: str) -> Set[str]:
 
     # 2. Historical Eras / Centuries (e.g. 1760 BCE, 4th century)
     for m in re.finditer(r"(?:(?<![\.\d])\d{1,4}\s*(?:bce?|ce|ad|bc)|\b\d{1,2}(?:st|nd|rd|th)\s+century)\b", text, re.IGNORECASE):
-        tokens.add(f"era:{re.sub(r'\s+', ' ', m.group(0).lower())}")
+        clean_era = re.sub(r"\s+", " ", m.group(0).lower())
+        tokens.add(f"era:{clean_era}")
 
     # 3. Quarters / Fiscal Years (e.g. Q1, Q2, FY26, FY2026)
     for m in re.finditer(r"\b(?:q[1-4]|quarter\s*[1-4]|fy\s*\d{2,4})\b", text, re.IGNORECASE):
-        tokens.add(f"quarter:{re.sub(r'\s+', '', m.group(0).lower())}")
+        clean_quarter = re.sub(r"\s+", "", m.group(0).lower())
+        tokens.add(f"quarter:{clean_quarter}")
 
     # 4. Explicit numbered milestones / phases (e.g. Milestone 1, Phase 2)
     for m in re.finditer(r"\b(?:milestone\s*\d+|phase\s*\d+)\b", text, re.IGNORECASE):
-        tokens.add(f"milestone:{re.sub(r'\s+', '', m.group(0).lower())}")
+        clean_milestone = re.sub(r"\s+", "", m.group(0).lower())
+        tokens.add(f"milestone:{clean_milestone}")
 
     # 5. Full calendar months
     for m in re.finditer(r"\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\b", text, re.IGNORECASE):
