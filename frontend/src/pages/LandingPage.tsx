@@ -69,18 +69,18 @@ const LandingPage: React.FC = () => {
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": "https://teachgenie.online/#website",
-        "url": "https://teachgenie.online",
+        "@id": "https://learnbygenie.online/#website",
+        "url": "https://learnbygenie.online",
         "name": "LearnByGenie",
         "description": "AI Tutor for Students | Chat With PDFs, Notes & Generate MCQs",
-        "publisher": { "@id": "https://teachgenie.online/#organization" },
+        "publisher": { "@id": "https://learnbygenie.online/#organization" },
       },
       {
         "@type": "Organization",
-        "@id": "https://teachgenie.online/#organization",
+        "@id": "https://learnbygenie.online/#organization",
         "name": "LearnByGenie",
-        "url": "https://teachgenie.online",
-        "logo": { "@type": "ImageObject", "url": "https://teachgenie.online/logo.png" },
+        "url": "https://learnbygenie.online",
+        "logo": { "@type": "ImageObject", "url": "https://learnbygenie.online/logo.png" },
       },
       {
         "@type": "SoftwareApplication",

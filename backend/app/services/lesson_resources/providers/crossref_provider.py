@@ -25,7 +25,7 @@ class CrossrefProvider:
 
     @classmethod
     def get_headers(cls) -> Dict[str, str]:
-        mailto = getattr(settings, "CROSSREF_MAILTO", "contact@teachgenie.online")
+        mailto = getattr(settings, "CROSSREF_MAILTO", "contact@learnbygenie.online")
         return {
             "User-Agent": f"LearnByGenie-LessonPlanner/1.0 (mailto:{mailto})"
         }

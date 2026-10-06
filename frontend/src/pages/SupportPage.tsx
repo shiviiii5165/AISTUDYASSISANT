@@ -5,6 +5,7 @@ import SEO from '../components/SEO';
 import { Mail, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { ILLUSTRATIONS } from '../lib/assets';
+import { BRAND } from '../config/branding';
 
 const SupportPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -153,10 +154,10 @@ const SupportPage: React.FC = () => {
               <p className="text-xs text-[var(--text-secondary)]">
                 Prefer email? Contact us directly at{' '}
                 <a
-                  href="mailto:support@teachgenie.online"
+                  href={`mailto:${BRAND.supportEmail}`}
                   className="font-semibold text-[var(--accent-royal)] hover:underline"
                 >
-                  support@teachgenie.online
+                  {BRAND.supportEmail}
                 </a>
               </p>
             </div>

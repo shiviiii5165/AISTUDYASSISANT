@@ -95,7 +95,7 @@ class SemanticScholarProvider:
         api_key = cls.get_api_key()
         
         headers = {
-            "User-Agent": "LearnByGenie-LessonPlanner/1.0 (contact@teachgenie.online)"
+            "User-Agent": "LearnByGenie-LessonPlanner/1.0 (contact@learnbygenie.online)"
         }
         if api_key:
             headers["x-api-key"] = api_key

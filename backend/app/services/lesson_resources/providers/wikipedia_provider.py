@@ -27,7 +27,7 @@ class WikipediaProvider:
         seen_urls = set()
 
         headers = {
-            "User-Agent": "LearnByGenie-LessonPlanner/1.0 (contact@teachgenie.online)"
+            "User-Agent": "LearnByGenie-LessonPlanner/1.0 (contact@learnbygenie.online)"
         }
 
         async with httpx.AsyncClient(timeout=6.0) as client:

@@ -267,7 +267,7 @@ class WikipediaMediaWikiExtractor:
     Consumes 0.0 external API credits.
     """
     API_URL = "https://en.wikipedia.org/w/api.php"
-    USER_AGENT = "LearnByGenieApp/1.0 (contact@teachgenie.online; educational research)"
+    USER_AGENT = "LearnByGenieApp/1.0 (contact@learnbygenie.online; educational research)"
 
     @classmethod
     def is_wikipedia_url(cls, url: str) -> bool:
@@ -654,7 +654,7 @@ class SourceExtractionService:
         try:
             # Secure client: do not follow redirects blindly (follow_redirects=False)
             async with httpx.AsyncClient(timeout=cfg.timeout_seconds, follow_redirects=False) as client:
-                headers = {"User-Agent": "LearnByGenieApp/1.0 (contact@teachgenie.online; educational research)"}
+                headers = {"User-Agent": "LearnByGenieApp/1.0 (contact@learnbygenie.online; educational research)"}
                 
                 for hop in range(4):  # Up to 3 redirects
                     is_safe_hop, _, hop_err = validate_url_security(current_target_url)

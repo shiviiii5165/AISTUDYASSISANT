@@ -27,7 +27,7 @@ from app.services.ai import router
 
 IMAGE_CACHE_VERSION = 1
 IMAGE_TTL_DAYS = 30
-USER_AGENT = "TeachGenieEduBot/1.0 (https://teachgenie.online; support@teachgenie.online)"
+USER_AGENT = "LearnByGenieEduBot/1.0 (https://learnbygenie.online; support@learnbygenie.online)"
 
 
 def compute_image_query_hash(query: str) -> str:

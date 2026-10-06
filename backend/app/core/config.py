@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     LESSON_PLANNER_MATERIALS_ENABLED: bool = True
     YOUTUBE_API_KEY: str = ""
     SEMANTIC_SCHOLAR_API_KEY: str = ""
-    CROSSREF_MAILTO: str = "contact@learnbygenie.com"
+    CROSSREF_MAILTO: str = "contact@learnbygenie.online"
     TAVILY_API_KEY: str = ""
 
     # Legacy & Dual-read Environment Variables

@@ -29,7 +29,7 @@ const BlogPostPage: React.FC = () => {
       "name": "LearnByGenie",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://teachgenie.online/logo.png"
+        "url": "https://learnbygenie.online/logo.png"
       }
     },
     "datePublished": post.date,

@@ -149,3 +149,55 @@ def test_no_user_facing_teachgenie_brand():
                                 prohibited_matches.append((fpath, line_no, line.strip()))
 
     assert len(prohibited_matches) == 0, f"Found prohibited user-facing legacy brand references: {prohibited_matches[:5]}"
+
+
+def test_domain_cutover_integrity():
+    """Verify that all production-facing domain surfaces point to learnbygenie.online."""
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    # 1. Frontend index.html
+    with open(os.path.join(root_dir, "frontend", "index.html"), "r", encoding="utf-8") as f:
+        html = f.read()
+    assert '<link rel="canonical" href="https://learnbygenie.online" />' in html
+    assert '<meta property="og:url" content="https://learnbygenie.online" />' in html
+    assert '<meta property="og:image" content="https://learnbygenie.online/og-image.webp" />' in html
+
+    # 2. Robots & Sitemap
+    with open(os.path.join(root_dir, "frontend", "public", "robots.txt"), "r", encoding="utf-8") as f:
+        robots = f.read()
+    assert "Sitemap: https://learnbygenie.online/sitemap.xml" in robots
+
+    with open(os.path.join(root_dir, "frontend", "public", "sitemap.xml"), "r", encoding="utf-8") as f:
+        sitemap = f.read()
+    assert "https://learnbygenie.online/" in sitemap
+    assert "https://teachgenie.online" not in sitemap
+
+    # 3. SEO Component
+    with open(os.path.join(root_dir, "frontend", "src", "components", "SEO.tsx"), "r", encoding="utf-8") as f:
+        seo_code = f.read()
+    assert "https://learnbygenie.online${canonical}" in seo_code
+
+    # 4. Branding Config
+    with open(os.path.join(root_dir, "frontend", "src", "config", "branding.ts"), "r", encoding="utf-8") as f:
+        branding_code = f.read()
+    assert "deployedDomain: 'learnbygenie.online'" in branding_code
+
+    # 5. Billing Config
+    with open(os.path.join(root_dir, "backend", "app", "api", "billing.py"), "r", encoding="utf-8") as f:
+        billing_code = f.read()
+    assert "https://learnbygenie.online" in billing_code
+    assert 'f"https://learnbygenie.online/pricing?order_id={order_id}"' in billing_code
+
+    # 6. CORS Settings
+    assert "https://learnbygenie.online" in settings.ALLOWED_ORIGINS
+    assert "https://www.learnbygenie.online" in settings.ALLOWED_ORIGINS
+
+    # 7. Vercel Redirects
+    with open(os.path.join(root_dir, "vercel.json"), "r", encoding="utf-8") as f:
+        vercel_json = json.load(f)
+    assert "redirects" in vercel_json
+    assert any(
+        r.get("destination") == "https://learnbygenie.online/$1" 
+        for r in vercel_json["redirects"]
+    )
+

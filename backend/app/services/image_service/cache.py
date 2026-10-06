@@ -136,7 +136,7 @@ class ImageCache:
             import httpx
             async with httpx.AsyncClient(timeout=15.0) as client:
                 resp = await client.get(image_url, headers={
-                    "User-Agent": "LearnByGenieEduBot/2.0 (https://teachgenie.online)"
+                    "User-Agent": "LearnByGenieEduBot/2.0 (https://learnbygenie.online)"
                 })
                 if resp.status_code != 200 or len(resp.content) < 1000:
                     return None

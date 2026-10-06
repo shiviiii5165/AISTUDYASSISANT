@@ -34,7 +34,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:description" content={description} />
       
       {/* Canonical URL */}
-      {canonical && <link rel="canonical" href={`https://teachgenie.online${canonical}`} />}
+      {canonical && <link rel="canonical" href={`https://learnbygenie.online${canonical}`} />}
 
       {/* JSON-LD Schema */}
       {schema && (

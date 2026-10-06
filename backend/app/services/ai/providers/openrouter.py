@@ -34,7 +34,7 @@ class OpenRouterProvider(AIProvider):
         url = f"{self.base_url}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://www.teachgenie.online",
+            "HTTP-Referer": "https://www.learnbygenie.online",
             "X-Title": "LearnByGenie",
             "Content-Type": "application/json",
         }

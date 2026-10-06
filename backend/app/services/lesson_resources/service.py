@@ -368,7 +368,7 @@ class StageResourceIntelligenceService:
                     provider="coding_engine",
                     resource_type=c_type,
                     title=card.title,
-                    canonical_url=card.url or getattr(card, "related_practice_url", None) or f"https://teachgenie.online/diagnostics/{card.id}",
+                    canonical_url=card.url or getattr(card, "related_practice_url", None) or f"https://learnbygenie.online/diagnostics/{card.id}",
                     description=card.what_it_covers,
                     source_name=card.source_authority,
                     author_or_channel=card.source_authority,

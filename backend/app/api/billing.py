@@ -23,7 +23,13 @@ async def create_order(req: OrderRequest, user = Depends(get_current_user)):
     order_id = f"order_{int(time.time())}_{str(uuid.uuid4())[:8]}"
     
     # Validate return_url to prevent open redirect attacks
-    ALLOWED_DOMAINS = ["https://teachgenie.online", "https://www.teachgenie.online", "http://localhost"]
+    ALLOWED_DOMAINS = [
+        "https://learnbygenie.online",
+        "https://www.learnbygenie.online",
+        "https://teachgenie.online",
+        "https://www.teachgenie.online",
+        "http://localhost"
+    ]
     if req.return_url and not any(req.return_url.startswith(domain) for domain in ALLOWED_DOMAINS):
         raise HTTPException(status_code=400, detail="Invalid return URL")
     
@@ -33,11 +39,11 @@ async def create_order(req: OrderRequest, user = Depends(get_current_user)):
         "order_id": order_id,
         "customer_details": {
             "customer_id": str(user.id),
-            "customer_email": user.email or "student@teachgenie.online",
+            "customer_email": user.email or "student@learnbygenie.online",
             "customer_phone": req.customer_phone
         },
         "order_meta": {
-            "return_url": req.return_url if req.return_url else f"https://teachgenie.online/pricing?order_id={order_id}"
+            "return_url": req.return_url if req.return_url else f"https://learnbygenie.online/pricing?order_id={order_id}"
         }
     }
     

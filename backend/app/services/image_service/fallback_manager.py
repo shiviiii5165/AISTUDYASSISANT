@@ -24,7 +24,7 @@ from .models import ImageResult, CandidateImage, Attribution
 from .provider_manager import ProviderManager
 from .ranker import ImageRanker
 
-USER_AGENT = "LearnByGenieEduBot/2.0 (https://teachgenie.online; support@teachgenie.online)"
+USER_AGENT = "LearnByGenieEduBot/2.0 (https://learnbygenie.online; support@learnbygenie.online)"
 
 
 class FallbackManager:

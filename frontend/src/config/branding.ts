@@ -29,9 +29,10 @@ export const BRAND = {
   titleSuffix: 'LearnByGenie - AI Doubt Solver for Students | Chat with Your PDF Notes',
 
   /** Domains & Email (Infrastructure defaults) */
-  brandDomain: 'learnbygenie.com',
-  deployedDomain: 'teachgenie.online',
-  supportEmail: 'contact@learnbygenie.com',
+  brandDomain: 'learnbygenie.online',
+  deployedDomain: 'learnbygenie.online',
+  legacyDomain: 'teachgenie.online',
+  supportEmail: 'contact@learnbygenie.online',
   legacyEmail: 'contact@teachgenie.online',
 } as const;
 

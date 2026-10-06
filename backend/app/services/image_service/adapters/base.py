@@ -19,7 +19,7 @@ class BaseAdapter(ABC):
 
     PROVIDER_NAME: str = "base"
     COOLDOWN_SECONDS: int = 300  # 5 minutes after a 429
-    USER_AGENT: str = "LearnByGenieEduBot/2.0 (https://teachgenie.online; support@teachgenie.online)"
+    USER_AGENT: str = "LearnByGenieEduBot/2.0 (https://learnbygenie.online; support@learnbygenie.online)"
 
     def __init__(self, api_keys: List[str]):
         """Initialize with a list of API keys (credential pool)."""
