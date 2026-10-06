@@ -2,8 +2,10 @@ from fastapi.testclient import TestClient
 import sys
 import os
 
-# Add backend to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
+# Add backend directory to sys.path
+_backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
 
 from app.main import app
 from app.core.dependencies import get_current_user

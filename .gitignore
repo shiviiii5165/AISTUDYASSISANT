@@ -11,12 +11,18 @@ backend/test_tokens.json
 # Python
 backend/venv/
 **/__pycache__/
-backend/*.py[cod]
-backend/*$py.class
-backend/.pytest_cache/
+**/*.py[cod]
+**/*$py.class
+**/.pytest_cache/
+.pytest_cache/
 backend/.coverage
 backend/htmlcov/
 backend/chroma_db/
+
+# Temporary test/preview outputs
+*_preview.png
+*_preview.pptx
+test_stage_id.txt
 
 # Node
 frontend/node_modules/
