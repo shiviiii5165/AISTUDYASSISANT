@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     
 
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://learnbygenie.com,https://www.learnbygenie.com,https://learnbygenie.online,https://www.learnbygenie.online,https://aistudyassisant.onrender.com"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,https://prepmind.vercel.app,https://teachgenie.online,https://www.teachgenie.online,https://learnbygenie.com,https://www.learnbygenie.com,https://learnbygenie.online,https://www.learnbygenie.online,https://aistudyassisant.onrender.com,https://learnbygenie.onrender.com"
 
     # Lesson Planner Feature Flags & Integrations
     LESSON_PLANNER_YOUTUBE_ENABLED: bool = True
