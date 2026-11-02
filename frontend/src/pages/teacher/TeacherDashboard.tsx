@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  GraduationCap, Users, BookOpen, Presentation, Radio, Plus, 
-  ChevronRight, AlertCircle, RefreshCw, BarChart3, Sparkles 
+import {
+  GraduationCap, Users, BookOpen, Presentation, Radio, Plus,
+  ChevronRight, AlertCircle, RefreshCw, BarChart3, Sparkles
 } from 'lucide-react';
 import AppLayout from '../../components/AppLayout';
-import { 
-  fetchTeacherDashboard, 
-  createClassroom 
+import {
+  fetchTeacherDashboard,
+  createClassroom
 } from '../../lib/portalsApi';
-import type { 
-  TeacherDashboardSummary, 
-  ClassroomView 
+import type {
+  TeacherDashboardSummary,
+  ClassroomView
 } from '../../lib/portalsApi';
 
 export default function TeacherDashboard() {
@@ -361,11 +361,10 @@ export default function TeacherDashboard() {
 
                 {createMsg && (
                   <div
-                    className={`p-3 rounded-xl text-xs ${
-                      createMsg.error
+                    className={`p-3 rounded-xl text-xs ${createMsg.error
                         ? 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
                         : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
-                    }`}
+                      }`}
                   >
                     {createMsg.text}
                   </div>
