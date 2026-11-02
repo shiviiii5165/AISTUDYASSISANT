@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import type { UserRole } from '../store/useAuthStore';
@@ -12,12 +12,20 @@ interface RoleGuardProps {
 export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   const location = useLocation();
   const { session, loading, authorizedRoles } = useAuthStore();
+  const [timedOut, setTimedOut] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading && !timedOut && !session) {
     return (
       <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-[var(--accent-green)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
           <span className="text-[var(--text-secondary)] text-sm font-medium">Verifying portal authorization...</span>
         </div>
       </div>
@@ -52,4 +60,3 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
 
   return <>{children}</>;
 }
-

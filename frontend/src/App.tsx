@@ -69,12 +69,20 @@ import BlogPostPage from './pages/blog/BlogPostPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuthStore();
+  const [timedOut, setTimedOut] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
   
-  if (loading) {
+  if (loading && !timedOut && !session) {
     return (
       <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-[var(--accent-green)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
           <span className="text-[var(--text-secondary)] text-sm font-medium">Loading...</span>
         </div>
       </div>

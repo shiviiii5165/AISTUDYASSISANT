@@ -54,8 +54,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ activeRole: role });
   },
 
-  setUser: (user) => set({ user }),
-  setSession: (session) => set({ session }),
+  setUser: (user) => set({ user, loading: false }),
+  setSession: (session) => set({ session, loading: false }),
 
   signOut: async () => {
     await supabase.auth.signOut();
@@ -64,15 +64,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.removeItem('learnbygenie_dev_auth');
       localStorage.removeItem('teachgenie_dev_auth');
     }
-    set({ user: null, session: null, activeRole: 'student', authorizedRoles: ['student'] });
+    set({ user: null, session: null, loading: false, activeRole: 'student', authorizedRoles: ['student'] });
   },
 
   refreshRoles: async () => {
     try {
-      const res = await fetchUserRoles();
-      if (res && res.authorized_roles) {
-        const validRoles = res.authorized_roles as UserRole[];
-        const primary = (res.primary_role as UserRole) || 'student';
+      // 2.5s safety timeout on role check to guarantee it never stalls
+      const res = await Promise.race([
+        fetchUserRoles(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500))
+      ]);
+      if (res && (res as any).authorized_roles && Array.isArray((res as any).authorized_roles)) {
+        const validRoles = (res as any).authorized_roles as UserRole[];
+        const primary = ((res as any).primary_role as UserRole) || 'student';
         const storedRole = typeof window !== 'undefined' ? (localStorage.getItem('learnbygenie_active_role') as UserRole) : null;
         const currentActive = storedRole && validRoles.includes(storedRole) ? storedRole : primary;
 
@@ -90,7 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (err) {
       // In dev or fallback, preserve existing role
-      console.debug('[AuthStore] Role sync notice:', err);
+      console.debug('[AuthStore] Role sync notice (fallback to default):', err);
     }
   },
 
@@ -129,7 +133,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      // Add a 2.5s safety timeout to getSession to prevent any browser storage lock stall
+      const sessionResult = await Promise.race([
+        supabase.auth.getSession(),
+        new Promise<{ data: { session: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null } }), 2500)
+        )
+      ]);
+
+      const session = sessionResult?.data?.session;
 
       const syncUserProfile = async (currentSession: any) => {
         if (!currentSession?.user) return;
@@ -158,6 +170,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (session) {
         set({
           session,
+          loading: false, // Immediately unblock portal dispatch
           user: {
             id: session.user.id,
             email: session.user.email,
@@ -169,8 +182,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           },
         });
         syncUserProfile(session);
-        // Refresh server-authoritative roles
-        await get().refreshRoles();
+        // Refresh server-authoritative roles in background without blocking
+        get().refreshRoles();
       }
 
       // Listen for auth changes
@@ -178,6 +191,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (session) {
           set({
             session,
+            loading: false, // Ensure loading is cleared on auth events
             user: {
               id: session.user.id,
               email: session.user.email,
@@ -190,10 +204,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           });
           if (event === 'SIGNED_IN') {
             syncUserProfile(session);
-            await get().refreshRoles();
+            get().refreshRoles();
           }
         } else {
-          set({ user: null, session: null, activeRole: 'student', authorizedRoles: ['student'] });
+          set({ user: null, session: null, loading: false, activeRole: 'student', authorizedRoles: ['student'] });
         }
       });
     } catch (error) {

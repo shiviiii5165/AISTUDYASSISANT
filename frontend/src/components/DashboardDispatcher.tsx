@@ -1,16 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import Dashboard from '../pages/Dashboard';
 
 export default function DashboardDispatcher() {
   const { activeRole, authorizedRoles, loading, session } = useAuthStore();
+  const [timedOut, setTimedOut] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    // 2-second fallback timer: never trap user on loading screen
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Only show loading if we don't have session yet and haven't timed out
+  if (loading && !timedOut && !session) {
     return (
       <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-[var(--accent-green)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
           <span className="text-[var(--text-secondary)] text-sm font-medium">Loading your portal...</span>
         </div>
       </div>
@@ -53,4 +63,3 @@ export default function DashboardDispatcher() {
   // Default: Student Portal Dashboard
   return <Dashboard />;
 }
-
