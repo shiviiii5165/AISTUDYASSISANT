@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 from datetime import date, datetime
 
@@ -77,13 +78,14 @@ def clean_state():
 
 def test_xp_award_and_duplicate_idempotency():
     """Verify that XP transactions are recorded and duplicate idempotency keys prevent duplicate awards."""
-    uid = STUDENT_USER.id
+    uid = str(uuid.uuid4())
+    test_key = f"diag_sess_{uuid.uuid4().hex[:8]}"
     tx1, is_new1 = GamificationService.award_xp(
         user_id=uid,
         amount=50,
         reason_code=XPReasonCode.DIAGNOSTIC_COMPLETION,
         source_entity_type="diagnostic_session",
-        idempotency_key="diag_sess_001"
+        idempotency_key=test_key
     )
     assert is_new1 is True
     assert tx1.amount == 50
@@ -94,7 +96,7 @@ def test_xp_award_and_duplicate_idempotency():
         amount=50,
         reason_code=XPReasonCode.DIAGNOSTIC_COMPLETION,
         source_entity_type="diagnostic_session",
-        idempotency_key="diag_sess_001"
+        idempotency_key=test_key
     )
     assert is_new2 is False
     assert tx2.id == tx1.id
@@ -162,6 +164,7 @@ def test_sm2_review_progression():
 def test_parent_portal_dashboard_api():
     """Verify Parent Portal API returns linked children and summary."""
     try:
+        PortalsRepository.link_parent_child(PARENT_USER.id, "a56da972-0f19-418d-b0f7-de91ff114190")
         app.dependency_overrides[get_current_user] = lambda: PARENT_USER
         with TestClient(app) as client:
             res = client.get("/api/portals/parent/dashboard")
@@ -312,14 +315,15 @@ def test_error_token_taxonomy_resolution():
 
 def test_blueprint_xp_rewards_and_daily_cap():
     """Verify canonical blueprint XP amounts and 10 XP/day cap on repeated easy items (§8)."""
-    uid = "user_blueprint_test_01"
+    uid = str(uuid.uuid4())
+    run_id = uuid.uuid4().hex[:6]
 
     # 1. Baseline diagnostic: +50 XP
     tx1, _ = GamificationService.award_blueprint_xp(
         user_id=uid,
         reason_code=XPReasonCode.BASELINE_DIAGNOSTIC,
         source_entity_type="diagnostic_session",
-        idempotency_key="diag_xp_01"
+        idempotency_key=f"diag_xp_{run_id}"
     )
     assert tx1.amount == 50
 
@@ -328,7 +332,7 @@ def test_blueprint_xp_rewards_and_daily_cap():
         user_id=uid,
         reason_code=XPReasonCode.ERROR_RESOLUTION_UNSEEN,
         source_entity_type="mistake_repair",
-        idempotency_key="repair_xp_01"
+        idempotency_key=f"repair_xp_{run_id}"
     )
     assert tx2.amount == 30
 
@@ -339,7 +343,7 @@ def test_blueprint_xp_rewards_and_daily_cap():
             amount=2,
             reason_code=XPReasonCode.REPEATED_EASY_PRACTICE,
             source_entity_type="practice_item",
-            idempotency_key=f"easy_item_{i}"
+            idempotency_key=f"easy_item_{run_id}_{i}"
         )
     # 6th easy practice attempt: cap reached, should receive 0 XP
     tx_capped, _ = GamificationService.award_xp(
@@ -347,7 +351,7 @@ def test_blueprint_xp_rewards_and_daily_cap():
         amount=2,
         reason_code=XPReasonCode.REPEATED_EASY_PRACTICE,
         source_entity_type="practice_item",
-        idempotency_key="easy_item_overflow"
+        idempotency_key=f"easy_item_overflow_{run_id}"
     )
     assert tx_capped.amount == 0
 

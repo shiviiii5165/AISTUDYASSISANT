@@ -76,6 +76,7 @@ class ProvenanceType(str, Enum):
 class VerificationStatus(str, Enum):
     VERIFIED = "VERIFIED"
     PENDING = "PENDING"
+    PENDING_REVIEW = "PENDING"
     REJECTED = "REJECTED"
 
 

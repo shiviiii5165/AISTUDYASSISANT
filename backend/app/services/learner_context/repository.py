@@ -147,18 +147,31 @@ class LearnerProfileRepository:
             record["created_at"] = now_iso
             record["updated_at"] = now_iso
 
-        # Commit to real database table if accessible, with resilient local memory fallback
-        saved_record = None
-        if supabase is not None:
-            try:
-                db_res = supabase.table("learner_profiles").upsert(record, on_conflict="user_id").execute()
-                if db_res and db_res.data and len(db_res.data) > 0:
-                    saved_record = db_res.data[0]
-            except Exception as e:
-                logger.warning("Authoritative database write notice for user %s: %s; falling back to synchronized local store", user_id[:8], e)
+        # Authoritative persistence: must NOT return fake in-memory success if database storage is unavailable
+        if supabase is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="LEARNER_PROFILE_STORAGE_UNAVAILABLE: Authoritative database is not configured or reachable"
+            )
 
-        if saved_record is None:
-            saved_record = copy.deepcopy(record)
+        saved_record = None
+        try:
+            db_res = supabase.table("learner_profiles").upsert(record, on_conflict="user_id").execute()
+            if db_res and db_res.data and len(db_res.data) > 0:
+                saved_record = db_res.data[0]
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="LEARNER_PROFILE_STORAGE_UNAVAILABLE: Database write failed to persist profile"
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error("Authoritative database write failed for user %s: %s", user_id[:8], e)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"LEARNER_PROFILE_STORAGE_UNAVAILABLE: Database write failed: {e}"
+            )
 
         # Synchronize legacy exam_target on profiles table
         if record.get("target_exam") and supabase is not None:

@@ -158,3 +158,4 @@ The daily study plan combines canonical learner state into a single actionable r
 - **20% Interleaved Transfer:** Unseen transfer checks on previously mastered concepts ($\approx 10$ mins).
 
 The learner is presented with three structured next tasks with explicit durations, pedagogical reasons, and unlocking milestones. Recalculations occur immediately following meaningful evidence events.
+

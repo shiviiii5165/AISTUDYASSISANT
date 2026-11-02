@@ -317,8 +317,12 @@ class MistakeDNARepository:
                                 cls._MEMORY_PATTERN_KEY_MAP[pat_key] = updated_pat.id
                             return updated_pat
                         else:
-                            # 0 rows updated: Another worker updated occurrence_count concurrently in PostgreSQL!
-                            # Back off with jitter and retry with refreshed count.
+                            # Verify if row actually exists in PostgreSQL
+                            chk = supabase.table("mistake_patterns").select("id").eq("id", pat.id).execute()
+                            if not chk.data:
+                                # Row does not exist in remote DB; fall through to local memory persistence
+                                break
+                            # Row exists but occurrence_count differed concurrently: back off and retry
                             time.sleep(min(0.5, 0.03 * (1.15 ** attempt) + random.uniform(0.02, 0.08)))
                             continue
                     except Exception as e:
@@ -569,13 +573,15 @@ class MistakeDNARepository:
 
     @staticmethod
     def _serialize_pattern(p: MistakePattern) -> Dict[str, Any]:
+        meta = dict(p.metadata or {})
+        if p.error_token_id:
+            meta["error_token_id"] = p.error_token_id
         return {
             "id": p.id,
             "user_id": p.user_id,
             "skill_id": p.skill_id,
             "subject": p.subject,
             "error_type": p.error_type.value,
-            "error_token_id": p.error_token_id or "E20_UNCLASSIFIED_AMBIGUOUS",
             "error_subtype": p.error_subtype,
             "occurrence_count": p.occurrence_count,
             "recent_occurrence_count": p.recent_occurrence_count,
@@ -588,20 +594,22 @@ class MistakeDNARepository:
             "likely_prerequisite_skill": p.likely_prerequisite_skill,
             "prerequisite_signal": p.prerequisite_signal,
             "engine_version": p.engine_version,
-            "metadata": p.metadata,
+            "metadata": meta,
             "created_at": p.created_at.isoformat(),
             "updated_at": p.updated_at.isoformat(),
         }
 
     @staticmethod
     def _deserialize_pattern(row: Dict[str, Any]) -> MistakePattern:
+        row_meta = row.get("metadata") or {}
+        token_id = row.get("error_token_id") or row_meta.get("error_token_id", "E20_UNCLASSIFIED_AMBIGUOUS")
         return MistakePattern(
             id=row["id"],
             user_id=row["user_id"],
             skill_id=row["skill_id"],
             subject=row.get("subject", "Mathematics"),
             error_type=ErrorType(row.get("error_type", ErrorType.UNKNOWN.value)),
-            error_token_id=row.get("error_token_id", "E20_UNCLASSIFIED_AMBIGUOUS"),
+            error_token_id=token_id,
             error_subtype=row.get("error_subtype", ""),
             occurrence_count=row.get("occurrence_count", 1),
             recent_occurrence_count=row.get("recent_occurrence_count", 1),
@@ -614,7 +622,7 @@ class MistakeDNARepository:
             likely_prerequisite_skill=row.get("likely_prerequisite_skill"),
             prerequisite_signal=row.get("prerequisite_signal"),
             engine_version=row.get("engine_version", "5.0.0"),
-            metadata=row.get("metadata") or {},
+            metadata=row_meta,
             created_at=datetime.fromisoformat(row["created_at"]) if "created_at" in row else datetime.now(timezone.utc),
             updated_at=datetime.fromisoformat(row["updated_at"]) if "updated_at" in row else datetime.now(timezone.utc),
         )

@@ -101,7 +101,31 @@ class GamificationRepository:
                         "created_at": tx.created_at.isoformat()
                     }).execute()
                 except Exception as e:
-                    logger.debug(f"[GamificationRepo] Remote XP ledger insert notice: {e}")
+                    err_str = str(e).lower()
+                    if "duplicate" in err_str or "23505" in err_str or "unique" in err_str or "idempotency_key" in err_str:
+                        try:
+                            res_re = supabase.table("xp_ledger").select("*").eq("idempotency_key", idempotency_key).limit(1).execute()
+                            if res_re.data and len(res_re.data) > 0:
+                                tx_data = res_re.data[0]
+                                existing_tx = XPTransaction(
+                                    id=tx_data["id"],
+                                    user_id=tx_data["user_id"],
+                                    amount=tx_data["amount"],
+                                    reason_code=XPReasonCode(tx_data["reason_code"]),
+                                    source_entity_type=tx_data["source_entity_type"],
+                                    source_entity_id=tx_data.get("source_entity_id"),
+                                    idempotency_key=tx_data["idempotency_key"],
+                                    created_at=datetime.fromisoformat(tx_data["created_at"])
+                                )
+                                cls._XP_LEDGER[existing_tx.id] = existing_tx
+                                cls._IDEMPOTENCY_INDEX[idempotency_key] = existing_tx.id
+                                return existing_tx, False
+                        except Exception:
+                            pass
+                    from app.core.dependencies import _is_dev_environment
+                    if not _is_dev_environment():
+                        raise RuntimeError(f"Authoritative XP ledger persistence failed: {e}")
+                    logger.warning(f"[GamificationRepo] Remote XP ledger insert notice: {e}")
 
             cls._XP_LEDGER[tx.id] = tx
             cls._IDEMPOTENCY_INDEX[idempotency_key] = tx.id
@@ -109,6 +133,26 @@ class GamificationRepository:
 
     @classmethod
     def get_user_transactions(cls, user_id: str, limit: int = 20) -> List[XPTransaction]:
+        if supabase is not None:
+            try:
+                res = supabase.table("xp_ledger").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(limit).execute()
+                if res.data:
+                    txs = []
+                    for tx_data in res.data:
+                        txs.append(XPTransaction(
+                            id=tx_data["id"],
+                            user_id=tx_data["user_id"],
+                            amount=tx_data["amount"],
+                            reason_code=XPReasonCode(tx_data["reason_code"]),
+                            source_entity_type=tx_data["source_entity_type"],
+                            source_entity_id=tx_data.get("source_entity_id"),
+                            idempotency_key=tx_data["idempotency_key"],
+                            created_at=datetime.fromisoformat(tx_data["created_at"])
+                        ))
+                    return txs
+            except Exception as e:
+                logger.debug(f"[GamificationRepo] Database get_user_transactions notice: {e}")
+
         with cls._LOCK:
             user_txs = [tx for tx in cls._XP_LEDGER.values() if tx.user_id == user_id]
             user_txs.sort(key=lambda x: x.created_at, reverse=True)
@@ -116,6 +160,14 @@ class GamificationRepository:
 
     @classmethod
     def get_total_xp(cls, user_id: str) -> int:
+        if supabase is not None:
+            try:
+                res = supabase.table("xp_ledger").select("amount").eq("user_id", user_id).execute()
+                if res.data:
+                    return sum(r["amount"] for r in res.data)
+            except Exception as e:
+                logger.debug(f"[GamificationRepo] Database get_total_xp notice: {e}")
+
         with cls._LOCK:
             return sum(tx.amount for tx in cls._XP_LEDGER.values() if tx.user_id == user_id)
 

@@ -8,8 +8,10 @@ from app.core.dependencies import (
     require_teacher,
     require_school_admin,
     require_content_creator,
-    require_admin
+    require_admin,
+    require_role
 )
+from app.core.user_roles import UserRoleRepository
 from app.services.portals.service import (
     ParentPortalService,
     TeacherPortalService,
@@ -63,9 +65,22 @@ def link_child_to_parent(payload: LinkChildRequest, current_user: AuthenticatedU
 
 @router.post("/student/generate-parent-code")
 def generate_parent_code(current_user: AuthenticatedUser = Depends(get_current_user)):
-    """Generates a secure verification code that a parent can use to link to this student."""
+    """Generates a cryptographically secure, high-entropy invitation code with expiration for linking."""
     code = PortalsRepository.generate_student_invite_code(current_user.id)
     return {"invitation_code": code, "student_id": current_user.id}
+
+
+@router.post("/student/revoke-parent-code")
+def revoke_parent_code(payload: Dict[str, str], current_user: AuthenticatedUser = Depends(get_current_user)):
+    """Allows a student to revoke an unredeemed pending invitation code."""
+    invite_code = payload.get("invitation_code", "")
+    try:
+        success = PortalsRepository.revoke_student_invite_code(current_user.id, invite_code)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation code not found or not owned by student.")
+        return {"status": "revoked", "invitation_code": invite_code}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/parent/child/{student_id}/progress", response_model=ChildDetailedProgress)
@@ -133,24 +148,60 @@ def get_creator_dashboard(current_user: AuthenticatedUser = Depends(require_cont
 
 @router.post("/creator/items")
 def create_practice_item_endpoint(payload: CreatePracticeItemRequest, current_user: AuthenticatedUser = Depends(require_content_creator)):
-    """Authors and adds a new verified question item to the canonical item bank."""
+    """
+    Authors a new practice question item.
+    Enforces that all newly authored questions enter PENDING_REVIEW status
+    and cannot be served to learners until authorized reviewer approval.
+    """
     new_item = PracticeItem(
         id=make_practice_uuid(f"creator-{payload.skill_id}-{len(payload.prompt)}"),
         skill_id=payload.skill_id,
         subject=payload.subject,
         grade_band=payload.grade_band,
-        difficulty_band=DifficultyBand(payload.difficulty_band),
-        question_type=QuestionType(payload.question_type),
+        difficulty_band=DifficultyBand.from_str(payload.difficulty_band) if hasattr(DifficultyBand, "from_str") else DifficultyBand(payload.difficulty_band),
+        question_type=QuestionType.MCQ if payload.question_type.lower() in ("mcq", "multiple_choice") else QuestionType(payload.question_type.lower()),
         prompt=payload.prompt,
         options=payload.options,
         correct_answer=payload.correct_answer,
         explanation=payload.explanation,
         hints=payload.hints,
         target_mistake_types=payload.target_mistake_types,
-        verification_status=VerificationStatus.VERIFIED
+        verification_status=VerificationStatus.PENDING_REVIEW
     )
-    register_practice_item(new_item)
-    return {"status": "created", "item_id": new_item.id}
+    saved = PortalsRepository.save_creator_item(new_item, author_id=current_user.id)
+    return {
+        "status": "pending_review",
+        "item_id": new_item.id,
+        "review_status": "pending_review"
+    }
+
+
+require_reviewer = require_role(["teacher", "school_admin", "admin", "super_admin"])
+
+
+@router.get("/creator/items/pending")
+def list_pending_items(current_user: AuthenticatedUser = Depends(require_reviewer)):
+    """Returns questions awaiting authorized review."""
+    return PortalsRepository.get_pending_creator_items()
+
+
+@router.post("/creator/items/{item_id}/approve")
+def approve_item_endpoint(item_id: str, current_user: AuthenticatedUser = Depends(require_reviewer)):
+    """Approves a pending item, publishing it to the active verified practice item bank."""
+    approved = PortalsRepository.approve_creator_item(item_id, reviewer_id=current_user.id)
+    if not approved:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found or already processed.")
+    return {"status": "approved", "item_id": item_id, "reviewer_id": current_user.id}
+
+
+@router.post("/creator/items/{item_id}/reject")
+def reject_item_endpoint(item_id: str, payload: Dict[str, str] = {}, current_user: AuthenticatedUser = Depends(require_reviewer)):
+    """Rejects a question item with feedback notes."""
+    notes = payload.get("notes", "") if payload else ""
+    rejected = PortalsRepository.reject_creator_item(item_id, reviewer_id=current_user.id, notes=notes)
+    if not rejected:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found or already processed.")
+    return {"status": "rejected", "item_id": item_id, "notes": notes, "reviewer_id": current_user.id}
 
 
 # ─── 5. SUPER ADMINISTRATOR PORTAL ENDPOINTS ──────────────────────────────────
@@ -163,12 +214,20 @@ def get_super_admin_overview(current_user: AuthenticatedUser = Depends(require_a
 
 @router.post("/super-admin/user-role")
 def update_user_role(payload: UserRoleUpdate, current_user: AuthenticatedUser = Depends(require_admin)):
-    """Updates the assigned role for a user across the platform."""
-    return {
-        "status": "updated",
-        "target_user_id": payload.target_user_id,
-        "new_role": payload.new_role
-    }
+    """
+    Authoritatively updates user role in PostgreSQL with audit log.
+    Takes effect immediately in subsequent authenticated requests.
+    """
+    try:
+        res = UserRoleRepository.set_user_role(
+            target_user_id=payload.target_user_id,
+            new_role=payload.new_role,
+            assigned_by=current_user.id,
+            reason="Administrative role assignment"
+        )
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ─── 6. STUDENT PORTAL ROADMAP ENDPOINTS (STAGE 8) ────────────────────────────

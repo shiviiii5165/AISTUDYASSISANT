@@ -76,3 +76,4 @@ flowchart LR
 - **Sprint 1 (Classes 9–10 Math: 350 items):** Linear Equations (100), Quadratic Equations (100), Coordinate Geometry (75), Trigonometric Ratios (75).
 - **Sprint 2 (Classes 9–10 Physics: 350 items):** Motion & Forces (120), Gravitation (80), Work & Energy (80), Optics & Light (70).
 - **Sprint 3 (Classes 9–10 Chemistry & Biology: 300 items):** Chemical Reactions (80), Acids, Bases & Salts (70), Life Processes (80), Control & Coordination (70).
+

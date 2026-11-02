@@ -80,9 +80,7 @@ async def get_learner_context(current_user=Depends(get_current_user)):
             detail="User ID could not be identified from credentials."
         )
     
-    # Determine user role from app_metadata or user_metadata
-    app_meta = getattr(current_user, "app_metadata", {}) or {}
-    user_meta = getattr(current_user, "user_metadata", {}) or {}
-    role = app_meta.get("role") or user_meta.get("role") or "student"
+    # Determine user role authoritatively
+    role = getattr(current_user, "role", None) or (getattr(current_user, "app_metadata", {}) or {}).get("role") or "student"
 
     return LearnerContextService.get_learner_context(user_id, role=role)

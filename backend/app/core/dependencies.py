@@ -7,6 +7,7 @@ import jwt
 from app.db.supabase_client import supabase
 from app.core.config import settings
 from app.core.logging import logger
+from app.core.user_roles import UserRoleRepository, VALID_SYSTEM_ROLES
 
 security = HTTPBearer(auto_error=False)
 
@@ -91,21 +92,14 @@ MOCK_DEV_USERS = {
 }
 
 
-VALID_SYSTEM_ROLES = {
-    "student",
-    "parent",
-    "teacher",
-    "school_admin",
-    "content_creator",
-    "admin",
-    "super_admin"
-}
-
-
 def _is_dev_environment() -> bool:
-    """Returns True ONLY when explicitly in development or testing mode."""
-    env = (getattr(settings, "ENVIRONMENT", "") or os.environ.get("ENVIRONMENT", "development")).lower()
-    return env in ("development", "test", "local") and env != "production"
+    """Returns True ONLY when explicitly in a recognized development or testing mode.
+    Missing, empty, or unknown environment configurations FAIL CLOSED (return False).
+    """
+    env = (getattr(settings, "ENVIRONMENT", "") or os.environ.get("ENVIRONMENT", "")).lower().strip()
+    if not env or env not in ("development", "test", "local") or env == "production":
+        return False
+    return True
 
 
 def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> AuthenticatedUser:
@@ -116,6 +110,7 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
     2. Supabase remote auth lookup.
     3. Network-resilient local JWT cryptographic verification using SUPABASE_JWT_SECRET.
     Never accepts unverified JWT payloads without cryptographic signature verification.
+    NEVER derives privileged roles from user-editable metadata.
     """
     if credentials is None:
         raise HTTPException(
@@ -130,13 +125,14 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
     if _is_dev_environment():
         if token in MOCK_DEV_USERS:
             u = MOCK_DEV_USERS[token]
+            authoritative_role = UserRoleRepository.get_user_role(u["id"]) or u["role"]
             return AuthenticatedUser(
                 id=u["id"],
                 email=u["email"],
-                role=u["role"],
+                role=authoritative_role,
                 full_name=u["full_name"],
-                app_metadata={"role": u["role"]},
-                user_metadata={"full_name": u["full_name"], "role": u["role"]}
+                app_metadata={"role": authoritative_role},
+                user_metadata={"full_name": u["full_name"], "role": authoritative_role}
             )
 
     # 2. Attempt Supabase Auth Client verification if configured
@@ -146,16 +142,22 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
             if res and res.user:
                 u = res.user
                 app_meta = getattr(u, "app_metadata", {}) or {}
-                user_meta = getattr(u, "user_metadata", {}) or {}
-                raw_role = app_meta.get("role") or user_meta.get("role") or "student"
+                # Security rule: NEVER derive roles from client-editable user_metadata
+                raw_role = app_meta.get("role") or "student"
                 role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
+
+                # Check authoritative database role assignment
+                authoritative_role = UserRoleRepository.get_user_role(u.id)
+                if authoritative_role:
+                    role = authoritative_role
+
                 return AuthenticatedUser(
                     id=u.id,
                     email=getattr(u, "email", "") or "",
                     role=role,
-                    full_name=user_meta.get("full_name") or user_meta.get("name") or "",
+                    full_name=getattr(u, "user_metadata", {}).get("full_name") or "",
                     app_metadata=app_meta,
-                    user_metadata=user_meta
+                    user_metadata=getattr(u, "user_metadata", {}) or {}
                 )
         except Exception as e:
             logger.debug(f"[Auth] Supabase remote validation notice: {e}; attempting local cryptographic JWT verification")
@@ -173,16 +175,22 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
             user_id = payload.get("sub")
             if user_id:
                 app_meta = payload.get("app_metadata", {}) or {}
-                user_meta = payload.get("user_metadata", {}) or {}
-                raw_role = payload.get("role") or app_meta.get("role") or user_meta.get("role") or "student"
+                # Security rule: NEVER derive roles from client-editable user_metadata
+                raw_role = payload.get("role") or app_meta.get("role") or "student"
                 role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
+
+                # Check authoritative database role assignment
+                authoritative_role = UserRoleRepository.get_user_role(user_id)
+                if authoritative_role:
+                    role = authoritative_role
+
                 return AuthenticatedUser(
                     id=user_id,
                     email=payload.get("email", ""),
                     role=role,
-                    full_name=user_meta.get("full_name", ""),
+                    full_name=payload.get("user_metadata", {}).get("full_name", ""),
                     app_metadata=app_meta,
-                    user_metadata=user_meta
+                    user_metadata=payload.get("user_metadata", {}) or {}
                 )
         except jwt.ExpiredSignatureError:
             raise HTTPException(
@@ -211,14 +219,18 @@ def require_role(allowed_roles: List[str]):
     """
     Enforces server-side role-based access control.
     Super administrators always have cross-role operational access.
+    Checks authoritative database role first, then server-signed app_metadata.
+    NEVER trusts user-editable user_metadata for role claims.
     """
     def role_dependency(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        user_id = getattr(current_user, "id", None)
+        authoritative_role = UserRoleRepository.get_user_role(user_id) if user_id else None
         app_meta = getattr(current_user, "app_metadata", {}) or {}
-        user_meta = getattr(current_user, "user_metadata", {}) or {}
+
         user_role = (
-            getattr(current_user, "role", None)
+            authoritative_role
+            or getattr(current_user, "role", None)
             or app_meta.get("role")
-            or user_meta.get("role")
             or "student"
         )
         if user_role not in allowed_roles and user_role not in ("admin", "super_admin"):
