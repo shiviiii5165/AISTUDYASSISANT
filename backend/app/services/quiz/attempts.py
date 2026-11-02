@@ -174,6 +174,35 @@ def submit_attempt(
         # Non-blocking emission
         pass
 
+    # Feature 5: Mistake DNA Engine Integration (§23)
+    try:
+        from app.services.mistake_dna.service import MistakeDNAService
+        from app.services.mistake_dna.schemas import (
+            MistakeCandidate, MistakeSourceType, AssistanceLevel as MistakeAssistanceLevel
+        )
+        from app.services.diagnostic.curriculum_blueprint import CANONICAL_SKILLS
+        for pq in result.get("per_question_results", []):
+            if not pq.get("is_correct"):
+                potential_skill = pq.get("skill_id") or pq.get("concept_id")
+                # Only ingest if mapped to a verified canonical skill! (§23)
+                if potential_skill and potential_skill in CANONICAL_SKILLS:
+                    q_id = str(pq.get("question_id") or "")
+                    cand = MistakeCandidate(
+                        user_id=user_id,
+                        skill_id=potential_skill,
+                        subject=attempt.get("subject", "Mathematics"),
+                        source_type=MistakeSourceType.QUIZ,
+                        source_record_id=f"quiz_{attempt_id}_{q_id}",
+                        question_reference=f"Quiz Q{q_id}",
+                        student_response=str(pq.get("user_answer", "")),
+                        expected_answer=str(pq.get("correct_answer", "")),
+                        assistance_level=MistakeAssistanceLevel.INDEPENDENT,
+                        metadata={"quiz_id": attempt.get("quiz_id"), "attempt_id": attempt_id}
+                    )
+                    MistakeDNAService.ingest_error_candidate(cand)
+    except Exception:
+        pass
+
     return _result_view(updated or {**attempt, **fields}, timed_out=timed_out)
 
 

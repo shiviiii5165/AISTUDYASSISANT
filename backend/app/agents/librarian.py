@@ -336,3 +336,37 @@ async def retrieve_context(
         sufficient=is_sufficient,
         used_web_fallback=used_web_fallback,
     )
+
+
+def format_isolated_context(librarian_output: LibrarianOutput, max_chars: int = 2000) -> str:
+    """
+    Formats librarian chunks with strict prompt-injection delimiters (§42)
+    and distinguishes student-provided material from supplementary material (§9).
+    """
+    if not librarian_output or not librarian_output.context:
+        return ""
+
+    out_parts = []
+    total_len = 0
+    for idx, chunk in enumerate(librarian_output.context):
+        label = "FROM YOUR MATERIAL" if chunk.source == "internal" else "SUPPLEMENTARY EXPLANATION"
+        loc = f" (Location: {chunk.page_or_location})" if chunk.page_or_location else ""
+        content = chunk.text.strip()
+        if total_len + len(content) > max_chars:
+            remaining = max_chars - total_len
+            if remaining > 80:
+                content = content[:remaining] + "..."
+            else:
+                break
+
+        block = (
+            f"<<<BEGIN_STUDENT_DOCUMENT_EXCERPT {idx+1}>>>\n"
+            f"Category: {label}\n"
+            f"Source: {chunk.source_document}{loc}\n"
+            f"{content}\n"
+            f"<<<END_STUDENT_DOCUMENT_EXCERPT {idx+1}>>>"
+        )
+        out_parts.append(block)
+        total_len += len(content)
+
+    return "\n\n".join(out_parts)

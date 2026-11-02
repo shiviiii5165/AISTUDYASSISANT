@@ -100,13 +100,16 @@ async def ask_question_v2(request: PipelineRequest, current_user=Depends(get_cur
     """
     try:
         result = await handle_student_message(
-            user_id=current_user.id,
+            user_id=str(current_user.id),
             message=request.message,
             pdf_id=request.pdf_id,
-            conversation_history=request.history
+            conversation_history=request.history,
+            mode=request.mode,
+            session_id=request.session_id,
+            user_action=request.user_action
         )
         
-        session_id = getattr(request, 'session_id', None)
+        session_id = getattr(request, 'session_id', None) or result.session_id
         user_id = str(current_user.id)
         if supabase:
             try:
@@ -126,10 +129,8 @@ async def ask_question_v2(request: PipelineRequest, current_user=Depends(get_cur
                     }).execute()
                     
                     # Try to extract the string content depending on response type
-                    assistant_content = ""
-                    if result.response_type == 'direct_message':
-                        assistant_content = result.content
-                    elif result.response_type == 'tutor_turn' and result.tutor_data:
+                    assistant_content = result.message or ""
+                    if not assistant_content and result.tutor_data:
                         assistant_content = result.tutor_data.message
                         
                     if assistant_content:

@@ -23,3 +23,5 @@ class PipelineRequest(BaseModel):
     pdf_id: Optional[str] = None
     history: Optional[List[Dict[str, Any]]] = None
     session_id: Optional[str] = None
+    mode: Optional[str] = None  # "QUICK_ASK", "TUTOR", or None for auto-detection
+    user_action: Optional[str] = None  # "HINT", "FULL_EXPLANATION", "SIMPLIFY", etc.
