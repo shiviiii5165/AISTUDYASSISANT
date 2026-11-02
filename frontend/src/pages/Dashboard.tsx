@@ -248,7 +248,7 @@ const Dashboard: React.FC = () => {
                     <button
                       onClick={() => handleReviewCard(1)}
                       disabled={submittingReview}
-                      className="flex-1 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold transition"
+                      className="flex-1 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold transition"
                     >
                       Again (1)
                     </button>
@@ -444,7 +444,7 @@ const Dashboard: React.FC = () => {
 
         {/* Subtle section separator */}
         <div className="relative my-2 overflow-hidden rounded-2xl" aria-hidden="true">
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#ABD2FA]/40 via-[#1B2CC1]/15 to-[#7692FF]/30 rounded-full" />
+          <div className="h-1.5 w-full bg-gradient-to-r from-[#ABD2FA]/40 via-[#1E3A8A]/15 to-[#7692FF]/30 rounded-full" />
         </div>
 
         {/* Recent documents */}
@@ -540,7 +540,7 @@ const Dashboard: React.FC = () => {
                               aria-hidden="true"
                             />
                           ) : (
-                            <span className="text-xs font-medium text-red-700">Failed</span>
+                            <span className="text-xs font-medium text-amber-900">Failed</span>
                           )}
                         </div>
                         <div className="mb-2 flex items-center justify-between gap-2">

@@ -481,6 +481,7 @@ def test_durable_profile_writes_and_no_in_memory_false_success(monkeypatch):
 
     # Simulate database outage by setting supabase client to None
     monkeypatch.setattr(repo_mod, "supabase", None)
+    monkeypatch.delenv("SUPABASE_OFFLINE_MODE", raising=False)
 
     with TestClient(app) as client:
         patch_res = client.patch("/api/learner/profile", json={"preferred_language": "hi"})

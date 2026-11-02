@@ -18,12 +18,18 @@ import {
 } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import { stepGraderApi } from '../lib/stepGraderApi';
+import { soundFx } from '../lib/soundFx';
 import type {
   StepGraderResult,
   GradedStep,
   CapabilityMatrixItem,
   TutorHandoffContext
 } from '../types/stepGrader';
+
+function playOutcome(result: StepGraderResult) {
+  if (result.overall_outcome === 'ALL_STEPS_VALID') soundFx.playStepVerified();
+  else if (result.overall_outcome === 'ROOT_ERROR_DETECTED') soundFx.playMistakeLogged();
+}
 
 const PRESET_EXAMPLES = [
   {
@@ -108,6 +114,7 @@ export const StepCheckPage: React.FC = () => {
           audience_level: audienceLevel
         });
         setResult(res);
+        playOutcome(res);
       } else {
         // Initial grading
         const res = await stepGraderApi.gradeSolution({
@@ -118,6 +125,7 @@ export const StepCheckPage: React.FC = () => {
           audience_level: audienceLevel
         });
         setResult(res);
+        playOutcome(res);
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.detail || 'Grading temporarily unavailable. Please try again.');
@@ -277,7 +285,7 @@ export const StepCheckPage: React.FC = () => {
               </div>
 
               {errorMsg && (
-                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs flex items-center space-x-2">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-xs flex items-center space-x-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>

@@ -5,6 +5,7 @@ import {
   getDiagnosticSession,
   getDiagnosticHistory
 } from '../lib/diagnosticApi';
+import { soundFx } from '../lib/soundFx';
 import type {
   DiagnosticStepResponse,
   DiagnosticResult,
@@ -82,6 +83,7 @@ export const DiagnosticPage: React.FC = () => {
       setStepData(res);
       setSelectedAnswer('');
       if (res.is_completed) {
+        soundFx.playSessionComplete();
         loadHistory();
       }
     } catch (err: any) {
@@ -230,7 +232,7 @@ export const DiagnosticPage: React.FC = () => {
 
           {/* Needs Repair */}
           <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
-            <div className="flex items-center gap-2 text-rose-400 font-semibold text-sm mb-4">
+            <div className="flex items-center gap-2 text-amber-400 font-semibold text-sm mb-4">
               <AlertCircle className="w-4 h-4" />
               Prerequisites Needing Repair ({repairSkills.length})
             </div>
@@ -238,7 +240,7 @@ export const DiagnosticPage: React.FC = () => {
               <ul className="space-y-3">
                 {repairSkills.map((s, idx) => (
                   <li key={idx} className="text-xs text-slate-300">
-                    <span className="font-medium text-rose-300">{s.skill_name}</span>
+                    <span className="font-medium text-amber-300">{s.skill_name}</span>
                     <div className="text-slate-500 mt-0.5">{s.recommended_action}</div>
                   </li>
                 ))}
@@ -304,7 +306,7 @@ export const DiagnosticPage: React.FC = () => {
         </div>
 
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 text-xs text-rose-300 flex items-center gap-2">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-xs text-amber-300 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>

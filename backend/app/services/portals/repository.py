@@ -224,6 +224,11 @@ class PortalsRepository:
                 if now > exp_dt:
                     raise ValueError("Invitation code has expired. Please request a new code from the student.")
 
+            from app.modules.privacy import service as privacy
+
+            if not privacy.has_consent(student_id, "parent_reports"):
+                raise PermissionError("consent_required")
+
             # Atomic mark as redeemed
             invitation["is_redeemed"] = True
             invitation["redeemed_by_parent_id"] = parent_id

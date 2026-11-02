@@ -66,7 +66,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, message })
 
         <div className="p-6">
           {error && (
-            <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-800">
+            <div role="alert" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900">
               {error}
             </div>
           )}

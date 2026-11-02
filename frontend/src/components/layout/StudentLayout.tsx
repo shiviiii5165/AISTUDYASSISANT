@@ -12,6 +12,7 @@ const STUDENT_NAV_GROUPS: NavGroup[] = [
     heading: 'Learning Core',
     items: [
       { path: '/dashboard', label: 'Dashboard', icon: Target, exact: true },
+      { path: '/studio', label: 'Learn Studio', icon: GraduationCap },
       { path: '/diagnostic', label: 'Diagnostic Assessment', icon: Sparkles },
       { path: '/practice', label: 'Adaptive Practice', icon: Compass },
       { path: '/step-check', label: 'Step Check', icon: ListChecks },

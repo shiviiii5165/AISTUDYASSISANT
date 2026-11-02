@@ -49,10 +49,10 @@ const LiveQuizReportPage: React.FC = () => {
   if (error || !report) {
     return (
       <AppLayout title="Live Session Report">
-        <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <AlertTriangle className="mx-auto h-8 w-8 text-red-600" />
-          <h2 className="mt-2 text-lg font-bold text-red-900">Report Unavailable</h2>
-          <p className="mt-1 text-sm text-red-800">{error || 'Session report could not be retrieved.'}</p>
+        <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <AlertTriangle className="mx-auto h-8 w-8 text-amber-900" />
+          <h2 className="mt-2 text-lg font-bold text-amber-900">Report Unavailable</h2>
+          <p className="mt-1 text-sm text-amber-900">{error || 'Session report could not be retrieved.'}</p>
         </div>
       </AppLayout>
     );
@@ -210,7 +210,7 @@ const LiveQuizReportPage: React.FC = () => {
                     <h4 className="font-bold text-sm text-[var(--text-primary)]">
                       {q.question_text}
                     </h4>
-                    <span className="rounded-lg bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 shrink-0">
+                    <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900 shrink-0">
                       {q.accuracy_pct}% Correct
                     </span>
                   </div>

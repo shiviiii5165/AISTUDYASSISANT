@@ -425,7 +425,7 @@ const TeachMePage: React.FC = () => {
       ? 'bg-[var(--accent-green-light)] border-[var(--accent-green)] text-[var(--accent-green-deep)]'
       : correctness === 'partial'
       ? 'bg-[var(--accent-amber-light)] border-[var(--accent-amber)] text-[var(--text-primary)]'
-      : 'bg-red-50 border-red-200 text-red-800';
+      : 'bg-amber-50 border-amber-200 text-amber-900';
 
   // ─── Sub-components ────────────────────────────────────────────────────────
 
@@ -876,7 +876,7 @@ const TeachMePage: React.FC = () => {
                 {errorBanner && (
                   <div
                     role="alert"
-                    className="mx-auto flex max-w-3xl items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                    className="mx-auto flex max-w-3xl items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                   >
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                     <span className="flex-1">{errorBanner}</span>
@@ -884,7 +884,7 @@ const TeachMePage: React.FC = () => {
                       type="button"
                       onClick={() => setErrorBanner(null)}
                       aria-label="Dismiss error"
-                      className="rounded p-0.5 hover:bg-red-100"
+                      className="rounded p-0.5 hover:bg-amber-100"
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                     </button>

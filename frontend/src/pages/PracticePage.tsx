@@ -22,6 +22,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import { practiceApi } from '../lib/practiceApi';
+import { soundFx } from '../lib/soundFx';
+import ActivitySelector from '../components/activities/ActivitySelector';
 import type {
   PracticeMode,
   DifficultyBand,
@@ -135,6 +137,8 @@ export const PracticePage: React.FC = () => {
         student_response: selectedAnswer.trim()
       });
       setFeedback(fb);
+      if (fb.correctness) soundFx.playStepVerified();
+      else soundFx.playMistakeLogged();
 
       if (fb.session_completed) {
         // Fetch session outcome summary
@@ -183,6 +187,7 @@ export const PracticePage: React.FC = () => {
     try {
       const res = await practiceApi.requestHint(session.id, currentItem.id);
       setRevealedHints(prev => [...prev, res.hint]);
+      soundFx.playHintReveal();
     } catch (err) {
       // Hints exhausted or error
     } finally {
@@ -744,6 +749,10 @@ export const PracticePage: React.FC = () => {
             </div>
           </div>
         )}
+        <details className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+          <summary className="cursor-pointer font-semibold text-[var(--text-primary)]">Hands-on activities</summary>
+          <div className="mt-4"><ActivitySelector /></div>
+        </details>
       </div>
     </AppLayout>
   );

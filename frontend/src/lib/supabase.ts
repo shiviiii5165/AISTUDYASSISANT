@@ -10,5 +10,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Fallback to placeholders so the app can at least render (though API calls will fail)
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder'
+  supabaseAnonKey || 'placeholder',
+  { auth: { flowType: 'pkce' } }
 );

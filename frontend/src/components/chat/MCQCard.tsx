@@ -54,7 +54,7 @@ function getOptionStyle(state: OptionState): React.CSSProperties {
     default:   { borderColor: "#e5e7eb", background: "white" },
     selected:  { borderColor: "#6366f1", background: "#eef2ff" },
     correct:   { borderColor: "#16a34a", background: "#f0fdf4", cursor: "default" },
-    wrong:     { borderColor: "#dc2626", background: "#fef2f2", cursor: "default" },
+    wrong:     { borderColor: "#D97706", background: "#fef2f2", cursor: "default" },
   };
   return { ...base, ...variants[state] };
 }
@@ -76,7 +76,7 @@ function getLabelStyle(state: OptionState): React.CSSProperties {
     default:  { borderColor: "#d1d5db", color: "#6b7280" },
     selected: { borderColor: "#6366f1", color: "#6366f1" },
     correct:  { borderColor: "#16a34a", color: "#15803d", background: "#dcfce7" },
-    wrong:    { borderColor: "#dc2626", color: "#b91c1c", background: "#fee2e2" },
+    wrong:    { borderColor: "#D97706", color: "#b91c1c", background: "#fee2e2" },
   };
   return { ...base, ...variants[state] };
 }
@@ -169,7 +169,7 @@ function SingleQuestion({
               <span style={{ marginLeft: "auto", color: "#16a34a", fontSize: "16px" }}>✓</span>
             )}
             {revealed && opt.label === selected && opt.label !== question.correctAnswer && (
-              <span style={{ marginLeft: "auto", color: "#dc2626", fontSize: "16px" }}>✗</span>
+              <span style={{ marginLeft: "auto", color: "#D97706", fontSize: "16px" }}>✗</span>
             )}
           </div>
         );
@@ -279,7 +279,7 @@ function SessionResultsBanner({
                     fontSize: "11px",
                     padding: "3px 10px",
                     borderRadius: "20px",
-                    border: "1px solid #dc2626",
+                    border: "1px solid #D97706",
                     background: "transparent",
                     color: "#b91c1c",
                     cursor: "pointer",

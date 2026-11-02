@@ -21,6 +21,34 @@ _env_path = os.path.join(_root_dir, ".env")
 if os.path.exists(_env_path):
     load_dotenv(_env_path, override=True)
 
+# Offline unless LEARNGENIE_LIVE_TESTS=1: no real keys, database or outbound network.
+LIVE_TESTS = os.environ.get("LEARNGENIE_LIVE_TESTS") == "1"
+_NEEDS_LIVE_SUPABASE = {
+    "test_profile_restart_persistence_from_authoritative_database",
+    "test_legacy_profile_exam_target_synchronization",
+    "test_database_rls_blocks_anon_client",
+    "test_real_database_rls_live_postgres",  # Connects to the real Supabase project.
+    "test_end_to_end_pipeline_speed_benchmark",  # Times the full slide pipeline on live LLMs.
+}
+if not LIVE_TESTS:
+    os.environ["SUPABASE_OFFLINE_MODE"] = "true"
+    for _name in ("GEMINI_API_KEY", "GEMINI_IMAGE_API_KEY", "GROQ_API_KEY", "OPENROUTER_API_KEY", "CEREBRAS_API_KEY"):
+        os.environ[_name] = "offline-test-key"
+    for _name in ("GEMINI_API_KEYS", "GROQ_API_KEYS", "OPENROUTER_API_KEYS", "CEREBRAS_API_KEYS"):
+        os.environ[_name] = "offline-test-key"
+
+    import socket as _socket
+
+    _real_connect = _socket.socket.connect
+
+    def _loopback_only(self, address):
+        host = address[0] if isinstance(address, tuple) else address
+        if isinstance(host, str) and host not in ("127.0.0.1", "::1", "localhost"):
+            raise ConnectionRefusedError(f"Outbound network is blocked during tests: {host}")
+        return _real_connect(self, address)
+
+    _socket.socket.connect = _loopback_only
+
 # Preserve the real API keys loaded from .env
 _PROTECTED_KEY_NAMES = [
     "GEMINI_API_KEY",
@@ -41,6 +69,19 @@ _PROTECTED_KEY_NAMES = [
 ]
 os.environ.setdefault("CANARY_VAULT_MASTER_KEY", "teachgenie_test_vault_master_key_2026_aes_gcm_pytest")
 _REAL_ENV_KEYS = {k: os.environ[k] for k in _PROTECTED_KEY_NAMES if k in os.environ and os.environ[k] != "placeholder"}
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "live: needs real providers or Supabase (LEARNGENIE_LIVE_TESTS=1)")
+
+
+def pytest_collection_modifyitems(config, items):
+    if LIVE_TESTS:
+        return
+    skip = pytest.mark.skip(reason="Needs real services; run with LEARNGENIE_LIVE_TESTS=1")
+    for item in items:
+        if "live" in item.keywords or item.name in _NEEDS_LIVE_SUPABASE:
+            item.add_marker(skip)
 
 
 def _restore_env_and_settings():
@@ -127,3 +168,33 @@ def live_quiz_persistence_controller(request):
         repo.set_persistence_enabled(True)
     except Exception:
         yield
+
+
+@pytest.fixture(autouse=True)
+def fake_providers_for_contract_tests(request, monkeypatch):
+    """Provider and router tests check our call contract offline, against canned replies."""
+    if LIVE_TESTS or request.module.__name__.rsplit(".", 1)[-1] != "test_provider_credentials_health":
+        yield
+        return
+    from app.services.ai.base import LLMResponse
+    from app.services.ai.providers.gemini import GeminiProvider
+    from app.services.ai.providers.groq import GroqProvider
+    from app.services.ai.providers.openrouter import OpenRouterProvider
+    for cls, name in ((GroqProvider, "groq"), (GeminiProvider, "gemini"), (OpenRouterProvider, "openrouter")):
+        async def text(self, messages, *args, _name=name, **kwargs):
+            return LLMResponse(text="VERIFIED", provider=_name, model="fake")
+        async def as_json(self, messages, *args, _name=name, **kwargs):
+            return {"healthy": True, "provider": _name, "tier": 1, "status": "success"}
+        monkeypatch.setattr(cls, "generate_text", text)
+        monkeypatch.setattr(cls, "generate_json", as_json)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def legacy_portal_gates_satisfied(request, monkeypatch):
+    """Older portal tests predate MFA and consent; those gates have their own negative tests."""
+    if request.module.__name__.rsplit(".", 1)[-1] in ("test_institutional_portals_and_gamification", "test_production_foundation_remediation"):
+        from app.modules.privacy import mfa, service as privacy
+        monkeypatch.setattr(mfa, "has_valid_token", lambda user_id, token: True)
+        monkeypatch.setattr(privacy, "has_consent", lambda student_id, purpose: True)
+    yield

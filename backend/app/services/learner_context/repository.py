@@ -7,6 +7,7 @@ deterministic versioning, profile completeness calculations, and fallback store.
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 import copy
+import os
 import threading
 
 from fastapi import HTTPException, status
@@ -25,6 +26,17 @@ from app.services.learner_context.academic_catalog import (
 # Thread-safe in-memory cache/store for test isolation and offline resilience
 _MEMORY_STORE: Dict[str, Dict[str, Any]] = {}
 _STORE_LOCK = threading.Lock()
+
+
+def _explicit_offline_mode() -> bool:
+    """In-memory writes are allowed only when asked for, and never in production.
+
+    A database outage in any other mode still returns 503 rather than a false success.
+    """
+    from app.core.config import settings
+
+    offline = os.environ.get("SUPABASE_OFFLINE_MODE", "").lower() in ("true", "1")
+    return offline and (settings.ENVIRONMENT or "").lower().strip() != "production"
 
 
 def calculate_profile_completeness(data: Dict[str, Any]) -> ProfileCompleteness:
@@ -148,6 +160,10 @@ class LearnerProfileRepository:
             record["updated_at"] = now_iso
 
         # Authoritative persistence: must NOT return fake in-memory success if database storage is unavailable
+        if supabase is None and _explicit_offline_mode():
+            with _STORE_LOCK:
+                _MEMORY_STORE[user_id] = copy.deepcopy(record)
+            return record
         if supabase is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

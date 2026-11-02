@@ -449,7 +449,7 @@ interface LessonHealthReport {
       case 'diagnostic_check':
         return 'bg-orange-100 text-orange-900 border-orange-300';
       case 'remediation':
-        return 'bg-red-100 text-red-900 border-red-300';
+        return 'bg-amber-100 text-amber-900 border-amber-300';
       default:
         return 'bg-[var(--accent-baby)]/30 text-[var(--accent-royal)] border-[var(--border)]';
     }
@@ -1277,7 +1277,7 @@ interface LessonHealthReport {
         return { icon: PlayCircle, label: 'Ready to teach', cls: 'bg-[var(--accent-green-light)] text-[var(--accent-green-text)] border-[var(--accent-green)]' };
       case 'blocked':
       case 'needs_review':
-        return { icon: AlertTriangle, label: 'Needs review', cls: 'bg-red-100 text-red-800 border-red-200' };
+        return { icon: AlertTriangle, label: 'Needs review', cls: 'bg-amber-100 text-amber-900 border-amber-200' };
       default:
         return { icon: Lock, label: 'Locked', cls: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)]' };
     }
@@ -1411,7 +1411,7 @@ interface LessonHealthReport {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               role="alert"
-              className="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
             >
               <span className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -1421,7 +1421,7 @@ interface LessonHealthReport {
                 type="button"
                 onClick={() => setErrorNotification(null)}
                 aria-label="Dismiss error"
-                className="ml-4 rounded p-0.5 hover:bg-red-100"
+                className="ml-4 rounded p-0.5 hover:bg-amber-100"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -2422,7 +2422,7 @@ interface LessonHealthReport {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-900">
                     <Video className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <div>
@@ -2497,7 +2497,7 @@ interface LessonHealthReport {
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center bg-gray-900 text-white">
-                                <Video className="h-8 w-8 text-red-500" />
+                                <Video className="h-8 w-8 text-amber-900" />
                               </div>
                             )}
                             {item.duration && (
@@ -2557,7 +2557,7 @@ interface LessonHealthReport {
                                 href={item.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-red-700"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-amber-700"
                               >
                                 <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
                                 Watch on YouTube

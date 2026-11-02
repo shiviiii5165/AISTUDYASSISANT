@@ -84,7 +84,7 @@ const JoinLiveQuizPage: React.FC = () => {
           aria-label={isMuted ? 'Unmute sound' : 'Mute sound'}
           className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] shadow-sm transition-colors hover:bg-[var(--bg-hover)]"
         >
-          {isMuted ? <VolumeX className="h-5 w-5 text-red-600" /> : <Volume2 className="h-5 w-5 text-[var(--accent-green-text)]" />}
+          {isMuted ? <VolumeX className="h-5 w-5 text-amber-900" /> : <Volume2 className="h-5 w-5 text-[var(--accent-green-text)]" />}
         </button>
       </div>
 
@@ -183,9 +183,9 @@ const JoinLiveQuizPage: React.FC = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-xs font-medium text-red-800"
+                className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-900"
               >
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <AlertCircle className="h-4 w-4 shrink-0 text-amber-900" />
                 <span>{error}</span>
               </motion.div>
             )}

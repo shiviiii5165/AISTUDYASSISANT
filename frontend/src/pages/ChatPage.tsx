@@ -7,6 +7,7 @@ import { Send, FileText, Loader2, ChevronDown, Sparkles } from 'lucide-react';
 import { fetchPdfs, askQuestion, sendMessageV2 } from '../lib/api';
 import type { PDFDocument, ChatMessage, ChatSource, PipelineOutput } from '../lib/api';
 import AppLayout from '../components/AppLayout';
+import { ActivityDrawer } from '../components/activities/ActivitySelector';
 import SEO from '../components/SEO';
 import VoiceInputButton from '../components/voice/VoiceInputButton';
 import { useAuthStore } from '../store/useAuthStore';
@@ -447,6 +448,7 @@ const ChatPage: React.FC = () => {
 
   return (
     <AppLayout title="Study Assistant">
+      <ActivityDrawer />
       <SEO
         title="AI Chat | LearnByGenie"
         description="Chat directly with your documents. Get instant answers, summaries, and personalized learning support."
@@ -607,7 +609,7 @@ const ChatPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setMessages([])}
-                  className="rounded text-xs font-medium text-[var(--text-secondary)] transition-colors hover:text-red-700"
+                  className="rounded text-xs font-medium text-[var(--text-secondary)] transition-colors hover:text-amber-900"
                 >
                   Clear chat
                 </button>

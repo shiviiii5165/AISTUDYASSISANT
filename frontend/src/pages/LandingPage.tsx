@@ -50,7 +50,7 @@ const PillCard = ({
   icon: React.ElementType;
   label: string;
 }) => (
-  <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-[#1B2CC1] shadow-md backdrop-blur-sm">
+  <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-[#1E3A8A] shadow-md backdrop-blur-sm">
     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
     {label}
   </span>
@@ -165,26 +165,26 @@ const LandingPage: React.FC = () => {
             className="flex shrink-0 items-center gap-2.5 rounded-lg"
             aria-label="LearnByGenie home"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1B2CC1]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E3A8A]">
               <img src="/assets/genie-default.png" alt="" width={20} height={20} className="h-5 w-5 object-contain brightness-0 invert" />
             </div>
-            <span className="font-display text-base font-bold tracking-tight text-[#091540]">
+            <span className="font-display text-base font-bold tracking-tight text-[#0F172A]">
               LearnByGenie
             </span>
           </Link>
 
           {/* Minimal text links (Teak pattern) */}
           <div className="hidden items-center gap-1 md:flex">
-            <Link to="/pricing" className="rounded-lg px-3 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#091540]">
+            <Link to="/pricing" className="rounded-lg px-3 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#0F172A]">
               Pricing
             </Link>
-            <Link to="/support" className="rounded-lg px-3 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#091540]">
+            <Link to="/support" className="rounded-lg px-3 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#0F172A]">
               Support
             </Link>
             <button
               type="button"
               onClick={goToAuth}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#091540]"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#0F172A]"
             >
               Log in
             </button>
@@ -195,7 +195,7 @@ const LandingPage: React.FC = () => {
             <button
               type="button"
               onClick={goToAuth}
-              className="rounded-full bg-[#1B2CC1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#091540] hover:shadow-md active:scale-[0.98]"
+              className="rounded-full bg-[#1E3A8A] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#0F172A] hover:shadow-md active:scale-[0.98]"
             >
               Start free
             </button>
@@ -218,7 +218,7 @@ const LandingPage: React.FC = () => {
                     initial={reduce ? false : { opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, ease: EASE }}
-                    className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#ABD2FA]/40 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#1B2CC1]"
+                    className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#ABD2FA]/40 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#1E3A8A]"
                   >
                     <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                     AI-Powered Study Assistant
@@ -228,10 +228,10 @@ const LandingPage: React.FC = () => {
                     initial={reduce ? false : { opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.65, delay: 0.08, ease: EASE }}
-                    className="font-display text-5xl font-bold leading-[1.05] tracking-tight text-[#091540] sm:text-6xl lg:text-7xl"
+                    className="font-display text-5xl font-bold leading-[1.05] tracking-tight text-[#0F172A] sm:text-6xl lg:text-7xl"
                   >
                     Study from your notes.{' '}
-                    <span className="text-[#1B2CC1]">Teach from them too.</span>
+                    <span className="text-[#1E3A8A]">Teach from them too.</span>
                   </motion.h1>
 
                   <motion.p
@@ -254,7 +254,7 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={goToAuth}
-                        className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1B2CC1] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#1B2CC1]/30 transition-all duration-200 hover:bg-[#091540] hover:shadow-xl hover:shadow-[#091540]/20 active:scale-[0.98]"
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1E3A8A] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#1E3A8A]/30 transition-all duration-200 hover:bg-[#0F172A] hover:shadow-xl hover:shadow-[#0F172A]/20 active:scale-[0.98]"
                       >
                         Start free
                         <ArrowRight className="h-5 w-5" aria-hidden="true" />
@@ -262,7 +262,7 @@ const LandingPage: React.FC = () => {
                     </MagneticButton>
                     <a
                       href="#how-it-works"
-                      className="inline-flex items-center justify-center rounded-full border border-[rgba(9,21,64,0.2)] px-8 py-4 text-base font-semibold text-[#091540] transition-colors hover:bg-[#ABD2FA]/20"
+                      className="inline-flex items-center justify-center rounded-full border border-[rgba(9,21,64,0.2)] px-8 py-4 text-base font-semibold text-[#0F172A] transition-colors hover:bg-[#ABD2FA]/20"
                     >
                       See how it works
                     </a>
@@ -307,7 +307,7 @@ const LandingPage: React.FC = () => {
                               <div class="flex flex-col gap-4 p-6">
                                 <div class="h-8 w-48 rounded-lg bg-[#ABD2FA]/50"></div>
                                 <div class="grid grid-cols-3 gap-3">
-                                  ${[1,2,3].map(() => `<div class="h-24 rounded-xl bg-white border border-[rgba(9,21,64,0.08)] shadow-sm p-3"><div class="h-3 w-16 rounded bg-[#ABD2FA]/60 mb-2"></div><div class="h-6 w-10 rounded bg-[#1B2CC1]/20"></div></div>`).join('')}
+                                  ${[1,2,3].map(() => `<div class="h-24 rounded-xl bg-white border border-[rgba(9,21,64,0.08)] shadow-sm p-3"><div class="h-3 w-16 rounded bg-[#ABD2FA]/60 mb-2"></div><div class="h-6 w-10 rounded bg-[#1E3A8A]/20"></div></div>`).join('')}
                                 </div>
                                 <div class="h-32 rounded-xl bg-white border border-[rgba(9,21,64,0.08)] shadow-sm p-4">
                                   <div class="h-3 w-full rounded bg-[#F3F4F6] mb-2"></div>
@@ -327,11 +327,11 @@ const LandingPage: React.FC = () => {
 
             {/* Wave: cream → royal blue */}
             <div className="wave-divider">
-              <WaveDivider fromColor="#FAFAF8" toColor="#1B2CC1" />
+              <WaveDivider fromColor="#FAFAF8" toColor="#1E3A8A" />
             </div>
 
             {/* ══ SECTION 2: How it works — royal blue band ══ */}
-            <section id="how-it-works" className="bg-[#1B2CC1] py-20 md:py-28">
+            <section id="how-it-works" className="bg-[#1E3A8A] py-20 md:py-28">
               <div className="mx-auto max-w-6xl px-4 md:px-6">
                 <div className="gsap-reveal mb-4 text-center">
                   <span className="rounded-full bg-white/20 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white">
@@ -370,13 +370,13 @@ const LandingPage: React.FC = () => {
 
             {/* Wave: royal blue → cream */}
             <div className="wave-divider">
-              <WaveDivider fromColor="#1B2CC1" toColor="#FAFAF8" flip />
+              <WaveDivider fromColor="#1E3A8A" toColor="#FAFAF8" flip />
             </div>
 
             {/* ══ SECTION 3: Two audiences — cream ══ */}
             <section className="bg-[#FAFAF8] py-20 md:py-28">
               <div className="mx-auto max-w-6xl px-4 md:px-6">
-                <h2 className="gsap-reveal font-display max-w-[24ch] text-3xl font-bold tracking-tight text-[#091540] sm:text-4xl">
+                <h2 className="gsap-reveal font-display max-w-[24ch] text-3xl font-bold tracking-tight text-[#0F172A] sm:text-4xl">
                   Two jobs, one set of material
                 </h2>
 
@@ -385,14 +385,14 @@ const LandingPage: React.FC = () => {
                   <div className="gsap-reveal rounded-2xl border border-[rgba(9,21,64,0.08)] bg-white p-7 shadow-[0_4px_20px_-2px_rgba(9,21,64,0.05)] md:p-8">
                     <div className="mb-6 flex items-center gap-3">
                       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#ABD2FA]/40">
-                        <ListChecks className="h-5 w-5 text-[#1B2CC1]" aria-hidden="true" />
+                        <ListChecks className="h-5 w-5 text-[#1E3A8A]" aria-hidden="true" />
                       </span>
-                      <h3 className="font-display text-xl font-semibold text-[#091540]">If you are studying</h3>
+                      <h3 className="font-display text-xl font-semibold text-[#0F172A]">If you are studying</h3>
                     </div>
                     <ul className="space-y-4">
                       {studentPoints.map((point) => (
                         <li key={point} className="flex gap-3 text-sm leading-relaxed text-[#6B7280]">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1B2CC1]" aria-hidden="true" />
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1E3A8A]" aria-hidden="true" />
                           {point}
                         </li>
                       ))}
@@ -403,21 +403,21 @@ const LandingPage: React.FC = () => {
                   <div className="gsap-reveal rounded-2xl border border-[rgba(9,21,64,0.08)] bg-white p-7 shadow-[0_4px_20px_-2px_rgba(9,21,64,0.05)] md:p-8">
                     <div className="mb-6 flex items-center gap-3">
                       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#ABD2FA]/40">
-                        <Map className="h-5 w-5 text-[#1B2CC1]" aria-hidden="true" />
+                        <Map className="h-5 w-5 text-[#1E3A8A]" aria-hidden="true" />
                       </span>
-                      <h3 className="font-display text-xl font-semibold text-[#091540]">If you are teaching</h3>
+                      <h3 className="font-display text-xl font-semibold text-[#0F172A]">If you are teaching</h3>
                     </div>
                     <ul className="space-y-4">
                       {teacherPoints.map((point) => (
                         <li key={point} className="flex gap-3 text-sm leading-relaxed text-[#6B7280]">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1B2CC1]" aria-hidden="true" />
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1E3A8A]" aria-hidden="true" />
                           {point}
                         </li>
                       ))}
                     </ul>
                     <div className="mt-6 flex flex-wrap gap-2 border-t border-[rgba(9,21,64,0.08)] pt-5">
                       {[{ icon: Map, label: 'Lesson planner' }, { icon: Presentation, label: 'Slide decks' }, { icon: Video, label: 'Video lessons' }].map((t) => (
-                        <span key={t.label} className="inline-flex items-center gap-1.5 rounded-full bg-[#ABD2FA]/30 px-3 py-1.5 text-xs font-semibold text-[#1B2CC1]">
+                        <span key={t.label} className="inline-flex items-center gap-1.5 rounded-full bg-[#ABD2FA]/30 px-3 py-1.5 text-xs font-semibold text-[#1E3A8A]">
                           <t.icon className="h-3.5 w-3.5" aria-hidden="true" />
                           {t.label}
                         </span>
@@ -447,8 +447,8 @@ const LandingPage: React.FC = () => {
 
                 <div className="mt-14 grid auto-rows-[280px] grid-flow-dense grid-cols-1 gap-5 md:grid-cols-6">
                   {/* Hero bento cell — navy bg, spans 4 cols 2 rows */}
-                  <div className="gsap-reveal relative flex flex-col justify-end overflow-hidden rounded-2xl bg-[#091540] p-8 md:col-span-4 md:row-span-2 md:p-10">
-                    <div className="absolute -right-8 -top-8 h-56 w-56 rounded-full bg-[#1B2CC1]/40 blur-3xl" />
+                  <div className="gsap-reveal relative flex flex-col justify-end overflow-hidden rounded-2xl bg-[#0F172A] p-8 md:col-span-4 md:row-span-2 md:p-10">
+                    <div className="absolute -right-8 -top-8 h-56 w-56 rounded-full bg-[#1E3A8A]/40 blur-3xl" />
                     <FileText className="mb-5 h-9 w-9 text-[#ABD2FA]" aria-hidden="true" />
                     <h3 className="font-display text-3xl font-bold leading-tight text-white md:text-4xl">
                       The page number comes with the answer
@@ -462,8 +462,8 @@ const LandingPage: React.FC = () => {
 
                   {/* Handwritten notes — white card */}
                   <div className="gsap-reveal flex flex-col rounded-2xl bg-white p-7 md:col-span-2">
-                    <PenLine className="mb-4 h-7 w-7 text-[#1B2CC1]" aria-hidden="true" />
-                    <h3 className="font-display text-xl font-bold text-[#091540]">Handwritten notes work</h3>
+                    <PenLine className="mb-4 h-7 w-7 text-[#1E3A8A]" aria-hidden="true" />
+                    <h3 className="font-display text-xl font-bold text-[#0F172A]">Handwritten notes work</h3>
                     <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
                       Photograph a page of your own writing and ask questions against it.
                     </p>
@@ -471,8 +471,8 @@ const LandingPage: React.FC = () => {
 
                   {/* Practice questions */}
                   <div className="gsap-reveal flex flex-col rounded-2xl bg-white p-7 md:col-span-2">
-                    <ListChecks className="mb-4 h-7 w-7 text-[#1B2CC1]" aria-hidden="true" />
-                    <h3 className="font-display text-xl font-bold text-[#091540]">Practice questions</h3>
+                    <ListChecks className="mb-4 h-7 w-7 text-[#1E3A8A]" aria-hidden="true" />
+                    <h3 className="font-display text-xl font-bold text-[#0F172A]">Practice questions</h3>
                     <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
                       Multiple choice sets built from your material, not from a generic question bank.
                     </p>
@@ -480,8 +480,8 @@ const LandingPage: React.FC = () => {
 
                   {/* Slide decks */}
                   <div className="gsap-reveal flex flex-col rounded-2xl bg-white/90 p-7 md:col-span-3">
-                    <Presentation className="mb-4 h-7 w-7 text-[#1B2CC1]" aria-hidden="true" />
-                    <h3 className="font-display text-xl font-bold text-[#091540]">Decks with speaker notes</h3>
+                    <Presentation className="mb-4 h-7 w-7 text-[#1E3A8A]" aria-hidden="true" />
+                    <h3 className="font-display text-xl font-bold text-[#0F172A]">Decks with speaker notes</h3>
                     <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
                       Ten to fifteen slides, six themes, downloadable as PPTX.
                     </p>
@@ -489,9 +489,9 @@ const LandingPage: React.FC = () => {
 
                   {/* Lesson plans */}
                   <div className="gsap-reveal flex flex-col rounded-2xl bg-[#ABD2FA]/30 p-7 md:col-span-3">
-                    <Map className="mb-4 h-7 w-7 text-[#1B2CC1]" aria-hidden="true" />
-                    <h3 className="font-display text-xl font-bold text-[#091540]">Plans that sequence themselves</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-[#091540]/70">
+                    <Map className="mb-4 h-7 w-7 text-[#1E3A8A]" aria-hidden="true" />
+                    <h3 className="font-display text-xl font-bold text-[#0F172A]">Plans that sequence themselves</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[#0F172A]/70">
                       Stages ordered by prerequisite, each with its own timing and checkpoint.
                     </p>
                   </div>
@@ -509,7 +509,7 @@ const LandingPage: React.FC = () => {
               <div className="mx-auto max-w-6xl px-4 md:px-6">
                 <div className="grid grid-cols-1 gap-y-10 lg:grid-cols-12 lg:gap-x-16">
                   <div className="lg:col-span-4">
-                    <h2 className="gsap-reveal font-display text-2xl font-bold leading-tight tracking-tight text-[#091540] sm:text-3xl lg:sticky lg:top-24">
+                    <h2 className="gsap-reveal font-display text-2xl font-bold leading-tight tracking-tight text-[#0F172A] sm:text-3xl lg:sticky lg:top-24">
                       Questions people ask first
                     </h2>
                   </div>
@@ -525,9 +525,9 @@ const LandingPage: React.FC = () => {
                               aria-expanded={isOpen}
                               aria-controls={`faq-answer-${i}`}
                               id={`faq-question-${i}`}
-                              className="flex w-full items-center justify-between gap-6 py-5 text-left transition-colors hover:text-[#1B2CC1]"
+                              className="flex w-full items-center justify-between gap-6 py-5 text-left transition-colors hover:text-[#1E3A8A]"
                             >
-                              <span className="font-display text-base font-semibold text-[#091540] sm:text-lg">
+                              <span className="font-display text-base font-semibold text-[#0F172A] sm:text-lg">
                                 {faq.q}
                               </span>
                               {isOpen ? (
@@ -557,11 +557,11 @@ const LandingPage: React.FC = () => {
 
             {/* Wave: cream → navy */}
             <div className="wave-divider">
-              <WaveDivider fromColor="#FAFAF8" toColor="#091540" />
+              <WaveDivider fromColor="#FAFAF8" toColor="#0F172A" />
             </div>
 
             {/* ══ SECTION 6: Closing CTA — deep navy ══ */}
-            <section className="bg-[#091540]">
+            <section className="bg-[#0F172A]">
               <div className="mx-auto max-w-6xl px-4 pb-28 pt-24 md:px-6 md:pb-36 md:pt-32">
                 <div className="grid grid-cols-1 items-end gap-10 lg:grid-cols-12">
                   <h2 className="gsap-reveal font-display max-w-[14ch] text-4xl font-bold leading-[1.0] tracking-[-0.03em] text-white sm:text-5xl lg:col-span-7 lg:text-6xl">
@@ -575,7 +575,7 @@ const LandingPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={goToAuth}
-                        className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#091540] transition-all duration-200 hover:bg-[#ABD2FA] active:scale-[0.98]"
+                        className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-[#0F172A] transition-all duration-200 hover:bg-[#ABD2FA] active:scale-[0.98]"
                       >
                         Start free
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -594,10 +594,10 @@ const LandingPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                 <div className="col-span-2 md:col-span-1">
                   <div className="mb-3 flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#1B2CC1]">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#1E3A8A]">
                       <img src="/logo.png" alt="" width={16} height={16} className="h-4 w-4 object-contain brightness-0 invert" />
                     </div>
-                    <span className="font-display text-base font-bold text-[#091540]">LearnByGenie</span>
+                    <span className="font-display text-base font-bold text-[#0F172A]">LearnByGenie</span>
                   </div>
                   <p className="max-w-[30ch] text-sm leading-relaxed text-[#6B7280]">
                     Study and teaching tools that work from the material you already have.
@@ -605,31 +605,31 @@ const LandingPage: React.FC = () => {
                 </div>
 
                 <nav aria-label="Features">
-                  <h2 className="mb-3 text-sm font-semibold text-[#091540]">Features</h2>
+                  <h2 className="mb-3 text-sm font-semibold text-[#0F172A]">Features</h2>
                   <ul className="space-y-2 text-sm text-[#6B7280]">
-                    <li><Link to="/pdf-chat-ai" className="transition-colors hover:text-[#1B2CC1]">Chat with PDF</Link></li>
-                    <li><Link to="/mcq-generator" className="transition-colors hover:text-[#1B2CC1]">MCQ generator</Link></li>
-                    <li><Link to="/doubt-solver" className="transition-colors hover:text-[#1B2CC1]">Doubt solver</Link></li>
-                    <li><Link to="/exam-preparation-ai" className="transition-colors hover:text-[#1B2CC1]">Exam prep AI</Link></li>
+                    <li><Link to="/pdf-chat-ai" className="transition-colors hover:text-[#1E3A8A]">Chat with PDF</Link></li>
+                    <li><Link to="/mcq-generator" className="transition-colors hover:text-[#1E3A8A]">MCQ generator</Link></li>
+                    <li><Link to="/doubt-solver" className="transition-colors hover:text-[#1E3A8A]">Doubt solver</Link></li>
+                    <li><Link to="/exam-preparation-ai" className="transition-colors hover:text-[#1E3A8A]">Exam prep AI</Link></li>
                   </ul>
                 </nav>
 
                 <nav aria-label="Resources">
-                  <h2 className="mb-3 text-sm font-semibold text-[#091540]">Resources</h2>
+                  <h2 className="mb-3 text-sm font-semibold text-[#0F172A]">Resources</h2>
                   <ul className="space-y-2 text-sm text-[#6B7280]">
-                    <li><Link to="/ai-tutor-for-students" className="transition-colors hover:text-[#1B2CC1]">AI tutor for students</Link></li>
-                    <li><Link to="/blog" className="transition-colors hover:text-[#1B2CC1]">Blog</Link></li>
-                    <li><Link to="/pricing" className="transition-colors hover:text-[#1B2CC1]">Pricing</Link></li>
-                    <li><Link to="/support" className="transition-colors hover:text-[#1B2CC1]">Support</Link></li>
+                    <li><Link to="/ai-tutor-for-students" className="transition-colors hover:text-[#1E3A8A]">AI tutor for students</Link></li>
+                    <li><Link to="/blog" className="transition-colors hover:text-[#1E3A8A]">Blog</Link></li>
+                    <li><Link to="/pricing" className="transition-colors hover:text-[#1E3A8A]">Pricing</Link></li>
+                    <li><Link to="/support" className="transition-colors hover:text-[#1E3A8A]">Support</Link></li>
                   </ul>
                 </nav>
 
                 <nav aria-label="Legal">
-                  <h2 className="mb-3 text-sm font-semibold text-[#091540]">Legal</h2>
+                  <h2 className="mb-3 text-sm font-semibold text-[#0F172A]">Legal</h2>
                   <ul className="space-y-2 text-sm text-[#6B7280]">
-                    <li><Link to="/privacy-policy" className="transition-colors hover:text-[#1B2CC1]">Privacy policy</Link></li>
-                    <li><Link to="/terms-of-service" className="transition-colors hover:text-[#1B2CC1]">Terms of service</Link></li>
-                    <li><Link to="/cookie-policy" className="transition-colors hover:text-[#1B2CC1]">Cookie policy</Link></li>
+                    <li><Link to="/privacy-policy" className="transition-colors hover:text-[#1E3A8A]">Privacy policy</Link></li>
+                    <li><Link to="/terms-of-service" className="transition-colors hover:text-[#1E3A8A]">Terms of service</Link></li>
+                    <li><Link to="/cookie-policy" className="transition-colors hover:text-[#1E3A8A]">Cookie policy</Link></li>
                   </ul>
                 </nav>
               </div>

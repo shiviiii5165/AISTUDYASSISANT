@@ -16,7 +16,7 @@ import { motion } from 'framer-motion';
 const STATUS_STYLES: Record<string, string> = {
   ready: 'bg-[var(--accent-baby)] text-[var(--accent-royal)]',
   processing: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]',
-  error: 'bg-red-100 text-red-700',
+  error: 'bg-amber-100 text-amber-900',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -283,7 +283,7 @@ const LibraryPage: React.FC = () => {
           </div>
 
           {error && (
-            <p role="alert" className="mt-3 text-sm font-medium text-red-700">
+            <p role="alert" className="mt-3 text-sm font-medium text-amber-900">
               {error}
             </p>
           )}
@@ -400,12 +400,12 @@ const LibraryPage: React.FC = () => {
                             onClick={(e) => handleDelete(pdf.id, e)}
                             disabled={deletingId === pdf.id}
                             aria-label={`Delete ${pdf.name}`}
-                            className="rounded-lg p-2 transition-colors bg-white shadow-sm hover:bg-red-50 border border-[var(--border)]"
+                            className="rounded-lg p-2 transition-colors bg-white shadow-sm hover:bg-amber-50 border border-[var(--border)]"
                           >
                             {deletingId === pdf.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-700" aria-hidden="true" />
+                              <Loader2 className="h-4 w-4 animate-spin text-amber-900" aria-hidden="true" />
                             ) : (
-                              <Trash2 className="h-4 w-4 text-red-700" aria-hidden="true" />
+                              <Trash2 className="h-4 w-4 text-rose-800" aria-hidden="true" />
                             )}
                           </button>
                         </div>

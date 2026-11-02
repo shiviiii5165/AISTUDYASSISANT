@@ -314,10 +314,10 @@ const LiveQuizHostPage: React.FC = () => {
   if (error || !session) {
     return (
       <AppLayout title="Live Quiz Host Dashboard">
-        <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <AlertTriangle className="mx-auto h-8 w-8 text-red-600" />
-          <h2 className="mt-2 text-lg font-bold text-red-900">Session Error</h2>
-          <p className="mt-1 text-sm text-red-800">{error || 'Could not load session'}</p>
+        <div className="mx-auto mt-12 max-w-lg rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <AlertTriangle className="mx-auto h-8 w-8 text-amber-900" />
+          <h2 className="mt-2 text-lg font-bold text-amber-900">Session Error</h2>
+          <p className="mt-1 text-sm text-amber-900">{error || 'Could not load session'}</p>
           <button
             onClick={() => navigate('/quizzes')}
             className="mt-4 rounded-xl bg-[var(--accent-royal)] px-4 py-2 font-semibold text-white"
@@ -411,7 +411,7 @@ const LiveQuizHostPage: React.FC = () => {
 
                 <button
                   onClick={() => setShowEndModal(true)}
-                  className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-100"
+                  className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-900 hover:bg-amber-100"
                 >
                   <X className="h-4 w-4" />
                   <span>End Session</span>
@@ -440,8 +440,8 @@ const LiveQuizHostPage: React.FC = () => {
             <div className="text-2xl font-black text-amber-600 mt-1">{Math.max(0, totalStudents - responseCount)}</div>
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center">
-            <div className="text-xs font-bold uppercase tracking-wider text-red-600">Flagged</div>
-            <div className="text-2xl font-black text-red-600 mt-1">{summary?.flagged_count ?? 0}</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-amber-900">Flagged</div>
+            <div className="text-2xl font-black text-amber-900 mt-1">{summary?.flagged_count ?? 0}</div>
           </div>
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center">
             <div className="text-xs font-bold uppercase tracking-wider text-purple-600">Banned</div>
@@ -578,9 +578,9 @@ const LiveQuizHostPage: React.FC = () => {
                       <div className="font-bold text-green-800 text-sm">{interventionResult.comparison.correct_concept.heading}</div>
                       <div className="mt-1 text-xs text-green-700">{interventionResult.comparison.correct_concept.text}</div>
                     </div>
-                    <div className="rounded-xl border border-red-500/30 bg-red-50/50 p-4">
-                      <div className="font-bold text-red-800 text-sm">{interventionResult.comparison.common_misconception.heading}</div>
-                      <div className="mt-1 text-xs text-red-700">{interventionResult.comparison.common_misconception.text}</div>
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-50/50 p-4">
+                      <div className="font-bold text-amber-900 text-sm">{interventionResult.comparison.common_misconception.heading}</div>
+                      <div className="mt-1 text-xs text-amber-900">{interventionResult.comparison.common_misconception.text}</div>
                     </div>
                   </div>
                 )}
@@ -670,7 +670,7 @@ const LiveQuizHostPage: React.FC = () => {
                       <tr
                         key={p.id}
                         className={`hover:bg-[var(--bg-hover)] transition-colors ${
-                          isBanned ? 'bg-red-500/5' : ''
+                          isBanned ? 'bg-amber-500/5' : ''
                         }`}
                       >
                         <td className="py-3 px-4 font-bold flex items-center gap-2">
@@ -696,7 +696,7 @@ const LiveQuizHostPage: React.FC = () => {
                         </td>
                         <td className="py-3 px-4 text-xs">
                           <span className={`inline-flex rounded-full px-2 py-0.5 font-bold uppercase text-[10px] ${
-                            risk === 'high' ? 'bg-red-100 text-red-800' :
+                            risk === 'high' ? 'bg-amber-100 text-amber-900' :
                             risk === 'medium' ? 'bg-amber-100 text-amber-800' :
                             'bg-green-100 text-green-800'
                           }`}>
@@ -720,7 +720,7 @@ const LiveQuizHostPage: React.FC = () => {
                           ) : (
                             <button
                               onClick={() => setBanModalStudent(p)}
-                              className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100"
+                              className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 hover:bg-amber-100"
                             >
                               Ban
                             </button>
@@ -775,7 +775,7 @@ const LiveQuizHostPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[var(--bg-hover)] p-4 text-xs font-semibold">
                     <div>Score: <span className="font-bold text-sm text-[var(--accent-royal)]">{studentDetail?.participant?.score} pts</span></div>
                     <div>Streak: <span className="font-bold">{studentDetail?.participant?.streak}</span></div>
-                    <div>Risk Score: <span className="font-bold text-red-600">{studentDetail?.participant?.risk_score}/100</span></div>
+                    <div>Risk Score: <span className="font-bold text-amber-900">{studentDetail?.participant?.risk_score}/100</span></div>
                     <div>Status: <span className="font-bold">{studentDetail?.participant?.connection_state}</span></div>
                   </div>
 
@@ -811,7 +811,7 @@ const LiveQuizHostPage: React.FC = () => {
                           <div key={idx} className="rounded-xl border border-[var(--border)] p-3 text-xs space-y-1">
                             <div className="flex items-center justify-between font-bold">
                               <span>Option: {resp.selected_option_id}</span>
-                              <span className={resp.is_correct ? 'text-green-600' : 'text-red-600'}>
+                              <span className={resp.is_correct ? 'text-green-600' : 'text-amber-900'}>
                                 {resp.is_correct ? 'Correct' : 'Incorrect'} (+{resp.points} pts)
                               </span>
                             </div>
@@ -839,10 +839,10 @@ const LiveQuizHostPage: React.FC = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md rounded-3xl border border-red-500/30 bg-[var(--bg-card)] p-6 shadow-2xl space-y-4"
+              className="w-full max-w-md rounded-3xl border border-amber-500/30 bg-[var(--bg-card)] p-6 shadow-2xl space-y-4"
             >
-              <div className="flex items-center gap-3 text-red-600">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+              <div className="flex items-center gap-3 text-amber-900">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
                   <Ban className="h-6 w-6" />
                 </div>
                 <div>
@@ -864,7 +864,7 @@ const LiveQuizHostPage: React.FC = () => {
                   type="text"
                   value={banReasonInput}
                   onChange={e => setBanReasonInput(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-hover)] px-3 py-2 text-sm font-semibold focus:outline-none focus:border-red-500"
+                  className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-hover)] px-3 py-2 text-sm font-semibold focus:outline-none focus:border-amber-500"
                 />
               </div>
 
@@ -878,7 +878,7 @@ const LiveQuizHostPage: React.FC = () => {
                 <button
                   onClick={handleConfirmBan}
                   disabled={banLoading}
-                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white hover:bg-red-700"
+                  className="rounded-xl bg-amber-600 px-5 py-2 text-xs font-bold text-white hover:bg-amber-700"
                 >
                   {banLoading ? 'Banning...' : 'Confirm Ban'}
                 </button>
@@ -899,7 +899,7 @@ const LiveQuizHostPage: React.FC = () => {
               className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-2xl space-y-4"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-900">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
                 <div>
@@ -919,7 +919,7 @@ const LiveQuizHostPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleEndSession}
-                  className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white hover:bg-red-700"
+                  className="rounded-xl bg-amber-600 px-5 py-2 text-xs font-bold text-white hover:bg-amber-700"
                 >
                   End Session Now
                 </button>

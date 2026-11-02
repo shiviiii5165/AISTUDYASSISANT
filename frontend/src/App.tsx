@@ -24,6 +24,7 @@ import MistakesPage from './pages/MistakesPage';
 import PracticePage from './pages/PracticePage';
 import { TransferCheckPage } from './pages/TransferCheckPage';
 import StepCheckPage from './pages/StepCheckPage';
+import LearnStudioPage from './pages/LearnStudioPage';
 
 // Specialized & Institutional Portals
 import ParentDashboard from './pages/parent/ParentDashboard';
@@ -174,8 +175,16 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/mastery" 
+          <Route
+            path="/studio"
+            element={
+              <ProtectedRoute>
+                <LearnStudioPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mastery"
             element={
               <ProtectedRoute>
                 <MasteryMapPage />

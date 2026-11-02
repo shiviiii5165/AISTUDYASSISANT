@@ -22,3 +22,6 @@ imageio-ffmpeg>=0.6.0
 numpy>=2.0.0
 matplotlib>=3.9.0
 ddgs>=9.16.0
+sympy>=1.13
+reportlab>=4.2
+redis>=5.0

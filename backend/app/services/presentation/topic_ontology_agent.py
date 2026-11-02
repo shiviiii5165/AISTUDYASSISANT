@@ -152,6 +152,12 @@ async def generate_topic_ontology(
             f"Critical Limitations, Tradeoffs & Best Practices",
         ]
 
+    if not must_include:
+        must_include = [
+            f"A clear definition of {config.topic}",
+            f"One worked example or case study of {config.topic}",
+        ]
+
     checklist = TopicOntologyChecklist(
         core_subtopics=core_subtopics,
         must_include=must_include,

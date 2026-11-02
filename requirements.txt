@@ -14,3 +14,6 @@ pydantic-settings==2.15.0
 python-pptx==1.0.2
 slowapi==0.1.10
 youtube-transcript-api
+sympy>=1.13
+reportlab>=4.2
+redis>=5.0

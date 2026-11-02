@@ -686,19 +686,19 @@ const TopicDeckPage: React.FC = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     role="alert"
-                    className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6"
+                    className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-6"
                   >
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" aria-hidden="true" />
+                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-900" aria-hidden="true" />
                       <div className="min-w-0 flex-1">
-                        <h2 className="font-display text-base font-semibold text-red-900">
+                        <h2 className="font-display text-base font-semibold text-amber-900">
                           Presentation generation failed
                         </h2>
-                        <p className="mt-1 text-sm text-red-800">{errorMessage}</p>
+                        <p className="mt-1 text-sm text-amber-900">{errorMessage}</p>
                         <button
                           type="button"
                           onClick={() => handleGenerate()}
-                          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-800"
+                          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-800"
                         >
                           <RotateCcw className="h-4 w-4" aria-hidden="true" />
                           Try again
@@ -820,7 +820,7 @@ const TopicDeckPage: React.FC = () => {
                             type="button"
                             onClick={() => handleDeleteDeck(deck.id)}
                             aria-label={`Delete ${deck.topic}`}
-                            className="rounded-lg p-2.5 text-[var(--text-secondary)] transition-colors hover:bg-red-50 hover:text-red-700"
+                            className="rounded-lg p-2.5 text-[var(--text-secondary)] transition-colors hover:bg-amber-50 hover:text-amber-900"
                           >
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </button>

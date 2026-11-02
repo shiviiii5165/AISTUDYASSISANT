@@ -3,7 +3,7 @@
 /* ─── Design Tokens: Living Storybook Magic ─── */
 :root {
   /* Text */
-  --text-primary: #091540;
+  --text-primary: #0F172A;
   --text-secondary: #6B7280;
   --text-muted: #9CA3AF;
   --text-inverse: #FFFFFF;
@@ -13,27 +13,27 @@
   --bg-secondary: #F3F4F6;
   --bg-card: #FFFFFF;
   --bg-hover: #F3F4F6;
-  --bg-navy: #091540;
+  --bg-navy: #0F172A;
 
   /* Borders */
   --border: rgba(9, 21, 64, 0.1);
   --border-strong: rgba(9, 21, 64, 0.2);
 
   /* Accents */
-  --accent-royal: #1B2CC1;
+  --accent-royal: #1E3A8A;
   --accent-periwinkle: #7692FF;
   --accent-baby: #ABD2FA;
-  --accent-green: #1B2CC1;
-  --accent-green-deep: #091540;
+  --accent-green: #1E3A8A;
+  --accent-green-deep: #0F172A;
   --accent-green-light: #ABD2FA;
-  --accent-green-text: #1B2CC1;
-  --accent-green-hover: #091540;
+  --accent-green-text: #1E3A8A;
+  --accent-green-hover: #0F172A;
   
-  --accent-indigo: #091540;
-  --accent-red: #DC2626;
+  --accent-indigo: #0F172A;
+  --accent-red: #D97706;
 
   /* Gradients */
-  --royal-gradient: linear-gradient(135deg, #1B2CC1, #091540);
+  --royal-gradient: linear-gradient(135deg, #1E3A8A, #0F172A);
 
   /* Typography */
   --font-display: 'Lora', Georgia, 'Times New Roman', serif;
@@ -339,11 +339,11 @@ select:focus-visible {
 .text-gold-shimmer {
   background: linear-gradient(
     90deg, 
-    #1B2CC1 0%, 
+    #1E3A8A 0%, 
     #7692FF 25%, 
-    #1B2CC1 50%, 
-    #091540 75%, 
-    #1B2CC1 100%
+    #1E3A8A 50%, 
+    #0F172A 75%, 
+    #1E3A8A 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;

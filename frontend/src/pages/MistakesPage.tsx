@@ -302,7 +302,7 @@ export const MistakesPage: React.FC = () => {
         )}
 
         {error && !loading && (
-          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
+          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
             {error}
           </div>
         )}

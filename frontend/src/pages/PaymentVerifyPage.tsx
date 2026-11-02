@@ -75,8 +75,8 @@ const PaymentVerifyPage: React.FC = () => {
 
           {status === 'error' && (
             <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
-                <XCircle className="w-12 h-12 text-red-600" />
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6">
+                <XCircle className="w-12 h-12 text-amber-900" />
               </div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Verification Failed</h2>
               <p className="text-[var(--text-secondary)] mb-8">

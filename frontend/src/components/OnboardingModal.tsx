@@ -157,7 +157,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* Content Body */}
         <div className="p-6 overflow-y-auto flex-1 space-y-4">
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
               {error}
             </div>
           )}

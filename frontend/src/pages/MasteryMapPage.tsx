@@ -95,7 +95,7 @@ export const MasteryMapPage: React.FC = () => {
         );
       case 'NEEDS_REPAIR':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
             <AlertCircle className="w-3.5 h-3.5" /> Needs Repair
           </span>
         );
@@ -112,7 +112,7 @@ export const MasteryMapPage: React.FC = () => {
     switch (readiness) {
       case 'BLOCKED_BY_PREREQUISITE':
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 dark:text-rose-400">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-900 dark:text-amber-400">
             <Lock className="w-3.5 h-3.5" /> Prerequisite Blocked
           </span>
         );
@@ -195,7 +195,7 @@ export const MasteryMapPage: React.FC = () => {
         </div>
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Needs Repair</div>
-          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">{repairCount}</div>
+          <div className="text-2xl font-bold text-amber-900 dark:text-amber-400 mt-1">{repairCount}</div>
           <div className="text-[11px] text-slate-400 mt-0.5">Foundational gaps</div>
         </div>
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -231,7 +231,7 @@ export const MasteryMapPage: React.FC = () => {
                   <span
                     className={
                       rec.priority === 1
-                        ? 'text-rose-600 dark:text-rose-400'
+                        ? 'text-amber-900 dark:text-amber-400'
                         : 'text-indigo-600 dark:text-indigo-400'
                     }
                   >
@@ -406,7 +406,7 @@ export const MasteryMapPage: React.FC = () => {
                           }}
                           className={`p-2 rounded text-xs flex items-center justify-between cursor-pointer border ${
                             isBlocking
-                              ? 'border-rose-300 bg-rose-50/50 dark:bg-rose-950/20 dark:border-rose-900 text-rose-700 dark:text-rose-300'
+                              ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900 text-amber-900 dark:text-amber-300'
                               : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
                           }`}
                         >
@@ -454,7 +454,7 @@ export const MasteryMapPage: React.FC = () => {
               {/* Repair Path (if blocked) */}
               {graphData?.repair_paths && graphData.repair_paths[selectedNode.skill_id] && (
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
-                  <div className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                  <div className="text-xs font-semibold text-amber-900 dark:text-amber-400 flex items-center gap-1">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>Prerequisite Repair Path</span>
                   </div>
@@ -470,7 +470,7 @@ export const MasteryMapPage: React.FC = () => {
                             onClick={() => {
                               if (rNode) setSelectedNode(rNode);
                             }}
-                            className="px-2 py-1 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-xs font-medium hover:bg-rose-100 transition"
+                            className="px-2 py-1 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900 text-xs font-medium hover:bg-amber-100 transition"
                           >
                             {rNode?.skill_name || rId}
                           </button>

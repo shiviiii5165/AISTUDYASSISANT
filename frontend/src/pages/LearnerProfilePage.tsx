@@ -240,7 +240,7 @@ export const LearnerProfilePage: React.FC = () => {
           <div className={`p-4 rounded-xl text-sm font-medium border flex items-center justify-between ${
             feedbackMsg.type === 'success' 
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
           }`}>
             <span>{feedbackMsg.text}</span>
             <button 

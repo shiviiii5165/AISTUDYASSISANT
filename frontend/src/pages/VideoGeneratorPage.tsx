@@ -711,18 +711,18 @@ const VideoGeneratorPage: React.FC = () => {
 
         {/* ═══════════ ERROR ALERT ═══════════ */}
         {error && !generating && (
-          <div role="alert" className="mt-8 flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-5">
+          <div role="alert" className="mt-8 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5">
             <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-900" />
               <div>
-                <h2 className="font-display text-base font-semibold text-red-900">Generation Notice</h2>
-                <p className="mt-1 text-sm text-red-800">{error}</p>
+                <h2 className="font-display text-base font-semibold text-amber-900">Generation Notice</h2>
+                <p className="mt-1 text-sm text-amber-900">{error}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={handleGenerate}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-300 bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-800 transition-colors hover:bg-red-200"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-200"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               <span>Retry Lesson</span>
@@ -1332,7 +1332,7 @@ const VideoGeneratorPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleDeleteLesson(lesson.id)}
-                      className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-red-50 hover:text-red-700"
+                      className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-amber-50 hover:text-amber-900"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

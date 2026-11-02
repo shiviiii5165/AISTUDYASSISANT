@@ -38,12 +38,12 @@ export default function AccessDeniedPage({ requiredRoles = [] }: AccessDeniedPag
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center p-4 sm:p-6 text-[var(--text-primary)]">
       <div className="max-w-md w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 sm:p-8 shadow-xl text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 mx-auto flex items-center justify-center border border-red-200 dark:border-red-800">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-900 mx-auto flex items-center justify-center border border-amber-200 dark:border-amber-800">
           <ShieldAlert className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-900 bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 rounded-full">
             HTTP 403 • Authorization Required
           </span>
           <h1 className="text-2xl font-display font-bold text-[var(--text-primary)]">
@@ -77,7 +77,7 @@ export default function AccessDeniedPage({ requiredRoles = [] }: AccessDeniedPag
           {requiredRoles.length > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-[var(--text-muted)]">Required Role(s):</span>
-              <span className="font-mono text-[10px] text-red-600 dark:text-red-400 font-bold">
+              <span className="font-mono text-[10px] text-amber-900 dark:text-amber-900 font-bold">
                 {requiredRoles.join(' or ')}
               </span>
             </div>

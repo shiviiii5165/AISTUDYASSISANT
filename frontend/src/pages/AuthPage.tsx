@@ -105,19 +105,19 @@ const AuthPage: React.FC = () => {
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#7692FF] opacity-[0.08] rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#ABD2FA] opacity-[0.15] rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1B2CC1] opacity-[0.02] rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1E3A8A] opacity-[0.02] rounded-full blur-3xl" />
       </div>
 
       <div className="bg-white p-7 md:p-9 rounded-2xl shadow-[var(--shadow-lg)] w-full max-w-sm border border-[rgba(9,21,64,0.08)] relative z-10">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-7">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1B2CC1]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1E3A8A]">
             <img src="/assets/genie-default.png" alt="" className="h-5 w-5 object-contain brightness-0 invert" />
           </div>
-          <span className="font-display text-lg font-bold text-[#091540]">LearnByGenie</span>
+          <span className="font-display text-lg font-bold text-[#0F172A]">LearnByGenie</span>
         </div>
 
-        <h2 className="font-display text-xl font-bold text-[#091540] mb-1 text-center">
+        <h2 className="font-display text-xl font-bold text-[#0F172A] mb-1 text-center">
           {isLogin ? 'Welcome back' : 'Create your account'}
         </h2>
         <p className="text-[var(--text-secondary)] text-center mb-6 text-sm">
@@ -126,7 +126,7 @@ const AuthPage: React.FC = () => {
 
         {/* Alerts — icon-only, no emoji */}
         {error && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">
+          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-900">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{error}</span>
           </div>
@@ -226,7 +226,7 @@ const AuthPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1B2CC1] py-2.5 text-sm font-semibold text-white shadow-md shadow-[#1B2CC1]/25 transition-all hover:bg-[#091540] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E3A8A] py-2.5 text-sm font-semibold text-white shadow-md shadow-[#1E3A8A]/25 transition-all hover:bg-[#0F172A] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

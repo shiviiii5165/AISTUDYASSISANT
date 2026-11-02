@@ -226,13 +226,13 @@ const NotesGeneratorPage: React.FC = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center justify-between rounded-xl bg-red-50 border border-red-200 p-4 text-xs text-red-700 dark:bg-red-950/40 dark:border-red-900"
+                  className="flex items-center justify-between rounded-xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-900 dark:bg-amber-950/40 dark:border-amber-900"
                 >
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-900" />
                     <span>{errorMessage}</span>
                   </div>
-                  <button onClick={() => setErrorMessage(null)} className="text-red-500 hover:text-red-700 font-bold ml-4">✕</button>
+                  <button onClick={() => setErrorMessage(null)} className="text-amber-900 hover:text-amber-900 font-bold ml-4">✕</button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -342,7 +342,7 @@ const NotesGeneratorPage: React.FC = () => {
                   {/* Primary Topic Input */}
                   <div>
                     <label className="text-xs font-semibold text-[var(--text-primary)] block mb-1.5">
-                      Subject Topic or Chapter Concept <span className="text-red-500">*</span>
+                      Subject Topic or Chapter Concept <span className="text-amber-900">*</span>
                     </label>
                     <input
                       type="text"
@@ -584,14 +584,14 @@ const NotesGeneratorPage: React.FC = () => {
                                 c.type === 'warning' || c.type === 'misconception'
                                   ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200'
                                   : c.type === 'exam_alert'
-                                  ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900 text-red-900 dark:text-red-200'
+                                  ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-900'
                                   : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 text-blue-900 dark:text-blue-200'
                               }`}
                             >
                               {c.type === 'warning' || c.type === 'misconception' ? (
                                 <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                               ) : c.type === 'exam_alert' ? (
-                                <Flame className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                                <Flame className="h-4 w-4 shrink-0 text-amber-900 mt-0.5" />
                               ) : (
                                 <Lightbulb className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
                               )}

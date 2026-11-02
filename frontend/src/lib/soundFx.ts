@@ -11,6 +11,7 @@ import { getMigratedStorageItem, setMigratedStorageItem } from './storageMigrati
 class SoundEffectsManager {
   private ctx: AudioContext | null = null;
   private muted: boolean = false;
+  private focusNoise: AudioBufferSourceNode | null = null;
 
   constructor() {
     // Check localStorage preference
@@ -37,13 +38,16 @@ class SoundEffectsManager {
   }
 
   public toggleMute(): boolean {
-    this.muted = !this.muted;
-    setMigratedStorageItem('learnbygenie_sound_muted', 'teachgenie_sound_muted', String(this.muted));
+    this.setMuted(!this.muted);
     return this.muted;
   }
 
   public setMuted(muted: boolean) {
     this.muted = muted;
+    if (muted && this.focusNoise) {
+      this.focusNoise.stop();
+      this.focusNoise = null;
+    }
     setMigratedStorageItem('learnbygenie_sound_muted', 'teachgenie_sound_muted', String(muted));
   }
 
@@ -193,6 +197,98 @@ class SoundEffectsManager {
         osc.stop(now + idx * 0.08 + 0.6);
       });
     } catch {}
+  }
+
+  private playTone(
+    freq: number,
+    startOffset: number,
+    duration: number,
+    peak: number,
+    endFreq?: number,
+  ) {
+    if (!this.ctx) return;
+    const start = this.ctx.currentTime + startOffset;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, start);
+    if (endFreq) osc.frequency.linearRampToValueAtTime(endFreq, start + duration);
+
+    gain.gain.setValueAtTime(peak, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(start);
+    osc.stop(start + duration);
+  }
+
+  private playIfAudible(render: () => void) {
+    if (this.muted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    try {
+      render();
+    } catch {
+      // Audio context error swallowed gracefully
+    }
+  }
+
+  /** Ascending major third for a verified step (440 Hz to 554 Hz, 180 ms). */
+  public playStepVerified() {
+    this.playIfAudible(() => this.playTone(440, 0, 0.18, 0.12, 554));
+  }
+
+  /** Soft marimba-like tap when a hint is revealed (330 Hz, 90 ms). */
+  public playHintReveal() {
+    this.playIfAudible(() => this.playTone(330, 0, 0.09, 0.1));
+  }
+
+  /** Calm C4 pulse when a mistake is logged; never a buzzer. */
+  public playMistakeLogged() {
+    this.playIfAudible(() => this.playTone(261.6, 0, 0.2, 0.08));
+  }
+
+  /** C-major triad arpeggio lasting 650 ms for boss mastery. */
+  public playBossMastery() {
+    this.playIfAudible(() => {
+      [261.63, 329.63, 392.0].forEach((freq, i) => {
+        this.playTone(freq, i * 0.15, 0.65 - i * 0.15, 0.1);
+      });
+    });
+  }
+
+  /** Starts or stops looping brown noise; returns whether it is now playing. */
+  public toggleFocusNoise(): boolean {
+    if (this.focusNoise) {
+      this.focusNoise.stop();
+      this.focusNoise = null;
+      return false;
+    }
+    if (this.muted) return false;
+    this.initContext();
+    if (!this.ctx) return false;
+
+    const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 4, this.ctx.sampleRate);
+    const samples = buffer.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < samples.length; i++) {
+      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      samples[i] = last * 3.5;
+    }
+
+    const source = this.ctx.createBufferSource();
+    const gain = this.ctx.createGain();
+    source.buffer = buffer;
+    source.loop = true;
+    gain.gain.value = 0.05;
+    source.connect(gain);
+    gain.connect(this.ctx.destination);
+    source.start();
+    this.focusNoise = source;
+    return true;
   }
 
   public playWrongSound() {

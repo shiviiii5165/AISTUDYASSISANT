@@ -154,7 +154,7 @@ const HandwrittenUpload: React.FC<HandwrittenUploadProps> = ({ selectedSubject, 
                 {!uploading && (
                   <button
                     onClick={handleReset}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center hover:bg-amber-600 transition-colors shadow-sm"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>

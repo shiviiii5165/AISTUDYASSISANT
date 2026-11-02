@@ -233,12 +233,12 @@ const QuizPage: React.FC = () => {
   if (error || !quiz) {
     return (
       <AppLayout title="Quiz">
-        <div className="mx-auto mt-10 max-w-2xl rounded-xl border border-red-200 bg-red-50 p-6">
+        <div className="mx-auto mt-10 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-6">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
-            <h2 className="text-lg font-semibold text-red-900">Error Loading Quiz</h2>
+            <AlertTriangle className="h-6 w-6 text-amber-900" />
+            <h2 className="text-lg font-semibold text-amber-900">Error Loading Quiz</h2>
           </div>
-          <p className="mt-2 text-red-800">{error || 'Quiz not found'}</p>
+          <p className="mt-2 text-amber-900">{error || 'Quiz not found'}</p>
         </div>
       </AppLayout>
     );
@@ -355,8 +355,8 @@ const QuizPage: React.FC = () => {
                         <button onClick={() => handleRegenerate(q.id)} disabled={savingId === q.id} className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent-green)]">
                           {savingId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => handleDelete(q.id)} disabled={savingId === q.id} className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-red-50 hover:text-red-700">
-                          {savingId === q.id ? <Loader2 className="h-4 w-4 animate-spin text-red-700" /> : <Trash2 className="h-4 w-4 text-red-700" />}
+                        <button onClick={() => handleDelete(q.id)} disabled={savingId === q.id} className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-rose-50 hover:text-rose-800">
+                          {savingId === q.id ? <Loader2 className="h-4 w-4 animate-spin text-rose-800" /> : <Trash2 className="h-4 w-4 text-rose-800" />}
                         </button>
                       </div>
                     </div>
@@ -436,7 +436,7 @@ const QuizPage: React.FC = () => {
             </div>
             
             {timeLeft !== null && (
-              <div className={`flex items-center gap-2 rounded-lg px-3 py-1.5 font-bold tabular-nums ${timeLeft < 60 ? 'animate-pulse bg-red-100 text-red-700' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
+              <div className={`flex items-center gap-2 rounded-lg px-3 py-1.5 font-bold tabular-nums ${timeLeft < 60 ? 'animate-pulse bg-amber-100 text-amber-900' : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'}`}>
                 <Clock className="h-4 w-4" />
                 {formatTime(timeLeft)}
               </div>
@@ -525,8 +525,8 @@ const QuizPage: React.FC = () => {
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               )}
-              <div className={`mb-4 flex h-24 w-24 items-center justify-center rounded-full border-4 ${scorePct >= 80 ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]' : scorePct >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50'}`}>
-                <span className={`text-3xl font-bold ${scorePct >= 80 ? 'text-[var(--accent-green-text)]' : scorePct >= 50 ? 'text-amber-700' : 'text-red-700'}`}>{scorePct}%</span>
+              <div className={`mb-4 flex h-24 w-24 items-center justify-center rounded-full border-4 ${scorePct >= 80 ? 'border-[var(--accent-green)] bg-[var(--accent-green-light)]' : scorePct >= 50 ? 'border-amber-400 bg-amber-50' : 'border-amber-400 bg-amber-50'}`}>
+                <span className={`text-3xl font-bold ${scorePct >= 80 ? 'text-[var(--accent-green-text)]' : scorePct >= 50 ? 'text-amber-700' : 'text-amber-900'}`}>{scorePct}%</span>
               </div>
             </div>
             <img
@@ -563,7 +563,7 @@ const QuizPage: React.FC = () => {
                         <CheckCircle2 className="h-3.5 w-3.5" /> Correct
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-800">
+                      <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
                         <X className="h-3.5 w-3.5" /> Incorrect
                       </span>
                     )}
@@ -578,7 +578,7 @@ const QuizPage: React.FC = () => {
                       if (isCorrectAnswer) {
                         optClass = 'border-[var(--accent-green)] bg-[var(--accent-green-light)] font-medium text-[var(--accent-green-text)]';
                       } else if (isUserAnswer) {
-                        optClass = 'border-red-200 bg-red-50 font-medium text-red-800';
+                        optClass = 'border-amber-200 bg-amber-50 font-medium text-amber-900';
                       }
 
                       return (

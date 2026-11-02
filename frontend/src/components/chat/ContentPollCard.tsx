@@ -54,7 +54,7 @@ const ContentPollCard: React.FC<ContentPollCardProps> = ({ initialData }) => {
 
   const renderIcon = () => {
     if (data.status === 'processing') return <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />;
-    if (data.status === 'failed') return <XCircle className="w-6 h-6 text-red-500" />;
+    if (data.status === 'failed') return <XCircle className="w-6 h-6 text-amber-900" />;
     return data.content_type === 'ppt' ? (
       <FileText className="w-6 h-6 text-purple-600" />
     ) : (
@@ -79,7 +79,7 @@ const ContentPollCard: React.FC<ContentPollCardProps> = ({ initialData }) => {
       )}
 
       {data.status === 'failed' && (
-        <div className="text-sm text-red-600 mt-3">
+        <div className="text-sm text-amber-900 mt-3">
           Error: {data.error_message || 'Something went wrong.'}
         </div>
       )}

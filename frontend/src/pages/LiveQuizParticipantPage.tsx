@@ -248,17 +248,17 @@ const LiveQuizParticipantPage: React.FC = () => {
   // Authoritative Ban Revocation Screen (§11)
   if (isBanned) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-red-950/20 px-4 text-center">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-amber-950/20 px-4 text-center">
         <SEO title={`Access Revoked | ${BRAND.name}`} description="Participation revoked." />
-        <div className="max-w-md rounded-3xl border border-red-500/40 bg-[var(--bg-card)] p-8 shadow-2xl">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+        <div className="max-w-md rounded-3xl border border-amber-500/40 bg-[var(--bg-card)] p-8 shadow-2xl">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-900">
             <ShieldAlert className="h-9 w-9" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-red-600">ATTEMPT REVOKED</h1>
+          <h1 className="font-display text-2xl font-bold text-amber-900">ATTEMPT REVOKED</h1>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">
             You have been removed from this live session by the teacher.
           </p>
-          <div className="mt-4 rounded-xl bg-red-50 p-3 text-xs font-medium text-red-800">
+          <div className="mt-4 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-900">
             Reason: {banReason}
           </div>
           <button
@@ -304,7 +304,7 @@ const LiveQuizParticipantPage: React.FC = () => {
         <div className="flex items-center gap-3">
           {timeLeft !== null && state?.status === 'LIVE' && !state?.is_revealed && (
             <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold shadow-sm ${
-              timeLeft <= 5 ? 'bg-red-500 text-white animate-pulse' : 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
+              timeLeft <= 5 ? 'bg-amber-500 text-white animate-pulse' : 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
             }`}>
               <Clock className="h-4 w-4" />
               <span>{timeLeft}s</span>
@@ -316,7 +316,7 @@ const LiveQuizParticipantPage: React.FC = () => {
             aria-label={isMuted ? 'Unmute' : 'Mute'}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
           >
-            {isMuted ? <VolumeX className="h-4 w-4 text-red-500" /> : <Volume2 className="h-4 w-4 text-[var(--accent-green-text)]" />}
+            {isMuted ? <VolumeX className="h-4 w-4 text-amber-900" /> : <Volume2 className="h-4 w-4 text-[var(--accent-green-text)]" />}
           </button>
         </div>
       </header>
@@ -377,7 +377,7 @@ const LiveQuizParticipantPage: React.FC = () => {
                     if (isCorrect) {
                       borderClass = 'border-green-500 bg-green-500/15 ring-2 ring-green-500';
                     } else if (isSelected && !isCorrect) {
-                      borderClass = 'border-red-500 bg-red-500/15 ring-2 ring-red-500';
+                      borderClass = 'border-amber-500 bg-amber-500/15 ring-2 ring-amber-500';
                     } else {
                       borderClass = 'opacity-40 border-[var(--border)]';
                     }

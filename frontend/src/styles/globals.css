@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 @layer base {
+  /* Learn Genie chromatic tokens. Fills use the blueprint hex; text uses darker -text
+     values because the blueprint teal, amber and violet are below 7:1 as text on white. */
+  :root {
+    --lg-canvas: #F8FAFC; --lg-ink: #0F172A; --lg-indigo: #1E3A8A;
+    --lg-mastery: #0D9488; --lg-mastery-text: #115E59; --lg-mastery-wash: #F0FDFA;
+    --lg-repair: #D97706; --lg-repair-text: #78350F; --lg-repair-wash: #FFFBEB;
+    --lg-destructive: #9F1239; --lg-destructive-wash: #FFF1F2;
+    --lg-boss: #7C3AED; --lg-boss-text: #4C1D95;
+  }
+
   :root {
     /*
      * LearnByGenie Design System — v2
@@ -26,26 +36,26 @@
      */
 
     /* ── Backgrounds ──────────────────────────────────────────────────── */
-    --bg-primary:   #FFFFFF;   /* Pure white — main page background       */
+    --bg-primary:   #F8FAFC;   /* Pure white — main page background       */
     --bg-secondary: #F8FAFC;   /* Slate 50 — sidebar, card zones          */
     --bg-card:      #FFFFFF;   /* Pure white — content card surfaces      */
     --bg-hover:     #F1F5F9;   /* Slate 100 — Hover state                 */
 
     /* ── Text ─────────────────────────────────────────────────────────── */
-    --text-primary:   #091540; /* Dark navy — headings                    */
+    --text-primary:   #0F172A; /* Dark navy — headings                    */
     --text-secondary: #475569; /* Slate 600 — body text                   */
-    --text-muted:     #94A3B8; /* Slate 400 — captions                    */
+    --text-muted:     #475569; /* Slate 400 — captions                    */
 
     /* ── Primary Brand / CTAs (deep blue) ─────────────────────────────── */
-    --accent-blue:        #1B2CC1; /* Royal blue CTA                      */
-    --accent-royal:       #1B2CC1; /* Same as blue, used by some components */
+    --accent-blue:        #1E3A8A; /* Royal blue CTA                      */
+    --accent-royal:       #1E3A8A; /* Same as blue, used by some components */
     --accent-baby:        #ABD2FA; /* Light blue accent                   */
     --accent-periwinkle:  #7692FF; /* Medium blue accent                  */
-    --accent-primary:     #1B2CC1; /* Primary CTA button background       */
-    --accent-blue-hover:  #091540; /* Dark navy — hover state             */
-    --accent-blue-text:   #1B2CC1; /* As link/text on light surfaces      */
-    --accent-blue-deep:   #091540; /* Full-bleed brand band               */
-    --accent-blue-light:  #ABD2FA; /* Light Baby Blue                     */
+    --accent-primary:     #1E3A8A; /* Primary CTA button background       */
+    --accent-blue-hover:  #0F172A; /* Dark navy — hover state             */
+    --accent-blue-text:   #1E3A8A; /* As link/text on light surfaces      */
+    --accent-blue-deep:   #0F172A; /* Full-bleed brand band               */
+    --accent-blue-light:  #DBEAFE; /* Light Baby Blue                     */
     /* Backward-compat aliases — prefer --accent-blue-* in new code */
     --accent-green:       var(--accent-blue);
     --accent-green-hover: var(--accent-blue-hover);
@@ -58,8 +68,8 @@
     --accent-indigo-light: #E0E7FF; /* Indigo 100                          */
 
     /* ── Gold Accent (use sparingly) ──────────────────────────────────── */
-    --accent-amber:       #D4A85F; /* Muted gold — success, positive       */
-    --accent-amber-light: #F5E8CE; /* Gold wash — tinted backgrounds       */
+    --accent-amber:       #D97706; /* Muted gold — success, positive       */
+    --accent-amber-light: #FEF3C7; /* Gold wash — tinted backgrounds       */
     --accent-gold-hover:  #B8893D; /* Darker gold — hover state            */
 
     /* ── Pale Sage Surface (Keeping names but moving to cooler slate) ─── */
@@ -67,7 +77,7 @@
     --surface-sage-light: #F8FAFC; /* Slate 50                             */
 
     /* ── Error / Warning ───────────────────────────────────────────────── */
-    --accent-red:    #DC2626; /* Errors, wrong answers                     */
+    --accent-red:    #78350F; /* Errors, wrong answers                     */
 
     /* ── Borders ────────────────────────────────────────────────────────── */
     --border:        #E2E8F0; /* Slate 200 border                          */

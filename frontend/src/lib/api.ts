@@ -35,6 +35,36 @@ api.interceptors.request.use(
   }
 );
 
+// Staff calls carry the MFA token; a missing one sends staff to set up or verify MFA.
+const MFA_KEY = 'learngenie_mfa_token';
+
+export function saveMfaToken(token: string) {
+  try {
+    sessionStorage.setItem(MFA_KEY, token);
+  } catch {
+    // Without storage, staff verify again on the next page load.
+  }
+}
+
+api.interceptors.request.use((config) => {
+  if (config.url?.startsWith('/api/v1/') || config.url?.startsWith('/api/portals/')) {
+    try {
+      const token = sessionStorage.getItem(MFA_KEY);
+      if (token) config.headers.set('X-MFA-Token', token);
+    } catch {
+      // No stored token; the server decides whether one is needed.
+    }
+  }
+  return config;
+});
+
+api.interceptors.response.use(undefined, (error) => {
+  if (error?.response?.data?.detail?.code === 'mfa_required' && !window.location.pathname.startsWith('/studio')) {
+    window.location.assign('/studio?tab=Privacy');
+  }
+  return Promise.reject(error);
+});
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface PDFDocument {

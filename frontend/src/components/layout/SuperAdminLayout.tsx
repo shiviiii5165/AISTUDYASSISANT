@@ -31,7 +31,7 @@ export default function SuperAdminLayout({ children, title }: SuperAdminLayoutPr
       portalRole="super_admin"
       portalName="Super Admin Control Plane"
       portalBadge="Platform"
-      badgeColorClass="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+      badgeColorClass="bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-900"
       navGroups={SUPER_ADMIN_NAV_GROUPS}
       title={title}
     >

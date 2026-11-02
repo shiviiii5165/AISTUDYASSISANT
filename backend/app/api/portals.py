@@ -12,6 +12,7 @@ from app.core.dependencies import (
     require_role
 )
 from app.core.user_roles import UserRoleRepository
+from app.modules.privacy import mfa
 from app.services.portals.service import (
     ParentPortalService,
     TeacherPortalService,
@@ -40,6 +41,7 @@ from app.services.portals.repository import PortalsRepository
 from app.services.practice.item_bank import register_practice_item, PracticeItem, QuestionType, DifficultyBand, VerificationStatus, make_practice_uuid
 
 router = APIRouter()
+STAFF_MFA = [Depends(mfa.require_mfa)]
 
 
 # ─── 1. PARENT PORTAL ENDPOINTS ───────────────────────────────────────────────
@@ -60,6 +62,8 @@ def link_child_to_parent(payload: LinkChildRequest, current_user: AuthenticatedU
             relationship=payload.relationship
         )
         return {"status": "linked", "link": link}
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"code": "consent_required", "purpose": "parent_reports"})
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -95,13 +99,13 @@ def get_child_progress(student_id: str, current_user: AuthenticatedUser = Depend
 
 # ─── 2. TEACHER PORTAL ENDPOINTS ──────────────────────────────────────────────
 
-@router.get("/teacher/dashboard", response_model=TeacherDashboardSummary)
+@router.get("/teacher/dashboard", response_model=TeacherDashboardSummary, dependencies=STAFF_MFA)
 def get_teacher_dashboard(current_user: AuthenticatedUser = Depends(require_teacher)):
     """Returns teacher dashboard with classrooms, total students, and class misconceptions."""
     return TeacherPortalService.get_dashboard_summary(current_user.id)
 
 
-@router.post("/teacher/classrooms", response_model=ClassroomView)
+@router.post("/teacher/classrooms", response_model=ClassroomView, dependencies=STAFF_MFA)
 def create_classroom_endpoint(payload: CreateClassroomRequest, current_user: AuthenticatedUser = Depends(require_teacher)):
     """Creates a new classroom cohort under the teacher's profile."""
     record = PortalsRepository.create_classroom(
@@ -125,7 +129,7 @@ def create_classroom_endpoint(payload: CreateClassroomRequest, current_user: Aut
     )
 
 
-@router.get("/teacher/classrooms/{classroom_id}/roster", response_model=List[ClassroomRosterItem])
+@router.get("/teacher/classrooms/{classroom_id}/roster", response_model=List[ClassroomRosterItem], dependencies=STAFF_MFA)
 def get_classroom_roster(classroom_id: str, current_user: AuthenticatedUser = Depends(require_teacher)):
     """Returns the student roster and individual mastery progression for a classroom."""
     return TeacherPortalService.get_classroom_roster(current_user.id, classroom_id)
@@ -133,7 +137,7 @@ def get_classroom_roster(classroom_id: str, current_user: AuthenticatedUser = De
 
 # ─── 3. SCHOOL ADMINISTRATOR PORTAL ENDPOINTS ─────────────────────────────────
 
-@router.get("/school-admin/overview", response_model=SchoolOverview)
+@router.get("/school-admin/overview", response_model=SchoolOverview, dependencies=STAFF_MFA)
 def get_school_overview(current_user: AuthenticatedUser = Depends(require_school_admin)):
     """Returns institution-wide performance, teacher allocations, and license telemetry."""
     return SchoolAdminPortalService.get_overview(current_user.id)
@@ -180,13 +184,13 @@ def create_practice_item_endpoint(payload: CreatePracticeItemRequest, current_us
 require_reviewer = require_role(["teacher", "school_admin", "admin", "super_admin"])
 
 
-@router.get("/creator/items/pending")
+@router.get("/creator/items/pending", dependencies=STAFF_MFA)
 def list_pending_items(current_user: AuthenticatedUser = Depends(require_reviewer)):
     """Returns questions awaiting authorized review."""
     return PortalsRepository.get_pending_creator_items()
 
 
-@router.post("/creator/items/{item_id}/approve")
+@router.post("/creator/items/{item_id}/approve", dependencies=STAFF_MFA)
 def approve_item_endpoint(item_id: str, current_user: AuthenticatedUser = Depends(require_reviewer)):
     """Approves a pending item, publishing it to the active verified practice item bank."""
     approved = PortalsRepository.approve_creator_item(item_id, reviewer_id=current_user.id)
@@ -195,7 +199,7 @@ def approve_item_endpoint(item_id: str, current_user: AuthenticatedUser = Depend
     return {"status": "approved", "item_id": item_id, "reviewer_id": current_user.id}
 
 
-@router.post("/creator/items/{item_id}/reject")
+@router.post("/creator/items/{item_id}/reject", dependencies=STAFF_MFA)
 def reject_item_endpoint(item_id: str, payload: Dict[str, str] = {}, current_user: AuthenticatedUser = Depends(require_reviewer)):
     """Rejects a question item with feedback notes."""
     notes = payload.get("notes", "") if payload else ""
@@ -207,13 +211,13 @@ def reject_item_endpoint(item_id: str, payload: Dict[str, str] = {}, current_use
 
 # ─── 5. SUPER ADMINISTRATOR PORTAL ENDPOINTS ──────────────────────────────────
 
-@router.get("/super-admin/overview", response_model=SystemHealthOverview)
+@router.get("/super-admin/overview", response_model=SystemHealthOverview, dependencies=STAFF_MFA)
 def get_super_admin_overview(current_user: AuthenticatedUser = Depends(require_admin)):
     """Returns system-wide operational health, LLM provider telemetry, and error rates."""
     return SuperAdminPortalService.get_system_health()
 
 
-@router.post("/super-admin/user-role")
+@router.post("/super-admin/user-role", dependencies=STAFF_MFA)
 def update_user_role(payload: UserRoleUpdate, current_user: AuthenticatedUser = Depends(require_admin)):
     """
     Authoritatively updates user role in PostgreSQL with audit log.

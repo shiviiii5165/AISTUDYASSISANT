@@ -10,6 +10,7 @@ import { useSidebarCollapse } from '../../hooks/useSidebarCollapse';
 import { pageTransition } from '../../lib/motion';
 import ProfileDropdown from '../ProfileDropdown';
 import PortalSwitcher from '../PortalSwitcher';
+import SoundControls from '../SoundControls';
 import { BRAND } from '../../config/branding';
 
 export interface NavItem {
@@ -193,6 +194,7 @@ export default function BasePortalLayout({
 
           {/* Header Controls: Portal Switcher & Profile */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <SoundControls />
             <PortalSwitcher />
             <ProfileDropdown />
           </div>

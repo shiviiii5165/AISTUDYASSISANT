@@ -130,7 +130,7 @@ export default function ProfileDropdown({ className }: { className?: string }) {
 
         <DropdownMenuItem
           onClick={signOut}
-          className="flex items-center gap-3 text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer"
+          className="flex items-center gap-3 text-amber-900 focus:bg-amber-50 focus:text-amber-900 cursor-pointer"
         >
           <LogOut className="h-4 w-4" />
           Sign out

@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import asyncio
+from contextlib import asynccontextmanager
 import os
 import traceback
 
@@ -9,7 +11,20 @@ from app.api import auth, pdfs, chat, notes, predict
 from app.core.config import settings
 from app.core.logging import logger
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    task = None
+    if os.environ.get("ERASURE_SCHEDULER_ENABLED", "true").lower() != "false":
+        from app.modules.privacy.service import erasure_retry_loop
+
+        task = asyncio.create_task(erasure_retry_loop())
+    yield
+    if task is not None:
+        task.cancel()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="LearnByGenie API",
     description="LearnByGenie AI Education Platform API",
     version="1.0.0"
@@ -130,3 +145,6 @@ app.include_router(spaced_repetition_api.router, prefix="/api/spaced-repetition"
 
 from app.api import portals as portals_api
 app.include_router(portals_api.router, prefix="/api/portals", tags=["portals"])
+
+from app.api import v1 as v1_api
+app.include_router(v1_api.router, prefix="/api/v1", tags=["v1"])
