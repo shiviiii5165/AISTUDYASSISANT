@@ -4,7 +4,7 @@ import {
   GraduationCap, Users, BookOpen, Presentation, Radio, Plus,
   ChevronRight, AlertCircle, RefreshCw, BarChart3, Sparkles
 } from 'lucide-react';
-import AppLayout from '../../components/AppLayout';
+import TeacherLayout from '../../components/layout/TeacherLayout';
 import {
   fetchTeacherDashboard,
   createClassroom
@@ -74,7 +74,7 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <AppLayout title="Teacher Portal">
+    <TeacherLayout title="Teacher Portal">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-5">
@@ -391,6 +391,6 @@ export default function TeacherDashboard() {
           </div>
         )}
       </div>
-    </AppLayout>
+    </TeacherLayout>
   );
 }

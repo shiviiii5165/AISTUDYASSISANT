@@ -3,7 +3,7 @@ import {
   ShieldCheck, Activity, Cpu, Database, Server, RefreshCw, 
   AlertTriangle, CheckCircle2, UserCog, Zap, Lock 
 } from 'lucide-react';
-import AppLayout from '../../components/AppLayout';
+import SuperAdminLayout from '../../components/layout/SuperAdminLayout';
 import { 
   fetchSuperAdminOverview, 
   updateUserRole 
@@ -63,7 +63,7 @@ export default function SuperAdminDashboard() {
   };
 
   return (
-    <AppLayout title="Super Administrator Telemetry">
+    <SuperAdminLayout title="Super Administrator Telemetry">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-5">
@@ -271,6 +271,6 @@ export default function SuperAdminDashboard() {
           </>
         )}
       </div>
-    </AppLayout>
+    </SuperAdminLayout>
   );
 }

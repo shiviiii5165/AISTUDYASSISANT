@@ -4,7 +4,7 @@ import {
   Users, AlertTriangle, Award, Flame, Plus, ChevronRight, 
   Sparkles, CheckCircle2, RefreshCw, HeartHandshake, BookOpen
 } from 'lucide-react';
-import AppLayout from '../../components/AppLayout';
+import ParentLayout from '../../components/layout/ParentLayout';
 import { 
   fetchParentDashboard, 
   linkChild 
@@ -67,7 +67,7 @@ export default function ParentDashboard() {
   };
 
   return (
-    <AppLayout title="Parent Portal">
+    <ParentLayout title="Parent Portal">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-5">
@@ -359,6 +359,6 @@ export default function ParentDashboard() {
           </div>
         )}
       </div>
-    </AppLayout>
+    </ParentLayout>
   );
 }

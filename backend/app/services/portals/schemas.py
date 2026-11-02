@@ -209,3 +209,10 @@ class DailyPersonalizedRoadmap(BaseModel):
     tasks: List[RoadmapTaskChoice]
     recalculated_at: datetime
 
+
+class UserRolesView(BaseModel):
+    user_id: str
+    primary_role: str
+    authorized_roles: List[str]
+    active_role: str
+

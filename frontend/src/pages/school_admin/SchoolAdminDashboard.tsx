@@ -3,7 +3,7 @@ import {
   Building2, Users, GraduationCap, CheckCircle2, Award, 
   BarChart3, RefreshCw, Radio, Shield, KeyRound 
 } from 'lucide-react';
-import AppLayout from '../../components/AppLayout';
+import SchoolAdminLayout from '../../components/layout/SchoolAdminLayout';
 import { fetchSchoolAdminOverview } from '../../lib/portalsApi';
 import type { SchoolOverview } from '../../lib/portalsApi';
 
@@ -31,7 +31,7 @@ export default function SchoolAdminDashboard() {
   }, []);
 
   return (
-    <AppLayout title="School Administration">
+    <SchoolAdminLayout title="School Administration">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-5">
@@ -211,6 +211,6 @@ export default function SchoolAdminDashboard() {
           </>
         )}
       </div>
-    </AppLayout>
+    </SchoolAdminLayout>
   );
 }

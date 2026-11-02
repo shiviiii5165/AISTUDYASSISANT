@@ -4,7 +4,7 @@ import {
   ArrowLeft, Users, AlertTriangle, Award, Flame, CheckCircle2, 
   HelpCircle, Compass, RefreshCw, Sparkles, BookOpen 
 } from 'lucide-react';
-import AppLayout from '../../components/AppLayout';
+import ParentLayout from '../../components/layout/ParentLayout';
 import { 
   fetchChildDetailedProgress 
 } from '../../lib/portalsApi';
@@ -39,7 +39,7 @@ export default function ChildDetailPage() {
   }, [id]);
 
   return (
-    <AppLayout title="Child Progress Details">
+    <ParentLayout title="Child Progress Details">
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
@@ -216,6 +216,6 @@ export default function ChildDetailPage() {
           </>
         )}
       </div>
-    </AppLayout>
+    </ParentLayout>
   );
 }

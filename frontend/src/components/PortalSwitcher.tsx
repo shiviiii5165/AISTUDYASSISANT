@@ -35,17 +35,25 @@ const PORTALS: PortalOption[] = [
 export default function PortalSwitcher() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeRole, setActiveRole } = useAuthStore();
+  const { activeRole, authorizedRoles, setActiveRole } = useAuthStore();
 
-  // Determine current portal based on route or activeRole
-  const currentPortal = PORTALS.find((p) => {
+  // Rule 1: If user has only 1 role (or none), do NOT render the switcher at all!
+  if (!authorizedRoles || authorizedRoles.length <= 1) {
+    return null;
+  }
+
+  // Rule 2: Strictly filter portals to only server-authorized roles!
+  const availablePortals = PORTALS.filter((p) => authorizedRoles.includes(p.role));
+
+  // Determine current portal based on active route or activeRole
+  const currentPortal = availablePortals.find((p) => {
     if (location.pathname.startsWith('/parent')) return p.role === 'parent';
     if (location.pathname.startsWith('/teacher')) return p.role === 'teacher';
     if (location.pathname.startsWith('/school-admin')) return p.role === 'school_admin';
     if (location.pathname.startsWith('/creator')) return p.role === 'content_creator';
     if (location.pathname.startsWith('/admin')) return p.role === 'super_admin';
     return p.role === activeRole;
-  }) || PORTALS[0];
+  }) || availablePortals[0];
 
   const handleSelect = (portal: PortalOption) => {
     setActiveRole(portal.role);
@@ -70,10 +78,10 @@ export default function PortalSwitcher() {
 
       <DropdownMenuContent align="end" className="w-56 p-1">
         <DropdownMenuLabel className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider px-2 py-1.5">
-          Switch Portal View
+          Authorized Portals ({availablePortals.length})
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {PORTALS.map((portal) => {
+        {availablePortals.map((portal) => {
           const Icon = portal.icon;
           const isSelected = currentPortal.role === portal.role;
           return (

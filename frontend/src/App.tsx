@@ -34,6 +34,10 @@ import SchoolAdminDashboard from './pages/school_admin/SchoolAdminDashboard';
 import CreatorDashboard from './pages/creator/CreatorDashboard';
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 
+// Architectural Role Guard & Portal Dispatcher
+import RoleGuard from './components/RoleGuard';
+import DashboardDispatcher from './components/DashboardDispatcher';
+
 // Lazy-loaded Live Quiz routes for strict code-splitting (§14)
 const LiveQuizHostPage = React.lazy(() => import('./pages/LiveQuizHostPage'));
 const LiveQuizParticipantPage = React.lazy(() => import('./pages/LiveQuizParticipantPage'));
@@ -152,11 +156,7 @@ function App() {
           
           <Route 
             path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
+            element={<DashboardDispatcher />} 
           />
           <Route 
             path="/profile" 
@@ -257,9 +257,9 @@ function App() {
           <Route 
             path="/decks" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['teacher', 'content_creator']}>
                 <TopicDeckPage />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
@@ -282,11 +282,11 @@ function App() {
           <Route 
             path="/quiz/:quizId/live" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['teacher']}>
                 <React.Suspense fallback={<div className="flex h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--accent-royal)] border-t-transparent rounded-full animate-spin" /></div>}>
                   <LiveQuizHostPage />
                 </React.Suspense>
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
@@ -308,74 +308,74 @@ function App() {
           <Route 
             path="/video" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['teacher', 'content_creator']}>
                 <VideoGeneratorPage />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/lesson-planner" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['teacher', 'school_admin']}>
                 <LessonPlannerPage />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
-          {/* Institutional & Specialized Portals */}
+          {/* Institutional & Specialized Portals Guarded by Server-Verified Roles */}
           <Route 
             path="/parent" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['parent']}>
                 <ParentDashboard />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/parent/child/:id" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['parent']}>
                 <ChildDetailPage />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/teacher" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['teacher']}>
                 <TeacherDashboard />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/teacher/classroom/:id" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['teacher']}>
                 <ClassroomDetailPage />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/school-admin" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['school_admin']}>
                 <SchoolAdminDashboard />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/creator" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['content_creator']}>
                 <CreatorDashboard />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route 
             path="/admin" 
             element={
-              <ProtectedRoute>
+              <RoleGuard allowedRoles={['super_admin']}>
                 <SuperAdminDashboard />
-              </ProtectedRoute>
+              </RoleGuard>
             } 
           />
           <Route path="/support" element={<SupportPage />} />

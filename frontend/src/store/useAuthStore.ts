@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { fetchUserRoles } from '../lib/portalsApi';
 
 export type UserRole =
   | 'student'
@@ -16,6 +17,7 @@ export interface UserProfile {
   avatar_url?: string;
   plan?: string;
   role?: UserRole;
+  authorizedRoles?: UserRole[];
 }
 
 interface AuthState {
@@ -23,23 +25,29 @@ interface AuthState {
   session: any | null;
   loading: boolean;
   activeRole: UserRole;
+  authorizedRoles: UserRole[];
   setActiveRole: (role: UserRole) => void;
   setUser: (user: UserProfile | null) => void;
   setSession: (session: any | null) => void;
   signOut: () => Promise<void>;
   initializeAuth: () => Promise<void>;
+  refreshRoles: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
   loading: true,
-  activeRole:
-    (typeof window !== 'undefined' &&
-      (localStorage.getItem('learnbygenie_active_role') as UserRole)) ||
-    'student',
+  activeRole: 'student',
+  authorizedRoles: ['student'],
 
   setActiveRole: (role: UserRole) => {
+    const currentAuthorized = get().authorizedRoles;
+    // Security check: only allow switching to server-authorized roles!
+    if (!currentAuthorized.includes(role)) {
+      console.warn(`[AuthStore] Blocked unauthorized role switch attempt to '${role}'. Authorized: ${currentAuthorized.join(', ')}`);
+      return;
+    }
     if (typeof window !== 'undefined') {
       localStorage.setItem('learnbygenie_active_role', role);
     }
@@ -51,7 +59,39 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ user: null, session: null });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('learnbygenie_active_role');
+      localStorage.removeItem('learnbygenie_dev_auth');
+      localStorage.removeItem('teachgenie_dev_auth');
+    }
+    set({ user: null, session: null, activeRole: 'student', authorizedRoles: ['student'] });
+  },
+
+  refreshRoles: async () => {
+    try {
+      const res = await fetchUserRoles();
+      if (res && res.authorized_roles) {
+        const validRoles = res.authorized_roles as UserRole[];
+        const primary = (res.primary_role as UserRole) || 'student';
+        const storedRole = typeof window !== 'undefined' ? (localStorage.getItem('learnbygenie_active_role') as UserRole) : null;
+        const currentActive = storedRole && validRoles.includes(storedRole) ? storedRole : primary;
+
+        set((state) => ({
+          authorizedRoles: validRoles,
+          activeRole: currentActive,
+          user: state.user
+            ? {
+                ...state.user,
+                role: primary,
+                authorizedRoles: validRoles,
+              }
+            : null,
+        }));
+      }
+    } catch (err) {
+      // In dev or fallback, preserve existing role
+      console.debug('[AuthStore] Role sync notice:', err);
+    }
   },
 
   initializeAuth: async () => {
@@ -72,13 +112,20 @@ export const useAuthStore = create<AuthState>((set) => ({
           email: 'teacher@learnbygenie.com',
           full_name: 'Teacher Jane',
           plan: 'pro',
-          role: 'teacher'
+          role: 'teacher',
+          authorizedRoles: ['teacher', 'student'],
         };
         const devSession = {
           access_token: 'mock-dev-token',
           user: { id: devUser.id, email: devUser.email }
         };
-        set({ user: devUser, session: devSession, loading: false });
+        set({
+          user: devUser,
+          session: devSession,
+          activeRole: 'teacher',
+          authorizedRoles: ['teacher', 'student'],
+          loading: false
+        });
         return;
       }
 
@@ -117,30 +164,17 @@ export const useAuthStore = create<AuthState>((set) => ({
             full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
             avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
             plan: 'free',
-            role: (session.user.user_metadata?.role as UserRole) || 'student',
+            role: 'student',
+            authorizedRoles: ['student'],
           },
         });
         syncUserProfile(session);
-        
-        // Fetch plan and role
-        supabase.from('profiles').select('plan, role').eq('id', session.user.id).single()
-          .then(({ data }) => {
-            if (data) {
-              set((state) => ({
-                user: state.user
-                  ? {
-                      ...state.user,
-                      plan: data.plan || state.user.plan,
-                      role: (data.role as UserRole) || state.user.role,
-                    }
-                  : null,
-              }));
-            }
-          });
+        // Refresh server-authoritative roles
+        await get().refreshRoles();
       }
 
       // Listen for auth changes
-      supabase.auth.onAuthStateChange((event, session) => {
+      supabase.auth.onAuthStateChange(async (event, session) => {
         if (session) {
           set({
             session,
@@ -150,28 +184,16 @@ export const useAuthStore = create<AuthState>((set) => ({
               full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
               avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
               plan: 'free',
-              role: (session.user.user_metadata?.role as UserRole) || 'student',
+              role: 'student',
+              authorizedRoles: ['student'],
             },
           });
           if (event === 'SIGNED_IN') {
             syncUserProfile(session);
-            supabase.from('profiles').select('plan, role').eq('id', session.user.id).single()
-              .then(({ data }) => {
-                if (data) {
-                  set((state) => ({
-                    user: state.user
-                      ? {
-                          ...state.user,
-                          plan: data.plan || state.user.plan,
-                          role: (data.role as UserRole) || state.user.role,
-                        }
-                      : null,
-                  }));
-                }
-              });
+            await get().refreshRoles();
           }
         } else {
-          set({ user: null, session: null });
+          set({ user: null, session: null, activeRole: 'student', authorizedRoles: ['student'] });
         }
       });
     } catch (error) {

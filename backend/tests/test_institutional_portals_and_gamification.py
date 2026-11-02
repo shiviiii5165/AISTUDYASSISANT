@@ -395,3 +395,32 @@ def test_parent_student_invite_code_handshake():
     finally:
         app.dependency_overrides.clear()
 
+
+# ─── 6. SERVER-VERIFIED ROLES & PORTAL AUTHORIZATION TESTS ────────────────────
+
+def test_user_roles_endpoint_for_all_roles():
+    """Verify that /api/portals/me/roles returns strictly server-authorized roles for each persona."""
+    roles_test_matrix = [
+        (STUDENT_USER, ["student"], "student"),
+        (TEACHER_USER, ["teacher", "student"], "teacher"),
+        (PARENT_USER, ["parent", "student"], "parent"),
+        (SCHOOL_ADMIN_USER, ["school_admin", "teacher", "student"], "school_admin"),
+        (CONTENT_CREATOR_USER, ["content_creator", "student"], "content_creator"),
+        (SUPER_ADMIN_USER, ["student", "parent", "teacher", "school_admin", "content_creator", "super_admin"], "super_admin"),
+    ]
+
+    for user, expected_authorized, expected_primary in roles_test_matrix:
+        try:
+            app.dependency_overrides[get_current_user] = lambda u=user: u
+            with TestClient(app) as client:
+                res = client.get("/api/portals/me/roles")
+                assert res.status_code == 200, f"Failed for {user.role}: {res.text}"
+                data = res.json()
+                assert data["user_id"] == user.id
+                assert data["primary_role"] == expected_primary
+                assert set(data["authorized_roles"]) == set(expected_authorized)
+                assert data["active_role"] == expected_primary
+        finally:
+            app.dependency_overrides.clear()
+
+

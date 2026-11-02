@@ -3,7 +3,7 @@ import {
   FileEdit, BookOpen, Layers, CheckCircle2, Plus, 
   RefreshCw, ListChecks, HelpCircle, Sparkles, Filter 
 } from 'lucide-react';
-import AppLayout from '../../components/AppLayout';
+import CreatorLayout from '../../components/layout/CreatorLayout';
 import { 
   fetchCreatorDashboard, 
   createPracticeItem 
@@ -81,7 +81,7 @@ export default function CreatorDashboard() {
   };
 
   return (
-    <AppLayout title="Content Creator Workbench">
+    <CreatorLayout title="Content Creator Workbench">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border)] pb-5">
@@ -379,6 +379,6 @@ export default function CreatorDashboard() {
           </div>
         )}
       </div>
-    </AppLayout>
+    </CreatorLayout>
   );
 }

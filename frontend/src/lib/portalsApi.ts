@@ -242,3 +242,17 @@ export async function fetchDailyPersonalizedRoadmap(): Promise<DailyPersonalized
   return response.data;
 }
 
+// ── User Roles & Authorizations API ──────────────────────
+
+export interface UserRolesView {
+  user_id: string;
+  primary_role: string;
+  authorized_roles: string[];
+  active_role: string;
+}
+
+export async function fetchUserRoles(): Promise<UserRolesView> {
+  const response = await api.get<UserRolesView>('/api/portals/me/roles');
+  return response.data;
+}
+

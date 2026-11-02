@@ -33,7 +33,8 @@ from app.services.portals.schemas import (
     CreatePracticeItemRequest,
     SystemHealthOverview,
     UserRoleUpdate,
-    DailyPersonalizedRoadmap
+    DailyPersonalizedRoadmap,
+    UserRolesView
 )
 from app.services.portals.repository import PortalsRepository
 from app.services.practice.item_bank import register_practice_item, PracticeItem, QuestionType, DifficultyBand, VerificationStatus, make_practice_uuid
@@ -239,4 +240,34 @@ def get_student_daily_roadmap(current_user: AuthenticatedUser = Depends(get_curr
     to 30% Spaced Repair / 50% Core Progression / 20% Interleaved Transfer (§8).
     """
     return StudentPortalService.get_daily_roadmap(current_user.id)
+
+
+# ─── 7. CURRENT USER ROLES & PORTAL ACCESS ENDPOINT ──────────────────────────
+
+@router.get("/me/roles", response_model=UserRolesView)
+def get_current_user_roles(current_user: AuthenticatedUser = Depends(get_current_user)):
+    """
+    Returns server-verified roles and authorized portal access for the current user.
+    Prevents unauthorized portal switching via client-side manipulation.
+    """
+    role = UserRoleRepository.get_user_role(current_user.id) or current_user.role or "student"
+    if role in ("super_admin", "admin"):
+        authorized = ["student", "parent", "teacher", "school_admin", "content_creator", role]
+    elif role == "school_admin":
+        authorized = ["school_admin", "teacher", "student"]
+    elif role == "teacher":
+        authorized = ["teacher", "student"]
+    elif role == "content_creator":
+        authorized = ["content_creator", "student"]
+    elif role == "parent":
+        authorized = ["parent", "student"]
+    else:
+        authorized = ["student"]
+
+    return UserRolesView(
+        user_id=current_user.id,
+        primary_role=role,
+        authorized_roles=authorized,
+        active_role=role
+    )
 
