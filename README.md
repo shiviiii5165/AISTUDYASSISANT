@@ -1,6 +1,6 @@
 # LearnByGenie
 
-> **LearnByGenie** (formerly TeachGenie) — An enterprise-grade AI study assistant and smart classroom assessment platform.
+> **LearnByGenie**  — An enterprise-grade AI study assistant and smart classroom assessment platform.
 
 ## Features
 
