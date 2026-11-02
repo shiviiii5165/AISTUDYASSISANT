@@ -81,10 +81,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           activeRole: currentActive,
           user: state.user
             ? {
-                ...state.user,
-                role: primary,
-                authorizedRoles: validRoles,
-              }
+              ...state.user,
+              role: primary,
+              authorizedRoles: validRoles,
+            }
             : null,
         }));
       }
@@ -130,10 +130,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       const syncUserProfile = async (currentSession: any) => {
         if (!currentSession?.user) return;
-        
+
         const { user } = currentSession;
         const metadata = user.user_metadata || {};
         const fullName = metadata.full_name || metadata.name || '';

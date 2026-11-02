@@ -53,3 +53,4 @@ export default function DashboardDispatcher() {
   // Default: Student Portal Dashboard
   return <Dashboard />;
 }
+
