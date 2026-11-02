@@ -49,6 +49,7 @@ const ChatPage: React.FC = () => {
   const { user: currentUser } = useAuthStore();
 
   const [useV2, setUseV2] = useState(initialV2);
+  const [v2TeachingMode, setV2TeachingMode] = useState<'QUICK_ASK' | 'TUTOR'>('QUICK_ASK');
 
   const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
   const [selectedPdfId, setSelectedPdfId] = useState(initialPdfId);
@@ -183,7 +184,8 @@ const ChatPage: React.FC = () => {
           message: q,
           pdf_id: selectedPdfId || undefined,
           session_id: sessionId || undefined,
-          history: apiHistory
+          history: apiHistory,
+          mode: v2TeachingMode
         });
 
         if (response.session_id && !sessionId) {
@@ -191,11 +193,22 @@ const ChatPage: React.FC = () => {
             setChatHistory(prev => [{ id: response.session_id, title: q, created_at: new Date().toISOString() }, ...prev]);
         }
         
+        const tutorSources: ChatSource[] = [];
+        if (response.tutor_response?.citations) {
+          for (const c of response.tutor_response.citations) {
+            tutorSources.push({
+              page: c.page || 'Document',
+              text: `${c.source}${c.excerpt ? ': ' + c.excerpt : ''}`
+            });
+          }
+        }
+
         const assistantMessage: DisplayMessage = {
           role: 'assistant',
           content: response.message || '',
           isV2: true,
-          pipelineOutput: response
+          pipelineOutput: response,
+          sources: tutorSources.length > 0 ? tutorSources : undefined
         };
         setMessages(prev => [...prev, assistantMessage]);
       } else {
@@ -270,19 +283,92 @@ const ChatPage: React.FC = () => {
         );
       }
 
-      if (out.response_type === 'tutor_turn' && out.tutor_data) {
+      if (out.response_type === 'tutor_turn') {
+        const tr = out.tutor_response;
+        const td = out.tutor_data;
+        const text = tr?.message || td?.message || msg.content;
         return (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className={PROSE}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {out.tutor_data.message}
+                {text}
               </ReactMarkdown>
             </div>
-            {out.tutor_data.understanding_level && (
-              <p className="mt-2 inline-block rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
-                State: {out.tutor_data.understanding_level.replace('_', ' ')}
-              </p>
+
+            {/* Subtle mastery feedback badge */}
+            {tr?.mastery_feedback && (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-green-light)] px-3 py-1 text-xs font-medium text-[var(--accent-green-text)] border border-[var(--accent-green)]/30">
+                <Sparkles className="h-3 w-3" />
+                <span>{tr.mastery_feedback}</span>
+              </div>
             )}
+
+            {/* Prerequisite repair alert with explainability (§36) */}
+            {tr?.prerequisite_repair && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+                <div className="font-semibold flex items-center gap-1.5">
+                  <span>💡 Prerequisite Bridge</span>
+                </div>
+                {tr.prerequisite_repair.why && (
+                  <p className="mt-1 text-amber-800 dark:text-amber-300 leading-relaxed">
+                    {tr.prerequisite_repair.why}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Active Checking Question Card (§34, §15) */}
+            {tr?.active_check && tr.active_check.question && (
+              <div className="rounded-xl border border-[var(--accent-royal)]/30 bg-[var(--accent-baby)]/30 p-3.5 text-xs text-[var(--text-primary)]">
+                <span className="font-semibold text-[var(--accent-royal)] block mb-1">
+                  🎯 Understanding Check
+                </span>
+                <p className="font-medium text-sm text-[var(--text-primary)] mb-2.5">
+                  {tr.active_check.question}
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSend("Can you give me a hint?")}
+                    className="rounded-lg bg-[var(--bg-card)] border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--accent-royal)] hover:border-[var(--accent-royal)] transition-colors"
+                  >
+                    💡 Need a Hint
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSend("Just give me the full explanation")}
+                    className="rounded-lg bg-[var(--bg-card)] border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    📖 Show Full Answer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Socratic Actions (§22, §34) */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => handleSend("Explain this simpler")}
+                className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+              >
+                Explain simpler
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSend("Give me another example")}
+                className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+              >
+                Show example
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSend("Can you give me a hint?")}
+                className="rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+              >
+                Hint
+              </button>
+            </div>
           </div>
         );
       }
@@ -457,7 +543,34 @@ const ChatPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="ml-auto flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-3">
+              {useV2 && (
+                <div className="flex items-center rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setV2TeachingMode('QUICK_ASK')}
+                    className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                      v2TeachingMode === 'QUICK_ASK'
+                        ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    Quick Ask
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setV2TeachingMode('TUTOR')}
+                    className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                      v2TeachingMode === 'TUTOR'
+                        ? 'bg-[var(--accent-royal)] text-white shadow-sm'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    Socratic Tutor
+                  </button>
+                </div>
+              )}
+
               <label className="flex cursor-pointer items-center gap-2">
                 <span className="text-xs font-semibold text-[var(--text-secondary)]">V2 Pipeline</span>
                 <span className="relative inline-flex">

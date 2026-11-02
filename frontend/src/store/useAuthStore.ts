@@ -1,18 +1,29 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 
-interface UserProfile {
+export type UserRole =
+  | 'student'
+  | 'parent'
+  | 'teacher'
+  | 'school_admin'
+  | 'content_creator'
+  | 'super_admin';
+
+export interface UserProfile {
   id: string;
   email: string | undefined;
   full_name?: string;
   avatar_url?: string;
   plan?: string;
+  role?: UserRole;
 }
 
 interface AuthState {
   user: UserProfile | null;
   session: any | null;
   loading: boolean;
+  activeRole: UserRole;
+  setActiveRole: (role: UserRole) => void;
   setUser: (user: UserProfile | null) => void;
   setSession: (session: any | null) => void;
   signOut: () => Promise<void>;
@@ -23,6 +34,17 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   loading: true,
+  activeRole:
+    (typeof window !== 'undefined' &&
+      (localStorage.getItem('learnbygenie_active_role') as UserRole)) ||
+    'student',
+
+  setActiveRole: (role: UserRole) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('learnbygenie_active_role', role);
+    }
+    set({ activeRole: role });
+  },
 
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
@@ -49,7 +71,8 @@ export const useAuthStore = create<AuthState>((set) => ({
           id: '00000000-0000-0000-0000-000000000001',
           email: 'teacher@learnbygenie.com',
           full_name: 'Teacher Jane',
-          plan: 'pro'
+          plan: 'pro',
+          role: 'teacher'
         };
         const devSession = {
           access_token: 'mock-dev-token',
@@ -93,16 +116,25 @@ export const useAuthStore = create<AuthState>((set) => ({
             email: session.user.email,
             full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
             avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
-            plan: 'free', // Will be updated shortly
+            plan: 'free',
+            role: (session.user.user_metadata?.role as UserRole) || 'student',
           },
         });
         syncUserProfile(session);
         
-        // Fetch plan
-        supabase.from('profiles').select('plan').eq('id', session.user.id).single()
+        // Fetch plan and role
+        supabase.from('profiles').select('plan, role').eq('id', session.user.id).single()
           .then(({ data }) => {
-            if (data?.plan) {
-              set((state) => ({ user: state.user ? { ...state.user, plan: data.plan } : null }));
+            if (data) {
+              set((state) => ({
+                user: state.user
+                  ? {
+                      ...state.user,
+                      plan: data.plan || state.user.plan,
+                      role: (data.role as UserRole) || state.user.role,
+                    }
+                  : null,
+              }));
             }
           });
       }
@@ -118,14 +150,23 @@ export const useAuthStore = create<AuthState>((set) => ({
               full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
               avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
               plan: 'free',
+              role: (session.user.user_metadata?.role as UserRole) || 'student',
             },
           });
           if (event === 'SIGNED_IN') {
             syncUserProfile(session);
-            supabase.from('profiles').select('plan').eq('id', session.user.id).single()
+            supabase.from('profiles').select('plan, role').eq('id', session.user.id).single()
               .then(({ data }) => {
-                if (data?.plan) {
-                  set((state) => ({ user: state.user ? { ...state.user, plan: data.plan } : null }));
+                if (data) {
+                  set((state) => ({
+                    user: state.user
+                      ? {
+                          ...state.user,
+                          plan: data.plan || state.user.plan,
+                          role: (data.role as UserRole) || state.user.role,
+                        }
+                      : null,
+                  }));
                 }
               });
           }

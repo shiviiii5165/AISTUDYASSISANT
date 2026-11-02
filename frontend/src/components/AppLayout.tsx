@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   BookOpen, MessageSquare, Target, Menu, X, LogOut, LifeBuoy,
   Presentation, PlayCircle, GraduationCap, Map, HelpCircle,
-  ChevronLeft, ChevronRight, Radio, FileText,
+  ChevronLeft, ChevronRight, Radio, FileText, Sparkles, Compass,
+  ShieldCheck, ListChecks, HeartHandshake, Building2, FileEdit, Users,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -10,6 +11,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import { pageTransition } from '../lib/motion';
 import ProfileDropdown from './ProfileDropdown';
+import PortalSwitcher from './PortalSwitcher';
 import { BRAND } from '../config/branding';
 
 /**
@@ -24,8 +26,12 @@ const NAV_GROUPS: { heading: string; items: { path: string; label: string; icon:
     heading: 'Study',
     items: [
       { path: '/dashboard', label: 'Dashboard', icon: Target },
+      { path: '/practice', label: 'Adaptive Practice', icon: Compass },
+      { path: '/transfer-check', label: 'Independent Check', icon: ShieldCheck },
+      { path: '/step-check', label: 'Step Check', icon: ListChecks },
       { path: '/notes', label: 'AI Notes', icon: FileText },
       { path: '/teach', label: 'Teach Me', icon: GraduationCap },
+      { path: '/mistakes', label: 'Mistake DNA', icon: Sparkles },
       { path: '/library', label: 'My Library', icon: BookOpen },
       { path: '/chat', label: 'AI Chat', icon: MessageSquare },
     ],
@@ -33,11 +39,21 @@ const NAV_GROUPS: { heading: string; items: { path: string; label: string; icon:
   {
     heading: 'Teach',
     items: [
+      { path: '/teacher', label: 'Teacher Portal', icon: GraduationCap },
       { path: '/lesson-planner', label: 'AI Lesson Planner', icon: Map },
       { path: '/decks', label: 'PPT Generator', icon: Presentation },
       { path: '/video', label: 'Video Generator', icon: PlayCircle },
       { path: '/quizzes', label: 'Quiz Generator', icon: HelpCircle },
       { path: '/join', label: 'Live Quiz Room', icon: Radio },
+    ],
+  },
+  {
+    heading: 'Institutional Portals',
+    items: [
+      { path: '/parent', label: 'Parent Portal', icon: HeartHandshake },
+      { path: '/school-admin', label: 'School Admin', icon: Building2 },
+      { path: '/creator', label: 'Creator Studio', icon: FileEdit },
+      { path: '/admin', label: 'Super Admin', icon: ShieldCheck },
     ],
   },
 ];
@@ -249,6 +265,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode; title: Reac
             <span className="hidden text-xs font-medium text-[var(--text-muted)] sm:block mr-2">
               {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
+            <PortalSwitcher />
             <ProfileDropdown />
           </div>
         </header>

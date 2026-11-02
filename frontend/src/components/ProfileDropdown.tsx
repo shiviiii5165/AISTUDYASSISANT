@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, FileText, LogOut, Settings, User } from 'lucide-react';
+import { Compass, CreditCard, FileText, GitBranch, LogOut, Settings, User, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useAuthStore } from '../store/useAuthStore';
@@ -72,6 +72,34 @@ export default function ProfileDropdown({ className }: { className?: string }) {
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
+
+        <DropdownMenuItem asChild>
+          <Link to="/profile" className="flex items-center gap-3 text-[var(--text-primary)]">
+            <User className="h-4 w-4 text-[var(--text-secondary)]" />
+            <span>Learning Profile</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link to="/diagnostic" className="flex items-center gap-3 text-[var(--text-primary)]">
+            <Compass className="h-4 w-4 text-emerald-500" />
+            <span>Diagnostic Assessment</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link to="/mastery" className="flex items-center gap-3 text-[var(--text-primary)]">
+            <GitBranch className="h-4 w-4 text-indigo-500" />
+            <span>Mastery Map</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link to="/mistakes" className="flex items-center gap-3 text-[var(--text-primary)]">
+            <Sparkles className="h-4 w-4 text-purple-500" />
+            <span>Mistake DNA</span>
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
           <Link to="/pricing" className="flex items-center gap-3 text-[var(--text-primary)]">

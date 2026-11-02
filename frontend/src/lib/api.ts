@@ -135,10 +135,44 @@ export interface ContentCreatorOutput {
   flashcards_data: any | null;
 }
 
+export interface TutorCheck {
+  check_id: string;
+  skill_id: string;
+  skill_name: string;
+  question: string;
+  expected_answer?: string;
+  check_type: string;
+  status: string;
+}
+
+export interface TutorTurnResponse {
+  session_id: string;
+  message: string;
+  mode: 'QUICK_ASK' | 'TUTOR';
+  pedagogical_state: string;
+  active_check?: TutorCheck | null;
+  active_hints?: string | null;
+  hint_level: string;
+  citations?: Array<{ source: string; page?: string; excerpt?: string }>;
+  prerequisite_repair?: {
+    target_skill?: string;
+    blocking_prerequisite?: string;
+    repair_path?: string[];
+    why?: string;
+  } | null;
+  mastery_feedback?: string | null;
+  stem_verification?: {
+    is_verified: boolean;
+    expression: string;
+    note?: string;
+  } | null;
+}
+
 export interface PipelineOutput {
   response_type: string; // "tutor_turn" | "content" | "direct_message"
   message: string | null;
   tutor_data: TutorTurn | null;
+  tutor_response?: TutorTurnResponse | null;
   content_data: ContentCreatorOutput | null;
   intent: string;
   session_id?: string;
@@ -149,13 +183,34 @@ export async function sendMessageV2(params: {
   pdf_id?: string;
   history?: ChatMessage[];
   session_id?: string;
+  mode?: 'QUICK_ASK' | 'TUTOR';
+  user_action?: string;
 }): Promise<PipelineOutput> {
   const response = await api.post('/chat/v2/ask', {
     message: params.message,
     pdf_id: params.pdf_id,
     history: params.history || [],
     session_id: params.session_id,
+    mode: params.mode,
+    user_action: params.user_action,
   });
+  return response.data;
+}
+
+export async function sendTutorTurn(params: {
+  message: string;
+  session_id?: string;
+  mode?: 'QUICK_ASK' | 'TUTOR';
+  subject?: string;
+  pdf_id?: string;
+  user_action?: string;
+}): Promise<TutorTurnResponse> {
+  const response = await api.post('/api/tutor/session/turn', params);
+  return response.data;
+}
+
+export async function getActiveTutorSession(subject?: string): Promise<any> {
+  const response = await api.get('/api/tutor/session/active', { params: { subject } });
   return response.data;
 }
 

@@ -17,6 +17,22 @@ import QuizGeneratorPage from './pages/QuizGeneratorPage';
 import QuizPage from './pages/QuizPage';
 import JoinLiveQuizPage from './pages/JoinLiveQuizPage';
 import NotesGeneratorPage from './pages/NotesGeneratorPage';
+import LearnerProfilePage from './pages/LearnerProfilePage';
+import DiagnosticPage from './pages/DiagnosticPage';
+import { MasteryMapPage } from './pages/MasteryMapPage';
+import MistakesPage from './pages/MistakesPage';
+import PracticePage from './pages/PracticePage';
+import { TransferCheckPage } from './pages/TransferCheckPage';
+import StepCheckPage from './pages/StepCheckPage';
+
+// Specialized & Institutional Portals
+import ParentDashboard from './pages/parent/ParentDashboard';
+import ChildDetailPage from './pages/parent/ChildDetailPage';
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
+import ClassroomDetailPage from './pages/teacher/ClassroomDetailPage';
+import SchoolAdminDashboard from './pages/school_admin/SchoolAdminDashboard';
+import CreatorDashboard from './pages/creator/CreatorDashboard';
+import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 
 // Lazy-loaded Live Quiz routes for strict code-splitting (§14)
 const LiveQuizHostPage = React.lazy(() => import('./pages/LiveQuizHostPage'));
@@ -143,6 +159,70 @@ function App() {
             } 
           />
           <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <LearnerProfilePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/diagnostic" 
+            element={
+              <ProtectedRoute>
+                <DiagnosticPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/mastery" 
+            element={
+              <ProtectedRoute>
+                <MasteryMapPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/mastery-map" 
+            element={
+              <ProtectedRoute>
+                <MasteryMapPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/mistakes" 
+            element={
+              <ProtectedRoute>
+                <MistakesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/practice" 
+            element={
+              <ProtectedRoute>
+                <PracticePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/transfer-check" 
+            element={
+              <ProtectedRoute>
+                <TransferCheckPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/step-check" 
+            element={
+              <ProtectedRoute>
+                <StepCheckPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/teach" 
             element={
               <ProtectedRoute>
@@ -238,6 +318,63 @@ function App() {
             element={
               <ProtectedRoute>
                 <LessonPlannerPage />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Institutional & Specialized Portals */}
+          <Route 
+            path="/parent" 
+            element={
+              <ProtectedRoute>
+                <ParentDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/parent/child/:id" 
+            element={
+              <ProtectedRoute>
+                <ChildDetailPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/teacher" 
+            element={
+              <ProtectedRoute>
+                <TeacherDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/teacher/classroom/:id" 
+            element={
+              <ProtectedRoute>
+                <ClassroomDetailPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/school-admin" 
+            element={
+              <ProtectedRoute>
+                <SchoolAdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/creator" 
+            element={
+              <ProtectedRoute>
+                <CreatorDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute>
+                <SuperAdminDashboard />
               </ProtectedRoute>
             } 
           />
