@@ -15,7 +15,8 @@ from app.services.portals.service import (
     TeacherPortalService,
     SchoolAdminPortalService,
     ContentCreatorPortalService,
-    SuperAdminPortalService
+    SuperAdminPortalService,
+    StudentPortalService
 )
 from app.services.portals.schemas import (
     ParentDashboardSummary,
@@ -29,7 +30,8 @@ from app.services.portals.schemas import (
     CreatorDashboardSummary,
     CreatePracticeItemRequest,
     SystemHealthOverview,
-    UserRoleUpdate
+    UserRoleUpdate,
+    DailyPersonalizedRoadmap
 )
 from app.services.portals.repository import PortalsRepository
 from app.services.practice.item_bank import register_practice_item, PracticeItem, QuestionType, DifficultyBand, VerificationStatus, make_practice_uuid
@@ -47,11 +49,23 @@ def get_parent_dashboard(current_user: AuthenticatedUser = Depends(require_paren
 
 @router.post("/parent/link-child")
 def link_child_to_parent(payload: LinkChildRequest, current_user: AuthenticatedUser = Depends(require_parent)):
-    """Links a child account using an invitation code."""
-    # In practice, invitation code maps to student_id or default student
-    student_id = "a56da972-0f19-418d-b0f7-de91ff114190"
-    link = PortalsRepository.link_parent_child(current_user.id, student_id, payload.relationship)
-    return {"status": "linked", "link": link}
+    """Links a child account using an authentic verified invitation code."""
+    try:
+        link = PortalsRepository.link_parent_with_code(
+            parent_id=current_user.id,
+            invite_code=payload.invitation_code,
+            relationship=payload.relationship
+        )
+        return {"status": "linked", "link": link}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/student/generate-parent-code")
+def generate_parent_code(current_user: AuthenticatedUser = Depends(get_current_user)):
+    """Generates a secure verification code that a parent can use to link to this student."""
+    code = PortalsRepository.generate_student_invite_code(current_user.id)
+    return {"invitation_code": code, "student_id": current_user.id}
 
 
 @router.get("/parent/child/{student_id}/progress", response_model=ChildDetailedProgress)
@@ -155,4 +169,15 @@ def update_user_role(payload: UserRoleUpdate, current_user: AuthenticatedUser = 
         "target_user_id": payload.target_user_id,
         "new_role": payload.new_role
     }
+
+
+# ─── 6. STUDENT PORTAL ROADMAP ENDPOINTS (STAGE 8) ────────────────────────────
+
+@router.get("/student/roadmap", response_model=DailyPersonalizedRoadmap)
+def get_student_daily_roadmap(current_user: AuthenticatedUser = Depends(get_current_user)):
+    """
+    Returns the single daily personalized roadmap with 3 choice tasks adhering
+    to 30% Spaced Repair / 50% Core Progression / 20% Interleaved Transfer (§8).
+    """
+    return StudentPortalService.get_daily_roadmap(current_user.id)
 

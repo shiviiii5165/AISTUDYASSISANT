@@ -241,3 +241,153 @@ def test_super_admin_portal_overview_api():
     finally:
         app.dependency_overrides.clear()
 
+
+# ─── 4. DAILY ROADMAP (30/50/20) & BLUEPRINT REWARD TESTS ────────────────────
+
+def test_student_daily_roadmap_30_50_20():
+    """Verify Student Daily Roadmap provides 3 choices with 30/50/20 category weights (§8)."""
+    try:
+        app.dependency_overrides[get_current_user] = lambda: STUDENT_USER
+        with TestClient(app) as client:
+            res = client.get("/api/portals/student/roadmap")
+            assert res.status_code == 200
+            data = res.json()
+            assert "tasks" in data
+            assert len(data["tasks"]) == 3
+            weights = [t["weight_percentage"] for t in data["tasks"]]
+            assert weights == [30, 50, 20]
+            categories = [t["category"] for t in data["tasks"]]
+            assert "SPACED_ERROR_REPAIR" in categories
+            assert "CORE_PROGRESSION" in categories
+            assert "INTERLEAVED_TRANSFER" in categories
+            for t in data["tasks"]:
+                assert len(t["why_recommended"]) > 10
+                assert len(t["unlocks_next"]) > 5
+                assert t["expected_duration_minutes"] > 0
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_error_token_taxonomy_resolution():
+    """Verify that MistakeClassifier tags errors with canonical E01–E20 ErrorToken IDs."""
+    from app.services.mistake_dna.classifier import MistakeClassifier
+    from app.services.mistake_dna.schemas import MistakeCandidate, MistakeSourceType, AssistanceLevel, ErrorTokenID
+
+    # Test Sign Flip -> E07
+    cand_sign = MistakeCandidate(
+        user_id=STUDENT_USER.id,
+        skill_id="MATH_ALG_QUAD01",
+        source_type=MistakeSourceType.PRACTICE,
+        source_record_id="rec_01",
+        student_response="-5",
+        expected_answer="5",
+        feedback_reason="sign error"
+    )
+    res_sign = MistakeClassifier.classify(cand_sign)
+    assert res_sign.error_token_id == ErrorTokenID.E07.value
+
+    # Test Arithmetic Slip -> E08
+    cand_calc = MistakeCandidate(
+        user_id=STUDENT_USER.id,
+        skill_id="MATH_ALG_QUAD01",
+        source_type=MistakeSourceType.PRACTICE,
+        source_record_id="rec_02",
+        student_response="14",
+        expected_answer="15"
+    )
+    res_calc = MistakeClassifier.classify(cand_calc)
+    assert res_calc.error_token_id == ErrorTokenID.E08.value
+
+    # Test Empty / Give Up -> E18
+    cand_empty = MistakeCandidate(
+        user_id=STUDENT_USER.id,
+        skill_id="MATH_ALG_QUAD01",
+        source_type=MistakeSourceType.PRACTICE,
+        source_record_id="rec_03",
+        student_response="idk"
+    )
+    res_empty = MistakeClassifier.classify(cand_empty)
+    assert res_empty.error_token_id == ErrorTokenID.E18.value
+
+
+def test_blueprint_xp_rewards_and_daily_cap():
+    """Verify canonical blueprint XP amounts and 10 XP/day cap on repeated easy items (§8)."""
+    uid = "user_blueprint_test_01"
+
+    # 1. Baseline diagnostic: +50 XP
+    tx1, _ = GamificationService.award_blueprint_xp(
+        user_id=uid,
+        reason_code=XPReasonCode.BASELINE_DIAGNOSTIC,
+        source_entity_type="diagnostic_session",
+        idempotency_key="diag_xp_01"
+    )
+    assert tx1.amount == 50
+
+    # 2. Active error resolution: +30 XP
+    tx2, _ = GamificationService.award_blueprint_xp(
+        user_id=uid,
+        reason_code=XPReasonCode.ERROR_RESOLUTION_UNSEEN,
+        source_entity_type="mistake_repair",
+        idempotency_key="repair_xp_01"
+    )
+    assert tx2.amount == 30
+
+    # 3. Repeated easy practice: 2 XP per item, capped at 10 XP/day
+    for i in range(5):
+        GamificationService.award_xp(
+            user_id=uid,
+            amount=2,
+            reason_code=XPReasonCode.REPEATED_EASY_PRACTICE,
+            source_entity_type="practice_item",
+            idempotency_key=f"easy_item_{i}"
+        )
+    # 6th easy practice attempt: cap reached, should receive 0 XP
+    tx_capped, _ = GamificationService.award_xp(
+        user_id=uid,
+        amount=2,
+        reason_code=XPReasonCode.REPEATED_EASY_PRACTICE,
+        source_entity_type="practice_item",
+        idempotency_key="easy_item_overflow"
+    )
+    assert tx_capped.amount == 0
+
+
+def test_parent_student_invite_code_handshake():
+    """Verify authentic student invite code generation and parental linking handshake."""
+    new_student_id = "00000000-0000-0000-0000-000000000555"
+    student_user = AuthenticatedUser(id=new_student_id, role="student", email="child555@learnbygenie.com")
+    new_parent_id = "00000000-0000-0000-0000-000000000777"
+    parent_user = AuthenticatedUser(id=new_parent_id, role="parent", email="parent777@learnbygenie.com")
+
+    # Step 1: Student generates parent invitation code
+    try:
+        app.dependency_overrides[get_current_user] = lambda: student_user
+        with TestClient(app) as client:
+            res_code = client.post("/api/portals/student/generate-parent-code")
+            assert res_code.status_code == 200
+            invite_code = res_code.json()["invitation_code"]
+            assert invite_code.startswith("GENIE-")
+    finally:
+        app.dependency_overrides.clear()
+
+    # Step 2: Parent links child using valid invite code
+    try:
+        app.dependency_overrides[get_current_user] = lambda: parent_user
+        with TestClient(app) as client:
+            res_link = client.post("/api/portals/parent/link-child", json={
+                "invitation_code": invite_code,
+                "relationship": "guardian"
+            })
+            assert res_link.status_code == 200
+            data = res_link.json()
+            assert data["status"] == "linked"
+            assert data["link"]["student_id"] == new_student_id
+
+            # Verify parent dashboard now shows linked child
+            res_dash = client.get("/api/portals/parent/dashboard")
+            assert res_dash.status_code == 200
+            dash_data = res_dash.json()
+            assert any(c["student_id"] == new_student_id for c in dash_data["linked_children"])
+    finally:
+        app.dependency_overrides.clear()
+

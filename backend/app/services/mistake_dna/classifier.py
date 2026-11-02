@@ -11,7 +11,7 @@ import re
 from typing import Optional, List, Tuple
 from app.core.logging import logger
 from .schemas import (
-    ErrorType, ConfidenceClass, ClassificationResult, MistakeCandidate
+    ErrorType, ErrorTokenID, resolve_error_token, ConfidenceClass, ClassificationResult, MistakeCandidate
 )
 
 
@@ -43,9 +43,11 @@ class MistakeClassifier:
 
         # ─── 1. DETERMINISTIC HEURISTIC CHECKS ────────────────────────────────
 
+        raw_result: Optional[ClassificationResult] = None
+
         # A. Incomplete Response Check
         if len(resp_clean) == 0 or resp_clean in ("?", "...", "idk", "i don't know", "skip"):
-            return ClassificationResult(
+            raw_result = ClassificationResult(
                 primary_error_type=ErrorType.INCOMPLETE_RESPONSE,
                 error_subtype="unattempted_or_abandoned",
                 error_summary="Response was incomplete or abandoned before completing the solution.",
@@ -55,51 +57,53 @@ class MistakeClassifier:
             )
 
         # B. Unit or Dimension Check
-        unit_res = cls._check_unit_error(resp_clean, exp_clean, prompt)
-        if unit_res:
-            return unit_res
+        if not raw_result:
+            raw_result = cls._check_unit_error(resp_clean, exp_clean, prompt)
 
         # C. Sign or Notation Check
-        sign_res = cls._check_sign_or_notation_error(resp_clean, exp_clean, prompt, feedback)
-        if sign_res:
-            return sign_res
+        if not raw_result:
+            raw_result = cls._check_sign_or_notation_error(resp_clean, exp_clean, prompt, feedback)
 
         # D. Calculation / Arithmetic Check
-        calc_res = cls._check_calculation_error(resp_clean, exp_clean)
-        if calc_res:
-            return calc_res
+        if not raw_result:
+            raw_result = cls._check_calculation_error(resp_clean, exp_clean)
 
         # E. Formula Recall Check
-        formula_res = cls._check_formula_recall(resp_clean, exp_clean, prompt, feedback)
-        if formula_res:
-            return formula_res
+        if not raw_result:
+            raw_result = cls._check_formula_recall(resp_clean, exp_clean, prompt, feedback)
 
         # F. Misread Question Check
-        misread_res = cls._check_misread_question(resp_clean, exp_clean, prompt, feedback)
-        if misread_res:
-            return misread_res
+        if not raw_result:
+            raw_result = cls._check_misread_question(resp_clean, exp_clean, prompt, feedback)
 
         # ─── 2. STRUCTURED RUBRIC / FEEDBACK REASON CHECKS ────────────────────
-
-        rubric_res = cls._classify_via_rubric(candidate)
-        if rubric_res:
-            return rubric_res
+        if not raw_result:
+            raw_result = cls._classify_via_rubric(candidate)
 
         # ─── 3. SUBJECT-SPECIFIC FALLBACK PATTERNS ────────────────────────────
-        subj_res = cls._check_subject_heuristics(candidate)
-        if subj_res:
-            return subj_res
+        if not raw_result:
+            raw_result = cls._check_subject_heuristics(candidate)
 
         # ─── 4. UNKNOWN CLASSIFICATION (NO FABRICATION §7, §39) ────────────────
-        return ClassificationResult(
-            primary_error_type=ErrorType.UNKNOWN,
-            secondary_error_types=[],
-            error_subtype="",
-            error_summary="Response mechanism could not be determined with high confidence.",
-            confidence=ConfidenceClass.LOW,
-            classifier_version=cls.VERSION,
-            deterministic_rule="UNCLASSIFIED_FALLBACK"
+        if not raw_result:
+            raw_result = ClassificationResult(
+                primary_error_type=ErrorType.UNKNOWN,
+                secondary_error_types=[],
+                error_subtype="",
+                error_summary="Response mechanism could not be determined with high confidence.",
+                confidence=ConfidenceClass.LOW,
+                classifier_version=cls.VERSION,
+                deterministic_rule="UNCLASSIFIED_FALLBACK"
+            )
+
+        # Deterministically attach canonical E01–E20 ErrorTokenID
+        token = resolve_error_token(
+            raw_result.primary_error_type,
+            raw_result.error_subtype,
+            raw_result.deterministic_rule or ""
         )
+        raw_result.error_token_id = token.value
+        return raw_result
 
     # ─── DETERMINISTIC DETECTORS ──────────────────────────────────────────────
 

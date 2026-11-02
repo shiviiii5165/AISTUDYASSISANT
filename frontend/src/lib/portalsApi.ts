@@ -213,3 +213,32 @@ export async function updateUserRole(targetUserId: string, newRole: string): Pro
   return response.data;
 }
 
+// ── Student Daily Roadmap APIs (Stage 8) ─────────────────
+
+export interface RoadmapTaskChoice {
+  task_id: string;
+  title: string;
+  category: string;
+  weight_percentage: number;
+  skill_id: string;
+  skill_name: string;
+  why_recommended: string;
+  expected_duration_minutes: number;
+  current_mastery_state: string;
+  unlocks_next: string;
+  action_route: string;
+}
+
+export interface DailyPersonalizedRoadmap {
+  user_id: string;
+  target_exam: string;
+  daily_goal_minutes: number;
+  tasks: RoadmapTaskChoice[];
+  recalculated_at: string;
+}
+
+export async function fetchDailyPersonalizedRoadmap(): Promise<DailyPersonalizedRoadmap> {
+  const response = await api.get<DailyPersonalizedRoadmap>('/api/portals/student/roadmap');
+  return response.data;
+}
+

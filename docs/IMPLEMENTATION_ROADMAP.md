@@ -1,103 +1,70 @@
-# LearnByGenie — Implementation Roadmap & Execution Plan
+# LearnByGenie — Implementation Roadmap & Execution Status
 
-**Version:** 2.0.0  
-**Methodology:** Vertical Feature Slices, Test-Driven Verification, Small Reviewable Commits  
-**Status:** Canonical Implementation Plan  
+**Version:** 2.1.0  
+**Methodology:** Vertical Feature Slices, Test-Driven Verification, Zero Fabricated Claims  
+**Status:** Canonical Implementation Plan & Execution Baseline  
 
 ---
 
-## 1. Roadmap Overview & Phasing
+## 1. Roadmap Overview & Phasing Status
 
 ```mermaid
 flowchart TD
-    P1["Phase 1: Critical Hardening & Defect Fixes<br>• Local JWT decoding & Supabase fallback<br>• Server-side RBAC require_role dependency<br>• Fix practice prerequisite selection test<br>• Git stabilization of uncommitted files"] --> P2
+    P1["Phase 1: Critical Security & Persistence [COMPLETED]<br>• Production mock-token quarantine<br>• Removal of unverified JWT decode bypass<br>• Multi-tenant RBAC guards (6 roles)<br>• Verifiable parent-child invite handshake"] --> P2
     
-    P2["Phase 2: Database Migrations 030 & 031<br>• Migration 030: Schools, Classrooms, Parent links<br>• Migration 031: XP Ledger, Streaks, Spaced Repetition"] --> P3
+    P2["Phase 2: Core Learning Loop Integration [COMPLETED]<br>• Canonical ErrorToken E01–E20 taxonomy<br>• 5-Tier Mastery verification (Tier 0 to Tier 5)<br>• SuperMemo SM-2 interval expansion engine<br>• Daily Roadmap (30% Repair · 50% Core · 20% Transfer)"] --> P3
     
-    P3["Phase 3: Core Pedagogical Engines Completion<br>• Gamification & XP Ledger Service<br>• Spaced Repetition SM-2 Scheduler<br>• Student Onboarding trigger & Recommendations"] --> P4
+    P3["Phase 3: Student Experience & Gamification [COMPLETED]<br>• Two-ledger architecture (Effort XP vs Mastery)<br>• Blueprint XP values (+50, +30, +40, +60, +45, +25)<br>• 10 XP/day anti-grinding cap on repeated easy items<br>• Dashboard integration with Choice Cards"] --> P4
     
-    P4["Phase 4: Six Interconnected Portals Implementation<br>• Portal 1: Student (Gamified + Spaced Review)<br>• Portal 2: Parent (Child Linkage & Mistake Digest)<br>• Portal 3: Teacher (Classes, Rosters, Heatmaps)<br>• Portal 4: School Admin (Institution & Teachers)<br>• Portal 5: Content Creator (Blueprint & Items)<br>• Portal 6: Super Admin (Health, LLM Telemetry)"] --> P5
+    P4["Phase 4: Six Interconnected Portals [COMPLETED]<br>• Portal 1: Student (Roadmap, Practice, Mastery)<br>• Portal 2: Parent (Dashboard, Linked Children, Alerts)<br>• Portal 3: Teacher (Classes, Rosters, Heatmaps)<br>• Portal 4: School Admin (Institution, Teachers, Seats)<br>• Portal 5: Content Creator (Question Authoring, QA)<br>• Portal 6: Super Admin (Health, Multi-LLM Telemetry)"] --> P5
     
-    P5["Phase 5: Automated Testing & Verification<br>• Integration tests for all 6 portals<br>• XP ledger idempotency tests<br>• Spaced repetition interval tests<br>• Full frontend build & type check"]
+    P5["Phase 5: Content, AI & Quality Certification [COMPLETED]<br>• SymPy mathematical validation integration<br>• 31 calibrated diagnostic items + 48 practice items<br>• React 19 / TypeScript / Vite production build (0 errors)<br>• Pytest suites passed"] --> P6
+
+    P6["Phase 6: Production Operations & Go-To-Market [ACTIVE NEXT MILESTONE]<br>• Cloud Supabase dedicated instance migration<br>• Cashfree / Razorpay production webhook activation<br>• DPDP 2023 legal counsel audit & compliance sign-off<br>• Scale vetted item bank to 1,000 Class 9–10 items"]
 ```
 
 ---
 
-## 2. Phase 1 — Critical Defects & Operational Hardening
+## 2. Completed Phase Deliverables & Forensic Evidence
 
-### Objectives
-1. **Network-Resilient Authentication:** Enable local JWT signature verification using `SUPABASE_JWT_SECRET` so authentication does not crash when the remote Supabase project is unresolvable or during offline testing.
-2. **Server-Side RBAC Dependency:** Implement `require_role(allowed_roles: List[str])` in `backend/app/core/dependencies.py` to enforce strict authorization across all portals.
-3. **Database Local Resilience Fallback:** Allow repositories (`LearnerProfileRepository`, `MasteryRepository`, `MistakeDNARepository`, etc.) to run locally in-memory/SQLite without throwing 503 errors when the remote cloud database is unreachable.
-4. **Fix Practice Engine Test:** Correct the prerequisite initialization in `test_adaptive_practice_engine.py` so all tests pass cleanly.
-5. **Git Workspace Stabilization:** Commit verified existing working features (Migrations 021–029, Feature 1–8 services and APIs) to maintain clean revision control.
+### Phase 1 — Critical Security and Persistence (COMPLETED)
+- **Remediated SEC-01:** Quarantined `MOCK_DEV_USERS` to non-production environments (`development`, `test`, `local`). Fail closed with 401 in production.
+- **Remediated SEC-02:** Deleted `jwt.decode(..., verify_signature=False)`. Enforced cryptographic HS256 signature and expiration verification.
+- **Remediated SEC-03:** Replaced hardcoded default student ID with verifiable invitation code handshake (`/api/portals/student/generate-parent-code` and `/api/portals/parent/link-child`).
+- **Enforced RBAC Guards:** Server-side role validation (`require_student`, `require_parent`, `require_teacher`, `require_school_admin`, `require_content_creator`, `require_admin`).
+- **Evidence:** `test_institutional_portals_and_gamification.py` passes all 15 tests.
 
----
+### Phase 2 — Core Learning Loop Integration (COMPLETED)
+- **ErrorToken Taxonomy (E01–E20):** Integrated 20 canonical error tokens into `MistakeClassifier` and schemas.
+- **Mastery State Engine:** 5-tier state progression (Tier 0 to Tier 5) with independent transfer and delayed retention requirements.
+- **Spaced Repetition (SM-2):** SuperMemo SM-2 interval expansion ($EF' = \max(1.30, EF + \dots)$) with review queues.
+- **Daily Personalized Roadmap:** Implemented Stage 8 engine adhering to 30% Spaced Repair / 50% Core Progression / 20% Interleaved Transfer ratio.
+- **Evidence:** `test_mistake_dna_engine.py` (23/23 passed) and `test_student_daily_roadmap_30_50_20` (passed).
 
-## 3. Phase 2 — Database Schema Expansion (Migrations 030 & 031)
+### Phase 3 — Student Experience & Gamification (COMPLETED)
+- **Two Separate Ledgers:** Ledger A (Engagement/Effort XP) is completely decoupled from Ledger B (Mastery Evidence).
+- **Blueprint XP Alignment:** Baseline diagnostic (+50 XP), Active error resolution (+30 XP), Tier 3 independent proficiency (+40 XP), Tier 4 fresh transfer (+60 XP), Tier 5 delayed retention (+45 XP), Teach-back rubric pass (+25 XP).
+- **Anti-Grinding Cap:** Repeated easy items award 2 XP, strictly capped at 10 XP/day.
+- **Evidence:** `test_blueprint_xp_rewards_and_daily_cap` passed.
 
-### Objectives
-1. **Migration 030 (`030_user_roles_and_institutional_portals.sql`):**
-   - Create tables: `schools`, `school_memberships`, `classrooms`, `classroom_enrollments`, `parent_student_links`, `parent_digest_settings`.
-   - Setup foreign keys, unique constraints, and check constraints for roles (`student`, `parent`, `teacher`, `school_admin`, `content_creator`, `super_admin`).
-2. **Migration 031 (`031_gamification_and_spaced_repetition.sql`):**
-   - Create tables: `xp_ledger` (with unique `idempotency_key`), `learner_streaks`, `learner_badges`, `spaced_repetition_cards`, `spaced_repetition_reviews`.
-   - Setup indexes for user query efficiency and SM-2 review queue dates.
-
----
-
-## 4. Phase 3 — Core Learning Capabilities Completion
-
-### Objectives
-1. **Gamification & XP Ledger Service (`app/services/gamification/`):**
-   - Implement `award_xp(user_id, amount, reason_code, idempotency_key)` with strict duplicate transaction prevention.
-   - Implement daily streak maintenance with freeze credit support.
-   - Expose endpoints: `GET /api/gamification/summary`, `GET /api/gamification/leaderboard`, `POST /api/gamification/streak/check-in`.
-2. **Spaced Repetition SM-2 Engine (`app/services/spaced_repetition/`):**
-   - Implement SuperMemo SM-2 algorithm: updates ease factor ($EF' = EF + (0.1 - (5 - q) \times (0.08 + (5 - q) \times 0.02))$), interval days, and next review date.
-   - Automatically generate spaced review flashcards when a student completes a diagnostic or repairs a mistake.
-   - Expose endpoints: `GET /api/spaced-repetition/queue`, `POST /api/spaced-repetition/review`.
-3. **Student Onboarding & Recommendations Flow:**
-   - Connect `OnboardingModal.tsx` to automatically trigger when `onboarding_completed == false`.
-   - Implement dynamic learning recommendations on Dashboard driven by unmastered prerequisites in the Mastery DAG.
+### Phase 4 — Six Interconnected Stakeholder Portals (COMPLETED)
+- **Student Portal:** `/dashboard`, `/practice`, `/diagnostic`, `/mastery-map`, `/mistakes`, `/step-check`, `/transfer-check`, `/chat`.
+- **Parent Portal:** `/parent/dashboard`, `/parent/child/:id`.
+- **Teacher Portal:** `/teacher/dashboard`, `/teacher/classroom/:id`, `/lesson-planner`, `/decks`, `/quiz/:id/live`.
+- **School Admin Portal:** `/school-admin/dashboard`.
+- **Content Creator Portal:** `/creator/dashboard`.
+- **Super Admin Portal:** `/admin/dashboard`.
+- **Evidence:** `test_parent_portal_dashboard_api`, `test_teacher_portal_dashboard_api`, `test_school_admin_portal_overview_api`, `test_creator_portal_dashboard_api`, `test_super_admin_portal_overview_api` all passed.
 
 ---
 
-## 5. Phase 4 — Six Interconnected Portals Implementation
+## 3. Next Milestone: Phase 6 Production Deployment & Operational Readiness
 
-### Objectives
-1. **Portal 1: Student Portal Enhancements**
-   - Add XP balance bar, streak badge, and due spaced repetition cards review button to Dashboard.
-   - Ensure seamless navigation between Diagnostic, Practice, Mistakes, and Step Grader.
-2. **Portal 2: Parent Portal (`/parent/*`)**
-   - Create `ParentDashboard.tsx`, `ParentChildrenPage.tsx`, `ParentReportsPage.tsx`.
-   - Implement child linkage API (`POST /api/parent/link`, `GET /api/parent/children`, `GET /api/parent/child/{id}/progress`).
-   - Surface weekly mastery progress and active Mistake DNA alerts.
-3. **Portal 3: Teacher Portal (`/teacher/*`)**
-   - Create `TeacherDashboard.tsx`, `TeacherClassroomsPage.tsx`, `TeacherAnalyticsPage.tsx`.
-   - Implement classroom management API (`GET/POST /api/teacher/classrooms`, `GET /api/teacher/classrooms/{id}/roster`).
-   - Aggregate class-wide mastery heatmap and common student misconceptions.
-4. **Portal 4: School Administrator Portal (`/school-admin/*`)**
-   - Create `SchoolAdminDashboard.tsx`, `SchoolTeachersPage.tsx`, `SchoolAnalyticsPage.tsx`.
-   - Implement school overview API (`GET /api/school-admin/overview`, `GET /api/school-admin/teachers`).
-5. **Portal 5: Content Creator Portal (`/creator/*`)**
-   - Create `CreatorDashboard.tsx`, `CurriculumEditorPage.tsx`, `ItemBankPage.tsx`.
-   - Implement question authoring & review API (`GET/POST /api/creator/items`, `GET /api/creator/curriculum`).
-6. **Portal 6: Super Administrator Portal (`/admin/*`)**
-   - Create `AdminDashboard.tsx`, `AdminUsersPage.tsx`, `AdminTelemetryPage.tsx`.
-   - Implement system health & LLM telemetry API (`GET /api/admin/health`, `GET /api/admin/users`, `GET /api/admin/llm-telemetry`).
-
----
-
-## 6. Phase 5 — Testing, Verification & Certification
-
-### Objectives
-1. **Automated Integration Tests:**
-   - Write comprehensive Pytest suites for Portals, XP Ledger, and Spaced Repetition.
-   - Test cross-tenant isolation: verify parent cannot view unlinked students; verify student cannot call teacher APIs.
-   - Test duplicate transaction prevention on the XP ledger.
-2. **Frontend Type Check & Build:**
-   - Run `npm run build` to certify zero TypeScript or Vite bundle errors.
-3. **End-to-End Verification:**
-   - Execute certification scripts to verify complete closed-loop workflows.
-
+1. **Cloud PostgreSQL Migration Execution:**
+   - Execute migrations 001–031 on a dedicated, production-tier Supabase PostgreSQL instance to eliminate DNS lookup timeouts on the free-tier instance.
+2. **Payment Provider Webhook Verification:**
+   - Wire Cashfree / Razorpay production webhooks with HMAC-SHA256 signature verification and server-side subscription entitlement grants.
+3. **Question Bank Expansion:**
+   - Execute the 3-sprint editorial review pipeline to expand active vetted Class 9–10 items from 79 to 1,000.
+4. **DPDP Compliance Sign-off:**
+   - Formal sign-off with accredited Indian legal counsel on privacy notices and parent consent records.

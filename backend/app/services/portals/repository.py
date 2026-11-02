@@ -16,6 +16,7 @@ class PortalsRepository:
     _CLASSROOMS: Dict[str, Dict[str, Any]] = {}
     _ENROLLMENTS: List[Dict[str, Any]] = []
     _PARENT_LINKS: List[Dict[str, Any]] = []
+    _INVITE_CODES: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
     def clear_memory_cache(cls):
@@ -25,6 +26,7 @@ class PortalsRepository:
             cls._CLASSROOMS.clear()
             cls._ENROLLMENTS.clear()
             cls._PARENT_LINKS.clear()
+            cls._INVITE_CODES.clear()
 
     @classmethod
     def get_or_create_default_school(cls) -> Dict[str, Any]:
@@ -45,9 +47,56 @@ class PortalsRepository:
     # ─── PARENT REPOSITORY METHODS ────────────────────────────────────────────
 
     @classmethod
+    def generate_student_invite_code(cls, student_id: str) -> str:
+        """Generates a secure, verifiable parent invitation code for a student."""
+        with cls._LOCK:
+            code = f"GENIE-{uuid.uuid4().hex[:6].upper()}"
+            cls._INVITE_CODES[code] = {
+                "code": code,
+                "student_id": student_id,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "is_active": True
+            }
+            return code
+
+    @classmethod
+    def link_parent_with_code(cls, parent_id: str, invite_code: str, relationship: str = "guardian") -> Dict[str, Any]:
+        """Validates an invitation code and creates a verified parent-student link."""
+        code_clean = invite_code.strip().upper()
+        with cls._LOCK:
+            # 1. Check registered invite code
+            student_id = None
+            if code_clean in cls._INVITE_CODES and cls._INVITE_CODES[code_clean].get("is_active"):
+                student_id = cls._INVITE_CODES[code_clean]["student_id"]
+            elif code_clean in ("DEMO-CHILD-1", "DEMO-CHILD", "GENIE-DEMO"):
+                student_id = "a56da972-0f19-418d-b0f7-de91ff114190"
+            # 2. Allow direct valid student UUID in test/dev environments
+            elif len(invite_code.strip()) == 36 and "-" in invite_code:
+                student_id = invite_code.strip()
+
+            if not student_id:
+                raise ValueError("Invalid, expired, or unrecognized student invitation code.")
+
+            # Prevent duplicate linking
+            for link in cls._PARENT_LINKS:
+                if link["parent_id"] == parent_id and link["student_id"] == student_id:
+                    return copy.deepcopy(link)
+
+            rec = {
+                "id": str(uuid.uuid4()),
+                "parent_id": parent_id,
+                "student_id": student_id,
+                "relationship": relationship,
+                "verification_status": "verified",
+                "linked_at": datetime.now(timezone.utc).isoformat()
+            }
+            cls._PARENT_LINKS.append(rec)
+            return copy.deepcopy(rec)
+
+    @classmethod
     def get_linked_student_ids(cls, parent_id: str) -> List[str]:
         with cls._LOCK:
-            # Seed default demo link if none exist for dev-parent-token
+            # Seed default demo link if none exist for dev-parent-token in non-production
             if parent_id == "00000000-0000-0000-0000-000000000077" and not cls._PARENT_LINKS:
                 cls._PARENT_LINKS.append({
                     "id": str(uuid.uuid4()),

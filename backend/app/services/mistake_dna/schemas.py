@@ -33,6 +33,73 @@ class ErrorType(str, Enum):
     UNKNOWN = "UNKNOWN"                          # Cannot be reliably classified; auditable gap
 
 
+class ErrorTokenID(str, Enum):
+    """
+    Canonical Twenty-Category ErrorToken Taxonomy (E01–E20).
+    Explicitly tracks root pedagogical error mechanisms deterministically.
+    """
+    E01 = "E01_CONCEPTUAL_MISUNDERSTANDING"      # Core conceptual misunderstanding of principle or law
+    E02 = "E02_MISSING_PREREQUISITE"            # Foundation gap in earlier prerequisite skill
+    E03 = "E03_INCORRECT_FORMULA_SELECTION"      # Selection of incorrect governing formula or theorem
+    E04 = "E04_FORMULA_CONSTANT_OMISSION"        # Standard constant, coefficient, or 1/2 factor omitted
+    E05 = "E05_ALGEBRAIC_SETUP_ERROR"            # Inaccurate algebraic translation from problem prompt
+    E06 = "E06_ALGEBRAIC_TRANSPOSITION"          # Rearrangement, variable isolation, or cross-multiplication slip
+    E07 = "E07_SIGN_INVERSION"                   # Negative sign flip, direction inversion, or sign transposition
+    E08 = "E08_ARITHMETIC_CALCULATION_SLIP"      # Pure calculation slip with correct underlying steps
+    E09 = "E09_MISREAD_QUESTION_TARGET"          # Answering wrong target variable or misinterpreting query
+    E10 = "E10_INVERTED_CONDITION"               # Neglecting constraint, boundary condition, or inequality
+    E11 = "E11_UNIT_OMISSION"                    # Omitting necessary physical unit or dimension
+    E12 = "E12_UNIT_CONVERSION_ERROR"            # Unit mismatch or metric conversion scale error
+    E13 = "E13_FLAWED_REASONING_PREMISE"         # Invalid deductive logic, false assumption, or causal fallacy
+    E14 = "E14_INVALID_DERIVATION_STEP"          # Mathematically invalid derivation step or leap
+    E15 = "E15_DEFINITION_RECALL_GAP"            # Scientific term, notation, or formal definition recall gap
+    E16 = "E16_PROCEDURAL_STEP_ORDER"            # Out-of-order execution in multi-step procedural algorithm
+    E17 = "E17_BOUNDARY_CONDITION_ERROR"         # Index off-by-one, boundary inequality, or extreme value slip
+    E18 = "E18_INCOMPLETE_RESPONSE_ABANDONED"    # Partial attempt given up or abandoned before solution
+    E19 = "E19_UNSUPPORTED_GUESS"                # Random or unsupported answer without derivation
+    E20 = "E20_UNCLASSIFIED_AMBIGUOUS"           # Mechanism cannot be confidently classified
+
+
+def resolve_error_token(
+    error_type: ErrorType,
+    subtype: str = "",
+    rule: str = ""
+) -> ErrorTokenID:
+    """Deterministically resolves ErrorType, subtype, and rule into canonical E01–E20 token."""
+    rule_upper = (rule or "").upper()
+    sub_lower = (subtype or "").lower()
+
+    if "EMPTY" in rule_upper or "GIVE_UP" in rule_upper or error_type == ErrorType.INCOMPLETE_RESPONSE:
+        return ErrorTokenID.E18
+    if "UNIT_OMISSION" in rule_upper or sub_lower == "missing_unit":
+        return ErrorTokenID.E11
+    if "UNIT_MISMATCH" in rule_upper or sub_lower == "unit_mismatch" or error_type == ErrorType.UNIT_OR_DIMENSION:
+        return ErrorTokenID.E12
+    if "SIGN" in rule_upper or sub_lower == "sign_transposition" or error_type == ErrorType.SIGN_OR_NOTATION:
+        return ErrorTokenID.E07
+    if "ARITHMETIC" in rule_upper or sub_lower == "arithmetic_slip" or error_type == ErrorType.CALCULATION:
+        return ErrorTokenID.E08
+    if "COEFFICIENT" in rule_upper or sub_lower == "formula_constant_omission":
+        return ErrorTokenID.E04
+    if "FORMULA" in rule_upper or sub_lower == "formula_misuse" or error_type == ErrorType.FORMULA_RECALL:
+        return ErrorTokenID.E03
+    if "MISREAD" in rule_upper or sub_lower == "target_inversion" or error_type == ErrorType.MISREAD_QUESTION:
+        return ErrorTokenID.E09
+    if "BOUNDARY" in rule_upper or "CS_" in rule_upper or sub_lower == "off_by_one":
+        return ErrorTokenID.E17
+    if "ORDER" in rule_upper or "BIO_" in rule_upper or sub_lower == "step_sequencing" or error_type == ErrorType.PROCEDURAL:
+        return ErrorTokenID.E16
+    if "MEMORY" in rule_upper or error_type == ErrorType.MEMORY_RECALL:
+        return ErrorTokenID.E15
+    if "REASONING" in rule_upper or error_type == ErrorType.REASONING:
+        return ErrorTokenID.E13
+    if "PREREQUISITE" in rule_upper or sub_lower == "missing_prerequisite":
+        return ErrorTokenID.E02
+    if "CONCEPTUAL" in rule_upper or "CHEM_" in rule_upper or error_type == ErrorType.CONCEPTUAL:
+        return ErrorTokenID.E01
+    return ErrorTokenID.E20
+
+
 class PatternStatus(str, Enum):
     """
     Deterministic pattern states (§9, §10).
@@ -213,6 +280,7 @@ class ClassificationResult(BaseModel):
     """
     primary_error_type: ErrorType
     secondary_error_types: List[ErrorType] = Field(default_factory=list)
+    error_token_id: Optional[str] = "E20_UNCLASSIFIED_AMBIGUOUS"
     error_subtype: str = ""
     error_summary: str
     confidence: ConfidenceClass
@@ -236,6 +304,7 @@ class MistakeEvent(BaseModel):
 
     primary_error_type: ErrorType
     secondary_error_types: List[ErrorType] = Field(default_factory=list)
+    error_token_id: Optional[str] = "E20_UNCLASSIFIED_AMBIGUOUS"
     error_subtype: str = ""
     error_summary: str = ""
 
@@ -261,6 +330,7 @@ class MistakePattern(BaseModel):
     subject: str = "Mathematics"
 
     error_type: ErrorType
+    error_token_id: Optional[str] = "E20_UNCLASSIFIED_AMBIGUOUS"
     error_subtype: str = ""
 
     occurrence_count: int = 1

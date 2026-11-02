@@ -91,13 +91,31 @@ MOCK_DEV_USERS = {
 }
 
 
+VALID_SYSTEM_ROLES = {
+    "student",
+    "parent",
+    "teacher",
+    "school_admin",
+    "content_creator",
+    "admin",
+    "super_admin"
+}
+
+
+def _is_dev_environment() -> bool:
+    """Returns True ONLY when explicitly in development or testing mode."""
+    env = (getattr(settings, "ENVIRONMENT", "") or os.environ.get("ENVIRONMENT", "development")).lower()
+    return env in ("development", "test", "local") and env != "production"
+
+
 def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> AuthenticatedUser:
     """
     Authenticates user from Bearer JWT.
     Resilient multi-tier strategy:
-    1. Fast check for dev/test tokens in non-production environments
-    2. Supabase remote auth lookup
-    3. Network-resilient local JWT cryptographic verification using SUPABASE_JWT_SECRET
+    1. Check dev persona tokens ONLY in development/test environments (strictly blocked in production).
+    2. Supabase remote auth lookup.
+    3. Network-resilient local JWT cryptographic verification using SUPABASE_JWT_SECRET.
+    Never accepts unverified JWT payloads without cryptographic signature verification.
     """
     if credentials is None:
         raise HTTPException(
@@ -108,19 +126,20 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 
     token = credentials.credentials
 
-    # Check dev persona tokens
-    if token in MOCK_DEV_USERS:
-        u = MOCK_DEV_USERS[token]
-        return AuthenticatedUser(
-            id=u["id"],
-            email=u["email"],
-            role=u["role"],
-            full_name=u["full_name"],
-            app_metadata={"role": u["role"]},
-            user_metadata={"full_name": u["full_name"], "role": u["role"]}
-        )
+    # 1. Dev persona tokens (STRICTLY quarantined to non-production environments)
+    if _is_dev_environment():
+        if token in MOCK_DEV_USERS:
+            u = MOCK_DEV_USERS[token]
+            return AuthenticatedUser(
+                id=u["id"],
+                email=u["email"],
+                role=u["role"],
+                full_name=u["full_name"],
+                app_metadata={"role": u["role"]},
+                user_metadata={"full_name": u["full_name"], "role": u["role"]}
+            )
 
-    # 1. Attempt Supabase Auth Client verification if configured
+    # 2. Attempt Supabase Auth Client verification if configured
     if supabase is not None:
         try:
             res = supabase.auth.get_user(token)
@@ -128,7 +147,8 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                 u = res.user
                 app_meta = getattr(u, "app_metadata", {}) or {}
                 user_meta = getattr(u, "user_metadata", {}) or {}
-                role = app_meta.get("role") or user_meta.get("role") or "student"
+                raw_role = app_meta.get("role") or user_meta.get("role") or "student"
+                role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
                 return AuthenticatedUser(
                     id=u.id,
                     email=getattr(u, "email", "") or "",
@@ -138,9 +158,9 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                     user_metadata=user_meta
                 )
         except Exception as e:
-            logger.debug(f"[Auth] Supabase remote validation notice: {e}; attempting local JWT verification")
+            logger.debug(f"[Auth] Supabase remote validation notice: {e}; attempting local cryptographic JWT verification")
 
-    # 2. Resilient Local JWT Verification (using SUPABASE_JWT_SECRET)
+    # 3. Resilient Local Cryptographic JWT Verification (using SUPABASE_JWT_SECRET HS256)
     jwt_secret = getattr(settings, "SUPABASE_JWT_SECRET", None) or os.environ.get("SUPABASE_JWT_SECRET")
     if jwt_secret:
         try:
@@ -148,13 +168,14 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                 token,
                 jwt_secret,
                 algorithms=["HS256"],
-                options={"verify_aud": False, "verify_exp": True}
+                options={"verify_aud": False, "verify_exp": True, "verify_signature": True}
             )
             user_id = payload.get("sub")
             if user_id:
                 app_meta = payload.get("app_metadata", {}) or {}
                 user_meta = payload.get("user_metadata", {}) or {}
-                role = payload.get("role") or app_meta.get("role") or user_meta.get("role") or "student"
+                raw_role = payload.get("role") or app_meta.get("role") or user_meta.get("role") or "student"
+                role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
                 return AuthenticatedUser(
                     id=user_id,
                     email=payload.get("email", ""),
@@ -169,28 +190,16 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                 detail="Authentication token has expired",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        except Exception:
-            pass
-
-    # 3. Development / Test Unverified Decoding Fallback
-    try:
-        payload = jwt.decode(token, options={"verify_signature": False})
-        user_id = payload.get("sub")
-        if user_id:
-            app_meta = payload.get("app_metadata", {}) or {}
-            user_meta = payload.get("user_metadata", {}) or {}
-            role = payload.get("role") or app_meta.get("role") or user_meta.get("role") or "student"
-            return AuthenticatedUser(
-                id=user_id,
-                email=payload.get("email", ""),
-                role=role,
-                full_name=user_meta.get("full_name", ""),
-                app_metadata=app_meta,
-                user_metadata=user_meta
+        except jwt.InvalidSignatureError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid cryptographic token signature",
+                headers={"WWW-Authenticate": "Bearer"},
             )
-    except Exception:
-        pass
+        except Exception as e:
+            logger.debug(f"[Auth] Cryptographic JWT decode error: {e}")
 
+    # Cryptographic verification failed; fail closed
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -204,11 +213,18 @@ def require_role(allowed_roles: List[str]):
     Super administrators always have cross-role operational access.
     """
     def role_dependency(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
-        user_role = getattr(current_user, "role", "student")
+        app_meta = getattr(current_user, "app_metadata", {}) or {}
+        user_meta = getattr(current_user, "user_metadata", {}) or {}
+        user_role = (
+            getattr(current_user, "role", None)
+            or app_meta.get("role")
+            or user_meta.get("role")
+            or "student"
+        )
         if user_role not in allowed_roles and user_role not in ("admin", "super_admin"):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied: role '{user_role}' is not authorized. Required: {allowed_roles}"
+                detail=f"Insufficient permissions: role '{user_role}' is not authorized. Required: {allowed_roles}"
             )
         return current_user
     return role_dependency

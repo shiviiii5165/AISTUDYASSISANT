@@ -44,6 +44,20 @@ class GamificationService:
         source_entity_id: Optional[str] = None
     ) -> tuple[XPTransaction, bool]:
         """Awards XP idempotently and checks for milestone badges."""
+        # Enforce canonical blueprint daily cap on repeated easy items (§8)
+        if reason_code == XPReasonCode.REPEATED_EASY_PRACTICE:
+            from datetime import datetime, timezone
+            today_str = datetime.now(timezone.utc).date().isoformat()
+            history = GamificationRepository.get_user_transactions(user_id)
+            today_easy_xp = sum(
+                t.amount for t in history
+                if t.reason_code == XPReasonCode.REPEATED_EASY_PRACTICE and t.created_at.date().isoformat() == today_str
+            )
+            if today_easy_xp >= 10:
+                amount = 0
+            else:
+                amount = min(amount, 10 - today_easy_xp)
+
         tx, is_new = GamificationRepository.record_xp_transaction(
             user_id=user_id,
             amount=amount,
@@ -72,7 +86,7 @@ class GamificationService:
                     description="Accumulated 500 XP through rigorous study.",
                     tier="silver"
                 )
-            if reason_code == XPReasonCode.MISTAKE_REPAIRED:
+            if reason_code in (XPReasonCode.MISTAKE_REPAIRED, XPReasonCode.ERROR_RESOLUTION_UNSEEN):
                 GamificationRepository.award_badge(
                     user_id=user_id,
                     badge_key="ERROR_TERMINATOR",
@@ -80,7 +94,7 @@ class GamificationService:
                     description="Successfully repaired a recurring misconception.",
                     tier="bronze"
                 )
-            if reason_code == XPReasonCode.STEP_CHECK_SUCCESS:
+            if reason_code in (XPReasonCode.STEP_CHECK_SUCCESS, XPReasonCode.TIER_3_INDEPENDENT_PROFICIENCY):
                 GamificationRepository.award_badge(
                     user_id=user_id,
                     badge_key="FIRST_STEP_MASTER",
@@ -90,6 +104,27 @@ class GamificationService:
                 )
 
         return tx, is_new
+
+    @classmethod
+    def award_blueprint_xp(
+        cls,
+        user_id: str,
+        reason_code: XPReasonCode,
+        source_entity_type: str,
+        idempotency_key: str,
+        source_entity_id: Optional[str] = None
+    ) -> tuple[XPTransaction, bool]:
+        """Awards canonical blueprint XP amount for verified educational behavior."""
+        from app.services.gamification.schemas import CANONICAL_BLUEPRINT_XP_AMOUNTS
+        amt = CANONICAL_BLUEPRINT_XP_AMOUNTS.get(reason_code, 20)
+        return cls.award_xp(
+            user_id=user_id,
+            amount=amt,
+            reason_code=reason_code,
+            source_entity_type=source_entity_type,
+            idempotency_key=idempotency_key,
+            source_entity_id=source_entity_id
+        )
 
     @classmethod
     def check_in_streak(cls, user_id: str) -> StreakSummary:

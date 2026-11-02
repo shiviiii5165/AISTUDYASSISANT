@@ -5,7 +5,7 @@ import AppLayout from '../components/AppLayout';
 import SEO from '../components/SEO';
 import {
   Search, BookOpen, ArrowRight, FileText, MessageSquare, Layers, CheckCircle2,
-  Flame, Award, Sparkles, RefreshCw, ChevronRight, Check
+  Flame, Award, Sparkles, RefreshCw, ChevronRight, Check, Target, Compass, Zap
 } from 'lucide-react';
 import { fetchPdfs } from '../lib/api';
 import type { PDFDocument } from '../lib/api';
@@ -15,6 +15,8 @@ import { fetchGamificationSummary, checkInStreak } from '../lib/gamificationApi'
 import type { GamificationSummary } from '../lib/gamificationApi';
 import { fetchReviewQueue, submitCardReview } from '../lib/spacedRepetitionApi';
 import type { SpacedCard } from '../lib/spacedRepetitionApi';
+import { fetchDailyPersonalizedRoadmap } from '../lib/portalsApi';
+import type { DailyPersonalizedRoadmap } from '../lib/portalsApi';
 import { subjectStyle } from '../lib/subjects';
 import GreetingHeader from '../components/GreetingHeader';
 import { ILLUSTRATIONS, GENIE } from '../lib/assets';
@@ -33,6 +35,7 @@ const Dashboard: React.FC = () => {
   // Gamification & Spaced Repetition State
   const [gamification, setGamification] = useState<GamificationSummary | null>(null);
   const [reviewCards, setReviewCards] = useState<SpacedCard[]>([]);
+  const [dailyRoadmap, setDailyRoadmap] = useState<DailyPersonalizedRoadmap | null>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -40,16 +43,18 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [pdfRes, ctxRes, gamRes, cardsRes] = await Promise.allSettled([
+        const [pdfRes, ctxRes, gamRes, cardsRes, roadRes] = await Promise.allSettled([
           fetchPdfs(),
           fetchLearnerContext(),
           fetchGamificationSummary(),
           fetchReviewQueue(5),
+          fetchDailyPersonalizedRoadmap(),
         ]);
         if (pdfRes.status === 'fulfilled') setPdfs(pdfRes.value);
         if (ctxRes.status === 'fulfilled') setLearnerContext(ctxRes.value);
         if (gamRes.status === 'fulfilled') setGamification(gamRes.value);
         if (cardsRes.status === 'fulfilled') setReviewCards(cardsRes.value);
+        if (roadRes.status === 'fulfilled') setDailyRoadmap(roadRes.value);
 
         // Auto check-in streak
         checkInStreak().catch(() => {});
@@ -298,6 +303,79 @@ const Dashboard: React.FC = () => {
               {learnerContext.profile_completeness.is_complete ? 'Learning Profile' : 'Complete Profile'}
               <ArrowRight className="w-3 h-3 inline" />
             </Link>
+          </div>
+        )}
+
+        {/* Stage 8: Daily Personalized Learning Roadmap (30/50/20) */}
+        {dailyRoadmap && dailyRoadmap.tasks.length > 0 && (
+          <div className="p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-bento space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+              <div className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-indigo-500" />
+                <div>
+                  <h2 className="text-base font-bold font-display text-[var(--text-primary)]">
+                    Today's Priority Learning Roadmap
+                  </h2>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Algorithmic 30/50/20 balance: 30% Spaced Repair · 50% Core Progression · 20% Interleaved Transfer
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20 self-start sm:self-auto">
+                {dailyRoadmap.target_exam} · {dailyRoadmap.daily_goal_minutes}m Budget
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+              {dailyRoadmap.tasks.map((task) => {
+                const isRepair = task.category === 'SPACED_ERROR_REPAIR';
+                const isProg = task.category === 'CORE_PROGRESSION';
+                const badgeColor = isRepair
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  : isProg
+                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+                return (
+                  <div
+                    key={task.task_id}
+                    className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] flex flex-col justify-between space-y-3 hover:border-indigo-500/40 transition shadow-sm"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                          {task.weight_percentage}% Daily Weight
+                        </span>
+                        <span className="text-[11px] text-[var(--text-secondary)]">
+                          ~{task.expected_duration_minutes} mins
+                        </span>
+                      </div>
+
+                      <h3 className="text-sm font-bold text-[var(--text-primary)] line-clamp-1">
+                        {task.title}
+                      </h3>
+
+                      <p className="text-xs text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
+                        {task.why_recommended}
+                      </p>
+
+                      <div className="text-[11px] text-indigo-400/90 bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
+                        <strong className="block text-[10px] uppercase tracking-wider text-indigo-300">Unlocks Next:</strong>
+                        {task.unlocks_next}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => navigate(task.action_route)}
+                      className="w-full py-2 rounded-lg bg-[var(--bg-hover)] text-xs font-semibold text-[var(--accent-royal)] hover:bg-[var(--accent-royal)] hover:text-white transition flex items-center justify-center gap-1.5"
+                    >
+                      Start This Task
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

@@ -185,3 +185,27 @@ class UserRoleUpdate(BaseModel):
     target_user_id: str
     new_role: str
 
+
+# ─── 6. STUDENT PERSONALIZED ROADMAP SCHEMAS (STAGE 8: 30/50/20) ───────────────
+
+class RoadmapTaskChoice(BaseModel):
+    task_id: str
+    title: str
+    category: str  # "SPACED_ERROR_REPAIR" (30%), "CORE_PROGRESSION" (50%), "INTERLEAVED_TRANSFER" (20%)
+    weight_percentage: int
+    skill_id: str
+    skill_name: str
+    why_recommended: str
+    expected_duration_minutes: int
+    current_mastery_state: str
+    unlocks_next: str
+    action_route: str
+
+
+class DailyPersonalizedRoadmap(BaseModel):
+    user_id: str
+    target_exam: str
+    daily_goal_minutes: int
+    tasks: List[RoadmapTaskChoice]
+    recalculated_at: datetime
+

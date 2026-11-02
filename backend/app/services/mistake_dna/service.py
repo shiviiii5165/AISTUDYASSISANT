@@ -75,6 +75,7 @@ class MistakeDNAService:
             question_reference=candidate.question_reference or (candidate.prompt_text or "")[:120],
             primary_error_type=classification.primary_error_type,
             secondary_error_types=classification.secondary_error_types,
+            error_token_id=classification.error_token_id,
             error_subtype=classification.error_subtype,
             error_summary=classification.error_summary,
             confidence_class=classification.confidence,

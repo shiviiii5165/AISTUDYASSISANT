@@ -16,7 +16,9 @@ from app.services.portals.schemas import (
     CreatorDashboardSummary,
     ItemBankSummary,
     SystemHealthOverview,
-    LLMProviderTelemetry
+    LLMProviderTelemetry,
+    RoadmapTaskChoice,
+    DailyPersonalizedRoadmap
 )
 from app.services.portals.repository import PortalsRepository
 from app.services.learner_context.service import LearnerContextService
@@ -25,7 +27,8 @@ from app.services.mistake_dna.service import MistakeDNAService
 from app.services.mistake_dna.schemas import PatternStatus, RepairStatus
 from app.services.gamification.repository import GamificationRepository
 from app.services.practice.item_bank import get_all_practice_items
-from app.services.diagnostic.curriculum_blueprint import CANONICAL_DOMAINS, CANONICAL_SKILLS
+from app.services.diagnostic.curriculum_blueprint import CANONICAL_DOMAINS, CANONICAL_SKILLS, get_skill
+from app.services.spaced_repetition.service import SpacedRepetitionService
 
 
 class ParentPortalService:
@@ -303,4 +306,114 @@ class SuperAdminPortalService:
             database_status="ONLINE (Resilient Local & Remote)",
             llm_providers=providers,
             error_log_summary={"500": 0, "401": 2, "429": 0}
+        )
+
+
+class StudentPortalService:
+    @classmethod
+    def get_daily_roadmap(cls, user_id: str) -> DailyPersonalizedRoadmap:
+        """
+        Builds a single daily plan from the canonical learner model adhering to the
+        30% Spaced Error Repair / 50% Core Progression / 20% Interleaved Transfer ratio (§8).
+        """
+        prof = LearnerContextService.get_profile(user_id)
+        subj = prof.subjects[0] if prof.subjects else "Mathematics"
+        target_exam = prof.target_exam or "CBSE Class 10"
+
+        tasks: List[RoadmapTaskChoice] = []
+
+        # 1. 30% Weight: Spaced Error Repair
+        patterns = MistakeDNAService.get_patterns(user_id)
+        active_pats = [p for p in patterns if p.pattern_status in (PatternStatus.RECURRING, PatternStatus.PERSISTENT)]
+        
+        if active_pats:
+            top_p = active_pats[0]
+            sk_info = get_skill(top_p.skill_id)
+            sk_name = sk_info.skill_name if sk_info else top_p.skill_id
+            prereq_hint = f" (prerequisite: {top_p.likely_prerequisite_skill})" if top_p.likely_prerequisite_skill else ""
+            tasks.append(RoadmapTaskChoice(
+                task_id=f"repair_{top_p.id[:8]}",
+                title=f"Repair Mistake Pattern: {sk_name}",
+                category="SPACED_ERROR_REPAIR",
+                weight_percentage=30,
+                skill_id=top_p.skill_id,
+                skill_name=sk_name,
+                why_recommended=f"Diagnosed with {top_p.occurrence_count} recurring {top_p.error_type.value.lower().replace('_', ' ')} slips{prereq_hint}. Resolving this prevents compound errors.",
+                expected_duration_minutes=12,
+                current_mastery_state=top_p.pattern_status.value,
+                unlocks_next="Unblocks subsequent dependent topics on the Mastery Graph.",
+                action_route="/practice"
+            ))
+        else:
+            # Due spaced review fallback
+            queue = SpacedRepetitionService.get_queue(user_id)
+            tasks.append(RoadmapTaskChoice(
+                task_id="sr_review_01",
+                title="Spaced Review & Active Recall",
+                category="SPACED_ERROR_REPAIR",
+                weight_percentage=30,
+                skill_id="MATH_ALG_EQ01",
+                skill_name="Linear Equations Retention",
+                why_recommended="Scheduled SM-2 memory retention review to prevent forgetting decay.",
+                expected_duration_minutes=10,
+                current_mastery_state="REVIEW_DUE",
+                unlocks_next="Protects Tier 5 Delayed Retention status on completed skills.",
+                action_route="/practice"
+            ))
+
+        # 2. 50% Weight: Core Curriculum Progression
+        recs = MasteryGraphService.get_next_learning_recommendations(user_id, subj)
+        if recs:
+            rec = recs[0]
+            reason_text = getattr(rec, "reason", None) or getattr(rec, "why_recommended", "All prerequisites secure. Ready to master concept.")
+            unblocks_text = f"Unblocks {', '.join(rec.unblocks_skills)}" if getattr(rec, "unblocks_skills", None) else f"Advances curriculum progression for {target_exam}."
+            tasks.append(RoadmapTaskChoice(
+                task_id=f"prog_{rec.skill_id}",
+                title=f"Core Progression: {rec.skill_name}",
+                category="CORE_PROGRESSION",
+                weight_percentage=50,
+                skill_id=rec.skill_id,
+                skill_name=rec.skill_name,
+                why_recommended=reason_text,
+                expected_duration_minutes=25,
+                current_mastery_state="READY",
+                unlocks_next=unblocks_text,
+                action_route="/practice"
+            ))
+        else:
+            tasks.append(RoadmapTaskChoice(
+                task_id="prog_default",
+                title="Core Progression: Quadratic Equations",
+                category="CORE_PROGRESSION",
+                weight_percentage=50,
+                skill_id="MATH_ALG_QUAD01",
+                skill_name="Quadratic Equations",
+                why_recommended="All prerequisites are secure. Ready to master standard form solutions.",
+                expected_duration_minutes=20,
+                current_mastery_state="READY",
+                unlocks_next="Unlocks Higher Polynomials and Vertex Optimization.",
+                action_route="/practice"
+            ))
+
+        # 3. 20% Weight: Interleaved Fresh Transfer
+        tasks.append(RoadmapTaskChoice(
+            task_id="transfer_01",
+            title="AI-Off Independent Transfer Check",
+            category="INTERLEAVED_TRANSFER",
+            weight_percentage=20,
+            skill_id="MATH_ALG_FRAC01",
+            skill_name="Algebraic Fractions & Cross-Multiplication",
+            why_recommended="Verify independent Tier 4 mastery on fresh, unseen problems without AI scaffolding.",
+            expected_duration_minutes=10,
+            current_mastery_state="INDEPENDENT_CHECK",
+            unlocks_next="Awards +60 Effort XP and advances skill to Tier 4 Verified Transfer.",
+            action_route="/transfer-check"
+        ))
+
+        return DailyPersonalizedRoadmap(
+            user_id=user_id,
+            target_exam=target_exam,
+            daily_goal_minutes=45,
+            tasks=tasks,
+            recalculated_at=datetime.now(timezone.utc)
         )
