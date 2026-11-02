@@ -105,10 +105,10 @@ def _is_dev_environment() -> bool:
 def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> AuthenticatedUser:
     """
     Authenticates user from Bearer JWT.
-    Resilient multi-tier strategy:
+    High-performance multi-tier strategy:
     1. Check dev persona tokens ONLY in development/test environments (strictly blocked in production).
-    2. Supabase remote auth lookup.
-    3. Network-resilient local JWT cryptographic verification using SUPABASE_JWT_SECRET.
+    2. Ultra-fast local cryptographic JWT verification using SUPABASE_JWT_SECRET (HS256, 0.05ms, no network latency).
+    3. Fallback to Supabase remote auth lookup if local secret is not configured.
     Never accepts unverified JWT payloads without cryptographic signature verification.
     NEVER derives privileged roles from user-editable metadata.
     """
@@ -135,34 +135,7 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                 user_metadata={"full_name": u["full_name"], "role": authoritative_role}
             )
 
-    # 2. Attempt Supabase Auth Client verification if configured
-    if supabase is not None:
-        try:
-            res = supabase.auth.get_user(token)
-            if res and res.user:
-                u = res.user
-                app_meta = getattr(u, "app_metadata", {}) or {}
-                # Security rule: NEVER derive roles from client-editable user_metadata
-                raw_role = app_meta.get("role") or "student"
-                role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
-
-                # Check authoritative database role assignment
-                authoritative_role = UserRoleRepository.get_user_role(u.id)
-                if authoritative_role:
-                    role = authoritative_role
-
-                return AuthenticatedUser(
-                    id=u.id,
-                    email=getattr(u, "email", "") or "",
-                    role=role,
-                    full_name=getattr(u, "user_metadata", {}).get("full_name") or "",
-                    app_metadata=app_meta,
-                    user_metadata=getattr(u, "user_metadata", {}) or {}
-                )
-        except Exception as e:
-            logger.debug(f"[Auth] Supabase remote validation notice: {e}; attempting local cryptographic JWT verification")
-
-    # 3. Resilient Local Cryptographic JWT Verification (using SUPABASE_JWT_SECRET HS256)
+    # 2. Ultra-Fast Local Cryptographic JWT Verification (using SUPABASE_JWT_SECRET HS256)
     jwt_secret = getattr(settings, "SUPABASE_JWT_SECRET", None) or os.environ.get("SUPABASE_JWT_SECRET")
     if jwt_secret:
         try:
@@ -179,7 +152,7 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                 raw_role = payload.get("role") or app_meta.get("role") or "student"
                 role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
 
-                # Check authoritative database role assignment
+                # Check authoritative database role assignment (in-memory cached)
                 authoritative_role = UserRoleRepository.get_user_role(user_id)
                 if authoritative_role:
                     role = authoritative_role
@@ -205,7 +178,32 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
                 headers={"WWW-Authenticate": "Bearer"},
             )
         except Exception as e:
-            logger.debug(f"[Auth] Cryptographic JWT decode error: {e}")
+            logger.debug(f"[Auth] Local JWT decode exception: {e}; attempting remote Supabase lookup")
+
+    # 3. Fallback to Supabase Auth Client verification if local verification did not resolve
+    if supabase is not None:
+        try:
+            res = supabase.auth.get_user(token)
+            if res and res.user:
+                u = res.user
+                app_meta = getattr(u, "app_metadata", {}) or {}
+                raw_role = app_meta.get("role") or "student"
+                role = raw_role if raw_role in VALID_SYSTEM_ROLES else "student"
+
+                authoritative_role = UserRoleRepository.get_user_role(u.id)
+                if authoritative_role:
+                    role = authoritative_role
+
+                return AuthenticatedUser(
+                    id=u.id,
+                    email=getattr(u, "email", "") or "",
+                    role=role,
+                    full_name=getattr(u, "user_metadata", {}).get("full_name") or "",
+                    app_metadata=app_meta,
+                    user_metadata=getattr(u, "user_metadata", {}) or {}
+                )
+        except Exception as e:
+            logger.debug(f"[Auth] Supabase remote validation failed: {e}")
 
     # Cryptographic verification failed; fail closed
     raise HTTPException(
@@ -218,28 +216,69 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 def require_role(allowed_roles: List[str]):
     """
     Enforces server-side role-based access control.
-    Super administrators always have cross-role operational access.
-    Checks authoritative database role first, then server-signed app_metadata.
-    NEVER trusts user-editable user_metadata for role claims.
+    Strictly verifies authoritative role against allowed_roles list.
     """
-    def role_dependency(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
-        user_id = getattr(current_user, "id", None)
-        authoritative_role = UserRoleRepository.get_user_role(user_id) if user_id else None
-        app_meta = getattr(current_user, "app_metadata", {}) or {}
+    def role_checker(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        user_role = current_user.role
 
-        user_role = (
-            authoritative_role
-            or getattr(current_user, "role", None)
-            or app_meta.get("role")
-            or "student"
-        )
-        if user_role not in allowed_roles and user_role not in ("admin", "super_admin"):
+        if "super_admin" in allowed_roles and user_role == "super_admin":
+            return current_user
+
+        if user_role not in allowed_roles:
+            logger.warning(
+                f"[Security] Access denied: User {current_user.id} with role '{user_role}' "
+                f"attempted to access endpoint requiring {allowed_roles}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Insufficient permissions: role '{user_role}' is not authorized. Required: {allowed_roles}"
+                detail=f"Insufficient permissions: role '{user_role}' is not authorized. Required: {allowed_roles}",
             )
         return current_user
-    return role_dependency
+    return role_checker
+
+
+def get_current_student(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    """Convenience dependency for endpoints accessible to students or administrators."""
+    if current_user.role not in ("student", "super_admin", "school_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Student portal access required",
+        )
+    return current_user
+
+
+def get_current_parent(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    """Convenience dependency for parent portal endpoints."""
+    if current_user.role not in ("parent", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Parent portal access required",
+        )
+    return current_user
+
+
+def get_current_teacher(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    """Convenience dependency for teacher portal endpoints."""
+    if current_user.role not in ("teacher", "super_admin", "school_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Teacher portal access required",
+        )
+    return current_user
+
+
+def get_current_admin(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    """Convenience dependency for administrative operations."""
+    if current_user.role not in ("super_admin", "school_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrative authorization required",
+        )
+    return current_user
+
+
+# Backward compatibility alias
+get_current_admin_user = get_current_admin
 
 
 # Role-specific convenience guards

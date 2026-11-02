@@ -27,43 +27,100 @@ import { HoverCard } from '../components/MotionUtils';
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
-  const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
-  const [loadingPdfs, setLoadingPdfs] = useState(true);
+  const [pdfs, setPdfs] = useState<PDFDocument[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('learnbygenie_dashboard_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return parsed.pdfs || [];
+      }
+    } catch {}
+    return [];
+  });
+  const [loadingPdfs, setLoadingPdfs] = useState<boolean>(() => {
+    try {
+      const cached = sessionStorage.getItem('learnbygenie_dashboard_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return !(parsed.pdfs && parsed.pdfs.length > 0);
+      }
+    } catch {}
+    return true;
+  });
   const [quickAsk, setQuickAsk] = useState('');
-  const [learnerContext, setLearnerContext] = useState<LearnerContext | null>(null);
+  const [learnerContext, setLearnerContext] = useState<LearnerContext | null>(() => {
+    try {
+      const cached = sessionStorage.getItem('learnbygenie_dashboard_cache');
+      if (cached) return JSON.parse(cached).learnerContext || null;
+    } catch {}
+    return null;
+  });
 
   // Gamification & Spaced Repetition State
-  const [gamification, setGamification] = useState<GamificationSummary | null>(null);
+  const [gamification, setGamification] = useState<GamificationSummary | null>(() => {
+    try {
+      const cached = sessionStorage.getItem('learnbygenie_dashboard_cache');
+      if (cached) return JSON.parse(cached).gamification || null;
+    } catch {}
+    return null;
+  });
   const [reviewCards, setReviewCards] = useState<SpacedCard[]>([]);
-  const [dailyRoadmap, setDailyRoadmap] = useState<DailyPersonalizedRoadmap | null>(null);
+  const [dailyRoadmap, setDailyRoadmap] = useState<DailyPersonalizedRoadmap | null>(() => {
+    try {
+      const cached = sessionStorage.getItem('learnbygenie_dashboard_cache');
+      if (cached) return JSON.parse(cached).dailyRoadmap || null;
+    } catch {}
+    return null;
+  });
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    // Helper to persist updated cache
+    const updateCache = (key: string, data: any) => {
       try {
-        const [pdfRes, ctxRes, gamRes, cardsRes, roadRes] = await Promise.allSettled([
-          fetchPdfs(),
-          fetchLearnerContext(),
-          fetchGamificationSummary(),
-          fetchReviewQueue(5),
-          fetchDailyPersonalizedRoadmap(),
-        ]);
-        if (pdfRes.status === 'fulfilled') setPdfs(pdfRes.value);
-        if (ctxRes.status === 'fulfilled') setLearnerContext(ctxRes.value);
-        if (gamRes.status === 'fulfilled') setGamification(gamRes.value);
-        if (cardsRes.status === 'fulfilled') setReviewCards(cardsRes.value);
-        if (roadRes.status === 'fulfilled') setDailyRoadmap(roadRes.value);
+        const prev = JSON.parse(sessionStorage.getItem('learnbygenie_dashboard_cache') || '{}');
+        sessionStorage.setItem('learnbygenie_dashboard_cache', JSON.stringify({ ...prev, [key]: data }));
+      } catch {}
+    };
 
-        // Auto check-in streak
-        checkInStreak().catch(() => {});
-      } catch (err) {
-        console.error('Error loading dashboard data:', err);
-      } finally {
-        setLoadingPdfs(false);
-      }
-    })();
+    // Fetch all sections concurrently and independently (never block one on another)
+    fetchPdfs()
+      .then((data) => {
+        setPdfs(data);
+        updateCache('pdfs', data);
+      })
+      .catch((err) => console.debug('PDF load notice:', err))
+      .finally(() => setLoadingPdfs(false));
+
+    fetchLearnerContext()
+      .then((data) => {
+        setLearnerContext(data);
+        updateCache('learnerContext', data);
+      })
+      .catch((err) => console.debug('Learner context load notice:', err));
+
+    fetchGamificationSummary()
+      .then((data) => {
+        setGamification(data);
+        updateCache('gamification', data);
+      })
+      .catch((err) => console.debug('Gamification load notice:', err));
+
+    fetchReviewQueue(5)
+      .then(setReviewCards)
+      .catch((err) => console.debug('Review queue load notice:', err));
+
+    fetchDailyPersonalizedRoadmap()
+      .then((data) => {
+        setDailyRoadmap(data);
+        updateCache('dailyRoadmap', data);
+      })
+      .catch((err) => console.debug('Roadmap load notice:', err));
+
+    // Auto check-in streak in background
+    checkInStreak().catch(() => {});
   }, []);
 
   const handleReviewCard = async (rating: number) => {

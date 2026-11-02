@@ -124,6 +124,12 @@ function App() {
 
   useEffect(() => {
     initializeAuth();
+
+    // Pre-warm backend API in background to eliminate cold start wait times
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    if (apiUrl) {
+      fetch(`${apiUrl}/`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    }
   }, [initializeAuth]);
 
   return (
