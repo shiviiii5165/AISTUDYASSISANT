@@ -550,16 +550,16 @@ const NotesGeneratorPage: React.FC = () => {
 
                       {/* Visual Flowchart / Mind Map Spec */}
                       {sec.visual_spec && sec.visual_spec.nodes && sec.visual_spec.nodes.length > 0 && (
-                        <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 space-y-3">
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                            <Layers className="h-4 w-4 text-[var(--accent-blue)]" />
+                        <div className="rounded-xl bg-[var(--bg-subtle)] border border-[var(--border)] p-4 space-y-3">
+                          <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                            <Layers className="h-4 w-4 text-[var(--brand-primary)]" />
                             {sec.visual_spec.title || 'Process Sequence'}
                           </span>
 
                           <div className="flex flex-wrap items-center gap-3">
                             {sec.visual_spec.nodes.map((node, nIdx) => (
                               <React.Fragment key={node.id || nIdx}>
-                                <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 p-3 shadow-xs">
+                                <div className="rounded-lg bg-white border border-[var(--border)] p-3 shadow-xs">
                                   <div className="font-bold text-xs text-[var(--text-primary)]">{node.label}</div>
                                   {node.description && (
                                     <div className="text-[10px] text-[var(--text-muted)] mt-0.5 max-w-[180px]">{node.description}</div>

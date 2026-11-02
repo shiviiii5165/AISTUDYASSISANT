@@ -52,6 +52,7 @@ export interface GradedStep {
 
 export interface StepGraderResult {
   session_id: string;
+  step_grader_session_id?: string;
   attempt_id: string;
   attempt_sequence: number;
   overall_outcome: OverallOutcome;
@@ -92,4 +93,21 @@ export interface CapabilityMatrixItem {
   rubric_support: boolean;
   confidence_capability: string;
   notes: string;
+}
+
+
+// Type aliases for seamless component compatibility
+export type StepGraderResponse = StepGraderResult;
+export type StepCapabilityItem = CapabilityMatrixItem;
+export type TutorStepHandoffResponse = TutorHandoffContext;
+
+export interface StepGraderSubmission {
+  question_text: string;
+  raw_input: string;
+  subject?: string;
+  skill_id?: string;
+  assistance_level?: string;
+  idempotency_key?: string;
+  audience_level?: 'young' | 'standard' | 'advanced';
+  prior_attempt_sequence?: number;
 }

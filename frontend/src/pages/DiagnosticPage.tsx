@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   startDiagnostic,
   submitDiagnosticAnswer,
-  getDiagnosticSession,
-  getDiagnosticHistory
+  getDiagnosticHistory,
 } from '../lib/diagnosticApi';
 import { soundFx } from '../lib/soundFx';
 import type {
   DiagnosticStepResponse,
   DiagnosticResult,
-  StudentItemView
+  StudentItemView,
 } from '../types/diagnostic';
 import {
   Compass,
@@ -20,8 +20,12 @@ import {
   RotateCcw,
   BookOpen,
   History,
-  Layers
+  Layers,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
+import { Button, Card, Badge, ProgressBar } from '../components/ui';
+import { pageTransition, fadeUp, cardHover } from '../lib/motion';
 
 const AVAILABLE_SUBJECTS = [
   'Mathematics',
@@ -30,7 +34,7 @@ const AVAILABLE_SUBJECTS = [
   'Biology',
   'Science',
   'English',
-  'Computer Science'
+  'Computer Science',
 ];
 
 export const DiagnosticPage: React.FC = () => {
@@ -41,6 +45,7 @@ export const DiagnosticPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<DiagnosticResult[]>([]);
   const [viewHistory, setViewHistory] = useState<boolean>(false);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     loadHistory();
@@ -51,7 +56,7 @@ export const DiagnosticPage: React.FC = () => {
       const res = await getDiagnosticHistory();
       setHistory(res);
     } catch {
-      // Quiet fail if offline/mock
+      // Offline or mock fallback
     }
   };
 
@@ -94,64 +99,108 @@ export const DiagnosticPage: React.FC = () => {
   };
 
   const renderActiveQuestion = (q: StudentItemView) => {
+    const totalBudget = q.total_budget || 8;
+    const progressPercent = Math.min(100, Math.round(((q.sequence_number - 1) / totalBudget) * 100));
+
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-3xl mx-auto shadow-xl">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-6 uppercase tracking-wider">
-          <span className="flex items-center gap-2">
-            <Compass className="w-4 h-4 text-emerald-400" />
-            Adaptive Diagnostic • {stepData?.session?.subject}
-          </span>
-          <span className="bg-slate-800 px-3 py-1 rounded-full text-slate-300">
-            Probe {q.sequence_number} of ~{q.total_budget}
-          </span>
-        </div>
-
-        <h3 className="text-xl font-medium text-slate-100 mb-8 leading-relaxed">
-          {q.prompt}
-        </h3>
-
-        {q.options && q.options.length > 0 ? (
-          <div className="space-y-3 mb-8">
-            {q.options.map((opt, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setSelectedAnswer(opt)}
-                className={`w-full text-left p-4 rounded-xl border transition-all text-sm font-medium flex items-center justify-between ${
-                  selectedAnswer === opt
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-200'
-                    : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
-                }`}
-              >
-                <span>{opt}</span>
-                <span className={`w-4 h-4 rounded-full border ${selectedAnswer === opt ? 'border-emerald-400 bg-emerald-400' : 'border-slate-700'}`} />
-              </button>
-            ))}
+      <motion.div
+        key={q.id || q.sequence_number}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-3xl mx-auto"
+      >
+        <Card variant="elevated" className="p-8 sm:p-10 space-y-6">
+          {/* Header Metadata */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2.5">
+              <Badge tone="sky" icon={<Compass className="w-3.5 h-3.5" />}>
+                Adaptive Diagnostic • {stepData?.session?.subject}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-[var(--text-muted)] tracking-wider">
+                Probe {q.sequence_number} of ~{totalBudget}
+              </span>
+              <div className="w-24">
+                <ProgressBar value={progressPercent} tone="sky" size="sm" />
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="mb-8">
-            <input
-              type="text"
-              value={selectedAnswer}
-              onChange={(e) => setSelectedAnswer(e.target.value)}
-              placeholder="Enter your solution..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        )}
 
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            disabled={!selectedAnswer || loading}
-            onClick={handleSubmitAnswer}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium text-sm transition-all"
-          >
-            {loading ? 'Submitting...' : 'Submit Response'}
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+          {/* Question Prompt */}
+          <div className="py-2">
+            <h3 className="text-xl sm:text-2xl font-medium font-display text-[var(--text-primary)] leading-relaxed">
+              {q.prompt}
+            </h3>
+          </div>
+
+          {/* Answer Options */}
+          {q.options && q.options.length > 0 ? (
+            <div className="space-y-3 pt-2">
+              {q.options.map((opt, idx) => {
+                const isSelected = selectedAnswer === opt;
+                return (
+                  <motion.button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedAnswer(opt)}
+                    {...(prefersReducedMotion ? {} : cardHover)}
+                    className={`
+                      w-full text-left p-4 sm:p-5 rounded-xl border text-sm font-medium
+                      flex items-center justify-between transition-all duration-150 cursor-pointer
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-sky)]
+                      ${
+                        isSelected
+                          ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-light)] text-[var(--accent-blue-text)] shadow-xs ring-1 ring-[var(--brand-primary)]'
+                          : 'border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] shadow-xs'
+                      }
+                    `}
+                  >
+                    <span className="leading-relaxed">{opt}</span>
+                    <span
+                      className={`
+                        w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-4 transition-colors
+                        ${
+                          isSelected
+                            ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white'
+                            : 'border-[var(--border-strong)] bg-white'
+                        }
+                      `}
+                    >
+                      {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="pt-2">
+              <input
+                type="text"
+                value={selectedAnswer}
+                onChange={(e) => setSelectedAnswer(e.target.value)}
+                placeholder="Enter your step-by-step solution..."
+                className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-base text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:bg-white transition-colors"
+              />
+            </div>
+          )}
+
+          {/* Submit Action */}
+          <div className="flex items-center justify-end pt-4 border-t border-[var(--border)]">
+            <Button
+              variant="primary"
+              size="md"
+              loading={loading}
+              disabled={!selectedAnswer || loading}
+              onClick={handleSubmitAnswer}
+              iconRight={<ArrowRight className="w-4 h-4" />}
+            >
+              {loading ? 'Submitting...' : 'Submit Response'}
+            </Button>
+          </div>
+        </Card>
+      </motion.div>
     );
   };
 
@@ -161,234 +210,269 @@ export const DiagnosticPage: React.FC = () => {
     const repairSkills = res.skill_results.filter((s) => s.diagnostic_state === 'NEEDS_REPAIR');
 
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-4xl mx-auto shadow-xl space-y-8">
-        <div>
-          <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium mb-2">
-            <CheckCircle2 className="w-4 h-4" />
-            Diagnostic Assessment Complete
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Learning Starting Point: {res.subject}
-          </h2>
-          <p className="text-slate-400 text-sm">
-            Enrolled: Class {res.enrolled_grade} • Track: {res.exam_track}
-          </p>
-        </div>
-
-        {/* Operating Level Banner */}
-        <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-5">
-          <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
-            Recommended Focus
-          </div>
-          <div className="text-lg font-semibold text-emerald-300">
-            {res.operating_level_band}
-          </div>
-          <div className="text-sm text-slate-400 mt-2">
-            {res.summary}
-          </div>
-        </div>
-
-        {/* Conceptual Skill Breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Secure */}
-          <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
-            <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm mb-4">
-              <CheckCircle2 className="w-4 h-4" />
-              Secure Foundations ({secureSkills.length})
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-4xl mx-auto space-y-8"
+      >
+        <Card variant="elevated" className="p-8 sm:p-10 space-y-8">
+          <div>
+            <div className="flex items-center gap-2 text-[var(--accent-green-text)] text-sm font-semibold mb-2">
+              <CheckCircle2 className="w-5 h-5 text-[var(--accent-green)]" />
+              Diagnostic Assessment Complete
             </div>
-            {secureSkills.length > 0 ? (
-              <ul className="space-y-3">
-                {secureSkills.map((s, idx) => (
-                  <li key={idx} className="text-xs text-slate-300">
-                    <span className="font-medium text-slate-200">{s.skill_name}</span>
-                    <div className="text-slate-500 mt-0.5">{s.confidence_class.replace('_', ' ').toLowerCase()}</div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-xs text-slate-500 italic">No skills classified secure in this session.</div>
-            )}
+            <h2 className="text-2xl sm:text-3xl font-bold font-display text-[var(--text-primary)]">
+              Learning Starting Point: {res.subject}
+            </h2>
+            <p className="text-sm text-[var(--text-muted)] mt-1.5">
+              Enrolled: Class {res.enrolled_grade} • Track: {res.exam_track}
+            </p>
           </div>
 
-          {/* Developing */}
-          <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
-            <div className="flex items-center gap-2 text-amber-400 font-semibold text-sm mb-4">
-              <HelpCircle className="w-4 h-4" />
-              Developing Concepts ({developingSkills.length})
+          {/* Operating Level Focus Banner */}
+          <div className="bg-[var(--accent-sky-bg)] border border-[var(--accent-sky-border)] rounded-2xl p-6">
+            <div className="text-xs uppercase tracking-wider text-[var(--accent-sky-text)] font-bold mb-1">
+              Recommended Focus Zone
             </div>
-            {developingSkills.length > 0 ? (
-              <ul className="space-y-3">
-                {developingSkills.map((s, idx) => (
-                  <li key={idx} className="text-xs text-slate-300">
-                    <span className="font-medium text-slate-200">{s.skill_name}</span>
-                    <div className="text-slate-500 mt-0.5">{s.recommended_action}</div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-xs text-slate-500 italic">No concepts in developing state.</div>
-            )}
-          </div>
-
-          {/* Needs Repair */}
-          <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
-            <div className="flex items-center gap-2 text-amber-400 font-semibold text-sm mb-4">
-              <AlertCircle className="w-4 h-4" />
-              Prerequisites Needing Repair ({repairSkills.length})
+            <div className="text-xl font-bold font-display text-[var(--text-primary)]">
+              {res.operating_level_band}
             </div>
-            {repairSkills.length > 0 ? (
-              <ul className="space-y-3">
-                {repairSkills.map((s, idx) => (
-                  <li key={idx} className="text-xs text-slate-300">
-                    <span className="font-medium text-amber-300">{s.skill_name}</span>
-                    <div className="text-slate-500 mt-0.5">{s.recommended_action}</div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-xs text-slate-500 italic">No critical prerequisite gaps identified.</div>
-            )}
+            <div className="text-sm text-[var(--text-secondary)] mt-2 leading-relaxed">
+              {res.summary}
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-          <button
-            type="button"
-            onClick={() => handleStart(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-600 text-xs font-medium transition-all"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Retake Diagnostic
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStepData(null);
-              setViewHistory(false);
-            }}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all"
-          >
-            Back to Overview
-          </button>
-        </div>
-      </div>
+          {/* 3-Column Conceptual Mastery Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Secure Foundations */}
+            <div className="bg-white border border-[var(--border)] rounded-xl p-5 shadow-xs">
+              <div className="flex items-center gap-2 text-[var(--accent-green-text)] font-semibold text-sm mb-3">
+                <CheckCircle2 className="w-4 h-4 text-[var(--accent-green)]" />
+                Secure Foundations ({secureSkills.length})
+              </div>
+              {secureSkills.length > 0 ? (
+                <ul className="space-y-2.5">
+                  {secureSkills.map((s, idx) => (
+                    <li key={idx} className="text-xs">
+                      <span className="font-semibold text-[var(--text-primary)]">{s.skill_name}</span>
+                      <div className="text-[var(--text-muted)] capitalize mt-0.5">
+                        {s.confidence_class.replace('_', ' ').toLowerCase()}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-xs text-[var(--text-muted)] italic">No skills classified secure in this probe set.</div>
+              )}
+            </div>
+
+            {/* Developing Concepts */}
+            <div className="bg-white border border-[var(--border)] rounded-xl p-5 shadow-xs">
+              <div className="flex items-center gap-2 text-[var(--accent-yellow-text)] font-semibold text-sm mb-3">
+                <HelpCircle className="w-4 h-4 text-[var(--accent-yellow)]" />
+                Developing Concepts ({developingSkills.length})
+              </div>
+              {developingSkills.length > 0 ? (
+                <ul className="space-y-2.5">
+                  {developingSkills.map((s, idx) => (
+                    <li key={idx} className="text-xs">
+                      <span className="font-semibold text-[var(--text-primary)]">{s.skill_name}</span>
+                      <div className="text-[var(--text-muted)] mt-0.5">{s.recommended_action}</div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-xs text-[var(--text-muted)] italic">No concepts currently developing.</div>
+              )}
+            </div>
+
+            {/* Prerequisites Needing Repair */}
+            <div className="bg-white border border-[var(--border)] rounded-xl p-5 shadow-xs">
+              <div className="flex items-center gap-2 text-[var(--accent-red-text)] font-semibold text-sm mb-3">
+                <AlertCircle className="w-4 h-4 text-[var(--accent-red)]" />
+                Prerequisites Needing Repair ({repairSkills.length})
+              </div>
+              {repairSkills.length > 0 ? (
+                <ul className="space-y-2.5">
+                  {repairSkills.map((s, idx) => (
+                    <li key={idx} className="text-xs">
+                      <span className="font-semibold text-[var(--accent-red-text)]">{s.skill_name}</span>
+                      <div className="text-[var(--text-muted)] mt-0.5">{s.recommended_action}</div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-xs text-[var(--text-muted)] italic">No critical prerequisite gaps identified.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-[var(--border)]">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<RotateCcw className="w-4 h-4" />}
+              onClick={() => handleStart(true)}
+            >
+              Retake Diagnostic
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                setStepData(null);
+                setViewHistory(false);
+              }}
+            >
+              Back to Overview
+            </Button>
+          </div>
+        </Card>
+      </motion.div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 md:p-10">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[var(--border)]">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-1">
-              <Compass className="w-4 h-4" />
-              Educational Readiness Assessment
+            <div className="flex items-center gap-2 mb-2">
+              <Badge tone="sky" icon={<Compass className="w-3.5 h-3.5" />}>
+                Educational Readiness Assessment
+              </Badge>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-[var(--text-primary)]">
               Adaptive Subject Diagnostic
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Determines foundational prerequisite readiness and the optimal learning starting point.
+            <p className="text-sm text-[var(--text-muted)] mt-1 max-w-2xl">
+              Determines foundational prerequisite readiness and the optimal learning starting point using Bayesian Knowledge Tracing.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<History className="w-4 h-4 text-[var(--text-muted)]" />}
               onClick={() => setViewHistory(!viewHistory)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-300 hover:text-white hover:border-slate-700 text-xs font-medium transition-all"
             >
-              <History className="w-4 h-4 text-slate-400" />
               {viewHistory ? 'Hide History' : 'Diagnostic History'}
-            </button>
+            </Button>
           </div>
         </div>
 
         {error && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-xs text-amber-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
+          <div className="bg-[var(--accent-yellow-bg)] border border-[var(--accent-yellow-border)] rounded-xl p-4 text-xs text-[var(--accent-yellow-text)] flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* View History Section */}
+        {/* View History Drawer */}
         {viewHistory && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
-              <History className="w-4 h-4 text-emerald-400" />
-              Historical Diagnostics ({history.length})
-            </h3>
-            {history.length > 0 ? (
-              <div className="divide-y divide-slate-800">
-                {history.map((h, i) => (
-                  <div key={i} className="py-3 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="font-semibold text-slate-200">{h.subject}</span>
-                      <span className="text-slate-500 ml-2">• Class {h.enrolled_grade} ({h.exam_track})</span>
-                      <div className="text-slate-400 mt-0.5">{h.operating_level_band}</div>
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card variant="elevated" className="p-6">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                <History className="w-4 h-4 text-[var(--accent-sky)]" />
+                Historical Diagnostics ({history.length})
+              </h3>
+              {history.length > 0 ? (
+                <div className="divide-y divide-[var(--border)]">
+                  {history.map((h, i) => (
+                    <div key={i} className="py-3 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-semibold text-[var(--text-primary)]">{h.subject}</span>
+                        <span className="text-[var(--text-muted)] ml-2">• Class {h.enrolled_grade} ({h.exam_track})</span>
+                        <div className="text-[var(--text-secondary)] mt-0.5">{h.operating_level_band}</div>
+                      </div>
+                      <div className="text-right text-[var(--text-muted)]">
+                        {h.created_at ? new Date(h.created_at).toLocaleDateString() : 'Recorded'}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-slate-500">{h.created_at ? new Date(h.created_at).toLocaleDateString() : 'Recorded'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-slate-500 italic">No historical diagnostics recorded yet.</div>
-            )}
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-[var(--text-muted)] italic">No historical diagnostics recorded yet.</div>
+              )}
+            </Card>
+          </motion.div>
         )}
 
-        {/* Main Body */}
+        {/* Main Selection Body */}
         {!stepData && (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 max-w-2xl mx-auto text-center space-y-6">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-              <Layers className="w-6 h-6" />
-            </div>
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Card variant="elevated" className="p-8 sm:p-12 max-w-2xl mx-auto text-center space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-[var(--accent-sky-bg)] border border-[var(--accent-sky-border)] text-[var(--accent-sky)] flex items-center justify-center mx-auto shadow-xs">
+                <Layers className="w-7 h-7" />
+              </div>
 
-            <div>
-              <h2 className="text-xl font-bold text-white mb-2">
-                Select Diagnostic Subject
-              </h2>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
-                Each diagnostic assesses 6–10 bounded conceptual probes tailored to your curriculum and grade band.
-              </p>
-            </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold font-display text-[var(--text-primary)] mb-2">
+                  Select Diagnostic Subject
+                </h2>
+                <p className="text-xs sm:text-sm text-[var(--text-muted)] max-w-md mx-auto leading-relaxed">
+                  Each diagnostic assesses 6–10 bounded conceptual probes tailored to your curriculum and grade band.
+                </p>
+              </div>
 
-            <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
-              {AVAILABLE_SUBJECTS.map((sub) => (
-                <button
-                  key={sub}
-                  type="button"
-                  onClick={() => setSelectedSubject(sub)}
-                  className={`px-4 py-2 rounded-xl text-xs font-medium border transition-all ${
-                    selectedSubject === sub
-                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
-                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                  }`}
+              <div className="flex flex-wrap justify-center gap-2.5 max-w-lg mx-auto py-2">
+                {AVAILABLE_SUBJECTS.map((sub) => {
+                  const isSelected = selectedSubject === sub;
+                  return (
+                    <button
+                      key={sub}
+                      type="button"
+                      onClick={() => setSelectedSubject(sub)}
+                      className={`
+                        px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer
+                        ${
+                          isSelected
+                            ? 'bg-[var(--accent-sky-bg)] text-[var(--accent-sky-text)] border border-[var(--accent-sky-border)] shadow-xs ring-1 ring-[var(--accent-sky)]'
+                            : 'bg-white text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                        }
+                      `}
+                    >
+                      {sub}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  loading={loading}
+                  disabled={loading}
+                  onClick={() => handleStart(false)}
+                  icon={<BookOpen className="w-4 h-4" />}
                 >
-                  {sub}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleStart(false)}
-              className="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-all flex items-center gap-2 mx-auto"
-            >
-              <BookOpen className="w-4 h-4" />
-              {loading ? 'Initializing Diagnostic...' : `Begin ${selectedSubject} Diagnostic`}
-            </button>
-          </div>
+                  {loading ? 'Initializing Diagnostic...' : `Begin ${selectedSubject} Diagnostic`}
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
         )}
 
+        {/* Active Question View */}
         {stepData && !stepData.is_completed && stepData.current_question && (
           renderActiveQuestion(stepData.current_question)
         )}
 
+        {/* Completed Result View */}
         {stepData && stepData.is_completed && stepData.result && (
           renderResult(stepData.result)
         )}

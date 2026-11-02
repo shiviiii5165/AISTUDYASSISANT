@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -8,7 +9,9 @@ import {
   BookOpen,
   LogOut,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Lightbulb,
+  Check
 } from 'lucide-react';
 import { transferApi } from '../lib/transferApi';
 import type {
@@ -17,6 +20,8 @@ import type {
   TransferFeedback,
   TransferSummary
 } from '../types/transfer';
+import { Card, Button, Badge } from '../components/ui';
+import { pageTransition, cardHover, buttonPress } from '../lib/motion';
 
 export const TransferCheckPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -110,65 +115,78 @@ export const TransferCheckPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Header — Dignified, clean, pressure-free */}
-      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+    <motion.div
+      variants={pageTransition}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans"
+    >
+      {/* Header — Dignified, clean, pressure-free white bar with soft depth */}
+      <header className="border-b border-[var(--border)] bg-white/95 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-[var(--shadow-xs)]">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] border border-[var(--brand-soft)] flex items-center justify-center text-[var(--brand-primary)] shadow-sm">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-white tracking-tight">
-              {currentItem?.transfer_badge_text || 'Independent Check'}
+            <h1 className="text-base font-semibold text-[var(--text-primary)] tracking-tight">
+              {currentItem?.transfer_badge_text || 'Independent Transfer Check'}
             </h1>
-            <p className="text-xs text-slate-400">
-              {subjectParam} • AI Assistance is Disabled
+            <p className="text-xs text-[var(--text-muted)] flex items-center gap-1.5 mt-0.5">
+              <span>{subjectParam}</span>
+              <span>•</span>
+              <span className="font-medium text-[var(--accent-sky-text)]">AI Assistance Disabled for Verification</span>
             </p>
           </div>
         </div>
 
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={handleAbort}
-          className="flex items-center space-x-1.5 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition-colors"
+          className="flex items-center space-x-1.5"
           title="Leave and continue learning anytime"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-3.5 h-3.5 text-[var(--text-muted)]" />
           <span>Exit Check</span>
-        </button>
+        </Button>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-3xl w-full mx-auto p-6 flex flex-col justify-center">
+      <main className="flex-1 max-w-2xl w-full mx-auto p-6 sm:p-8 flex flex-col justify-center">
         {loading && (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-sm text-slate-400">Preparing your independent question...</p>
+          <div className="text-center py-16">
+            <div className="w-10 h-10 border-3 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm font-medium text-[var(--text-secondary)]">Preparing your independent question...</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Calibrating item difficulty to verify standalone mastery</p>
           </div>
         )}
 
         {errorMsg && !feedback && (
-          <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-800/40 text-amber-200 text-sm flex items-start space-x-3 mb-6">
+          <div className="p-4 rounded-xl bg-[var(--accent-yellow-light)] border border-[#FCE6BD] text-[var(--accent-yellow-text)] text-sm flex items-start space-x-3 mb-6 shadow-sm">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">Notice</p>
-              <p className="text-xs text-amber-300/90 mt-1">{errorMsg}</p>
-              <button
+            <div className="flex-1">
+              <p className="font-semibold text-sm">Notice</p>
+              <p className="text-xs mt-1 leading-relaxed">{errorMsg}</p>
+              <Button
+                variant="secondary"
+                size="xs"
                 onClick={() => navigate('/practice')}
-                className="mt-3 px-3 py-1 bg-amber-800/40 hover:bg-amber-800/60 text-xs text-amber-100 rounded-md transition-colors"
+                className="mt-3"
               >
                 Return to Practice
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {!loading && currentItem && !feedback && (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+          <Card variant="elevated" className="card-3d p-6 sm:p-8">
             {/* Why am I seeing this note */}
             {currentItem.why_explanation && (
-              <div className="mb-6 px-4 py-3 bg-indigo-950/30 border border-indigo-800/30 rounded-xl flex items-start space-x-2.5">
-                <Sparkles className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-indigo-200 leading-relaxed">
+              <div className="mb-6 px-4 py-3 bg-[var(--accent-sky-light)] border border-[#D1EBF9] rounded-xl flex items-start space-x-3 shadow-xs">
+                <Sparkles className="w-4 h-4 text-[var(--accent-sky-text)] mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-[var(--accent-sky-text)] leading-relaxed font-medium">
                   {currentItem.why_explanation}
                 </p>
               </div>
@@ -176,10 +194,11 @@ export const TransferCheckPage: React.FC = () => {
 
             {/* Question Prompt */}
             <div className="mb-6">
-              <span className="text-xs font-semibold tracking-wider text-indigo-400 uppercase">
-                Challenge
-              </span>
-              <h2 className="text-lg sm:text-xl font-medium text-slate-100 mt-1.5 leading-relaxed">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge tone="sky" dot>Standalone Transfer Probe</Badge>
+                <span className="text-xs text-[var(--text-muted)] font-mono">No Tutor Prompts</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] leading-relaxed">
                 {currentItem.prompt}
               </h2>
             </div>
@@ -190,26 +209,29 @@ export const TransferCheckPage: React.FC = () => {
                 {currentItem.options.map((opt, idx) => {
                   const isSelected = selectedAnswer === opt;
                   return (
-                    <button
+                    <motion.button
                       key={idx}
+                      variants={cardHover}
+                      whileHover="hover"
+                      whileTap="tap"
                       onClick={() => setSelectedAnswer(opt)}
-                      className={`w-full text-left p-4 rounded-xl border text-sm transition-all flex items-center justify-between ${
+                      className={`w-full text-left p-4 rounded-xl border text-sm transition-all flex items-center justify-between shadow-xs ${
                         isSelected
-                          ? 'border-indigo-500 bg-indigo-950/40 text-white font-medium shadow-sm'
-                          : 'border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300'
+                          ? 'border-[var(--brand-primary)] bg-[var(--brand-light)] text-[var(--brand-primary)] font-semibold ring-2 ring-[var(--brand-soft)] shadow-sm'
+                          : 'border-[var(--border)] bg-white hover:border-[var(--brand-primary)]/50 hover:bg-[var(--bg-hover)] text-[var(--text-primary)]'
                       }`}
                     >
-                      <span>{opt}</span>
+                      <span className="pr-4">{opt}</span>
                       <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
-                            ? 'border-indigo-500 bg-indigo-500 text-white'
-                            : 'border-slate-700'
+                            ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white'
+                            : 'border-[var(--border-strong)] bg-white'
                         }`}
                       >
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
@@ -220,86 +242,100 @@ export const TransferCheckPage: React.FC = () => {
                   value={selectedAnswer}
                   onChange={(e) => setSelectedAnswer(e.target.value)}
                   placeholder="Enter your final answer here"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-white border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-disabled)] text-sm focus:outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-soft)] transition shadow-xs"
                 />
               </div>
             )}
 
             {/* AI-Disabled Notice & Action Footer */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-800/80">
-              <div className="flex items-center space-x-2 text-xs text-slate-500">
-                <HelpCircle className="w-4 h-4 text-slate-500" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-5 border-t border-[var(--border)]">
+              <div className="flex items-center space-x-2 text-xs text-[var(--text-muted)]">
+                <HelpCircle className="w-4 h-4 text-[var(--text-muted)]" />
                 <span>Hints and Tutor assistance are disabled for this check.</span>
               </div>
 
               <div className="flex items-center space-x-3">
-                <button
+                <Button
+                  variant="primary"
+                  size="md"
                   onClick={handleSubmit}
                   disabled={!selectedAnswer.trim() || submitting}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-indigo-600/20"
+                  className="w-full sm:w-auto"
                 >
                   {submitting ? 'Verifying...' : 'Submit Answer'}
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Feedback / Outcome Screen */}
         {feedback && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
-            <div className="flex items-center space-x-3 mb-6">
+          <Card variant="elevated" className="card-3d p-6 sm:p-8 space-y-6">
+            <div className="flex items-center space-x-4">
               {feedback.outcome === 'PASSED' ? (
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <CheckCircle2 className="w-6 h-6" />
+                <div className="w-14 h-14 rounded-2xl bg-[var(--accent-green-light)] border border-[var(--accent-green-soft)] flex items-center justify-center text-[var(--accent-green)] shadow-sm">
+                  <CheckCircle2 className="w-7 h-7" />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                  <BookOpen className="w-6 h-6" />
+                <div className="w-14 h-14 rounded-2xl bg-[var(--accent-yellow-light)] border border-[var(--accent-yellow-soft)] flex items-center justify-center text-[var(--accent-yellow-text)] shadow-sm">
+                  <BookOpen className="w-7 h-7" />
                 </div>
               )}
               <div>
-                <h2 className="text-xl font-semibold text-slate-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge tone={feedback.outcome === 'PASSED' ? 'green' : 'yellow'}>
+                    {feedback.outcome === 'PASSED' ? 'Mastery Verified' : 'Practice Needed'}
+                  </Badge>
+                  <span className="text-xs text-[var(--text-muted)]">Transfer Assessment</span>
+                </div>
+                <h2 className="text-xl font-bold text-[var(--text-primary)]">
                   {feedback.feedback_headline}
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Independent Verification Outcome
-                </p>
               </div>
             </div>
 
             {feedback.educational_explanation && (
-              <div className="mb-6 p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-sm text-slate-300 leading-relaxed">
-                <p className="text-xs font-semibold text-slate-400 mb-1">Concept Insight:</p>
-                {feedback.educational_explanation}
+              <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border)] text-sm text-[var(--text-secondary)] leading-relaxed">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-primary)] mb-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-[var(--accent-yellow-text)]" />
+                  <span>Concept Insight</span>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  {feedback.educational_explanation}
+                </p>
               </div>
             )}
 
             {summary && (
-              <div className="mb-8 p-4 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-300">
-                <p className="font-semibold text-slate-200 mb-1">Recommended Next Step:</p>
-                <p>{summary.next_step}</p>
+              <div className="p-4 rounded-xl bg-[var(--brand-light)] border border-[var(--brand-soft)] text-xs text-[var(--brand-primary)]">
+                <p className="font-semibold mb-1">Recommended Next Step:</p>
+                <p className="text-[var(--text-secondary)] leading-relaxed">{summary.next_step}</p>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-800">
-              <button
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-5 border-t border-[var(--border)]">
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => navigate('/practice')}
-                className="w-full sm:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-xl transition-colors"
+                className="w-full sm:w-auto"
               >
                 Return to Practice
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
                 onClick={() => navigate(`/tutor?topic=${encodeURIComponent(subjectParam)}`)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full sm:w-auto flex items-center justify-center space-x-1.5"
               >
                 <span>Continue Learning</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 };

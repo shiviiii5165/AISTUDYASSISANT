@@ -2,91 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
-  /* Learn Genie chromatic tokens. Fills use the blueprint hex; text uses darker -text
-     values because the blueprint teal, amber and violet are below 7:1 as text on white. */
   :root {
-    --lg-canvas: #F8FAFC; --lg-ink: #0F172A; --lg-indigo: #1E3A8A;
-    --lg-mastery: #0D9488; --lg-mastery-text: #115E59; --lg-mastery-wash: #F0FDFA;
-    --lg-repair: #D97706; --lg-repair-text: #78350F; --lg-repair-wash: #FFFBEB;
-    --lg-destructive: #9F1239; --lg-destructive-wash: #FFF1F2;
-    --lg-boss: #7C3AED; --lg-boss-text: #4C1D95;
-  }
+    /* ==========================================================================
+       LearnByGenie Premium White 3D Design System Tokens
+       Direction: Premium White Educational SaaS + Soft 3D Depth + Multi-Colour Accents
+       ========================================================================== */
 
-  :root {
-    /*
-     * LearnByGenie Design System — v2
-     * Palette: education-psychology-grounded, calming/trust-building
-     *
-     * Confirmed WCAG AA ratios (required: 4.5:1 normal text, 3:1 large):
-     *   --text-primary  (#1A3A52)  on cream:   9.23:1 ✓
-     *   --text-secondary (#2D5273) on cream:   6.19:1 ✓
-     *   --text-muted    (#3D6170)  on cream:   5.19:1 ✓
-     *   --text-primary  (#1A3A52)  on sage:    7.77:1 ✓
-     *   --text-primary  (#1A3A52)  on gold:    4.97:1 ✓
-     *   white           (#FFFFFF)  on primary: 5.15:1 ✓
-     *   --accent-primary (#3368A0) as link-text on cream: 4.55:1 ✓
-     *
-     * Palette atoms:
-     *   Deep blue   #3368A0  — primary brand / CTAs
-     *   Teal-blue   #66A3BF  — decorative / secondary
-     *   Pale sage   #C8DFDB  — alternate surface
-     *   Warm cream  #F2EFE7  — main background
-     *   Muted gold  #D4A85F  — accent (CTAs, success, positive moments — use sparingly)
-     */
+    /* ── Neutral Foundation ──────────────────────────────────────────────── */
+    --bg-primary: #F8FAFD;
+    --bg-card: #FFFFFF;
+    --bg-subtle: #F1F5F9;
+    --bg-hover: #F3F6FB;
+    --bg-secondary: #F8FAFC;
 
-    /* ── Backgrounds ──────────────────────────────────────────────────── */
-    --bg-primary:   #F8FAFC;   /* Pure white — main page background       */
-    --bg-secondary: #F8FAFC;   /* Slate 50 — sidebar, card zones          */
-    --bg-card:      #FFFFFF;   /* Pure white — content card surfaces      */
-    --bg-hover:     #F1F5F9;   /* Slate 100 — Hover state                 */
+    --text-primary: #344054;
+    --text-secondary: #526174;
+    --text-muted: #758398;
+    --text-disabled: #A5AFBD;
 
-    /* ── Text ─────────────────────────────────────────────────────────── */
-    --text-primary:   #0F172A; /* Dark navy — headings                    */
-    --text-secondary: #475569; /* Slate 600 — body text                   */
-    --text-muted:     #475569; /* Slate 400 — captions                    */
+    --border: #E5EAF1;
+    --border-strong: #D5DDE8;
 
-    /* ── Primary Brand / CTAs (deep blue) ─────────────────────────────── */
-    --accent-blue:        #1E3A8A; /* Royal blue CTA                      */
-    --accent-royal:       #1E3A8A; /* Same as blue, used by some components */
-    --accent-baby:        #ABD2FA; /* Light blue accent                   */
-    --accent-periwinkle:  #7692FF; /* Medium blue accent                  */
-    --accent-primary:     #1E3A8A; /* Primary CTA button background       */
-    --accent-blue-hover:  #0F172A; /* Dark navy — hover state             */
-    --accent-blue-text:   #1E3A8A; /* As link/text on light surfaces      */
-    --accent-blue-deep:   #0F172A; /* Full-bleed brand band               */
-    --accent-blue-light:  #DBEAFE; /* Light Baby Blue                     */
-    /* Backward-compat aliases — prefer --accent-blue-* in new code */
-    --accent-green:       var(--accent-blue);
-    --accent-green-hover: var(--accent-blue-hover);
-    --accent-green-text:  var(--accent-blue-text);
-    --accent-green-deep:  var(--accent-blue-deep);
-    --accent-green-light: var(--accent-blue-light);
+    --surface-elevated: #FFFFFF;
 
-    /* ── Secondary Teal-Blue (decorative) ─────────────────────────────── */
-    --accent-indigo:       #7692FF; /* Periwinkle — decorative / icons     */
-    --accent-indigo-light: #E0E7FF; /* Indigo 100                          */
+    /* ── Brand Primary (Reliable, Academic Blue) ─────────────────────────── */
+    --brand-primary: #4777D9;
+    --brand-primary-hover: #3968C9;
+    --brand-primary-light: #EDF3FF;
+    --brand-primary-soft: #E1EBFF;
+    --accent-blue: #4777D9;
+    --accent-blue-hover: #3968C9;
+    --accent-blue-light: #EDF3FF;
+    --accent-blue-text: #2A54B0;
+    --accent-primary: #4777D9;
 
-    /* ── Gold Accent (use sparingly) ──────────────────────────────────── */
-    --accent-amber:       #D97706; /* Muted gold — success, positive       */
-    --accent-amber-light: #FEF3C7; /* Gold wash — tinted backgrounds       */
-    --accent-gold-hover:  #B8893D; /* Darker gold — hover state            */
+    /* ── Multi-Colour Accent Palette (Semantic & Accessible) ──────────────── */
+    /* Purple: AI Features & Intelligent Insights */
+    --accent-purple: #9272CF;
+    --accent-purple-bg: #F4F0FC;
+    --accent-purple-text: #6A48B0;
+    --accent-purple-border: #E2D7F7;
 
-    /* ── Pale Sage Surface (Keeping names but moving to cooler slate) ─── */
-    --surface-sage:       #E2E8F0; /* Slate 200                            */
-    --surface-sage-light: #F8FAFC; /* Slate 50                             */
+    /* Pink: Creative Tools, Notes & Special Learning */
+    --accent-pink: #D66A9D;
+    --accent-pink-bg: #FDF0F6;
+    --accent-pink-text: #AC3A6F;
+    --accent-pink-border: #F7D4E5;
 
-    /* ── Error / Warning ───────────────────────────────────────────────── */
-    --accent-red:    #78350F; /* Errors, wrong answers                     */
+    /* Sky Blue: Diagnostic, Probes, Curriculum Evidence */
+    --accent-sky: #54A6D4;
+    --accent-sky-bg: #EEF8FD;
+    --accent-sky-text: #2B7AA6;
+    --accent-sky-border: #D1EBF9;
 
-    /* ── Borders ────────────────────────────────────────────────────────── */
-    --border:        #E2E8F0; /* Slate 200 border                          */
-    --border-strong: #CBD5E1; /* Slate 300 border                          */
+    /* Green: Success, Verified Mastery, Completed Milestones */
+    --accent-green: #45966E;
+    --accent-green-bg: #EFF8F2;
+    --accent-green-text: #2C6E4F;
+    --accent-green-border: #CEECDA;
 
-    /* ── Shadows ────────────────────────────────────────────────────────── */
-    --shadow-sm: 0 1px 3px rgba(26, 58, 82, 0.07);
-    --shadow-md: 0 4px 12px rgba(26, 58, 82, 0.09);
-    --shadow-lg: 0 8px 24px rgba(26, 58, 82, 0.11);
+    /* Yellow / Amber: Caution, Review, Needs Attention */
+    --accent-yellow: #C79A43;
+    --accent-yellow-bg: #FFF8E9;
+    --accent-yellow-text: #8C671D;
+    --accent-yellow-border: #FCE6BD;
+    --accent-amber: #C79A43;
+    --accent-amber-light: #FFF8E9;
+
+    /* Red: Errors, Failed Verification, Destructive */
+    --accent-red: #CC666B;
+    --accent-red-bg: #FDF1F1;
+    --accent-red-text: #9E373C;
+    --accent-red-border: #F9D6D7;
+
+    /* Teal: Progress, Interleaving, Supporting Analytics */
+    --accent-teal: #4D9C94;
+    --accent-teal-bg: #EDF8F6;
+    --accent-teal-text: #2D736C;
+    --accent-teal-border: #CDECE8;
+
+    /* Backward compatibility aliases */
+    --lg-canvas: var(--bg-primary);
+    --lg-ink: var(--text-primary);
+    --lg-mastery: var(--accent-green);
+    --lg-mastery-text: var(--accent-green-text);
+    --lg-mastery-wash: var(--accent-green-bg);
+    --lg-repair: var(--accent-yellow);
+    --lg-repair-text: var(--accent-yellow-text);
+    --lg-repair-wash: var(--accent-yellow-bg);
+    --lg-destructive: var(--accent-red);
+    --lg-destructive-wash: var(--accent-red-bg);
+    --lg-boss: var(--accent-purple);
+    --lg-boss-text: var(--accent-purple-text);
+
+    /* ── Soft 3D Depth & Shadow System ─────────────────────────────────── */
+    --shadow-xs: 0 1px 2px rgba(40, 60, 100, 0.04);
+    --shadow-sm: 0 3px 10px rgba(40, 60, 100, 0.055);
+    --shadow-md: 0 8px 22px rgba(40, 60, 100, 0.075);
+    --shadow-lg: 0 15px 35px rgba(40, 60, 100, 0.09);
+    --shadow-hover: 0 12px 28px rgba(40, 60, 100, 0.11);
+
+    --card-3d-rest: 0 2px 8px -2px rgba(40, 60, 100, 0.05), 0 8px 20px -4px rgba(40, 60, 100, 0.06);
+    --card-3d-hover: 0 8px 24px -2px rgba(40, 60, 100, 0.09), 0 16px 36px -4px rgba(40, 60, 100, 0.08);
 
     /* ── Border Radius ──────────────────────────────────────────────────── */
     --radius-sm: 8px;
@@ -95,18 +117,86 @@
     --radius-xl: 24px;
 
     /* ── Typography ─────────────────────────────────────────────────────── */
-    /*
-     * DM Sans replaces Inter as the body font.
-     * Rationale: DM Sans is a humanist geometric sans with warmer personality
-     * than Inter, better distinguishable letter forms (e.g. l/I/1), and good
-     * multilingual coverage — while being distinctly less ubiquitous.
-     * Outfit remains for display/heading use.
-     */
-    --font-sans:    'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-display: 'Outfit', 'DM Sans', system-ui, sans-serif;
-    --font-hindi:   'Noto Sans Devanagari', 'DM Sans', sans-serif;
+    --font-hindi: 'Noto Sans Devanagari', 'DM Sans', sans-serif;
+  }
+}
+
+@layer utilities {
+  /* ── 3D Card Depth Primitives ────────────────────────────────────────── */
+  .card-3d {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 220ms ease;
+  }
+  .card-3d:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--border-strong);
   }
 
+  .card-3d-feature {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-3d-feature:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .card-flat {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+  }
+
+  /* ── Semantic Multi-Colour Pill Badges ────────────────────────────────── */
+  .pill-purple {
+    background-color: var(--accent-purple-bg);
+    color: var(--accent-purple-text);
+    border: 1px solid var(--accent-purple-border);
+  }
+  .pill-pink {
+    background-color: var(--accent-pink-bg);
+    color: var(--accent-pink-text);
+    border: 1px solid var(--accent-pink-border);
+  }
+  .pill-sky {
+    background-color: var(--accent-sky-bg);
+    color: var(--accent-sky-text);
+    border: 1px solid var(--accent-sky-border);
+  }
+  .pill-green {
+    background-color: var(--accent-green-bg);
+    color: var(--accent-green-text);
+    border: 1px solid var(--accent-green-border);
+  }
+  .pill-yellow {
+    background-color: var(--accent-yellow-bg);
+    color: var(--accent-yellow-text);
+    border: 1px solid var(--accent-yellow-border);
+  }
+  .pill-red {
+    background-color: var(--accent-red-bg);
+    color: var(--accent-red-text);
+    border: 1px solid var(--accent-red-border);
+  }
+  .pill-teal {
+    background-color: var(--accent-teal-bg);
+    color: var(--accent-teal-text);
+    border: 1px solid var(--accent-teal-border);
+  }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
   * {
     box-sizing: border-box;
   }

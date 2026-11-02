@@ -59,3 +59,20 @@ export const stepGraderApi = {
     return res.data;
   }
 };
+
+
+// Convenience functional exports
+export const gradeMathSteps = async (params: GradeSolutionParams): Promise<StepGraderResult> => {
+  return stepGraderApi.gradeSolution(params);
+};
+
+export const getGradeLevelCapabilities = async (subject?: string): Promise<CapabilityMatrixItem[]> => {
+  return stepGraderApi.getCapabilityMatrix();
+};
+
+export const requestStepTutorContext = async (
+  attemptId: string,
+  firstWrongStep?: number
+): Promise<TutorHandoffContext> => {
+  return stepGraderApi.getTutorContext(attemptId);
+};

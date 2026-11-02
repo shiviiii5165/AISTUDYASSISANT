@@ -1,107 +1,137 @@
 /**
- * LearnByGenie Motion System
- * ==========================
- * Shared Framer Motion variants for consistent animation across the app.
- *
- * Easing: cubic-bezier(0.16, 1, 0.3, 1) — expo out. Fast departure,
- * smooth deceleration. Never overshoots. Feels snappy without bounciness.
- *
- * Usage:
- *   import { fadeUp, staggerContainer } from '../lib/motion';
- *   <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true }}>
- *     <motion.p variants={fadeUp}>Content</motion.p>
- *   </motion.div>
- *
- * All animations are controlled by parent useReducedMotion checks.
- * To disable wholesale: pass `variants={prefersReducedMotion ? undefined : fadeUp}`.
+ * LearnByGenie Premium Motion System
+ * ==================================
+ * Direction: Smooth, refined micro-interactions and soft 3D depth.
+ * Complies with Section 2 & 3 Motion Design Tokens of Master Engineering Prompt.
  */
 import type { Variants } from 'framer-motion';
 
-const EXPO_OUT = [0.16, 1, 0.3, 1] as const;
+export const motionTokens = {
+  instant: 100,
+  fast: 150,
+  standard: 220,
+  smooth: 320,
+  emphasis: 450,
+  chart: 650,
+  celebration: 800,
+} as const;
 
-// ── Entrance variants ────────────────────────────────────────────────────────
+/** Standard ease-out curve for fast departure and smooth deceleration without bounciness */
+export const EASING_SMOOTH = [0.22, 1, 0.36, 1] as const;
+export const EASING_EXPO = [0.16, 1, 0.3, 1] as const;
 
-/** Fade + 16px upward slide — primary entrance for most content blocks */
-export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: EXPO_OUT } },
+// ── Page Transitions (Section 2.A) ──────────────────────────────────────────
+// Initial opacity: 0, y: 12px -> opacity: 1, y: 0 (220ms), exit: 150ms
+export const pageTransition: Variants = {
+  initial: { opacity: 0, y: 12 },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: motionTokens.standard / 1000, 
+      ease: EASING_SMOOTH 
+    } 
+  },
+  exit: { 
+    opacity: 0, 
+    y: -8, 
+    transition: { 
+      duration: motionTokens.fast / 1000, 
+      ease: EASING_SMOOTH 
+    } 
+  },
 };
 
-/** Fade only — for overlays, panels, modals */
+// ── Staggered Content Entrance (Section 2.B) ────────────────────────────────
+export const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.045, // 45ms gentle stagger
+      delayChildren: 0.02,
+    },
+  },
+};
+
+export const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: motionTokens.standard / 1000,
+      ease: EASING_SMOOTH,
+    },
+  },
+};
+
+export const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: motionTokens.smooth / 1000, ease: EASING_SMOOTH },
+  },
+};
+
 export const fadeIn: Variants = {
   hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.3, ease: EXPO_OUT } },
+  show: {
+    opacity: 1,
+    transition: { duration: motionTokens.standard / 1000, ease: EASING_SMOOTH },
+  },
 };
 
-/** Scale in from 96% — cards, dialogs, tooltips */
 export const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.96 },
-  show:   { opacity: 1, scale: 1, transition: { duration: 0.35, ease: EXPO_OUT } },
+  hidden: { opacity: 0, scale: 0.97 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: motionTokens.standard / 1000, ease: EASING_SMOOTH },
+  },
 };
 
-/** Slide in from the left — sidebars, drawers */
-export const slideInLeft: Variants = {
-  hidden: { opacity: 0, x: -20 },
-  show:   { opacity: 1, x: 0, transition: { duration: 0.35, ease: EXPO_OUT } },
-};
-
-/** Slide in from the right — right panels, roadmap */
-export const slideInRight: Variants = {
-  hidden: { opacity: 0, x: 20 },
-  show:   { opacity: 1, x: 0, transition: { duration: 0.35, ease: EXPO_OUT } },
-};
-
-/** Slide up from bottom — mobile sheets */
-export const slideUp: Variants = {
-  hidden: { opacity: 0, y: 32 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: EXPO_OUT } },
-  exit:   { opacity: 0, y: 32, transition: { duration: 0.25, ease: EXPO_OUT } },
-};
-
-// ── Container variants ───────────────────────────────────────────────────────
-
-/** Stagger children with 70ms gap — use as parent of fadeUp children */
-export const staggerContainer: Variants = {
-  hidden: {},
-  show:   { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
-};
-
-/** Tighter stagger for lists — 50ms gap */
-export const staggerList: Variants = {
-  hidden: {},
-  show:   { transition: { staggerChildren: 0.05 } },
-};
-
-// ── Page transition ──────────────────────────────────────────────────────────
-
-/** Route-level enter/exit — very short, never distracting */
-export const pageTransition: Variants = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.2, ease: EXPO_OUT } },
-  exit:   { opacity: 0, transition: { duration: 0.15, ease: EXPO_OUT } },
-};
-
-// ── Micro-interaction props ──────────────────────────────────────────────────
-
-/**
- * Subtle lift on hover for interactive cards. Spread onto a motion element:
- *   <motion.div {...cardHover}>...</motion.div>
- *
- * CSS shadow transition handles the shadow; Framer only drives translateY.
- */
+// ── Premium Soft 3D Card Effects (Section 2.C) ──────────────────────────────
 export const cardHover = {
-  whileHover: { y: -3, transition: { duration: 0.2, ease: EXPO_OUT } },
-  whileTap:   { y: 0, scale: 0.99, transition: { duration: 0.1 } },
+  whileHover: { 
+    y: -3, 
+    transition: { duration: motionTokens.fast / 1000, ease: EASING_SMOOTH } 
+  },
+  whileTap: { 
+    y: 0, 
+    scale: 0.99, 
+    transition: { duration: 0.1 } 
+  },
 } as const;
 
-/**
- * Gentle press feedback for buttons.
- */
+export const card3DTilt = {
+  whileHover: {
+    y: -4,
+    rotateX: 1,
+    rotateY: -1,
+    transition: { duration: motionTokens.standard / 1000, ease: EASING_SMOOTH },
+  },
+  whileTap: {
+    y: -1,
+    scale: 0.99,
+    rotateX: 0,
+    rotateY: 0,
+    transition: { duration: 0.1 },
+  },
+} as const;
+
+// ── Button Interactions (Section 2.D) ───────────────────────────────────────
 export const buttonPress = {
-  whileTap: { scale: 0.97, transition: { duration: 0.1 } },
+  whileHover: { 
+    y: -1, 
+    transition: { duration: motionTokens.fast / 1000, ease: EASING_SMOOTH } 
+  },
+  whileTap: { 
+    scale: 0.98, 
+    transition: { duration: 0.08 } 
+  },
 } as const;
 
-// ── Viewport defaults ────────────────────────────────────────────────────────
-
-/** Standard viewport config for scroll-triggered reveals */
-export const viewport = { once: true, amount: 0.2 } as const;
+// ── Viewport Observer Config ────────────────────────────────────────────────
+export const viewport = { once: true, amount: 0.15 } as const;
