@@ -107,4 +107,26 @@ from app.api import live_quiz as live_quiz_api
 app.include_router(live_quiz_api.router, prefix="/api/live-quizzes", tags=["live-quiz"])
 from app.api import notes_generator
 app.include_router(notes_generator.router, prefix="/api/notes-generator", tags=["notes-generator"])
+from app.api import learner as learner_api
+app.include_router(learner_api.router, prefix="/api/learner", tags=["learner"])
+from app.api import diagnostic as diagnostic_api
+app.include_router(diagnostic_api.router, prefix="/api/diagnostic", tags=["diagnostic"])
+from app.api import mastery as mastery_api
+app.include_router(mastery_api.router, prefix="/api/mastery", tags=["mastery"])
+from app.api import mistake_dna as mistake_dna_api
+app.include_router(mistake_dna_api.router, prefix="/api/mistakes", tags=["mistakes"])
+from app.api import practice as practice_api
+app.include_router(practice_api.router, prefix="/api/practice", tags=["practice"])
+from app.api import transfer as transfer_api
+app.include_router(transfer_api.router, prefix="/api/transfer", tags=["transfer"])
+from app.api import step_grader as step_grader_api
+app.include_router(step_grader_api.router, prefix="/api/step-grader", tags=["step-grader"])
 
+from app.api import gamification as gamification_api
+app.include_router(gamification_api.router, prefix="/api/gamification", tags=["gamification"])
+
+from app.api import spaced_repetition as spaced_repetition_api
+app.include_router(spaced_repetition_api.router, prefix="/api/spaced-repetition", tags=["spaced-repetition"])
+
+from app.api import portals as portals_api
+app.include_router(portals_api.router, prefix="/api/portals", tags=["portals"])
