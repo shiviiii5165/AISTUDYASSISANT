@@ -117,6 +117,17 @@ DO $$ BEGIN
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='skill_curriculum_mappings' AND policyname='Allow public read skill_curriculum_mappings') THEN
+    CREATE POLICY "Allow public read skill_curriculum_mappings" ON skill_curriculum_mappings FOR SELECT USING (true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='learner_skill_states' AND policyname='Students view own skill states') THEN
+    CREATE POLICY "Students view own skill states" ON learner_skill_states FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='learner_skill_evidence' AND policyname='Students view own skill evidence') THEN
+    CREATE POLICY "Students view own skill evidence" ON learner_skill_evidence FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 
 -- ─── 6. Seed Canonical Prerequisite Edges ────────────────────────────────────

@@ -133,8 +133,19 @@ $$;
 ALTER TABLE student_concept_state ENABLE ROW LEVEL SECURITY;
 ALTER TABLE canonical_concepts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public read on canonical_concepts" ON canonical_concepts FOR SELECT USING (true);
-CREATE POLICY "Users access own student concept state" ON student_concept_state
-  FOR ALL USING (
-    student_id = auth.uid()::text OR auth.role() = 'service_role'
-  );
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'canonical_concepts' AND policyname = 'Public read on canonical_concepts'
+  ) THEN
+    CREATE POLICY "Public read on canonical_concepts" ON canonical_concepts FOR SELECT USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'student_concept_state' AND policyname = 'Users access own student concept state'
+  ) THEN
+    CREATE POLICY "Users access own student concept state" ON student_concept_state
+      FOR ALL USING (
+        student_id = auth.uid()::text OR auth.role() = 'service_role'
+      );
+  END IF;
+END $$;
