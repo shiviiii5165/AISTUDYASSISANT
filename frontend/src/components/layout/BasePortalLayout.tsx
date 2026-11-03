@@ -119,7 +119,7 @@ export default function BasePortalLayout({
         <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--border)]">
           {!collapsed ? (
             <Link to="/" className="flex items-center gap-2 min-w-0">
-              <span className="text-xl font-display font-extrabold text-[var(--accent-green)] tracking-tight">
+              <span className="text-xl font-display font-extrabold text-black tracking-tight">
                 {BRAND.name}
               </span>
               <span className={`text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full ${badgeColorClass}`}>
@@ -128,7 +128,7 @@ export default function BasePortalLayout({
             </Link>
           ) : (
             <Link to="/" className="mx-auto" title={portalName}>
-              <span className="text-xl font-display font-black text-[var(--accent-green)]">
+              <span className="text-xl font-display font-black text-black">
                 {BRAND.name.charAt(0)}
               </span>
             </Link>
@@ -238,7 +238,7 @@ export default function BasePortalLayout({
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--border)]">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl font-display font-extrabold text-[var(--accent-green)]">
+                  <span className="text-xl font-display font-extrabold text-black">
                     {BRAND.name}
                   </span>
                   <span className={`text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full ${badgeColorClass}`}>
